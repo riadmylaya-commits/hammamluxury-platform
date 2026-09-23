@@ -17,11 +17,6 @@ class Home extends Component
 
     public string $date = '';
 
-    public function search(): void
-    {
-        $this->redirectRoute('search', array_filter(['q' => $this->q, 'category' => $this->category, 'date' => $this->date]));
-    }
-
     public function render(CatalogueService $catalogue): View
     {
         $cities = Spa::query()->fromSub($catalogue->bookableSpas()->select('city'), 'b')

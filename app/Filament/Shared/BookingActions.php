@@ -70,7 +70,7 @@ class BookingActions
     /** Schéma d'infolist d'une réservation. */
     public static function infolist(bool $withCommission = false): array
     {
-        $money = fn ($state) => number_format((float) $state, 0, ',', ' ').' '.config('hl.currency');
+        $money = fn ($state) => number_format((float) $state, fmod((float) $state, 1) ? 2 : 0, ',', ' ').' '.config('hl.currency');
 
         return [
             Section::make(__('partner.booking'))->schema([

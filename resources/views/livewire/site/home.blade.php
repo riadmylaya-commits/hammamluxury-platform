@@ -3,11 +3,11 @@
 <x-slot:hero>
     <h1>{{ __('ui.hero_title') }}</h1>
     <p>{{ __('ui.hero_sub') }}</p>
-    <form class="search" wire:submit="search">
-        <div class="fld"><label>{{ __('ui.search_where') }}</label><input class="inp" wire:model="q" placeholder="{{ __('ui.search_where_ph') }}" autocomplete="off"></div>
+    <form class="search" method="get" action="{{ route('search') }}">
+        <div class="fld"><label>{{ __('ui.search_where') }}</label><input class="inp" name="q" value="{{ $q }}" placeholder="{{ __('ui.search_where_ph') }}" autocomplete="off"></div>
         <div class="fld"><label>{{ __('ui.search_what') }}</label>
-            <select class="inp" wire:model="category"><option value="">{{ __('ui.any_treatment') }}</option>@foreach (__('ui.cat') as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
-        <div class="fld"><label>{{ __('ui.search_when') }}</label><input class="inp" type="date" wire:model="date" min="{{ now()->format('Y-m-d') }}"></div>
+            <select class="inp" name="category"><option value="">{{ __('ui.any_treatment') }}</option>@foreach (__('ui.cat') as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
+        <div class="fld"><label>{{ __('ui.search_when') }}</label><input class="inp" type="date" name="date" min="{{ now()->format('Y-m-d') }}"></div>
         <button class="btn" type="submit">{{ __('ui.search_btn') }}</button>
     </form>
 </x-slot:hero>
