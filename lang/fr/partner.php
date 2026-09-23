@@ -24,7 +24,7 @@ return [
     'description_en' => 'Présentation (anglais)',
     'features' => 'Équipements & particularités',
     'section_photos' => 'Photos',
-    'photos_help' => 'Les photos sont décisives pour les clients : ajoutez au moins 5 belles photos (hammam, cabines, accueil, terrasse…). Glissez pour réordonner ; la première ou la photo « couverture » s’affiche dans les résultats.',
+    'photos_help' => 'Les photos sont décisives pour les clients : ajoutez au moins :min belles photos (obligatoire pour la publication) (hammam, cabines, accueil, terrasse…). Glissez pour réordonner ; la première ou la photo « couverture » s’affiche dans les résultats.',
     'caption' => 'Légende',
     'is_cover' => 'Photo de couverture',
     'add_photo' => 'Ajouter une photo',

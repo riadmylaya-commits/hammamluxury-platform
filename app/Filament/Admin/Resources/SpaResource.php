@@ -62,7 +62,7 @@ class SpaResource extends Resource
     {
         $html = '<ul class="space-y-1">';
         foreach (PublicationChecklist::checks($spa) as $label => $ok) {
-            $html .= '<li>'.($ok ? '✅' : '⛔').' '.e($label).'</li>';
+            $html .= '<li class="'.($ok ? 'text-success-600' : 'text-danger-600 font-medium').'">'.($ok ? '[OK]' : '[!!]').' '.e($label).'</li>';
         }
         if (! PublicationChecklist::passes($spa)) {
             $html .= '<li class="font-semibold text-danger-600">'.e(__('admin.checklist_blocking')).'</li>';
@@ -95,7 +95,7 @@ class SpaResource extends Resource
                 Tables\Actions\Action::make('publish')->label(__('admin.publish'))->icon('heroicon-o-eye')->color('success')
                     ->visible(fn (Spa $s) => $s->status !== 'published')->requiresConfirmation()
                     ->modalContent(fn (Spa $s) => self::checklist($s))
-                    ->modalSubmitAction(fn ($action, Spa $s) => $action->disabled(! PublicationChecklist::passes($s)))
+                    ->modalSubmitAction(fn ($action, Spa $s) => $action->disabled(! PublicationChecklist::passes($s))->extraAttributes(fn () => PublicationChecklist::passes($s) ? [] : ['disabled' => 'disabled']))
                     ->action(function (Spa $s) {
                         if (! PublicationChecklist::passes($s)) {
                             Notification::make()->title(__('admin.checklist_blocking'))->body(implode(' · ', PublicationChecklist::failures($s)))->danger()->send();

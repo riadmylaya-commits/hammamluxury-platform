@@ -23,7 +23,7 @@ return [
     'description_en' => 'Description (English)',
     'features' => 'Facilities & highlights',
     'section_photos' => 'Photos',
-    'photos_help' => 'Photos drive bookings: add at least 5 great photos (hammam, cabins, reception, terrace…). Drag to reorder; the first or “cover” photo is shown in search results.',
+    'photos_help' => 'Photos drive bookings: add at least :min great photos (required for publication) (hammam, cabins, reception, terrace…). Drag to reorder; the first or “cover” photo is shown in search results.',
     'caption' => 'Caption',
     'is_cover' => 'Cover photo',
     'add_photo' => 'Add a photo',

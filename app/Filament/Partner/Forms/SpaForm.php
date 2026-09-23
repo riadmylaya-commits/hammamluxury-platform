@@ -53,7 +53,7 @@ class SpaForm
             ])->columns(2),
 
             Section::make(__('partner.section_photos'))
-                ->description(__('partner.photos_help'))
+                ->description(__('partner.photos_help', ['min' => config('hl.min_photos')]))
                 ->schema([
                     Repeater::make('photos')
                         ->relationship()
