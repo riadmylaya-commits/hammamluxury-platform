@@ -20,7 +20,7 @@ class ExpirationTest extends BookingFlowTestCase
         Mail::fake();
         $done = $this->bookings->expireWaiting();
         $b->refresh();
-        $this->assertTrue([$b->id] === $done && 'expired' === $b->status && [] === $this->activeAllocations($b) && 2 === Allocation::where('booking_id', $b->id)->where('status', 'released')->count(), 'Échéance dépassée : statut expired, 2 allocations passées en released (historique conservé)');
+        $this->assertTrue([$b->id] === $done && $b->status === 'expired' && $this->activeAllocations($b) === [] && Allocation::where('booking_id', $b->id)->where('status', 'released')->count() === 2, 'Échéance dépassée : statut expired, 2 allocations passées en released (historique conservé)');
         $this->assertNotNull($b->expiration_notified_at, 'Horodatage de notification d’expiration');
         Mail::assertSentCount(2);
         Mail::assertSent(BookingMail::class, fn ($m) => $m->event === 'expired' && $m->audience === 'client' && $m->hasTo('client@example.test'));

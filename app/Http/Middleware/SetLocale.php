@@ -15,13 +15,19 @@ class SetLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = $request->route('locale') ?? $request->session()->get('hl.locale', config('app.locale'));
+        $locale = $request->route('locale')
+            ?? ($request->hasSession() ? $request->session()->get('hl.locale') : null)
+            ?? $request->query('locale')
+            ?? $request->getPreferredLanguage(config('hl.locales'))
+            ?? config('app.locale');
         if (! in_array($locale, config('hl.locales'), true)) {
             abort(404);
         }
         app()->setLocale($locale);
         URL::defaults(['locale' => $locale]);
-        $request->session()->put('hl.locale', $locale);
+        if ($request->hasSession()) {
+            $request->session()->put('hl.locale', $locale);
+        }
 
         return $next($request);
     }

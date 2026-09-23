@@ -5,8 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Str;
 
 class Booking extends Model
@@ -42,17 +40,50 @@ class Booking extends Model
         return $ref;
     }
 
-    public function spa(): BelongsTo { return $this->belongsTo(Spa::class); }
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
-    public function participants(): HasMany { return $this->hasMany(BookingParticipant::class)->orderBy('participant_no'); }
-    public function allocations(): HasMany { return $this->hasMany(Allocation::class); }
-    public function events(): HasMany { return $this->hasMany(BookingEvent::class); }
+    public function spa(): BelongsTo
+    {
+        return $this->belongsTo(Spa::class);
+    }
 
-    public function isActive(): bool { return ! in_array($this->status, self::INACTIVE_STATUSES, true); }
-    public function isWaiting(): bool { return $this->status === 'waiting'; }
-    public function isConfirmed(): bool { return $this->status === 'confirmed'; }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
-    public function customerName(): string { return trim($this->first_name.' '.$this->last_name); }
+    public function participants(): HasMany
+    {
+        return $this->hasMany(BookingParticipant::class)->orderBy('participant_no');
+    }
+
+    public function allocations(): HasMany
+    {
+        return $this->hasMany(Allocation::class);
+    }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(BookingEvent::class);
+    }
+
+    public function isActive(): bool
+    {
+        return ! in_array($this->status, self::INACTIVE_STATUSES, true);
+    }
+
+    public function isWaiting(): bool
+    {
+        return $this->status === 'waiting';
+    }
+
+    public function isConfirmed(): bool
+    {
+        return $this->status === 'confirmed';
+    }
+
+    public function customerName(): string
+    {
+        return trim($this->first_name.' '.$this->last_name);
+    }
 
     public function log(string $type, ?string $actor = null, array $payload = []): BookingEvent
     {

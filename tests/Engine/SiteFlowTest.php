@@ -5,6 +5,7 @@ namespace Tests\Engine;
 use App\Livewire\Site\BookingFlow;
 use App\Livewire\Site\BookingShow;
 use App\Models\Booking;
+use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 
 /** Pages publiques Livewire FR/EN : rendu, réservation invitée de bout en bout, refus de créneau, suivi et annulation. */
@@ -13,7 +14,7 @@ class SiteFlowTest extends BookingFlowTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        \Illuminate\Support\Facades\URL::defaults(['locale' => 'fr']);
+        URL::defaults(['locale' => 'fr']);
         app()->setLocale('fr');
     }
 
@@ -52,7 +53,7 @@ class SiteFlowTest extends BookingFlowTestCase
         $b = Booking::latest('id')->first();
         $this->assertNotNull($b, 'Réservation créée depuis le parcours Livewire');
         $c->assertRedirect(route('booking.show', ['locale' => 'fr', 'token' => $b->manage_token, 'new' => 1]));
-        $this->assertTrue(1350.0 === (float) $b->total && 2 === $b->party && '12:15' === $b->end_at->format('H:i') && 'Riad Test' === $b->hotel, 'Prix/durée/fin recalculés côté serveur');
+        $this->assertTrue((float) $b->total === 1350.0 && $b->party === 2 && $b->end_at->format('H:i') === '12:15' && $b->hotel === 'Riad Test', 'Prix/durée/fin recalculés côté serveur');
         $this->assertStringNotContainsString('11 22 33 44', (string) $b->note, 'Coordonnées masquées dans le message client');
 
         $this->get('/fr/reservation/'.$b->manage_token.'?new=1')->assertOk()->assertSee('Demande envoyée')->assertSee($b->reference)->assertSee('En attente de confirmation')->assertDontSee($this->spa->phone);

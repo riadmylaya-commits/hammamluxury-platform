@@ -11,32 +11,32 @@ class QuoteTest extends BookingFlowTestCase
     public function test_formulas_solo_couple_group_and_fallback(): void
     {
         $q = $this->quote(['treatment' => $this->h->id, 'party' => 1]);
-        $this->assertTrue(150.0 === $q['total'] && 'solo' === $q['lines'][0]['formula'] && 45 === $q['duration_min'], 'Devis hammam solo = 150, 45 min');
+        $this->assertTrue($q['total'] === 150.0 && $q['lines'][0]['formula'] === 'solo' && $q['duration_min'] === 45, 'Devis hammam solo = 150, 45 min');
         $q = $this->quote(['treatment' => $this->h->slug, 'party' => 2]);
-        $this->assertTrue(350.0 === $q['total'] && 'couple' === $q['lines'][0]['formula'], 'Devis hammam couple = 350 (formule couple, résolu par slug)');
+        $this->assertTrue($q['total'] === 350.0 && $q['lines'][0]['formula'] === 'couple', 'Devis hammam couple = 350 (formule couple, résolu par slug)');
         $q = $this->quote(['treatment' => $this->h->id, 'party' => 3]);
-        $this->assertTrue(450.0 === $q['total'] && 'group' === $q['lines'][0]['formula'], 'Devis hammam groupe 3 = 3 × 150 = 450 (formule groupe)');
+        $this->assertTrue($q['total'] === 450.0 && $q['lines'][0]['formula'] === 'group', 'Devis hammam groupe 3 = 3 × 150 = 450 (formule groupe)');
         $q = $this->quote(['treatment' => $this->m->id, 'party' => 3]);
-        $this->assertTrue(1200.0 === $q['total'] && 'solo' === $q['lines'][0]['formula'], 'Devis massage 3 pers sans formule groupe = 3 × 400 = 1200 (fallback solo)');
+        $this->assertTrue($q['total'] === 1200.0 && $q['lines'][0]['formula'] === 'solo', 'Devis massage 3 pers sans formule groupe = 3 × 400 = 1200 (fallback solo)');
         $this->assertSame(['group', 150.0], $this->h->formulaFor(3), 'Treatment::formulaFor cohérent avec QuoteBuilder');
     }
 
     public function test_extras_per_person_and_capped(): void
     {
         $q = $this->quote(['treatment' => $this->hm->id, 'party' => 2, 'extras' => [$this->cr->id]]);
-        $this->assertTrue(1350.0 === $q['total'] && 135 === $q['duration_min'] && 2 === $q['party'], 'H+M couple + crânien (par personne) = 1100 + 2×125 = 1350, durée 120+15 = 135 min');
+        $this->assertTrue($q['total'] === 1350.0 && $q['duration_min'] === 135 && $q['party'] === 2, 'H+M couple + crânien (par personne) = 1100 + 2×125 = 1350, durée 120+15 = 135 min');
         $q = $this->quote(['treatment' => $this->hm->id, 'party' => 1, 'extras' => [['id' => $this->the->id, 'qty' => 5]]]);
-        $this->assertTrue(690.0 === $q['total'] && 3 === $q['lines'][0]['extras'][0]['qty'] && 120 === $q['duration_min'], 'Extra « Thé » ×5 borné à max_qty 3, non par personne, sans durée : 600 + 3×30 = 690, 120 min');
+        $this->assertTrue($q['total'] === 690.0 && $q['lines'][0]['extras'][0]['qty'] === 3 && $q['duration_min'] === 120, 'Extra « Thé » ×5 borné à max_qty 3, non par personne, sans durée : 600 + 3×30 = 690, 120 min');
         $q = $this->quote(['treatment' => $this->hm->id, 'party' => 1, 'extras' => [$this->cr->id => 1, $this->the->id => 2]]);
-        $this->assertTrue(785.0 === $q['total'] && 135 === $q['duration_min'], 'Extras en map id⇒qté : 600 + 125 + 60 = 785');
+        $this->assertTrue($q['total'] === 785.0 && $q['duration_min'] === 135, 'Extras en map id⇒qté : 600 + 125 + 60 = 785');
         $q = $this->quote(['treatment' => $this->h->id, 'party' => 1, 'extras' => [$this->cr->id]]);
-        $this->assertTrue(150.0 === $q['total'] && [] === $q['lines'][0]['extras'], 'Extra d’une autre prestation ignoré (150, sans extra)');
+        $this->assertTrue($q['total'] === 150.0 && $q['lines'][0]['extras'] === [], 'Extra d’une autre prestation ignoré (150, sans extra)');
     }
 
     public function test_advanced_mode_different_treatment_per_person(): void
     {
         $q = $this->quote(['participants' => [['treatment' => $this->hm->id, 'extras' => [$this->cr->id]], ['treatment' => $this->hs->slug]]]);
-        $this->assertTrue(1275.0 === $q['total'] && 2 === count($q['lines']) && 2 === $q['party'] && 135 === $q['duration_min'], 'Mode avancé : P1 H+M+crânien (725) + P2 H+Soin (550) = 1275, 2 personnes, durée max 135');
+        $this->assertTrue($q['total'] === 1275.0 && count($q['lines']) === 2 && $q['party'] === 2 && $q['duration_min'] === 135, 'Mode avancé : P1 H+M+crânien (725) + P2 H+Soin (550) = 1275, 2 personnes, durée max 135');
         $this->assertSame([1, 2], array_column($q['lines'], 'participant_no'), 'Participants numérotés 1 et 2');
         $this->assertStringContainsString('Hammam + Soin visage', QuoteBuilder::summaryText($q), 'Résumé lisible du devis');
     }
@@ -82,7 +82,7 @@ class QuoteTest extends BookingFlowTestCase
         $cat = app(CatalogueService::class);
         $list = $cat->treatments($this->spa);
         $pkg = $list->firstWhere('id', $this->hm->id);
-        $this->assertTrue(4 === $list->count() && $pkg['is_package'] && 120 === $pkg['duration_min'] && 2 === count($pkg['extras']) && 600.0 === $pkg['price_from'], 'Catalogue : 4 prestations, package Hammam+Massage 120 min avec 2 extras, à partir de 600');
+        $this->assertTrue($list->count() === 4 && $pkg['is_package'] && $pkg['duration_min'] === 120 && count($pkg['extras']) === 2 && $pkg['price_from'] === 600.0, 'Catalogue : 4 prestations, package Hammam+Massage 120 min avec 2 extras, à partir de 600');
         $card = $cat->spaCard($this->spa->load('photos', 'hours'));
         $json = json_encode($card + ['treatments' => $list->all()]);
         $this->assertTrue(! str_contains($json, 'phone') && ! str_contains($json, 'email') && ! str_contains($json, 'document') && ! str_contains($json, 'company'), 'Catalogue : aucune coordonnée directe ni donnée juridique exposée');

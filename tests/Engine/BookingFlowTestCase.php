@@ -2,6 +2,8 @@
 
 namespace Tests\Engine;
 
+use App\Domain\Booking\BookingException;
+use App\Models\Booking;
 use App\Models\Extra;
 use App\Models\Treatment;
 
@@ -56,14 +58,14 @@ abstract class BookingFlowTestCase extends EngineTestCase
         return $this->bookings->prepare($this->spa, ['date' => $this->day, 'time' => $time] + $sel);
     }
 
-    /** @return array{ok: bool, booking: ?\App\Models\Booking, error: string, reason: string} */
+    /** @return array{ok: bool, booking: ?Booking, error: string, reason: string} */
     protected function submit(array $prepared, array $customer = []): array
     {
         try {
             $b = $this->bookings->confirmIntent($this->spa, $prepared['intent']['token'], $customer ?: $this->customer);
 
             return ['ok' => true, 'booking' => $b, 'error' => '', 'reason' => ''];
-        } catch (\App\Domain\Booking\BookingException $e) {
+        } catch (BookingException $e) {
             return ['ok' => false, 'booking' => null, 'error' => $e->getMessage(), 'reason' => $e->reason];
         }
     }

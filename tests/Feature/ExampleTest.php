@@ -14,6 +14,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertRedirect();
+        $this->assertStringEndsWith('/fr', $this->withHeaders(['Accept-Language' => 'fr-FR'])->get('/')->headers->get('Location'));
     }
 }

@@ -10,6 +10,7 @@ use App\Domain\Catalogue\CatalogueService;
 use App\Models\Spa;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -276,7 +277,7 @@ class BookingFlow extends Component
         }
     }
 
-    public function catalogue(): \Illuminate\Support\Collection
+    public function catalogue(): Collection
     {
         return once(fn () => app(CatalogueService::class)->treatments($this->spa));
     }

@@ -34,7 +34,7 @@ class IntentTest extends BookingFlowTestCase
     public function test_valid_intent_and_tampering(): void
     {
         $p = $this->intent('10:00', $this->sel);
-        $this->assertTrue($p['intent']['token'] !== '' && str_ends_with($p['end_at'], '12:15:00') && 1350.0 === $p['quote']['total'], 'Intent créé : fin 12:15, total serveur 1350');
+        $this->assertTrue($p['intent']['token'] !== '' && str_ends_with($p['end_at'], '12:15:00') && $p['quote']['total'] === 1350.0, 'Intent créé : fin 12:15, total serveur 1350');
         $this->assertTrue($p['intent']['expires_at'] > time() + 60 * (config('hl.intent_ttl_minutes') - 1), 'Intent : expiration = TTL configuré ('.config('hl.intent_ttl_minutes').' min)');
 
         $resolved = $this->intents->resolve($p['intent']['token'], $this->spa);
@@ -61,7 +61,7 @@ class IntentTest extends BookingFlowTestCase
         $p = $this->intent('10:00', $this->sel);
         $this->cr->update(['price' => 150]);
         $r = $this->submit($p);
-        $this->assertTrue(! $r['ok'] && 'price_changed' === $r['reason'], 'Tarif modifié après l’intent → refus price_changed : '.$r['error']);
+        $this->assertTrue(! $r['ok'] && $r['reason'] === 'price_changed', 'Tarif modifié après l’intent → refus price_changed : '.$r['error']);
         $this->cr->update(['price' => 125]);
         $this->assertTrue($this->submit($p)['ok'], 'Tarif rétabli → même intent accepté');
     }
@@ -71,11 +71,11 @@ class IntentTest extends BookingFlowTestCase
         $p = $this->intent('11:00', $this->sel);
         Cache::forget('hl:intent:'.$p['intent']['id']);
         $r = $this->submit($p);
-        $this->assertTrue(! $r['ok'] && 'intent_expired' === $r['reason'], 'Intent expiré (cache disparu) → refus : '.$r['error']);
+        $this->assertTrue(! $r['ok'] && $r['reason'] === 'intent_expired', 'Intent expiré (cache disparu) → refus : '.$r['error']);
 
         $p = $this->intent('10:00', $this->sel);
         $this->assertTrue($this->submit($p)['ok'], 'Intent valide → réservation créée');
         $r = $this->submit($p);
-        $this->assertTrue(! $r['ok'] && 'intent_replayed' === $r['reason'], 'Rejeu du même intent → refus : '.$r['error']);
+        $this->assertTrue(! $r['ok'] && $r['reason'] === 'intent_replayed', 'Rejeu du même intent → refus : '.$r['error']);
     }
 }
