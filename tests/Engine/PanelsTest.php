@@ -3,6 +3,8 @@
 namespace Tests\Engine;
 
 use App\Domain\Booking\BookingException;
+use App\Domain\Catalogue\PublicationChecklist;
+use App\Filament\Admin\Resources\SpaResource\Pages\EditSpa;
 use App\Filament\Admin\Resources\SpaResource\Pages\ListSpas;
 use App\Filament\Partner\Resources\BookingResource\Pages\ListBookings;
 use App\Filament\Partner\Resources\BookingResource\Pages\ViewBooking;
@@ -115,17 +117,44 @@ class PanelsTest extends BookingFlowTestCase
         Livewire::test(ViewBooking::class, ['record' => $b->getRouteKey()])->assertActionHidden('accept');
     }
 
-    public function test_admin_publishes_spa_after_checklist(): void
+    public function test_admin_cannot_publish_incomplete_spa(): void
     {
         $this->actingAs($this->admin);
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         $this->otherSpa->update(['status' => 'pending']);
 
-        Livewire::test(ListSpas::class)->assertCanSeeTableRecords([$this->spa, $this->otherSpa])
-            ->callTableAction('publish', $this->otherSpa)->assertHasNoTableActionErrors();
-        $this->otherSpa->refresh();
-        $this->assertSame('published', $this->otherSpa->status);
-        $this->assertNotNull($this->otherSpa->published_at);
-        $this->getJson('/api/v1/spas')->assertOk()->assertJsonPath('meta.total', 2);
+        $this->assertFalse(PublicationChecklist::passes($this->otherSpa));
+        $this->assertCount(6, PublicationChecklist::failures($this->otherSpa));
+
+        Livewire::test(ListSpas::class)->callTableAction('publish', $this->otherSpa)->assertNotified();
+        $this->assertSame('pending', $this->otherSpa->refresh()->status);
+
+        Livewire::test(EditSpa::class, ['record' => $this->otherSpa->getRouteKey()])
+            ->fillForm(['status' => 'published'])->call('save')->assertNotified();
+        $this->assertSame('pending', $this->otherSpa->refresh()->status);
+        $this->getJson('/api/v1/spas')->assertOk()->assertJsonPath('meta.total', 1);
+    }
+
+    public function test_admin_publishes_spa_once_checklist_passes(): void
+    {
+        $this->actingAs($this->admin);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $spa = $this->spa;
+        $spa->update(['status' => 'pending', 'published_at' => null, 'category' => 'hammam', 'description_fr' => 'Description démo', 'address' => '1 rue Test', 'phone' => '+212600000000']);
+        foreach (range(1, 9) as $i) {
+            $spa->photos()->create(['path' => "/p/$i.jpg", 'sort_order' => $i, 'is_cover' => $i === 1]);
+        }
+        $this->assertSame([__('admin.chk_photos', ['min' => 10, 'n' => 9])], PublicationChecklist::failures($spa));
+        Livewire::test(ListSpas::class)->callTableAction('publish', $spa);
+        $this->assertSame('pending', $spa->refresh()->status);
+
+        $spa->photos()->create(['path' => '/p/10.jpg', 'sort_order' => 10]);
+        $this->assertTrue(PublicationChecklist::passes($spa));
+        Livewire::test(ListSpas::class)->assertCanSeeTableRecords([$spa, $this->otherSpa])
+            ->callTableAction('publish', $spa)->assertHasNoTableActionErrors();
+        $spa->refresh();
+        $this->assertSame('published', $spa->status);
+        $this->assertNotNull($spa->published_at);
+        $this->getJson('/api/v1/spas')->assertOk()->assertJsonPath('meta.total', 1);
     }
 }

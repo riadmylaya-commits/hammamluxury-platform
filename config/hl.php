@@ -17,6 +17,7 @@ return [
 
     // Nombre maximal de participants par réservation.
     'max_participants' => 20,
+    'min_photos' => (int) env('HL_MIN_PHOTOS', 10),
 
     'default_commission_pct' => (float) env('HL_DEFAULT_COMMISSION_PCT', 15),
     'lock_timeout_seconds' => 5,

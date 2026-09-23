@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Domain\Catalogue\PublicationChecklist;
 use App\Filament\Admin\Resources\SpaResource\Pages;
 use App\Models\Spa;
 use Filament\Forms;
@@ -59,17 +60,12 @@ class SpaResource extends Resource
 
     public static function checklist(Spa $spa): HtmlString
     {
-        $checks = [
-            __('admin.chk_photos', ['n' => $spa->photos()->count()]) => $spa->photos()->count() >= 5,
-            __('admin.chk_hours') => $spa->hours()->exists(),
-            __('admin.chk_resources') => $spa->resources()->where('status', 'active')->exists(),
-            __('admin.chk_treatments') => $spa->treatments()->where('status', 'active')->exists(),
-            __('admin.chk_address') => filled($spa->address) && filled($spa->phone),
-            __('admin.chk_partner') => $spa->partner?->isApproved() ?? false,
-        ];
         $html = '<ul class="space-y-1">';
-        foreach ($checks as $label => $ok) {
-            $html .= '<li>'.($ok ? '✅' : '⚠️').' '.e($label).'</li>';
+        foreach (PublicationChecklist::checks($spa) as $label => $ok) {
+            $html .= '<li>'.($ok ? '✅' : '⛔').' '.e($label).'</li>';
+        }
+        if (! PublicationChecklist::passes($spa)) {
+            $html .= '<li class="font-semibold text-danger-600">'.e(__('admin.checklist_blocking')).'</li>';
         }
 
         return new HtmlString($html.'</ul>');
@@ -99,7 +95,13 @@ class SpaResource extends Resource
                 Tables\Actions\Action::make('publish')->label(__('admin.publish'))->icon('heroicon-o-eye')->color('success')
                     ->visible(fn (Spa $s) => $s->status !== 'published')->requiresConfirmation()
                     ->modalContent(fn (Spa $s) => self::checklist($s))
+                    ->modalSubmitAction(fn ($action, Spa $s) => $action->disabled(! PublicationChecklist::passes($s)))
                     ->action(function (Spa $s) {
+                        if (! PublicationChecklist::passes($s)) {
+                            Notification::make()->title(__('admin.checklist_blocking'))->body(implode(' · ', PublicationChecklist::failures($s)))->danger()->send();
+
+                            return;
+                        }
                         $s->refreshPriceFrom();
                         $s->update(['status' => 'published', 'published_at' => $s->published_at ?? now(), 'status_note' => null]);
                         Notification::make()->title(__('admin.published_ok'))->success()->send();

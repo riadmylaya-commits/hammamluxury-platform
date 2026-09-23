@@ -78,7 +78,7 @@ class DemoSeeder extends Seeder
             $spa->hours()->create(['weekday' => $wd, 'opens_min' => $o, 'closes_min' => $c]);
         }
         $spa->photos()->delete();
-        foreach (range(1, 4) as $i) {
+        foreach (range(1, 10) as $i) {
             $spa->photos()->create(['path' => "https://picsum.photos/seed/{$spa->slug}-$i/1200/800", 'sort_order' => $i, 'is_cover' => $i === 1, 'caption_fr' => $spa->name, 'caption_en' => $spa->name]);
         }
         $typeIds = [];

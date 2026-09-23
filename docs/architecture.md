@@ -55,6 +55,16 @@ intent (15 min, ne bloque rien)
 
 Panneau Filament `partner` avec tenant `Spa` : un partenaire ne voit que ses établissements (`User::getTenants`, `canAccessTenant`) ; un admin accède à tous. Les ressources Filament sont scoppées par `Filament::getTenant()`.
 
+## Publication d'un établissement (`app/Domain/Catalogue/PublicationChecklist`)
+
+Une fiche ne devient `published` (visible côté client et API) que si toutes les conditions sont remplies — la checklist est **bloquante**, dans l'action « Publier » comme dans le formulaire d'édition admin :
+
+- nom, catégorie, ville et description FR ; adresse et téléphone ;
+- au moins `HL_MIN_PHOTOS` photos (10 par défaut) ;
+- horaires renseignés ; au moins un soin actif avec tarif ;
+- au moins une ressource active, et chaque étape des soins actifs couverte par un type de ressource ayant une ressource active ;
+- partenaire validé.
+
 ## Extensibilité prévue
 
 - **Paiement / acompte** : `ledger_entries` + point d'entrée unique `BookingService::confirmIntent` ; ajout d'un `PaymentGateway` sans toucher au moteur.
