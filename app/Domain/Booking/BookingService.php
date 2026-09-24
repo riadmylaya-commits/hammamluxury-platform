@@ -2,6 +2,7 @@
 
 namespace App\Domain\Booking;
 
+use App\Domain\Phone\PhoneNumber;
 use App\Domain\Privacy\ContactMasker;
 use App\Events\BookingCreated;
 use App\Events\BookingExpired;
@@ -127,7 +128,7 @@ class BookingService
                 'first_name' => $customer['first_name'] ?? '',
                 'last_name' => $customer['last_name'] ?? '',
                 'email' => $customer['email'] ?? '',
-                'phone' => $customer['phone'] ?? '',
+                'phone' => PhoneNumber::normalize($customer['phone'] ?? null) ?? ($customer['phone'] ?? ''),
                 'hotel' => $customer['hotel'] ?? null,
                 'note' => isset($customer['note']) && $customer['note'] !== '' ? ContactMasker::redact($customer['note']) : null,
                 'locale' => $locale ?? app()->getLocale(),

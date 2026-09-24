@@ -101,7 +101,14 @@
             <div class="fld"><label>{{ __('ui.last_name') }}</label><input class="inp @error('last_name') err @enderror" wire:model="last_name" autocomplete="family-name" required>@error('last_name')<span class="ferr">{{ $message }}</span>@enderror</div>
         </div>
         <div class="fld"><label>{{ __('ui.email') }}</label><input class="inp @error('email') err @enderror" type="email" wire:model="email" autocomplete="email" inputmode="email" required>@error('email')<span class="ferr">{{ $message }}</span>@enderror</div>
-        <div class="fld"><label>{{ __('ui.phone') }}</label><input class="inp @error('phone') err @enderror" type="tel" wire:model="phone" autocomplete="tel" inputmode="tel" placeholder="+212 6…" required>@error('phone')<span class="ferr">{{ $message }}</span>@enderror</div>
+        <div class="fld"><label>{{ __('ui.phone') }}</label>
+            <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,2fr);gap:8px">
+                <select class="inp @error('phoneCountry') err @enderror" wire:model="phoneCountry" autocomplete="tel-country-code" aria-label="{{ __('phone.country') }}">@foreach (\App\Domain\Phone\PhoneNumber::options() as $iso => $lbl)<option value="{{ $iso }}">{{ $lbl }}</option>@endforeach</select>
+                <input class="inp @error('phone') err @enderror" type="tel" wire:model="phone" autocomplete="tel-national" inputmode="tel" placeholder="0661351989" aria-label="{{ __('phone.number') }}" required>
+            </div>
+            <span class="xs muted">{{ __('phone.help') }}</span>
+            @error('phone')<span class="ferr">{{ $message }}</span>@enderror
+        </div>
         <div class="fld"><label>{{ __('ui.hotel') }}</label><input class="inp" wire:model="hotel"></div>
         <div class="fld"><label>{{ __('ui.note') }}</label><textarea class="inp" rows="2" wire:model="note"></textarea><span class="xs muted">{{ __('ui.note_privacy') }}</span></div>
         <label class="small row" style="align-items:flex-start"><input type="checkbox" wire:model="terms" style="margin-top:3px"> <span>{{ __('ui.accept_terms') }}</span></label>@error('terms')<span class="ferr">{{ $message }}</span>@enderror

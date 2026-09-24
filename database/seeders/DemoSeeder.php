@@ -25,7 +25,7 @@ class DemoSeeder extends Seeder
 
         $demo = $this->spa($partner, [
             'slug' => 'hammam-demo-marrakech', 'name' => 'Hammam Démo Marrakech', 'category' => 'hammam', 'city' => 'Marrakech', 'area' => 'Médina',
-            'address' => 'Derb Demo 12, Médina, Marrakech', 'phone' => '+212 5 24 00 00 00', 'email' => 'contact@hammam-demo.test',
+            'address' => 'Derb Demo 12, Médina, Marrakech', 'phone' => '+212524000000', 'email' => 'contact@hammam-demo.test',
             'description_fr' => "Hammam traditionnel au cœur de la médina : salle chaude collective, gommage au savon noir, massages à l'huile d'argan dans nos deux cabines privées et soins du visage.\nThé à la menthe offert, patio ombragé pour se reposer.",
             'description_en' => "Traditional hammam in the heart of the medina: shared hot room, black-soap scrub, argan-oil massages in our two private cabins and facials.\nComplimentary mint tea, shaded patio to relax.",
             'features' => ['couples', 'tea', 'rooftop'], 'rating' => 4.7, 'reviews_count' => 128, 'lat' => 31.6295, 'lng' => -7.9811,
@@ -56,7 +56,7 @@ class DemoSeeder extends Seeder
             $u = User::updateOrCreate(['email' => $email], ['name' => $name, 'role' => 'partner', 'password' => Hash::make($password), 'email_verified_at' => now()]);
             $p = Partner::updateOrCreate(['user_id' => $u->id], ['company_name' => $company, 'status' => 'approved']);
             $spa = $this->spa($p, [
-                'slug' => $slug, 'name' => $name, 'category' => $cat, 'city' => $city, 'area' => $area, 'address' => "Adresse démo, $area, $city", 'phone' => '+212 5 00 00 00 00',
+                'slug' => $slug, 'name' => $name, 'category' => $cat, 'city' => $city, 'area' => $area, 'address' => "Adresse démo, $area, $city", 'phone' => '+212500000000',
                 'description_fr' => $fr, 'description_en' => $en, 'features' => $features, 'rating' => $rating, 'reviews_count' => $nrev,
             ], [[0, 600, 1260], [1, 600, 1260], [2, 600, 1260], [3, 600, 1260], [4, 600, 1260], [5, 600, 1320], [6, 600, 1200]], [
                 ['hammam', 'Hammam', 'Hammam', $slug === 'riad-sara-spa' ? 'unit' : 'pool', 'room', $slug === 'riad-sara-spa' ? [['Hammam privé', 2, 1, 2]] : [['Hammam', 8, 1, 8]]],

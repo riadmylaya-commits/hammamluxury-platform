@@ -2,6 +2,7 @@
 
 namespace App\Filament\Partner\Forms;
 
+use App\Filament\Forms\Components\PhoneField;
 use App\Models\SpaHour;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
@@ -72,7 +73,7 @@ class SpaForm
 
             Section::make(__('partner.section_address'))->schema([
                 TextInput::make('address')->label(__('partner.address'))->maxLength(255)->columnSpanFull(),
-                TextInput::make('phone')->label(__('partner.phone'))->tel()->maxLength(40),
+                PhoneField::make('phone', __('partner.phone'))->columnSpanFull(),
                 TextInput::make('email')->label('E-mail')->email()->maxLength(190),
                 TextInput::make('website')->label(__('partner.website'))->url()->maxLength(190),
                 Placeholder::make('privacy')->label('')->content(__('partner.contact_privacy'))->columnSpanFull(),

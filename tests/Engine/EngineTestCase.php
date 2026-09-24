@@ -59,7 +59,7 @@ abstract class EngineTestCase extends TestCase
 
     protected function spa(string $slug = 'hl-test-spa', string $name = 'HL TEST Spa'): Spa
     {
-        $user = User::create(['name' => 'Partenaire test', 'email' => $slug.'@example.test', 'password' => 'secret-test', 'role' => 'partner']);
+        $user = User::create(['name' => 'Partenaire test', 'email' => $slug.'@example.test', 'password' => 'secret-test', 'role' => 'partner', 'email_verified_at' => now()]);
         $partner = Partner::create(['user_id' => $user->id, 'company_name' => $name.' SARL', 'status' => 'approved']);
         $spa = Spa::create(['partner_id' => $partner->id, 'slug' => $slug, 'name' => $name, 'city' => 'Marrakech', 'status' => 'published', 'published_at' => now(), 'min_lead_minutes' => 0]);
         foreach ([0, 1, 3, 4, 5] as $wd) {

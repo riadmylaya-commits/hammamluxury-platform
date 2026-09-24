@@ -5,11 +5,13 @@ namespace App\Providers\Filament;
 use App\Filament\Partner\Pages\EditSpaProfile;
 use App\Filament\Partner\Pages\Register as RegisterPartner;
 use App\Filament\Partner\Pages\RegisterSpa;
+use App\Http\Responses\PartnerRegistrationResponse;
 use App\Models\Spa;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Http\Responses\Auth\Contracts\RegistrationResponse;
 use Filament\Navigation\MenuItem;
 use Filament\Pages;
 use Filament\Panel;
@@ -25,6 +27,12 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 /** Espace partenaire : un compte, un ou plusieurs établissements (tenant = Spa). */
 class PartnerPanelProvider extends PanelProvider
 {
+    public function register(): void
+    {
+        parent::register();
+        $this->app->bind(RegistrationResponse::class, PartnerRegistrationResponse::class);
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -33,6 +41,7 @@ class PartnerPanelProvider extends PanelProvider
             ->login()
             ->registration(RegisterPartner::class)
             ->passwordReset()
+            ->emailVerification()
             ->brandName('HammamLuxury · Partenaires')
             ->colors(['primary' => Color::hex('#1f4d3f')])
             ->font('Inter')

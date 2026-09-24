@@ -6,6 +6,8 @@ use App\Domain\Booking\BookingException;
 use App\Domain\Booking\BookingService;
 use App\Domain\Booking\CapacityEngine;
 use App\Domain\Booking\QuoteBuilder;
+use App\Domain\Phone\PhoneNumber;
+use App\Domain\Phone\PhoneRule;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Spa;
@@ -65,13 +67,14 @@ class BookingController extends Controller
             'first_name' => 'required|string|max:80',
             'last_name' => 'required|string|max:80',
             'email' => 'required|email|max:190',
-            'phone' => 'required|string|max:40',
+            'phone_country' => 'nullable|string|size:2',
+            'phone' => ['required', 'string', 'max:25', new PhoneRule($request->input('phone_country'))],
             'hotel' => 'nullable|string|max:190',
             'note' => 'nullable|string|max:1000',
         ]);
 
         return $this->guard(function () use ($spa, $data) {
-            $booking = $this->bookings->confirmIntent($spa, $data['intent'], collect($data)->except('intent')->all());
+            $booking = $this->bookings->confirmIntent($spa, $data['intent'], collect($data)->except(['intent', 'phone_country'])->put('phone', PhoneNumber::normalize($data['phone'], $data['phone_country'] ?? null))->all());
 
             return response()->json(['data' => $this->serialize($booking)], 201);
         });

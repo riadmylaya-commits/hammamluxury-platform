@@ -4,6 +4,7 @@ namespace App\Filament\Shared;
 
 use App\Domain\Booking\BookingException;
 use App\Domain\Booking\BookingService;
+use App\Domain\Phone\PhoneNumber;
 use App\Models\Booking;
 use App\Models\BookingParticipant;
 use Filament\Actions\Action as PageAction;
@@ -101,7 +102,7 @@ class BookingActions
             Section::make(__('partner.customer'))->schema([
                 TextEntry::make('customer')->label(__('partner.name'))->getStateUsing(fn (Booking $b) => $b->customerName()),
                 TextEntry::make('email')->label('E-mail')->copyable(),
-                TextEntry::make('phone')->label(__('partner.phone'))->copyable(),
+                TextEntry::make('phone')->label(__('partner.phone'))->formatStateUsing(fn (?string $state) => PhoneNumber::format($state))->copyable(),
                 TextEntry::make('hotel')->label(__('partner.hotel'))->placeholder('—'),
                 TextEntry::make('note')->label(__('partner.customer_note'))->placeholder('—')->columnSpanFull(),
                 TextEntry::make('partner_note')->label(__('partner.partner_note'))->placeholder('—')->columnSpanFull(),

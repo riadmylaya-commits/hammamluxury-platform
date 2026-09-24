@@ -34,7 +34,7 @@
             <div class="divider"></div>
             <b class="small">{{ __('ui.spa_contact') }}</b>
             <div class="small">{{ $b->spa->address }}</div>
-            @if ($b->spa->phone)<div class="small"><a href="tel:{{ $b->spa->phone }}">{{ $b->spa->phone }}</a></div>@endif
+            @if ($b->spa->phone)<div class="small"><a href="tel:{{ $b->spa->phone }}">{{ \App\Domain\Phone\PhoneNumber::format($b->spa->phone) }}</a>@if ($wa = \App\Domain\Phone\PhoneNumber::whatsappUrl($b->spa->phone)) · <a href="{{ $wa }}" target="_blank" rel="noopener">WhatsApp</a>@endif</div>@endif
         @else
             <div class="muted xs" style="margin-top:6px">{{ __('ui.contact_after') }}</div>
         @endif

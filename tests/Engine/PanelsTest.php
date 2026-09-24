@@ -32,8 +32,8 @@ class PanelsTest extends BookingFlowTestCase
     {
         parent::setUp();
         $this->owner = $this->spa->partner->user;
-        $this->admin = User::create(['name' => 'Admin', 'email' => 'admin@example.test', 'password' => 'secret-test', 'role' => 'admin']);
-        $this->other = User::create(['name' => 'Autre', 'email' => 'autre@example.test', 'password' => 'secret-test', 'role' => 'partner']);
+        $this->admin = User::create(['name' => 'Admin', 'email' => 'admin@example.test', 'password' => 'secret-test', 'role' => 'admin', 'email_verified_at' => now()]);
+        $this->other = User::create(['name' => 'Autre', 'email' => 'autre@example.test', 'password' => 'secret-test', 'role' => 'partner', 'email_verified_at' => now()]);
         $p = Partner::create(['user_id' => $this->other->id, 'company_name' => 'Autre SARL', 'status' => 'approved']);
         $this->otherSpa = Spa::create(['partner_id' => $p->id, 'slug' => 'autre-spa', 'name' => 'Autre Spa', 'city' => 'Fès', 'status' => 'draft']);
     }

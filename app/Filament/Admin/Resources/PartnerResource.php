@@ -2,7 +2,9 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Domain\Phone\PhoneNumber;
 use App\Filament\Admin\Resources\PartnerResource\Pages;
+use App\Filament\Forms\Components\PhoneField;
 use App\Models\Partner;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -44,7 +46,7 @@ class PartnerResource extends Resource
                 Forms\Components\TextInput::make('legal_form')->label(__('admin.legal_form'))->maxLength(60),
                 Forms\Components\TextInput::make('tax_id')->label(__('admin.tax_id'))->maxLength(60),
                 Forms\Components\TextInput::make('registry_number')->label(__('admin.registry_number'))->maxLength(60),
-                Forms\Components\TextInput::make('contact_phone')->label(__('partner.phone'))->maxLength(40),
+                PhoneField::make('contact_phone', __('partner.phone'))->columnSpanFull(),
             ])->columns(2),
             Forms\Components\Section::make(__('admin.validation'))->schema([
                 Forms\Components\Select::make('status')->label(__('partner.status'))->options(self::statuses())->required(),
@@ -68,7 +70,7 @@ class PartnerResource extends Resource
                 Tables\Columns\TextColumn::make('company_name')->label(__('partner.company_name'))->searchable()->weight('bold')
                     ->description(fn (Partner $p) => $p->user?->email),
                 Tables\Columns\TextColumn::make('user.name')->label(__('admin.contact')),
-                Tables\Columns\TextColumn::make('contact_phone')->label(__('partner.phone')),
+                Tables\Columns\TextColumn::make('contact_phone')->label(__('partner.phone'))->formatStateUsing(fn (?string $state) => PhoneNumber::format($state)),
                 Tables\Columns\TextColumn::make('spas_count')->counts('spas')->label(__('admin.spas')),
                 Tables\Columns\TextColumn::make('commission_pct')->label(__('admin.commission_pct'))->formatStateUsing(fn (Partner $p) => $p->commissionPct().' %'),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()

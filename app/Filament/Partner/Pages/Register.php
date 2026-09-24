@@ -2,6 +2,7 @@
 
 namespace App\Filament\Partner\Pages;
 
+use App\Filament\Forms\Components\PhoneField;
 use App\Models\Partner;
 use App\Models\User;
 use Filament\Forms\Components\TextInput;
@@ -17,7 +18,7 @@ class Register extends BaseRegister
         return $form->schema([
             $this->getNameFormComponent(),
             TextInput::make('company_name')->label(__('partner.company_name'))->required()->maxLength(190),
-            TextInput::make('phone')->label(__('partner.phone'))->tel()->required()->maxLength(40),
+            PhoneField::make('phone', __('partner.phone'), required: true),
             $this->getEmailFormComponent(),
             $this->getPasswordFormComponent(),
             $this->getPasswordConfirmationFormComponent(),

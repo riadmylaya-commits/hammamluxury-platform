@@ -7,6 +7,8 @@ use App\Domain\Booking\BookingService;
 use App\Domain\Booking\CapacityEngine;
 use App\Domain\Booking\QuoteBuilder;
 use App\Domain\Catalogue\CatalogueService;
+use App\Domain\Phone\PhoneNumber;
+use App\Domain\Phone\PhoneRule;
 use App\Models\Spa;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -62,6 +64,8 @@ class BookingFlow extends Component
 
     public string $phone = '';
 
+    public string $phoneCountry = PhoneNumber::DEFAULT_COUNTRY;
+
     public string $hotel = '';
 
     public string $note = '';
@@ -75,6 +79,7 @@ class BookingFlow extends Component
         abort_unless($catalogue->bookableSpas()->whereKey($spa->id)->exists(), 404);
         $this->spa = $spa->load('hours');
         $this->month = CarbonImmutable::now()->format('Y-m');
+        $this->phoneCountry = PhoneNumber::detectCountry();
         if ($this->treatment && ! $this->catalogue()->firstWhere('id', $this->treatment)) {
             $this->treatment = null;
         }
@@ -222,14 +227,15 @@ class BookingFlow extends Component
             'first_name' => 'required|string|max:90',
             'last_name' => 'required|string|max:90',
             'email' => 'required|email|max:190',
-            'phone' => 'required|string|min:6|max:40',
+            'phoneCountry' => 'required|string|size:2',
+            'phone' => ['required', 'string', 'max:25', new PhoneRule($this->phoneCountry)],
             'hotel' => 'nullable|string|max:190',
             'note' => 'nullable|string|max:1000',
             'terms' => 'accepted',
         ]);
         $customer = [
             'first_name' => $this->first_name, 'last_name' => $this->last_name, 'email' => $this->email,
-            'phone' => $this->phone, 'hotel' => $this->hotel ?: null, 'note' => $this->note ?: null,
+            'phone' => PhoneNumber::normalize($this->phone, $this->phoneCountry), 'hotel' => $this->hotel ?: null, 'note' => $this->note ?: null,
         ];
         try {
             $booking = app(BookingService::class)->confirmIntent($this->spa, $this->intentToken, $customer);
