@@ -79,7 +79,7 @@ server {
         fastcgi_hide_header X-Powered-By;
     }
     location ~ /\.(?!well-known).* { deny all; }
-    location ~* \.(css|js|jpg|jpeg|png|gif|webp|svg|woff2?)$ { expires 30d; access_log off; }
+    location ~* \.(css|js|jpg|jpeg|png|gif|webp|svg|woff2?)$ { try_files $uri /index.php?$query_string; expires 30d; access_log off; }
 }
 EOF
 ln -sf /etc/nginx/sites-available/hammamluxury /etc/nginx/sites-enabled/hammamluxury
