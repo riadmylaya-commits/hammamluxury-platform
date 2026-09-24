@@ -17,8 +17,8 @@
         <nav class="nav {{ $dark ? 'dark' : '' }}">
             <a class="logo" href="{{ route('home') }}">HammamLuxury<small>{{ __('ui.tagline') }}</small></a>
             <span class="sp"></span>
-            <a class="lnk desk-only" href="{{ route('home') }}#partner">{{ __('ui.nav_list') }}</a>
-            <a class="lnk ghost desk-only" href="{{ route('home') }}#partner">{{ __('ui.nav_partner') }}</a>
+            <a class="lnk desk-only" href="{{ route('filament.partner.auth.register') }}">{{ __('ui.nav_list') }}</a>
+            <a class="lnk ghost desk-only" href="{{ route('filament.partner.auth.login') }}">{{ __('ui.nav_partner') }}</a>
             @php($other = app()->getLocale() === 'fr' ? 'en' : 'fr')
             <a class="lang" href="{{ preg_replace('#^'.preg_quote(url('/'), '#').'/[a-z]{2}#', url('/'.$other), url()->full()) }}" hreflang="{{ $other }}">{{ strtoupper($other) }}</a>
         </nav>
@@ -28,7 +28,7 @@
 <main class="wrap">{{ $slot }}</main>
 <footer><div class="wrap foot">
     <div><b>HammamLuxury</b>{{ __('ui.footer_about') }}</div>
-    <div><b>{{ __('ui.footer_partner') }}</b><a href="#">{{ __('ui.nav_list') }}</a><a href="#">{{ __('ui.nav_partner') }}</a></div>
+    <div><b>{{ __('ui.footer_partner') }}</b><a href="{{ route('filament.partner.auth.register') }}">{{ __('ui.nav_list') }}</a><a href="{{ route('filament.partner.auth.login') }}">{{ __('ui.nav_partner') }}</a></div>
     <div><b>{{ __('ui.footer_help') }}</b><a href="#">FAQ</a><a href="#">Contact</a></div>
     <div><b>{{ __('ui.footer_legal') }}</b><a href="#">CGU</a><a href="#">Confidentialité</a></div>
 </div></footer>

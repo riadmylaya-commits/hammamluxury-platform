@@ -45,6 +45,9 @@
 <section class="sec card" id="partner" style="padding:20px">
     <h2 style="font-size:20px">{{ __('ui.nav_list') }}</h2>
     <p class="muted small">{{ app()->getLocale() === 'fr' ? 'Vous gérez un hammam, un spa ou un centre de bien-être ? Rejoignez HammamLuxury et gérez vous-même vos soins, photos, horaires et réservations.' : 'Do you run a hammam, spa or wellness centre? Join HammamLuxury and manage your treatments, photos, opening hours and bookings yourself.' }}</p>
-    <a class="btn sec sm" href="#">{{ __('ui.nav_partner') }}</a>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn sm" href="{{ route('filament.partner.auth.register') }}">{{ __('ui.nav_list') }}</a>
+        <a class="btn sec sm" href="{{ route('filament.partner.auth.login') }}">{{ __('ui.nav_partner') }}</a>
+    </div>
 </section>
 </div>
