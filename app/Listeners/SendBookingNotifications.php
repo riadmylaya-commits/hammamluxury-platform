@@ -10,7 +10,7 @@ use App\Models\Booking;
 use Illuminate\Support\Facades\Mail;
 
 /**
- * E-mails client + partenaire à chaque étape. Idempotent : la trace `notified:<event>` dans
+ * E-mails client + partenaire à chaque étape, envoyés via la file (un échec SMTP ne bloque jamais la réservation). Idempotent : la trace `notified:<event>` dans
  * booking_events empêche tout second envoi pour le même événement.
  */
 class SendBookingNotifications

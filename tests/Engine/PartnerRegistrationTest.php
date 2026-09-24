@@ -41,6 +41,8 @@ class PartnerRegistrationTest extends BookingFlowTestCase
         $this->assertNull($user->email_verified_at);
         $this->assertSame('pending', Partner::where('user_id', $user->id)->value('status'));
         Notification::assertSentTo($user, VerifyEmail::class);
+        $this->assertSame('fr', $user->preferredLocale());
+        $this->assertSame('Confirmez votre adresse e-mail', __('Verify Email Address', [], 'fr'));
     }
 
     public function test_unverified_partner_is_sent_to_verification_prompt_and_can_resend(): void

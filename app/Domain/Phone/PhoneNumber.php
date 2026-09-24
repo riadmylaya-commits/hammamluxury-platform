@@ -36,12 +36,12 @@ final class PhoneNumber
     /** Correspondance langue/région du navigateur => pays. */
     private const LOCALE_COUNTRIES = ['fr-ma' => 'MA', 'ar-ma' => 'MA', 'fr-fr' => 'FR', 'fr-be' => 'BE', 'fr-ch' => 'CH', 'es' => 'ES', 'en-gb' => 'GB', 'en-ca' => 'CA', 'fr-ca' => 'CA', 'it' => 'IT', 'de' => 'DE', 'nl' => 'NL', 'pt' => 'PT', 'ar-dz' => 'DZ', 'ar-tn' => 'TN', 'ar-ae' => 'AE', 'ar-sa' => 'SA', 'ar-qa' => 'QA'];
 
-    /** @return array<string, string> code ISO => "🇲🇦 Maroc +212", trié par nom dans la locale courante. */
+    /** @return array<string, string> code ISO => "🇲🇦 +212 Maroc", trié par nom dans la locale courante. */
     public static function options(?string $locale = null): array
     {
         $out = [];
         foreach (self::COUNTRIES as $iso => [$dial]) {
-            $out[$iso] = self::flag($iso).' '.self::countryName($iso, $locale).' +'.$dial;
+            $out[$iso] = self::flag($iso).' +'.$dial.' '.self::countryName($iso, $locale);
         }
         $order = ['MA', 'FR', 'ES', 'GB'];
         uksort($out, function (string $a, string $b) use ($order, $locale): int {

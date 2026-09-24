@@ -28,9 +28,9 @@ class BookingLifecycleTest extends BookingFlowTestCase
         $delta = $b->expires_at->diffInMinutes(now(), true);
         $this->assertTrue($delta > 118 && $delta < 122, 'Expiration waiting = maintenant + 2 h ('.round($delta).' min)');
         $this->assertSame(['created', 'notified:created'], $b->events->pluck('type')->all(), 'Journal : création + notification');
-        Mail::assertSent(BookingMail::class, fn ($m) => $m->event === 'created' && $m->audience === 'client' && $m->hasTo('client@example.test'));
-        Mail::assertSent(BookingMail::class, fn ($m) => $m->event === 'created' && $m->audience === 'partner');
-        Mail::assertSentCount(2);
+        Mail::assertQueued(BookingMail::class, fn ($m) => $m->event === 'created' && $m->audience === 'client' && $m->hasTo('client@example.test'));
+        Mail::assertQueued(BookingMail::class, fn ($m) => $m->event === 'created' && $m->audience === 'partner');
+        Mail::assertQueuedCount(2);
     }
 
     public function test_advanced_mode_two_participants(): void
@@ -51,7 +51,7 @@ class BookingLifecycleTest extends BookingFlowTestCase
         $this->bookings->accept($b, 'partner', 'Bienvenue');
         $this->assertTrue($b->fresh()->isConfirmed() && $b->fresh()->expires_at === null && $b->fresh()->partner_note === 'Bienvenue', 'Acceptation : confirmée, échéance retirée, note partenaire');
         $this->assertSame([], $this->bookings->expireWaiting(now()->addHours(3)), 'Réservation confirmée : non expirable');
-        Mail::assertSentCount(2);
+        Mail::assertQueuedCount(2);
         try {
             $this->bookings->accept($b->fresh());
             $this->fail('Double acceptation');
@@ -71,7 +71,7 @@ class BookingLifecycleTest extends BookingFlowTestCase
         $this->bookings->decline($b, 'partner', 'Fermeture exceptionnelle');
         $this->assertTrue($b->fresh()->status === 'declined' && $this->activeAllocations($b) === [] && Allocation::where('booking_id', $b->id)->where('status', 'released')->count() === 2, 'Refus : allocations libérées (historique conservé)');
         $this->assertContains('16:00', $this->availability($sel)['times'], 'Après refus : 16:00 redevenu disponible');
-        Mail::assertSent(BookingMail::class, fn ($m) => $m->event === 'declined' && $m->audience === 'client');
+        Mail::assertQueued(BookingMail::class, fn ($m) => $m->event === 'declined' && $m->audience === 'client');
     }
 
     public function test_client_cancel_and_double_cancel(): void

@@ -22,19 +22,19 @@ class ExpirationTest extends BookingFlowTestCase
         $b->refresh();
         $this->assertTrue([$b->id] === $done && $b->status === 'expired' && $this->activeAllocations($b) === [] && Allocation::where('booking_id', $b->id)->where('status', 'released')->count() === 2, 'Échéance dépassée : statut expired, 2 allocations passées en released (historique conservé)');
         $this->assertNotNull($b->expiration_notified_at, 'Horodatage de notification d’expiration');
-        Mail::assertSentCount(2);
-        Mail::assertSent(BookingMail::class, fn ($m) => $m->event === 'expired' && $m->audience === 'client' && $m->hasTo('client@example.test'));
-        Mail::assertSent(BookingMail::class, fn ($m) => $m->event === 'expired' && $m->audience === 'partner');
+        Mail::assertQueuedCount(2);
+        Mail::assertQueued(BookingMail::class, fn ($m) => $m->event === 'expired' && $m->audience === 'client' && $m->hasTo('client@example.test'));
+        Mail::assertQueued(BookingMail::class, fn ($m) => $m->event === 'expired' && $m->audience === 'partner');
 
         Mail::fake();
         $this->assertSame([], $this->bookings->expireWaiting(), 'Second passage du cron : aucun retraitement');
-        Mail::assertNothingSent();
+        Mail::assertNothingQueued();
 
         Booking::where('id', $b->id)->update(['expires_at' => now()->subMinute()]);
         $this->assertSame([], $this->bookings->expireWaiting(), 'Ancienne échéance résiduelle sur une réservation expirée : ignorée');
         event(new BookingExpired($b->fresh()));
         event(new BookingExpired($b->fresh()));
-        Mail::assertNothingSent();
+        Mail::assertNothingQueued();
         $this->assertSame(1, $b->events()->where('type', 'notified:expired')->count(), 'Événement d’expiration répété : aucune seconde notification');
 
         $this->assertContains('17:00', $this->availability($sel)['times'], 'Créneau 17:00 massage ×2 redevenu disponable après expiration');
@@ -59,7 +59,7 @@ class ExpirationTest extends BookingFlowTestCase
         Booking::where('id', $b->id)->update(['expires_at' => now()->subMinute()]);
         Mail::fake();
         $this->assertSame([], $this->bookings->expireWaiting(), 'Réservation confirmée avec échéance résiduelle : jamais expirée');
-        Mail::assertNothingSent();
+        Mail::assertNothingQueued();
         $this->assertSame('confirmed', $b->fresh()->status);
     }
 }

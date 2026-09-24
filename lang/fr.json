@@ -1,0 +1,15 @@
+{
+    "Hello!": "Bonjour,",
+    "Regards": "Cordialement",
+    "Whoops!": "Oups !",
+    "All rights reserved.": "Tous droits réservés.",
+    "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\ninto your web browser:": "Si le bouton « :actionText » ne fonctionne pas, copiez et collez l’adresse ci-dessous dans votre navigateur :",
+    "Verify Email Address": "Confirmez votre adresse e-mail",
+    "Please click the button below to verify your email address.": "Merci de cliquer sur le bouton ci-dessous pour confirmer votre adresse e-mail et activer votre compte partenaire HammamLuxury.",
+    "If you did not create an account, no further action is required.": "Si vous n’avez pas créé de compte, ignorez simplement ce message.",
+    "Reset Password Notification": "Réinitialisation de votre mot de passe",
+    "You are receiving this email because we received a password reset request for your account.": "Vous recevez cet e-mail car une demande de réinitialisation de mot de passe a été faite pour votre compte.",
+    "Reset Password": "Réinitialiser le mot de passe",
+    "This password reset link will expire in :count minutes.": "Ce lien expirera dans :count minutes.",
+    "If you did not request a password reset, no further action is required.": "Si vous n’êtes pas à l’origine de cette demande, ignorez simplement ce message."
+}

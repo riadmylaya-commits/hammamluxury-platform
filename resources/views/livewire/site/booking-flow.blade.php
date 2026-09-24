@@ -102,7 +102,7 @@
         </div>
         <div class="fld"><label>{{ __('ui.email') }}</label><input class="inp @error('email') err @enderror" type="email" wire:model="email" autocomplete="email" inputmode="email" required>@error('email')<span class="ferr">{{ $message }}</span>@enderror</div>
         <div class="fld"><label>{{ __('ui.phone') }}</label>
-            <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,2fr);gap:8px">
+            <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,2fr);gap:8px">
                 <select class="inp @error('phoneCountry') err @enderror" wire:model="phoneCountry" autocomplete="tel-country-code" aria-label="{{ __('phone.country') }}">@foreach (\App\Domain\Phone\PhoneNumber::options() as $iso => $lbl)<option value="{{ $iso }}">{{ $lbl }}</option>@endforeach</select>
                 <input class="inp @error('phone') err @enderror" type="tel" wire:model="phone" autocomplete="tel-national" inputmode="tel" placeholder="0661351989" aria-label="{{ __('phone.number') }}" required>
             </div>
