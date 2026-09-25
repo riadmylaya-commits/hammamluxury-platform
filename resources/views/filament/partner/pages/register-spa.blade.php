@@ -13,7 +13,7 @@
             </p>
         </div>
         @if ($spa->status_note)
-            <div class="rounded-lg border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-900 dark:border-danger-800 dark:bg-danger-950 dark:text-danger-100">
+            <div class="rounded-lg border px-4 py-3 text-sm" style="border-color:#fca5a5;background:#fef2f2;color:#991b1b">
                 <p><strong>{{ __('partner.refused_banner') }}</strong></p>
                 <p class="mt-1 whitespace-pre-line">{{ $spa->status_note }}</p>
                 <p class="mt-1">{{ __('partner.refused_banner_help') }}</p>

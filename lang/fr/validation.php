@@ -74,7 +74,7 @@ return [
     'mimes' => 'Ce fichier doit être de type : :values.',
     'mimetypes' => 'Ce fichier doit être de type : :values.',
     'min' => [
-        'array' => 'Ce champ doit contenir au moins :min éléments.',
+        'array' => 'Ce champ doit contenir au moins :min élément(s).',
         'file' => 'Ce fichier doit peser au moins :min kilo-octets.',
         'numeric' => 'Cette valeur doit être au moins :min.',
         'string' => 'Ce texte doit contenir au moins :min caractères.',
