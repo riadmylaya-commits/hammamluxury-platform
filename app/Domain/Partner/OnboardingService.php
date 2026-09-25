@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Assistant « Référencer mon spa » : chaque étape est enregistrée dès qu'elle est validée
@@ -74,6 +75,10 @@ class OnboardingService
     public function savePhotos(Spa $spa, array $paths): void
     {
         $paths = array_values(array_unique(array_filter($paths)));
+        $max = (int) config('hl.max_photos');
+        if (count($paths) > $max) {
+            throw ValidationException::withMessages(['data.photos' => __('partner.photos_max_error', ['max' => $max])]);
+        }
         $spa->photos()->whereNotIn('path', $paths)->delete();
         foreach ($paths as $i => $path) {
             $spa->photos()->updateOrCreate(['path' => $path], ['sort_order' => $i, 'is_cover' => $i === 0]);

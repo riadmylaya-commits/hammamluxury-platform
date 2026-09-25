@@ -15,6 +15,8 @@ use Database\Seeders\ReferenceSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -73,6 +75,9 @@ class SpaOnboardingWizardTest extends TestCase
         // 3. photos : minimum bloquant
         $t->fillForm(['photos' => ['spas/a.jpg', 'spas/b.jpg']]);
         $this->next($t, 2)->assertHasFormErrors(['photos']);
+        $t->fillForm(['photos' => array_map(fn ($i) => "spas/x$i.jpg", range(1, 41))]);
+        $this->next($t, 2)->assertHasFormErrors(['photos']);
+        $this->assertSame(0, $spa->photos()->count());
         $paths = array_map(fn ($i) => "spas/p$i.jpg", range(1, 10));
         $t->fillForm(['photos' => $paths]);
         $this->next($t, 2)->assertHasNoFormErrors();
@@ -150,6 +155,66 @@ class SpaOnboardingWizardTest extends TestCase
         $this->assertSame($spa->id, $again->get('spaId'));
         $again->assertFormSet(['name' => 'Spa Océan', 'area' => 'Founty', 'city_id' => $city->id, 'spa_phone' => '528000000']);
         $this->assertSame($spa->id, app(OnboardingService::class)->currentDraft($this->partner)->id);
+    }
+
+    public function test_service_refuses_more_than_max_photos(): void
+    {
+        $spa = $this->partner->spas()->create(['name' => 'Trop de photos', 'slug' => 'trop', 'city' => 'Fès', 'category' => 'spa', 'status' => 'draft', 'onboarding_step' => 2]);
+        $this->expectException(ValidationException::class);
+        app(OnboardingService::class)->savePhotos($spa, array_map(fn ($i) => "spas/x$i.jpg", range(1, 41)));
+    }
+
+    public function test_draft_survives_logout_and_login_and_back_forward_across_all_steps(): void
+    {
+        $city = City::where('slug', 'casablanca')->firstOrFail();
+        $cats = Category::whereIn('slug', ['spa'])->pluck('id')->all();
+        $t = Livewire::test(RegisterSpa::class);
+        $this->next($t, 0);
+        $t->fillForm(['name' => 'Spa Anfa', 'category' => 'spa', 'city_id' => $city->id, 'address' => '1 bd Anfa', 'description_fr' => str_repeat('Spa urbain moderne avec hammam et sauna. ', 2), 'spa_phone' => '522000000']);
+        $this->next($t, 1)->assertHasNoFormErrors();
+        Storage::fake('public');
+        $photos = array_map(fn ($i) => "spas/c$i.jpg", range(1, 10));
+        foreach ($photos as $p) {
+            Storage::disk('public')->put($p, 'jpg');
+        }
+        $t->fillForm(['photos' => $photos]);
+        $this->next($t, 2)->assertHasNoFormErrors();
+        $t->fillForm(['categories' => $cats]);
+        $this->next($t, 3)->assertHasNoFormErrors();
+        $spa = Spa::where('name', 'Spa Anfa')->firstOrFail();
+        $this->assertSame(4, $spa->onboarding_step);
+
+        // Déconnexion puis reconnexion : reprise du même brouillon à l'étape 5 avec toutes les données
+        auth()->logout();
+        $this->get('/partenaire/new')->assertRedirect();
+        $this->actingAs(User::find($this->user->id));
+        $again = Livewire::test(RegisterSpa::class);
+        $this->assertSame($spa->id, $again->get('spaId'));
+        $again->assertFormSet(['name' => 'Spa Anfa', 'city_id' => $city->id, 'address' => '1 bd Anfa', 'categories' => $cats]);
+        $this->assertEqualsCanonicalizing($photos, array_values($again->get('data.photos')));
+
+        // Précédent jusqu'à l'étape 1 puis Suivant jusqu'au récapitulatif : rien n'est perdu, aucun doublon
+        $again->fillForm(['treatments' => [['name_fr' => 'Massage relaxant', 'category' => 'massage', 'duration_min' => 60, 'price_solo' => 400]]]);
+        $this->next($again, 4)->assertHasNoFormErrors();
+        $again->fillForm(['hours' => [['weekday' => 2, 'opens_min' => '10:00', 'closes_min' => '19:00']], 'hammam_capacity' => 0, 'massage_cabins' => 1, 'treatment_rooms' => 0]);
+        $this->next($again, 5)->assertHasNoFormErrors();
+        foreach ([6, 5, 4, 3, 2, 1] as $s) {
+            $again->call('dispatchFormEvent', 'wizard::previousStep', 'data', $s);
+        }
+        $again->assertFormSet(['first_name' => 'Nadia', 'name' => 'Spa Anfa', 'categories' => $cats, 'massage_cabins' => 1]);
+        $this->assertEqualsCanonicalizing($photos, array_values($again->get('data.photos')));
+        $this->assertSame('Massage relaxant', array_values($again->get('data.treatments'))[0]['name_fr']);
+        $this->assertSame('10:00', array_values($again->get('data.hours'))[0]['opens_min']);
+        foreach (range(0, 5) as $s) {
+            $this->next($again, $s)->assertHasNoFormErrors();
+        }
+        $spa->refresh();
+        $this->assertSame(1, Spa::count());
+        $this->assertSame(10, $spa->photos()->count());
+        $this->assertSame(1, $spa->treatments()->count());
+        $this->assertSame(1, $spa->hours()->count());
+        $this->assertSame(6, $spa->onboarding_step);
+        $this->assertSame('draft', $spa->status);
     }
 
     public function test_submission_is_blocked_when_listing_incomplete(): void

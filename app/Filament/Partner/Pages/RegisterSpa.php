@@ -138,11 +138,12 @@ class RegisterSpa extends RegisterTenant
     private function stepPhotos(): Step
     {
         $min = (int) config('hl.min_photos');
+        $max = (int) config('hl.max_photos');
 
-        return Step::make(__('partner.step_photos'))->description(__('partner.step_photos_help', ['min' => $min]))->icon('heroicon-o-photo')->schema([
+        return Step::make(__('partner.step_photos'))->description(__('partner.step_photos_help', ['min' => $min, 'max' => $max]))->icon('heroicon-o-photo')->schema([
             SpaForm::photoUpload('photos', multiple: true)->label(__('partner.section_photos'))
-                ->minFiles($min)->maxFiles(40)->required()
-                ->validationMessages(['min' => __('partner.photos_min_error', ['min' => $min])]),
+                ->minFiles($min)->maxFiles($max)->required()
+                ->validationMessages(['min' => __('partner.photos_min_error', ['min' => $min]), 'max' => __('partner.photos_max_error', ['max' => $max])]),
             Placeholder::make('photos_tip')->label('')->content(__('partner.photos_tip')),
         ])->afterValidation(function (Step $component) {
             $state = $component->getChildComponentContainer()->getState();
