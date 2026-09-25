@@ -4,12 +4,12 @@
         <div class="row" style="align-items:flex-start">
             <div class="sp">
                 <h3>{{ $s['name'] }}</h3>
-                <div class="muted small">{{ $s['area'] ? $s['area'].' · ' : '' }}{{ $s['city'] }} · {{ __('ui.spa_cat.'.$s['category']) }}</div>
+                <div class="muted small">{{ $s['area'] ? $s['area'].' · ' : '' }}{{ $s['city'] }} · {{ $s['category_label'] }}</div>
                 <div class="row" style="margin-top:6px">
                     @if ($s['rating'])<span class="rating"><b>{{ number_format($s['rating'], 1) }}</b><span class="small muted">{{ __('ui.reviews', ['count' => $s['reviews_count']]) }}</span></span>@else<span class="chip grey">{{ __('ui.no_reviews') }}</span>@endif
                 </div>
                 <div class="row wrapg" style="margin-top:8px;gap:6px">
-                    @foreach (array_slice($s['features'], 0, 3) as $f)<span class="chip">{{ __('ui.features.'.$f) }}</span>@endforeach
+                    @foreach (array_slice($s['features'], 0, 3) as $f)<span class="chip">{{ $f }}</span>@endforeach
                     <span class="chip grey">{{ trans_choice('ui.treatments_count', $s['treatments_count'] ?? 0) }}</span>
                 </div>
             </div>

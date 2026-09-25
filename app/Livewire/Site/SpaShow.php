@@ -16,7 +16,7 @@ class SpaShow extends Component
     public function mount(Spa $spa, CatalogueService $catalogue): void
     {
         abort_unless($catalogue->bookableSpas()->whereKey($spa->id)->exists(), 404);
-        $this->spa = $spa->load(['photos', 'hours']);
+        $this->spa = $spa->load(['photos', 'hours', 'categories', 'amenities']);
     }
 
     public function render(CatalogueService $catalogue): View

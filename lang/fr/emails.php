@@ -21,4 +21,11 @@ return [
         'client' => ['subject' => 'Demande :ref expirée — :spa', 'title' => 'Votre demande :ref a expiré', 'intro' => 'Désolé :name, :spa n’a pas répondu dans le délai prévu. Aucun montant n’est dû ; vous pouvez renouveler votre demande ou choisir un autre établissement.'],
         'partner' => ['subject' => 'Demande :ref expirée', 'title' => 'Demande :ref expirée sans réponse', 'intro' => 'La demande de :name pour :spa a expiré faute de réponse. Le créneau est libéré. Pensez à traiter vos demandes plus rapidement pour ne pas perdre de clients.'],
     ],
+
+    'spa' => [
+        'reason' => 'Motif',
+        'submitted' => ['subject' => 'Nouvelle fiche à valider : :spa', 'title' => 'Nouvelle fiche à valider', 'intro' => 'Le partenaire :partner a envoyé la fiche « :spa » (:city) pour validation.', 'button' => 'Ouvrir dans l’administration'],
+        'published' => ['subject' => 'Votre établissement :spa est en ligne', 'title' => 'Félicitations, :spa est publié !', 'intro' => 'Votre fiche a été validée par notre équipe et est maintenant visible des clients. Vous recevrez les demandes de réservation par e-mail.', 'button' => 'Accéder à mon espace partenaire'],
+        'refused' => ['subject' => 'Votre fiche :spa nécessite des modifications', 'title' => 'Des modifications sont nécessaires', 'intro' => 'Notre équipe a examiné la fiche « :spa » et ne peut pas la publier en l’état. Corrigez les points ci-dessous puis renvoyez-la pour validation.', 'button' => 'Compléter ma fiche'],
+    ],
 ];

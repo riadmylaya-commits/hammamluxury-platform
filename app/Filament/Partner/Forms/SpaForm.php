@@ -2,7 +2,11 @@
 
 namespace App\Filament\Partner\Forms;
 
+use App\Domain\Media\PhotoProcessor;
 use App\Filament\Forms\Components\PhoneField;
+use App\Models\Amenity;
+use App\Models\Category;
+use App\Models\City;
 use App\Models\SpaHour;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
@@ -15,17 +19,42 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Illuminate\Support\HtmlString;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class SpaForm
 {
+    /** @return array<string, string> slug => libellé (catégorie principale) */
     public static function categories(): array
     {
-        return __('ui.spa_cat');
+        return Category::query()->active()->get()->mapWithKeys(fn (Category $c) => [$c->slug => $c->label()])->all();
     }
 
-    public static function features(): array
+    /** Upload photo sécurisé : types réels, 12 Mo max, 800×600 min, ré-encodage JPEG 1600 px côté serveur (PhotoProcessor). */
+    public static function photoUpload(string $name, bool $multiple = false): FileUpload
     {
-        return __('ui.features');
+        $upload = FileUpload::make($name)->label('')->image()->disk('public')->directory('spas')
+            ->acceptedFileTypes(PhotoProcessor::MIMES)->maxSize((int) (PhotoProcessor::MAX_BYTES / 1024))
+            ->rules(PhotoProcessor::rules())
+            ->helperText(__('partner.photo_rules', ['w' => PhotoProcessor::MIN_WIDTH, 'h' => PhotoProcessor::MIN_HEIGHT, 'mb' => (int) (PhotoProcessor::MAX_BYTES / 1024 / 1024)]))
+            ->saveUploadedFileUsing(fn (TemporaryUploadedFile $file) => PhotoProcessor::store($file));
+
+        return $multiple ? $upload->multiple()->reorderable()->appendFiles()->panelLayout('grid') : $upload;
+    }
+
+    public static function citySelect(): Select
+    {
+        return Select::make('city_id')->label(__('partner.city'))->options(fn () => City::options())->searchable()->preload()->required()->native(false);
+    }
+
+    /** Expériences proposées + équipements (référentiels admin), enregistrés via les relations many-to-many. */
+    public static function services(): array
+    {
+        return [
+            CheckboxList::make('categories')->label(__('partner.experiences'))->relationship('categories', 'name_fr', fn ($q) => $q->active())
+                ->getOptionLabelFromRecordUsing(fn (Category $c) => $c->label())->columns(2)->helperText(__('partner.experiences_help')),
+            CheckboxList::make('amenities')->label(__('partner.amenities'))->relationship('amenities', 'name_fr', fn ($q) => $q->active())
+                ->getOptionLabelFromRecordUsing(fn (Amenity $a) => $a->label())->columns(2),
+        ];
     }
 
     /** Champs minimaux pour créer un établissement. */
@@ -34,7 +63,7 @@ class SpaForm
         return [
             TextInput::make('name')->label(__('partner.spa_name'))->required()->maxLength(190),
             Select::make('category')->label(__('partner.category'))->options(self::categories())->default('hammam')->required(),
-            TextInput::make('city')->label(__('partner.city'))->required()->maxLength(90),
+            self::citySelect(),
             TextInput::make('area')->label(__('partner.area'))->maxLength(120)->helperText(__('partner.area_help')),
         ];
     }
@@ -50,8 +79,9 @@ class SpaForm
                 ...self::identity(),
                 Textarea::make('description_fr')->label(__('partner.description_fr'))->rows(4)->maxLength(4000),
                 Textarea::make('description_en')->label(__('partner.description_en'))->rows(4)->maxLength(4000),
-                CheckboxList::make('features')->label(__('partner.features'))->options(self::features())->columns(2),
             ])->columns(2),
+
+            Section::make(__('partner.section_services'))->schema(self::services())->columns(2),
 
             Section::make(__('partner.section_photos'))
                 ->description(__('partner.photos_help', ['min' => config('hl.min_photos')]))
@@ -62,8 +92,7 @@ class SpaForm
                         ->orderColumn('sort_order')
                         ->grid(3)
                         ->schema([
-                            FileUpload::make('path')->label('')->image()->disk('public')->directory('spas')
-                                ->imageResizeMode('cover')->imageResizeTargetWidth(1600)->imageResizeTargetHeight(1067)->maxSize(6144)->required(),
+                            self::photoUpload('path')->required(),
                             TextInput::make('caption_fr')->label(__('partner.caption'))->maxLength(190),
                             Toggle::make('is_cover')->label(__('partner.is_cover')),
                         ])
@@ -74,6 +103,7 @@ class SpaForm
             Section::make(__('partner.section_address'))->schema([
                 TextInput::make('address')->label(__('partner.address'))->maxLength(255)->columnSpanFull(),
                 PhoneField::make('phone', __('partner.phone'))->columnSpanFull(),
+                PhoneField::make('whatsapp', __('partner.whatsapp'))->columnSpanFull(),
                 TextInput::make('email')->label('E-mail')->email()->maxLength(190),
                 TextInput::make('website')->label(__('partner.website'))->url()->maxLength(190),
                 Placeholder::make('privacy')->label('')->content(__('partner.contact_privacy'))->columnSpanFull(),

@@ -6,6 +6,7 @@ use App\Models\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Spa extends Model
@@ -16,11 +17,52 @@ class Spa extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['features' => 'array', 'published_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float'];
+    protected $casts = ['submitted_at' => 'datetime', 'published_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float'];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $spa) {
+            if ($spa->city_id && $spa->isDirty('city_id')) {
+                $spa->city = City::find($spa->city_id)?->name_fr ?? $spa->city;
+            }
+        });
+    }
 
     public function partner(): BelongsTo
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    public function cityRef(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'city_id');
+    }
+
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'spa_categories');
+    }
+
+    public function amenities(): BelongsToMany
+    {
+        return $this->belongsToMany(Amenity::class, 'spa_amenities');
+    }
+
+    /** Libellés traduits des expériences puis équipements, pour les fiches publiques. */
+    public function featureLabels(): array
+    {
+        return $this->categories->where('is_active', true)->sortBy('sort_order')->map->label()
+            ->merge($this->amenities->where('is_active', true)->sortBy('sort_order')->map->label())->values()->all();
+    }
+
+    public function whatsappNumber(): ?string
+    {
+        return $this->whatsapp ?: $this->phone;
+    }
+
+    public function isOnboarding(): bool
+    {
+        return $this->onboarding_step !== null;
     }
 
     public function photos(): HasMany

@@ -9,10 +9,10 @@
 <div class="spa-h">
     <div class="sp">
         <h1>{{ $spa->name }}</h1>
-        <div class="muted">{{ $card['area'] ? $card['area'].' · ' : '' }}{{ $card['city'] }} · {{ __('ui.spa_cat.'.$card['category']) }}</div>
+        <div class="muted">{{ $card['area'] ? $card['area'].' · ' : '' }}{{ $card['city'] }} · {{ $card['category_label'] }}</div>
         <div class="row wrapg" style="margin-top:8px;gap:6px">
             @if ($card['rating'])<span class="rating"><b>{{ number_format($card['rating'], 1) }}</b><span class="small muted">{{ __('ui.reviews', ['count' => $card['reviews_count']]) }}</span></span>@else<span class="chip grey">{{ __('ui.no_reviews') }}</span>@endif
-            @foreach ($card['features'] as $f)<span class="chip">{{ __('ui.features.'.$f) }}</span>@endforeach
+            @foreach ($card['features'] as $f)<span class="chip">{{ $f }}</span>@endforeach
         </div>
     </div>
 </div>

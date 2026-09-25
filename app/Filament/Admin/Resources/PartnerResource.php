@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources;
 use App\Domain\Phone\PhoneNumber;
 use App\Filament\Admin\Resources\PartnerResource\Pages;
 use App\Filament\Forms\Components\PhoneField;
+use App\Models\ActivityLog;
 use App\Models\Partner;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -86,6 +87,7 @@ class PartnerResource extends Resource
                     ->visible(fn (Partner $p) => $p->status !== 'approved')->requiresConfirmation()
                     ->action(function (Partner $p) {
                         $p->update(['status' => 'approved']);
+                        ActivityLog::record('partner.approved', $p, ['company' => $p->company_name]);
                         Notification::make()->title(__('admin.approved_ok'))->success()->send();
                     }),
                 Tables\Actions\EditAction::make(),

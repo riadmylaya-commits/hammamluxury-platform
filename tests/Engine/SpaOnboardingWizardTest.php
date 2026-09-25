@@ -1,0 +1,190 @@
+<?php
+
+namespace Tests\Engine;
+
+use App\Domain\Partner\OnboardingService;
+use App\Filament\Partner\Pages\RegisterSpa;
+use App\Mail\SpaStatusMail;
+use App\Models\Amenity;
+use App\Models\Category;
+use App\Models\City;
+use App\Models\Partner;
+use App\Models\Spa;
+use App\Models\User;
+use Database\Seeders\ReferenceSeeder;
+use Filament\Facades\Filament;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
+use Livewire\Livewire;
+use Tests\TestCase;
+
+/** Assistant « Référencer mon spa » : sauvegarde étape par étape, reprise, soumission, refus/publication, multi-établissements. */
+class SpaOnboardingWizardTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $user;
+
+    private Partner $partner;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(ReferenceSeeder::class);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Mail::fake();
+        $this->user = User::create(['first_name' => 'Nadia', 'last_name' => 'Benali', 'email' => 'nadia@example.test', 'password' => 'secret-test', 'role' => 'partner', 'phone' => '+212661351989', 'email_verified_at' => now()]);
+        $this->partner = Partner::create(['user_id' => $this->user->id, 'company_name' => 'Nadia SARL', 'status' => 'pending']);
+        User::create(['name' => 'Admin', 'email' => 'admin@example.test', 'password' => 'secret-test', 'role' => 'admin', 'email_verified_at' => now()]);
+        $this->actingAs($this->user);
+    }
+
+    private function next($test, int $step)
+    {
+        return $test->call('dispatchFormEvent', 'wizard::nextStep', 'data', $step);
+    }
+
+    public function test_full_wizard_creates_draft_step_by_step_then_submits(): void
+    {
+        $city = City::where('slug', 'marrakech')->firstOrFail();
+        $cats = Category::whereIn('slug', ['hammam-traditionnel', 'massage'])->pluck('id')->all();
+        $amen = Amenity::whereIn('slug', ['sauna', 'parking'])->pluck('id')->all();
+
+        $t = Livewire::test(RegisterSpa::class);
+        $t->assertFormSet(['first_name' => 'Nadia', 'company_name' => 'Nadia SARL']);
+
+        // 1. compte
+        $t->fillForm(['first_name' => 'Nadia', 'last_name' => 'Benali', 'company_name' => 'Hammam Nadia SARL', 'phone' => '+212661351989', 'whatsapp_same' => false, 'whatsapp' => '+33612345678']);
+        $this->next($t, 0)->assertHasNoFormErrors();
+        $this->assertSame('+33612345678', $this->user->fresh()->whatsapp);
+        $this->assertSame('Hammam Nadia SARL', $this->partner->fresh()->company_name);
+        $this->assertDatabaseCount('spas', 0);
+
+        // 2. établissement → brouillon créé
+        $t->fillForm(['name' => 'Hammam Nadia', 'category' => 'hammam', 'city_id' => $city->id, 'area' => 'Médina', 'address' => '12 derb Test', 'description_fr' => str_repeat('Un hammam traditionnel au cœur de la médina. ', 3), 'spa_phone' => '+212524000000']);
+        $this->next($t, 1)->assertHasNoFormErrors();
+        $spa = Spa::where('name', 'Hammam Nadia')->firstOrFail();
+        $this->assertSame('draft', $spa->status);
+        $this->assertSame(2, $spa->onboarding_step);
+        $this->assertSame('hammam-nadia-marrakech', $spa->slug);
+        $this->assertSame($city->id, $spa->city_id);
+        $this->assertDatabaseHas('activity_logs', ['action' => 'spa.draft_created', 'subject_id' => $spa->id]);
+
+        // 3. photos : minimum bloquant
+        $t->fillForm(['photos' => ['spas/a.jpg', 'spas/b.jpg']]);
+        $this->next($t, 2)->assertHasFormErrors(['photos']);
+        $paths = array_map(fn ($i) => "spas/p$i.jpg", range(1, 10));
+        $t->fillForm(['photos' => $paths]);
+        $this->next($t, 2)->assertHasNoFormErrors();
+        $this->assertSame(10, $spa->photos()->count());
+        $this->assertTrue($spa->photos()->where('path', 'spas/p1.jpg')->value('is_cover'));
+
+        // 4. services
+        $t->fillForm(['categories' => $cats, 'amenities' => $amen]);
+        $this->next($t, 3)->assertHasNoFormErrors();
+        $this->assertEqualsCanonicalizing($cats, $spa->categories()->pluck('categories.id')->all());
+        $this->assertEqualsCanonicalizing($amen, $spa->amenities()->pluck('amenities.id')->all());
+
+        // 5. soins
+        $t->fillForm(['treatments' => [
+            ['name_fr' => 'Hammam traditionnel', 'category' => 'hammam', 'duration_min' => 45, 'price_solo' => 250],
+            ['name_fr' => 'Hammam + massage', 'category' => 'ritual', 'duration_min' => 90, 'price_solo' => 650, 'price_couple' => 1200],
+        ]]);
+        $this->next($t, 4)->assertHasNoFormErrors();
+        $this->assertSame(2, $spa->treatments()->count());
+
+        // 6. horaires + capacité → ressources et étapes auto
+        $t->fillForm(['hours' => [['weekday' => 1, 'opens_min' => '10:00', 'closes_min' => '20:00'], ['weekday' => 6, 'opens_min' => '09:00', 'closes_min' => '22:00']], 'hammam_capacity' => 0, 'massage_cabins' => 0, 'treatment_rooms' => 0]);
+        $this->next($t, 5)->assertHasFormErrors(['hammam_capacity']);
+        $t->fillForm(['hammam_capacity' => 8, 'massage_cabins' => 2]);
+        $this->next($t, 5)->assertHasNoFormErrors();
+        $spa->refresh();
+        $this->assertSame(2, $spa->hours()->count());
+        $this->assertSame(600, $spa->hours()->where('weekday', 1)->value('opens_min'));
+        $this->assertSame(3, $spa->resources()->where('status', 'active')->count());
+        $this->assertSame(8, $spa->resources()->whereHas('type', fn ($q) => $q->where('slug', 'hammam'))->value('capacity'));
+        $ritual = $spa->treatments()->where('category', 'ritual')->first();
+        $this->assertSame(2, $ritual->steps()->count());
+        $this->assertSame(90, (int) $ritual->steps()->sum('duration_min'));
+        $this->assertSame(6, $spa->onboarding_step);
+
+        // 7. récapitulatif + envoi
+        $t->fillForm(['accept_terms' => true])->call('register')->assertHasNoFormErrors();
+        $spa->refresh();
+        $this->assertSame('pending', $spa->status);
+        $this->assertNull($spa->onboarding_step);
+        $this->assertNotNull($spa->submitted_at);
+        $this->assertEquals(250, $spa->price_from);
+        $this->assertDatabaseHas('activity_logs', ['action' => 'spa.submitted', 'subject_id' => $spa->id, 'user_id' => $this->user->id]);
+        Mail::assertQueued(SpaStatusMail::class, fn (SpaStatusMail $m) => $m->event === 'submitted' && $m->hasTo('admin@example.test'));
+    }
+
+    public function test_draft_is_resumed_with_its_data_and_back_navigation_keeps_values(): void
+    {
+        $city = City::where('slug', 'agadir')->firstOrFail();
+        $t = Livewire::test(RegisterSpa::class);
+        $this->next($t, 0);
+        $t->fillForm(['name' => 'Spa Océan', 'category' => 'spa', 'city_id' => $city->id, 'address' => 'Bd du Front de mer', 'description_fr' => str_repeat('Spa face à la mer avec piscine chauffée. ', 2), 'spa_phone' => '528000000']);
+        $this->next($t, 1)->assertHasNoFormErrors();
+        $spa = Spa::where('name', 'Spa Océan')->firstOrFail();
+
+        // Retour arrière puis re-validation : la ville et l'adresse sont conservées, pas de doublon
+        $t->call('dispatchFormEvent', 'wizard::previousStep', 'data', 1);
+        $t->assertFormSet(['first_name' => 'Nadia', 'name' => 'Spa Océan', 'city_id' => $city->id]);
+        $this->next($t, 0);
+        $t->fillForm(['area' => 'Founty']);
+        $this->next($t, 1)->assertHasNoFormErrors();
+        $this->assertSame(1, Spa::count());
+        $this->assertSame('Founty', $spa->fresh()->area);
+
+        // Nouvelle visite : reprise du brouillon à l'étape suivante avec ses données
+        $again = Livewire::test(RegisterSpa::class);
+        $this->assertSame($spa->id, $again->get('spaId'));
+        $again->assertFormSet(['name' => 'Spa Océan', 'area' => 'Founty', 'city_id' => $city->id, 'spa_phone' => '528000000']);
+        $this->assertSame($spa->id, app(OnboardingService::class)->currentDraft($this->partner)->id);
+    }
+
+    public function test_submission_is_blocked_when_listing_incomplete(): void
+    {
+        $spa = $this->partner->spas()->create(['name' => 'Incomplet', 'slug' => 'incomplet', 'city' => 'Fès', 'category' => 'hammam', 'status' => 'draft', 'onboarding_step' => 6]);
+        Livewire::test(RegisterSpa::class)->fillForm(['accept_terms' => true])->call('register');
+        $this->assertSame('draft', $spa->fresh()->status);
+        Mail::assertNothingQueued();
+    }
+
+    public function test_admin_refusal_and_publication_notify_partner_and_log(): void
+    {
+        $spa = $this->partner->spas()->create(['name' => 'À valider', 'slug' => 'a-valider', 'city' => 'Rabat', 'category' => 'spa', 'status' => 'pending', 'submitted_at' => now()]);
+        $spa->update(['status' => 'draft', 'status_note' => 'Photos floues, adresse incomplète.']);
+        OnboardingService::notifyDecision($spa, 'refused');
+        Mail::assertQueued(SpaStatusMail::class, fn (SpaStatusMail $m) => $m->event === 'refused' && $m->hasTo('nadia@example.test'));
+        $this->assertDatabaseHas('activity_logs', ['action' => 'spa.refused', 'subject_id' => $spa->id]);
+
+        $spa->update(['status' => 'published', 'status_note' => null]);
+        OnboardingService::notifyDecision($spa, 'published');
+        Mail::assertQueued(SpaStatusMail::class, fn (SpaStatusMail $m) => $m->event === 'published' && $m->hasTo('nadia@example.test'));
+        $this->assertDatabaseHas('activity_logs', ['action' => 'spa.published', 'subject_id' => $spa->id]);
+    }
+
+    public function test_partner_with_existing_spa_can_add_a_second_one_via_wizard(): void
+    {
+        $existing = $this->partner->spas()->create(['name' => 'Premier', 'slug' => 'premier', 'city' => 'Marrakech', 'category' => 'hammam', 'status' => 'published', 'published_at' => now()]);
+        $city = City::where('slug', 'casablanca')->firstOrFail();
+
+        $t = Livewire::test(RegisterSpa::class);
+        $this->assertNull($t->get('spaId'));
+        $this->next($t, 0);
+        $t->fillForm(['name' => 'Second', 'category' => 'spa', 'city_id' => $city->id, 'address' => 'Anfa', 'description_fr' => str_repeat('Second établissement du groupe. ', 2), 'spa_phone' => '+212522000000']);
+        $this->next($t, 1)->assertHasNoFormErrors();
+
+        $this->assertSame(2, $this->partner->spas()->count());
+        $this->assertSame('published', $existing->fresh()->status);
+        $second = Spa::where('name', 'Second')->firstOrFail();
+        $this->assertSame($this->partner->id, $second->partner_id);
+        $this->assertSame('draft', $second->status);
+
+        // Le brouillon repris est le second ; l'établissement publié n'est jamais proposé comme brouillon
+        $this->assertSame($second->id, app(OnboardingService::class)->currentDraft($this->partner)->id);
+        $this->assertNull(app(OnboardingService::class)->currentDraft($this->partner, $existing->id));
+    }
+}

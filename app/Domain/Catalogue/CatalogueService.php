@@ -3,6 +3,7 @@
 namespace App\Domain\Catalogue;
 
 use App\Domain\Booking\QuoteBuilder;
+use App\Models\Category;
 use App\Models\Spa;
 use App\Models\SpaHour;
 use App\Models\Treatment;
@@ -20,7 +21,7 @@ class CatalogueService
     /** Recherche par ville/zone/nom (insensible à la casse, accents non normalisés). */
     public function search(?string $q, ?string $category = null): Builder
     {
-        $query = $this->bookableSpas()->with(['photos'])->withCount(['treatments' => fn ($t) => $t->where('status', 'active')]);
+        $query = $this->bookableSpas()->with(['photos', 'categories', 'amenities'])->withCount(['treatments' => fn ($t) => $t->where('status', 'active')]);
         if ($q = trim((string) $q)) {
             $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], mb_strtolower($q)).'%';
             $query->where(fn ($w) => $w->whereRaw('LOWER(city) LIKE ?', [$like])->orWhereRaw('LOWER(area) LIKE ?', [$like])->orWhereRaw('LOWER(name) LIKE ?', [$like]));
@@ -75,11 +76,12 @@ class CatalogueService
             'city' => $spa->city,
             'area' => $spa->area,
             'category' => $spa->category,
+            'category_label' => Category::labelsBySlug()[$spa->category] ?? $spa->category,
             'rating' => $spa->rating !== null ? (float) $spa->rating : null,
             'reviews_count' => (int) $spa->reviews_count,
             'price_from' => $spa->price_from !== null ? (float) $spa->price_from : null,
             'photos' => $spa->photos->map(fn ($p) => ['url' => $p->url(), 'caption' => $p->tr('caption')])->values()->all(),
-            'features' => $spa->features ?? [],
+            'features' => $spa->featureLabels(),
             'hours' => $spa->hours->groupBy('weekday')->map(fn ($rows) => $rows->map(fn ($h) => SpaHour::toHhmm($h->opens_min).'–'.SpaHour::toHhmm($h->closes_min))->values()->all())->all(),
         ];
     }

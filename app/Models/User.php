@@ -21,7 +21,21 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
 
     public const ROLES = ['admin', 'partner', 'client'];
 
-    protected $fillable = ['name', 'email', 'password', 'role', 'phone', 'locale', 'email_verified_at'];
+    protected $fillable = ['name', 'first_name', 'last_name', 'email', 'password', 'role', 'phone', 'whatsapp', 'locale', 'email_verified_at'];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $user) {
+            if ($user->first_name || $user->last_name) {
+                $user->name = trim($user->first_name.' '.$user->last_name);
+            }
+        });
+    }
+
+    public function whatsappNumber(): ?string
+    {
+        return $this->whatsapp ?: $this->phone;
+    }
 
     protected $hidden = ['password', 'remember_token'];
 

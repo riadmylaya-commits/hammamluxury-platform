@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Domain\Catalogue\PublicationChecklist;
+use App\Domain\Partner\OnboardingService;
 use App\Filament\Admin\Resources\SpaResource\Pages;
 use App\Models\Spa;
 use Filament\Forms;
@@ -75,7 +76,7 @@ class SpaResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with('partner'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['partner', 'photos']))
             ->columns([
                 Tables\Columns\ImageColumn::make('cover')->label('')->getStateUsing(fn (Spa $s) => $s->coverPhoto()?->url())->circular(),
                 Tables\Columns\TextColumn::make('name')->label(__('admin.spa'))->searchable()->weight('bold')
@@ -104,7 +105,16 @@ class SpaResource extends Resource
                         }
                         $s->refreshPriceFrom();
                         $s->update(['status' => 'published', 'published_at' => $s->published_at ?? now(), 'status_note' => null]);
+                        OnboardingService::notifyDecision($s, 'published');
                         Notification::make()->title(__('admin.published_ok'))->success()->send();
+                    }),
+                Tables\Actions\Action::make('refuse')->label(__('admin.refuse'))->icon('heroicon-o-x-mark')->color('danger')
+                    ->visible(fn (Spa $s) => $s->status === 'pending')
+                    ->form([Forms\Components\Textarea::make('status_note')->label(__('admin.refuse_reason'))->required()->rows(4)->maxLength(2000)])
+                    ->action(function (Spa $s, array $data) {
+                        $s->update(['status' => 'draft', 'status_note' => $data['status_note']]);
+                        OnboardingService::notifyDecision($s, 'refused');
+                        Notification::make()->title(__('admin.refused_ok'))->success()->send();
                     }),
                 Tables\Actions\Action::make('preview')->label(__('admin.preview'))->icon('heroicon-o-arrow-top-right-on-square')
                     ->url(fn (Spa $s) => route('spa.show', ['locale' => 'fr', 'spa' => $s]), shouldOpenInNewTab: true)

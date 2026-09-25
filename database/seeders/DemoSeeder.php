@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Amenity;
+use App\Models\Category;
+use App\Models\City;
 use App\Models\Partner;
 use App\Models\Spa;
 use App\Models\User;
@@ -28,7 +31,7 @@ class DemoSeeder extends Seeder
             'address' => 'Derb Demo 12, Médina, Marrakech', 'phone' => '+212524000000', 'email' => 'contact@hammam-demo.test',
             'description_fr' => "Hammam traditionnel au cœur de la médina : salle chaude collective, gommage au savon noir, massages à l'huile d'argan dans nos deux cabines privées et soins du visage.\nThé à la menthe offert, patio ombragé pour se reposer.",
             'description_en' => "Traditional hammam in the heart of the medina: shared hot room, black-soap scrub, argan-oil massages in our two private cabins and facials.\nComplimentary mint tea, shaded patio to relax.",
-            'features' => ['couples', 'tea', 'rooftop'], 'rating' => 4.7, 'reviews_count' => 128, 'lat' => 31.6295, 'lng' => -7.9811,
+            'features' => ['couple', 'the-offert', 'terrasse'], 'rating' => 4.7, 'reviews_count' => 128, 'lat' => 31.6295, 'lng' => -7.9811,
         ], [
             [0, 540, 1320], [1, 540, 1320], [2, 540, 840], [2, 960, 1380], [3, 540, 1320], [4, 540, 1320], [5, 540, 1320],
         ], [
@@ -48,9 +51,9 @@ class DemoSeeder extends Seeder
 
         // Établissements fictifs (autres partenaires) pour peupler la recherche.
         $others = [
-            ['sara@hammamluxury.test', 'Sara Spa SARL', 'riad-sara-spa', 'Riad Sara Spa', 'spa', 'Marrakech', 'Guéliz', ['private_hammam', 'couples', 'pool'], 4.9, 64, 'Spa intimiste dans un riad rénové : hammam privatif pour deux, massages en duo et piscine intérieure chauffée.', 'Intimate spa in a renovated riad: private hammam for two, couples massages and heated indoor pool.'],
-            ['atlas@hammamluxury.test', 'Atlas Wellness SA', 'atlas-wellness-agadir', 'Atlas Wellness Agadir', 'wellness', 'Agadir', 'Front de mer', ['parking', 'pool', 'hotel_pickup'], 4.5, 210, 'Grand centre de bien-être face à l’océan : hammam, sauna, 6 cabines de massage et espace thalasso.', 'Large seafront wellness centre: hammam, sauna, 6 massage cabins and thalasso area.'],
-            ['fes@hammamluxury.test', 'Dar Fès Hammam', 'dar-fes-hammam', 'Dar Fès Hammam', 'hammam', 'Fès', 'Fès el-Bali', ['women_only', 'tea'], 4.6, 38, 'Hammam authentique de la vieille ville, créneaux réservés aux femmes le matin.', 'Authentic old-town hammam, women-only slots in the morning.'],
+            ['sara@hammamluxury.test', 'Sara Spa SARL', 'riad-sara-spa', 'Riad Sara Spa', 'spa', 'Marrakech', 'Guéliz', ['hammam-prive', 'couple', 'piscine'], 4.9, 64, 'Spa intimiste dans un riad rénové : hammam privatif pour deux, massages en duo et piscine intérieure chauffée.', 'Intimate spa in a renovated riad: private hammam for two, couples massages and heated indoor pool.'],
+            ['atlas@hammamluxury.test', 'Atlas Wellness SA', 'atlas-wellness-agadir', 'Atlas Wellness Agadir', 'bien-etre', 'Agadir', 'Front de mer', ['parking', 'piscine', 'navette-hotel'], 4.5, 210, 'Grand centre de bien-être face à l’océan : hammam, sauna, 6 cabines de massage et espace thalasso.', 'Large seafront wellness centre: hammam, sauna, 6 massage cabins and thalasso area.'],
+            ['fes@hammamluxury.test', 'Dar Fès Hammam', 'dar-fes-hammam', 'Dar Fès Hammam', 'hammam', 'Fès', 'Fès el-Bali', ['femmes-seulement', 'the-offert'], 4.6, 38, 'Hammam authentique de la vieille ville, créneaux réservés aux femmes le matin.', 'Authentic old-town hammam, women-only slots in the morning.'],
         ];
         foreach ($others as [$email, $company, $slug, $name, $cat, $city, $area, $features, $rating, $nrev, $fr, $en]) {
             $u = User::updateOrCreate(['email' => $email], ['name' => $name, 'role' => 'partner', 'password' => Hash::make($password), 'email_verified_at' => now()]);
@@ -72,7 +75,12 @@ class DemoSeeder extends Seeder
 
     private function spa(Partner $partner, array $attrs, array $hours, array $types, array $treatments): Spa
     {
+        $features = $attrs['features'];
+        unset($attrs['features']);
+        $attrs['city_id'] = City::where('name_fr', $attrs['city'])->value('id');
         $spa = Spa::updateOrCreate(['slug' => $attrs['slug']], $attrs + ['partner_id' => $partner->id, 'status' => 'published', 'published_at' => now()]);
+        $spa->categories()->sync(Category::whereIn('slug', [$attrs['category'], ...$features])->pluck('id'));
+        $spa->amenities()->sync(Amenity::whereIn('slug', $features)->pluck('id'));
         $spa->hours()->delete();
         foreach ($hours as [$wd, $o, $c]) {
             $spa->hours()->create(['weekday' => $wd, 'opens_min' => $o, 'closes_min' => $c]);
