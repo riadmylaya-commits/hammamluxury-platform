@@ -44,6 +44,7 @@ class ExtrasRelationManager extends RelationManager
             ])
             ->headerActions([Tables\Actions\CreateAction::make()->label(__('partner.add_extra'))])
             ->actions([Tables\Actions\EditAction::make(), Tables\Actions\DeleteAction::make()])
+            ->description(__('partner.extras_intro'))
             ->emptyStateHeading(__('partner.no_extras'));
     }
 }

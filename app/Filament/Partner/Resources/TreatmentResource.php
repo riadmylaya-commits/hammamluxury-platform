@@ -2,6 +2,7 @@
 
 namespace App\Filament\Partner\Resources;
 
+use App\Domain\Catalogue\Presentation;
 use App\Filament\Partner\Resources\TreatmentResource\Pages;
 use App\Filament\Partner\Resources\TreatmentResource\RelationManagers\ExtrasRelationManager;
 use App\Models\ResourceType;
@@ -48,6 +49,14 @@ class TreatmentResource extends Resource
                 Forms\Components\Textarea::make('description_en')->label(__('partner.description_en'))->rows(3)->maxLength(2000),
             ])->columns(2),
 
+            Forms\Components\Section::make(__('partner.included'))
+                ->description(__('partner.included_help'))
+                ->schema([
+                    Forms\Components\CheckboxList::make('included')->label('')->options(Presentation::includedOptions())->columns(['default' => 2, 'lg' => 5]),
+                    Forms\Components\Select::make('featured_badge')->label(__('partner.featured'))->options(Presentation::badgeOptions())->placeholder('—')->native(false)
+                        ->helperText(fn (?Model $record) => self::featuredHelp($record)),
+                ]),
+
             Forms\Components\Section::make(__('partner.section_prices'))
                 ->description(__('partner.prices_help'))
                 ->schema([
@@ -72,12 +81,21 @@ class TreatmentResource extends Resource
                                 ->options(fn () => ResourceType::where('spa_id', Filament::getTenant()->id)->orderBy('sort_order')->pluck('name_fr', 'id'))
                                 ->required(),
                             Forms\Components\TextInput::make('duration_min')->label(__('partner.duration'))->numeric()->minValue(5)->step(5)->suffix('min')->required()->default(60),
+                            Forms\Components\TextInput::make('label')->label(__('partner.step_label'))->maxLength(120)->placeholder(__('partner.component_label_help')),
                         ])
-                        ->columns(2)
+                        ->columns(3)
                         ->addActionLabel(__('partner.add_step'))
                         ->defaultItems(1),
                 ]),
         ]);
+    }
+
+    private static function featuredHelp(?Model $record): string
+    {
+        $other = Treatment::where('spa_id', Filament::getTenant()->id)->whereNotNull('featured_badge')
+            ->when($record, fn ($q) => $q->whereKeyNot($record->getKey()))->first();
+
+        return $other ? __('partner.featured_replaces').' ('.$other->name_fr.')' : __('partner.featured_help');
     }
 
     public static function table(Table $table): Table
@@ -87,6 +105,7 @@ class TreatmentResource extends Resource
             ->defaultSort('sort_order')
             ->columns([
                 Tables\Columns\TextColumn::make('name_fr')->label(__('partner.treatment'))->searchable()->weight('bold')
+                    ->icon(fn (Treatment $t) => $t->featured_badge ? 'heroicon-s-star' : null)->iconColor('warning')
                     ->description(fn (Treatment $t) => $t->steps->count() > 1 ? __('ui.package').' · '.$t->steps->map(fn ($s) => $s->duration_min.' min')->implode(' → ') : null),
                 Tables\Columns\TextColumn::make('category')->label(__('partner.category'))->formatStateUsing(fn ($state) => __('ui.cat')[$state] ?? $state)->badge()->color('gray'),
                 Tables\Columns\TextColumn::make('duration_min')->label(__('partner.duration'))->suffix(' min'),

@@ -50,8 +50,12 @@ class CatalogueService
             'category' => $t->category,
             'description' => $t->tr('description'),
             'duration_min' => $t->computedDuration(),
+            'duration_label' => Presentation::duration($t->computedDuration()),
             'is_package' => $steps->count() > 1,
-            'steps' => $steps->map(fn ($s) => ['type' => $s->resourceType->tr('name'), 'duration_min' => $s->duration_min])->all(),
+            'steps' => $steps->map(fn ($s) => ['type' => $s->displayLabel(), 'duration_min' => $s->duration_min])->all(),
+            'components' => $steps->count() > 1 ? $steps->map(fn ($s) => $s->displayLabel().' '.$s->duration_min.' '.__('ui.min'))->implode(' + ') : null,
+            'included' => collect($t->included ?? [])->map(fn ($k) => __('ui.included.'.$k))->values()->all(),
+            'badge' => $t->featured_badge ? __('ui.badge.'.$t->featured_badge) : null,
             'party_min' => $t->party_min,
             'party_max' => $t->party_max,
             'price_solo' => $t->price_solo !== null ? (float) $t->price_solo : null,
@@ -84,6 +88,7 @@ class CatalogueService
             'price_from' => $spa->price_from !== null ? (float) $spa->price_from : null,
             'photos' => $spa->photos->map(fn ($p) => ['url' => $p->url(), 'caption' => $p->tr('caption')])->values()->all(),
             'features' => $spa->featureLabels(),
+            'practical' => Presentation::practicalRows($spa->practical_info),
             'hours' => $spa->hours->groupBy('weekday')->map(fn ($rows) => $rows->map(fn ($h) => SpaHour::toHhmm($h->opens_min).'–'.SpaHour::toHhmm($h->closes_min))->values()->all())->all(),
         ];
     }

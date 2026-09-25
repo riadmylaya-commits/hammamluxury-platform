@@ -2,6 +2,7 @@
 
 namespace App\Domain\Partner;
 
+use App\Domain\Catalogue\Presentation;
 use App\Mail\SpaStatusMail;
 use App\Models\ActivityLog;
 use App\Models\City;
@@ -53,7 +54,7 @@ class OnboardingService
     /** @param  array<string, mixed>  $data */
     public function saveSpa(Partner $partner, ?Spa $spa, array $data): Spa
     {
-        $attrs = collect($data)->only(['name', 'category', 'city_id', 'area', 'address', 'description_fr', 'description_en', 'phone', 'whatsapp', 'email', 'website', 'location'])->all();
+        $attrs = collect($data)->only(['name', 'category', 'city_id', 'area', 'address', 'description_fr', 'description_en', 'phone', 'whatsapp', 'email', 'website', 'location', 'practical_info'])->all();
 
         if ($spa) {
             $spa->update($attrs);
@@ -95,10 +96,14 @@ class OnboardingService
         $spa->amenities()->sync($amenityIds);
     }
 
-    /** @param  list<array<string, mixed>>  $rows name_fr, name_en, category, duration_min, price_solo, price_couple, description_fr */
+    /**
+     * @param  list<array<string, mixed>>  $rows  name_fr, name_en, category, duration_min, price_solo, price_couple, description_fr,
+     *                                            included[], featured (bool), featured_badge, components[] {kind, label, duration_min} pour les formules
+     */
     public function saveTreatments(Spa $spa, array $rows): void
     {
         $keep = [];
+        $featured = null;
         foreach (array_values($rows) as $i => $row) {
             $slug = Str::slug($row['name_fr']) ?: 'soin-'.($i + 1);
             $n = 1;
@@ -108,22 +113,81 @@ class OnboardingService
             }
             $keep[] = $slug;
 
+            $components = ($row['category'] ?? null) === 'ritual' ? $this->cleanComponents($row['components'] ?? []) : [];
+            $duration = $components ? array_sum(array_column($components, 'duration_min')) : (int) ($row['duration_min'] ?? 0);
+
             $treatment = $spa->treatments()->updateOrCreate(['slug' => $slug], [
                 'category' => $row['category'],
                 'name_fr' => $row['name_fr'],
                 'name_en' => $row['name_en'] ?? null,
                 'description_fr' => $row['description_fr'] ?? null,
-                'duration_min' => (int) $row['duration_min'],
+                'duration_min' => $duration,
                 'price_solo' => $row['price_solo'],
                 'price_couple' => $row['price_couple'] ?? null,
                 'party_min' => 1,
                 'party_max' => (int) ($row['party_max'] ?? 6),
+                'included' => Presentation::cleanIncluded($row['included'] ?? null) ?: null,
                 'sort_order' => $i,
                 'status' => 'active',
             ]);
-            $this->syncDefaultSteps($treatment);
+            if (! empty($row['featured']) && $featured === null) {
+                $featured = [$treatment, $row['featured_badge'] ?? null];
+            }
+            if ($components) {
+                $this->syncComponentSteps($treatment, $components);
+            } else {
+                $this->syncDefaultSteps($treatment);
+            }
         }
         $spa->treatments()->whereNotIn('slug', $keep)->delete();
+
+        if ($featured) {
+            [$t, $badge] = $featured;
+            $t->update(['featured_badge' => in_array($badge, Presentation::BADGES, true) ? $badge : ($t->featured_badge ?? 'signature')]);
+        } else {
+            $spa->treatments()->whereNotNull('featured_badge')->update(['featured_badge' => null]);
+        }
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array{kind:string, label:?string, duration_min:int}>
+     */
+    private function cleanComponents(array $rows): array
+    {
+        $out = [];
+        foreach ($rows as $c) {
+            $kind = $c['kind'] ?? null;
+            $min = (int) ($c['duration_min'] ?? 0);
+            if (! isset(self::RESOURCE_TYPES[$kind]) || $min <= 0) {
+                continue;
+            }
+            $out[] = ['kind' => $kind, 'label' => filled($c['label'] ?? null) ? trim($c['label']) : null, 'duration_min' => $min];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Étapes explicites d'une formule : une par composante, enchaînées dans l'ordre. Les types de ressources
+     * sont créés si besoin ; les ressources elles-mêmes sont provisionnées à l'étape horaires/capacité.
+     *
+     * @param  list<array{kind:string, label:?string, duration_min:int}>  $components
+     */
+    private function syncComponentSteps(Treatment $treatment, array $components): void
+    {
+        $treatment->steps()->delete();
+        $offset = 0;
+        foreach ($components as $i => $c) {
+            $treatment->steps()->create([
+                'resource_type_id' => $this->resourceType($treatment->spa, $c['kind'])->id,
+                'label' => $c['label'],
+                'duration_min' => $c['duration_min'],
+                'offset_min' => $offset,
+                'position' => $i,
+            ]);
+            $offset += $c['duration_min'];
+        }
     }
 
     /**

@@ -17,8 +17,10 @@
         <h2 style="font-size:20px;margin-bottom:10px">{{ __('ui.choose_treatment') }}</h2>
         @foreach ($treatments as $t)
             <button type="button" class="opt" aria-pressed="{{ $treatment === $t['id'] ? 'true' : 'false' }}" wire:click="selectTreatment({{ $t['id'] }})">
-                <div><b>{{ $t['name'] }}</b> @if ($t['is_package'])<span class="chip acc">{{ __('ui.package') }}</span>@endif<div class="muted small">{{ $t['duration_min'] }} {{ __('ui.min') }} · {{ __('ui.cat.'.$t['category']) }}</div></div>
-                <div class="r"><b>{{ $fmt($t['price_from']) }}</b><span class="xs muted">{{ __('ui.per_person') }}</span></div>
+                <div>@if ($t['badge'])<span class="chip badge xs" style="margin-bottom:4px">★ {{ $t['badge'] }}</span><br>@endif<b>{{ $t['name'] }}</b> @if ($t['is_package'])<span class="chip acc">{{ __('ui.package') }}</span>@endif
+                    <div class="muted small">@if ($t['components']){{ $t['components'] }} · {{ __('ui.total_duration') }} {{ $t['duration_label'] }}@else{{ $t['duration_label'] }} · {{ __('ui.cat.'.$t['category']) }}@endif</div>
+                    @if ($t['included'])<div class="xs muted" style="margin-top:3px">{{ __('ui.included_title') }} : {{ implode(', ', $t['included']) }}</div>@endif</div>
+                <div class="r"><b>{{ $fmt($t['price_from']) }}</b><span class="xs muted">{{ __('ui.per_person') }}</span>@if ($t['price_couple'])<span class="xs" style="display:block;color:var(--brand);font-weight:600">{{ __('ui.for_two_short') }} : {{ $fmt($t['price_couple']) }}</span>@endif</div>
             </button>
         @endforeach
     @endif
@@ -39,7 +41,7 @@
                 </select>
                 @php($pt = $treatments->firstWhere('id', $p['treatment']))
                 @if ($pt && $pt['extras'])
-                    <div class="muted xs" style="margin:8px 0 4px">{{ __('ui.extras') }}</div>
+                    <div class="muted xs" style="margin:8px 0 4px">{{ __('ui.add_to_ritual') }}</div>
                     @foreach ($pt['extras'] as $e)
                         <button type="button" class="opt" style="padding:9px 12px" aria-pressed="{{ isset($p['extras'][$e['id']]) ? 'true' : 'false' }}" wire:click="toggleExtra({{ $e['id'] }}, {{ $i }})">
                             <div><b>{{ $e['name'] }}</b>@if (isset($p['extras'][$e['id']]) && $e['max_qty'] > 1) ×{{ $p['extras'][$e['id']] }}@endif</div>
@@ -52,7 +54,8 @@
     @elseif ($treatment)
         @php($ct = $treatments->firstWhere('id', $treatment))
         <div class="divider"></div>
-        <h3 style="font-size:17px;margin-bottom:8px">{{ __('ui.extras') }}</h3>
+        <h3 style="font-size:17px;margin-bottom:2px">{{ __('ui.add_to_ritual') }}</h3>
+        @if ($ct['extras'])<div class="muted small" style="margin-bottom:8px">{{ __('ui.add_to_ritual_help') }}</div>@endif
         @forelse ($ct['extras'] as $e)
             <button type="button" class="opt" aria-pressed="{{ isset($extras[$e['id']]) ? 'true' : 'false' }}" wire:click="toggleExtra({{ $e['id'] }})">
                 <div><b>{{ $e['name'] }}</b>@if (isset($extras[$e['id']]) && $e['max_qty'] > 1) ×{{ $extras[$e['id']] }}@endif<div class="muted small">@if ($e['per_person']){{ __('ui.extra_each') }}@endif @if ($e['extra_min'])· +{{ $e['extra_min'] }} {{ __('ui.min') }}@endif</div></div>

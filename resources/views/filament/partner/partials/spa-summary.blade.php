@@ -47,8 +47,10 @@
         <table class="w-full text-left">
             @foreach ($spa->treatments->sortBy('sort_order') as $t)
                 <tr class="border-t dark:border-gray-700">
-                    <td class="py-1">{{ $t->name_fr }} <span class="text-gray-500">({{ __('ui.cat')[$t->category] ?? $t->category }})</span></td>
-                    <td class="py-1">{{ $t->duration_min }} min</td>
+                    <td class="py-1">@if ($t->featured_badge)<span class="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-800">★ {{ __('ui.badge.'.$t->featured_badge) }}</span> @endif{{ $t->name_fr }} <span class="text-gray-500">({{ __('ui.cat')[$t->category] ?? $t->category }})</span>
+                        @if ($t->steps->count() > 1)<div class="text-xs text-gray-500">{{ $t->steps->sortBy('position')->map(fn ($s) => $s->displayLabel().' '.$s->duration_min.' min')->implode(' + ') }}</div>@endif
+                        @if ($t->included)<div class="text-xs text-gray-500">{{ __('ui.included_title') }} : {{ collect($t->included)->map(fn ($k) => __('ui.included.'.$k))->implode(', ') }}</div>@endif</td>
+                    <td class="py-1">{{ \App\Domain\Catalogue\Presentation::duration((int) $t->computedDuration()) }}</td>
                     <td class="py-1 text-right">{{ number_format((float) $t->price_solo, 0, ',', ' ') }} {{ $cur }}@if ($t->price_couple) · {{ __('partner.price_couple') }} {{ number_format((float) $t->price_couple, 0, ',', ' ') }} {{ $cur }}@endif</td>
                 </tr>
             @endforeach

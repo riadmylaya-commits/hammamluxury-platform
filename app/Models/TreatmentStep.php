@@ -20,4 +20,10 @@ class TreatmentStep extends Model
     {
         return $this->belongsTo(ResourceType::class);
     }
+
+    /** Libellé affiché au client : texte libre du partenaire, sinon nom du type de ressource. */
+    public function displayLabel(): string
+    {
+        return filled($this->label) ? $this->label : (string) $this->resourceType?->tr('name');
+    }
 }

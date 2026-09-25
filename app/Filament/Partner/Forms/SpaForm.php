@@ -2,6 +2,7 @@
 
 namespace App\Filament\Partner\Forms;
 
+use App\Domain\Catalogue\Presentation;
 use App\Domain\Geo\WebsiteUrl;
 use App\Domain\Media\PhotoProcessor;
 use App\Filament\Forms\Components\MapPicker;
@@ -84,6 +85,24 @@ class SpaForm
         ];
     }
 
+    /** Infos pratiques (FAQ du spa), toutes facultatives, stockées dans `spas.practical_info`. */
+    public static function practical(bool $collapsed = true): Section
+    {
+        return Section::make(__('partner.practical_info'))
+            ->description(__('partner.practical_info_help'))
+            ->collapsible()->collapsed($collapsed)
+            ->statePath('practical_info')
+            ->schema([
+                Select::make('gender')->label(__('ui.practical.gender'))->options(Presentation::genderOptions())->native(false)->placeholder('—'),
+                Select::make('children')->label(__('ui.practical.children'))->options(Presentation::yesNoAskOptions())->native(false)->placeholder('—'),
+                Select::make('pregnant')->label(__('ui.practical.pregnant'))->options(Presentation::yesNoAskOptions())->native(false)->placeholder('—'),
+                Select::make('accessible')->label(__('ui.practical.accessible'))->options(Presentation::yesNoAskOptions())->native(false)->placeholder('—'),
+                CheckboxList::make('languages')->label(__('ui.practical.languages'))->options(Presentation::languageOptions())->columns(3)->columnSpanFull(),
+                TextInput::make('bring')->label(__('ui.practical.bring'))->maxLength(190)->placeholder(__('partner.practical_bring_placeholder')),
+                TextInput::make('notes')->label(__('ui.practical.notes'))->maxLength(190),
+            ])->columns(2);
+    }
+
     public static function full(): array
     {
         return [
@@ -98,6 +117,8 @@ class SpaForm
             ])->columns(2),
 
             Section::make(__('partner.section_services'))->schema(self::services())->columns(2),
+
+            self::practical(),
 
             Section::make(__('partner.section_photos'))
                 ->description(__('partner.photos_help', ['min' => config('hl.min_photos')]))

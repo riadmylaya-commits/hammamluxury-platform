@@ -99,7 +99,7 @@ class SpaOnboardingWizardTest extends TestCase
         // 5. soins
         $t->fillForm(['treatments' => [
             ['name_fr' => 'Hammam traditionnel', 'category' => 'hammam', 'duration_min' => 45, 'price_solo' => 250],
-            ['name_fr' => 'Hammam + massage', 'category' => 'ritual', 'duration_min' => 90, 'price_solo' => 650, 'price_couple' => 1200],
+            ['name_fr' => 'Hammam + massage', 'category' => 'ritual', 'price_solo' => 650, 'price_couple' => 1200, 'components' => [['kind' => 'hammam', 'duration_min' => 45], ['kind' => 'massage', 'duration_min' => 45]], 'included' => ['tea'], 'featured' => true, 'featured_badge' => 'signature'],
         ]]);
         $this->next($t, 4)->assertHasNoFormErrors();
         $this->assertSame(2, $spa->treatments()->count());
@@ -118,6 +118,9 @@ class SpaOnboardingWizardTest extends TestCase
         $this->assertSame(2, $ritual->steps()->count());
         $this->assertSame(90, (int) $ritual->steps()->sum('duration_min'));
         $this->assertSame(6, $spa->onboarding_step);
+        $this->assertSame('signature', $ritual->featured_badge);
+        $this->assertSame(['tea'], $ritual->included);
+        $this->assertSame(1, $spa->treatments()->whereNotNull('featured_badge')->count());
 
         // Rechargement : soins, horaires et capacités sont repris tels qu'enregistrés
         $reloaded = Livewire::test(RegisterSpa::class);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Catalogue\Presentation;
 use App\Domain\Geo\WebsiteUrl;
 use App\Models\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,7 +20,7 @@ class Spa extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['submitted_at' => 'datetime', 'published_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float'];
+    protected $casts = ['submitted_at' => 'datetime', 'published_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array'];
 
     /** Position sur la carte : `['lat' => ?, 'lng' => ?]`, éditable comme un seul champ de formulaire. */
     protected function location(): Attribute
@@ -54,6 +55,9 @@ class Spa extends Model
         static::saving(function (self $spa) {
             if ($spa->city_id && $spa->isDirty('city_id')) {
                 $spa->city = City::find($spa->city_id)?->name_fr ?? $spa->city;
+            }
+            if ($spa->isDirty('practical_info')) {
+                $spa->practical_info = Presentation::cleanPractical($spa->practical_info);
             }
         });
     }

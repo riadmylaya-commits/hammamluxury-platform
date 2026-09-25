@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Domain\Booking\QuoteBuilder;
+use App\Domain\Catalogue\Presentation;
 use App\Models\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +17,25 @@ class Treatment extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['price_solo' => 'float', 'price_couple' => 'float', 'price_group' => 'float'];
+    protected $casts = ['price_solo' => 'float', 'price_couple' => 'float', 'price_group' => 'float', 'included' => 'array'];
+
+    /** Une seule formule mise en avant par établissement : poser un badge retire celui des autres. */
+    protected static function booted(): void
+    {
+        static::saving(function (self $t) {
+            if ($t->featured_badge !== null && ! in_array($t->featured_badge, Presentation::BADGES, true)) {
+                $t->featured_badge = null;
+            }
+            if ($t->included !== null) {
+                $t->included = Presentation::cleanIncluded($t->included) ?: null;
+            }
+        });
+        static::saved(function (self $t) {
+            if ($t->featured_badge && ($t->wasRecentlyCreated || $t->wasChanged('featured_badge'))) {
+                static::where('spa_id', $t->spa_id)->whereKeyNot($t->getKey())->whereNotNull('featured_badge')->update(['featured_badge' => null]);
+            }
+        });
+    }
 
     public function spa(): BelongsTo
     {

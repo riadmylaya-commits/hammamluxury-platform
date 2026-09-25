@@ -24,21 +24,34 @@
         <section class="sec" @if (! $card['description']) style="padding-top:0" @endif id="treatments">
             <h2>{{ __('ui.treatments') }}</h2>
             <div class="card">
+                @php($cur = config('hl.currency'))
                 @foreach ($treatments as $t)
-                    <div class="treat">
+                    <div @class(['treat', 'featured' => (bool) $t['badge']])>
                         <div class="sp">
+                            @if ($t['badge'])<span class="chip badge">★ {{ $t['badge'] }}</span>@endif
                             <h4>{{ $t['name'] }} @if ($t['is_package'])<span class="chip acc">{{ __('ui.package') }}</span>@endif</h4>
-                            <div class="muted small">{{ __('ui.cat.'.$t['category']) }} · {{ $t['duration_min'] }} {{ __('ui.min') }}
-                                @if ($t['is_package']) · {{ collect($t['steps'])->map(fn ($s) => $s['type'].' '.$s['duration_min'].' '.__('ui.min'))->implode(' → ') }}@endif</div>
+                            @if ($t['is_package'])
+                                <div class="pkg">
+                                    @foreach ($t['steps'] as $s)<span class="pkg-step"><b>{{ $s['type'] }}</b> {{ $s['duration_min'] }} {{ __('ui.min') }}</span>@if (! $loop->last)<span class="pkg-plus">+</span>@endif @endforeach
+                                </div>
+                                <div class="small"><b>{{ __('ui.total_duration') }} {{ $t['duration_label'] }}</b> <span class="muted">· {{ __('ui.cat.'.$t['category']) }}</span></div>
+                            @else
+                                <div class="muted small">{{ __('ui.cat.'.$t['category']) }} · {{ $t['duration_label'] }}</div>
+                            @endif
                             @if ($t['description'])<p class="small" style="margin:6px 0 0">{{ $t['description'] }}</p>@endif
-                            <div class="row wrapg" style="gap:6px;margin-top:6px">
-                                @if ($t['price_couple'])<span class="chip grey">{{ __('ui.formula.couple') }} {{ number_format($t['price_couple'], 0, ',', ' ') }} {{ config('hl.currency') }}</span>@endif
-                                @if ($t['price_group'])<span class="chip grey">{{ __('ui.formula.group') }} {{ number_format($t['price_group'], 0, ',', ' ') }} {{ config('hl.currency') }}{{ __('ui.per_person') }}</span>@endif
-                                @foreach ($t['extras'] as $e)<span class="chip grey">+ {{ $e['name'] }} · +{{ number_format($e['price'], 0, ',', ' ') }} {{ config('hl.currency') }}@if ($e['extra_min']) / +{{ $e['extra_min'] }} {{ __('ui.min') }}@endif</span>@endforeach
-                            </div>
+                            @if ($t['included'])
+                                <div class="incl"><span class="xs muted">{{ __('ui.included_title') }}</span>@foreach ($t['included'] as $inc)<span class="chip ok">✓ {{ $inc }}</span>@endforeach</div>
+                            @endif
+                            @if ($t['extras'])
+                                <div class="incl"><span class="xs muted">{{ __('ui.add_to_ritual') }}</span>@foreach ($t['extras'] as $e)<span class="chip grey">+ {{ $e['name'] }} · {{ number_format($e['price'], 0, ',', ' ') }} {{ $cur }}@if ($e['extra_min']) · +{{ $e['extra_min'] }} {{ __('ui.min') }}@endif</span>@endforeach</div>
+                            @endif
+                            @if ($t['price_group'])<div class="xs muted" style="margin-top:6px">{{ __('ui.formula.group') }} {{ number_format($t['price_group'], 0, ',', ' ') }} {{ $cur }}{{ __('ui.per_person') }}</div>@endif
                         </div>
-                        <div class="r"><b>{{ number_format($t['price_from'], 0, ',', ' ') }} {{ config('hl.currency') }}</b><span class="xs muted">{{ __('ui.per_person') }}</span><br>
-                            <a class="btn sm" style="margin-top:8px" href="{{ route('spa.book', [$spa->slug, 'soin' => $t['id']]) }}">{{ __('ui.book') }}</a></div>
+                        <div class="r">
+                            <b>{{ number_format($t['price_from'], 0, ',', ' ') }} {{ $cur }}</b><span class="xs muted">{{ __('ui.per_person_solo') }}</span>
+                            @if ($t['price_couple'])<div class="duo"><span class="xs">{{ __('ui.for_two') }}</span><b>{{ number_format($t['price_couple'], 0, ',', ' ') }} {{ $cur }}</b></div>@endif
+                            <a class="btn sm" style="margin-top:8px" href="{{ route('spa.book', [$spa->slug, 'soin' => $t['id']]) }}">{{ __('ui.book') }}</a>
+                        </div>
                     </div>
                 @endforeach
             </div>
@@ -49,6 +62,13 @@
                 <div id="spa-map" data-lat="{{ $card['lat'] }}" data-lng="{{ $card['lng'] }}" data-title="{{ $spa->name }}" style="height:240px;z-index:0"></div>
             </div>
             <p class="muted small" style="margin-top:8px">{{ $card['area'] ? $card['area'].' · ' : '' }}{{ $card['city'] }} · <a href="https://www.google.com/maps/search/?api=1&query={{ $card['lat'] }},{{ $card['lng'] }}" target="_blank" rel="noopener">{{ __('ui.open_in_maps') }}</a></p>
+        </section>
+        @endif
+        @if ($card['practical'])
+        <section class="sec" id="practical"><h2>{{ __('ui.practical_title') }}</h2>
+            <div class="card practical" style="padding:14px">
+                @foreach ($card['practical'] as $row)<span class="b">{{ $row['label'] }}</span><span>{{ $row['value'] }}</span>@endforeach
+            </div>
         </section>
         @endif
         <section class="sec"><h2>{{ __('ui.hours') }}</h2>

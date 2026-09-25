@@ -2,6 +2,7 @@
 
 namespace App\Filament\Partner\Pages;
 
+use App\Domain\Catalogue\Presentation;
 use App\Domain\Catalogue\PublicationChecklist;
 use App\Domain\Partner\OnboardingService;
 use App\Filament\Forms\Components\PhoneField;
@@ -10,6 +11,7 @@ use App\Models\Amenity;
 use App\Models\Category;
 use App\Models\Spa;
 use App\Models\SpaHour;
+use App\Models\TreatmentStep;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\CheckboxList;
@@ -126,6 +128,7 @@ class RegisterSpa extends RegisterTenant
                 SpaForm::website(),
             ]),
             Placeholder::make('privacy')->label('')->content(__('partner.contact_privacy')),
+            SpaForm::practical(),
         ])->afterValidation(function (Step $component) {
             $data = $component->getChildComponentContainer()->getState();
             $data['phone'] = $data['spa_phone'];
@@ -178,16 +181,37 @@ class RegisterSpa extends RegisterTenant
                 ->schema([
                     TextInput::make('name_fr')->label(__('partner.name_fr'))->required()->maxLength(190)->columnSpan(['default' => 1, 'lg' => 2]),
                     TextInput::make('name_en')->label(__('partner.name_en'))->maxLength(190)->columnSpan(['default' => 1, 'lg' => 2]),
-                    Select::make('category')->label(__('partner.category'))->options(__('ui.cat'))->required()->default('hammam')->native(false),
-                    TextInput::make('duration_min')->label(__('partner.duration'))->numeric()->minValue(15)->maxValue(480)->step(5)->suffix('min')->required()->default(60),
+                    Select::make('category')->label(__('partner.category'))->options(__('ui.cat'))->required()->default('hammam')->native(false)->live(),
+                    TextInput::make('duration_min')->label(__('partner.duration'))->numeric()->minValue(15)->maxValue(480)->step(5)->suffix('min')->required(fn (Get $get) => $get('category') !== 'ritual')->default(60)
+                        ->hidden(fn (Get $get) => $get('category') === 'ritual'),
+                    Placeholder::make('total_duration')->label(__('partner.total_duration'))
+                        ->visible(fn (Get $get) => $get('category') === 'ritual')
+                        ->content(fn (Get $get) => Presentation::duration((int) collect($get('components') ?? [])->sum(fn ($c) => (int) ($c['duration_min'] ?? 0)))),
                     TextInput::make('price_solo')->label(__('partner.price_solo'))->numeric()->minValue(1)->suffix(config('hl.currency'))->required(),
                     TextInput::make('price_couple')->label(__('partner.price_couple'))->numeric()->minValue(1)->suffix(config('hl.currency'))->helperText(__('partner.price_couple_help')),
+                    Repeater::make('components')->label(__('partner.components'))->helperText(__('partner.components_help'))
+                        ->visible(fn (Get $get) => $get('category') === 'ritual')
+                        ->minItems(fn (Get $get) => $get('category') === 'ritual' ? 2 : 0)->defaultItems(2)->reorderable()->live()
+                        ->addActionLabel(__('partner.add_component'))->columnSpanFull()
+                        ->schema([
+                            Select::make('kind')->label(__('partner.component_kind'))->options(__('partner.component_kinds'))->required()->native(false)->default('hammam'),
+                            TextInput::make('duration_min')->label(__('partner.duration'))->numeric()->minValue(5)->maxValue(480)->step(5)->suffix('min')->required()->default(45),
+                            TextInput::make('label')->label(__('partner.component_label'))->maxLength(120)->helperText(__('partner.component_label_help')),
+                        ])->columns(3),
+                    Select::make('included')->label(__('partner.included'))->options(Presentation::includedOptions())->multiple()->native(false)->helperText(__('partner.included_help'))->columnSpan(['default' => 1, 'lg' => 2]),
+                    Toggle::make('featured')->label(__('partner.featured'))->helperText(__('partner.featured_help'))->live()->inline(false),
+                    Select::make('featured_badge')->label(__('partner.featured_badge'))->options(Presentation::badgeOptions())->default('signature')->native(false)
+                        ->visible(fn (Get $get) => (bool) $get('featured')),
                     Textarea::make('description_fr')->label(__('partner.description_fr'))->rows(2)->maxLength(2000)->columnSpanFull(),
                 ])->columns(4),
             Placeholder::make('treatments_tip')->label('')->content(__('partner.treatments_tip')),
         ])->afterValidation(function (Step $component) {
             $state = $component->getChildComponentContainer()->getState();
-            $this->service()->saveTreatments($this->requireSpa(), array_values($state['treatments'] ?? []));
+            $rows = array_values($state['treatments'] ?? []);
+            if (collect($rows)->filter(fn ($r) => ! empty($r['featured']))->count() > 1) {
+                throw ValidationException::withMessages(['data.treatments' => __('partner.featured_only_one')]);
+            }
+            $this->service()->saveTreatments($this->requireSpa(), $rows);
             $this->service()->markStep($this->requireSpa(), 5);
             $this->savedNotice();
         });
@@ -278,6 +302,8 @@ class RegisterSpa extends RegisterTenant
             __('partner.miss_treatments') => $spa->treatments()->where('status', 'active')->where('price_solo', '>', 0)->exists(),
             __('partner.miss_hours') => $spa->hours()->exists(),
             __('partner.miss_resources') => $spa->resources()->where('status', 'active')->exists(),
+            __('partner.miss_step_resources') => ! TreatmentStep::whereIn('treatment_id', $spa->treatments()->where('status', 'active')->select('id'))
+                ->whereDoesntHave('resourceType.resources', fn ($q) => $q->where('status', 'active'))->exists(),
         ];
 
         return array_keys(array_filter($checks, fn ($ok) => ! $ok));
@@ -328,7 +354,7 @@ class RegisterSpa extends RegisterTenant
             return $state;
         }
 
-        $spa->load(['photos', 'categories', 'amenities', 'treatments', 'hours']);
+        $spa->load(['photos', 'categories', 'amenities', 'treatments.steps.resourceType', 'hours']);
 
         return [
             'name' => $spa->name, 'category' => $spa->category, 'city_id' => $spa->city_id, 'area' => $spa->area, 'address' => $spa->address,
@@ -340,7 +366,12 @@ class RegisterSpa extends RegisterTenant
             'treatments' => $spa->treatments->sortBy('sort_order')->map(fn ($t) => [
                 'name_fr' => $t->name_fr, 'name_en' => $t->name_en, 'category' => $t->category, 'duration_min' => $t->duration_min,
                 'price_solo' => $t->price_solo, 'price_couple' => $t->price_couple, 'description_fr' => $t->description_fr,
+                'included' => $t->included ?? [], 'featured' => $t->featured_badge !== null, 'featured_badge' => $t->featured_badge ?? 'signature',
+                'components' => $t->category === 'ritual' ? $t->steps->sortBy('position')->map(fn ($s) => [
+                    'kind' => $s->resourceType?->slug ?? 'hammam', 'duration_min' => $s->duration_min, 'label' => $s->label,
+                ])->values()->all() : [],
             ])->values()->all() ?: [],
+            'practical_info' => $spa->practical_info ?? [],
             'hours' => $spa->hours->sortBy(['weekday', 'opens_min'])->map(fn ($h) => ['weekday' => $h->weekday, 'opens_min' => SpaHour::toHhmm($h->opens_min), 'closes_min' => SpaHour::toHhmm($h->closes_min)])->values()->all(),
             'hours_every_day' => $spa->hours->isEmpty() || $spa->hasSameHoursEveryDay(),
             'every_opens' => SpaHour::toHhmm($spa->hours->first()?->opens_min ?? 600),

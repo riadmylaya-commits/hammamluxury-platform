@@ -47,6 +47,7 @@ class DemoSeeder extends Seeder
             ['soin-visage', 'face', 'Soin du visage à l’argile', 'Clay facial', 'Nettoyage, gommage doux, masque à l’argile et hydratation. 50 minutes.', 'Cleansing, gentle scrub, clay mask and moisturising. 50 minutes.', 350, null, null, 1, 2, [['soin', 50]], []],
             ['jacuzzi-hammam', 'ritual', 'Hammam + Jacuzzi', 'Hammam + Jacuzzi', 'Hammam de 45 min puis 30 min de jacuzzi sur la terrasse.', '45-min hammam then 30 min in the rooftop jacuzzi.', 300, 550, 260, 1, 4, [['hammam', 45], ['jacuzzi', 30]], []],
         ]);
+        $this->presentation($demo);
         $this->reviews($demo, [['Sophie L.', 5, 'Un moment magique, le gommage est parfait et le massage très professionnel.', 'fr'], ['James W.', 5, 'Great experience, very clean and the staff was lovely.', 'en'], ['Nadia B.', 4, 'Très bien mais un peu d’attente à l’accueil.', 'fr']]);
 
         // Établissements fictifs (autres partenaires) pour peupler la recherche.
@@ -120,6 +121,23 @@ class DemoSeeder extends Seeder
         $spa->update(['price_from' => $priceFrom]);
 
         return $spa;
+    }
+
+    /** Vitrine des 6 points de présentation : composantes nommées, inclus, badge unique, infos pratiques. */
+    private function presentation(Spa $spa): void
+    {
+        $spa->update(['practical_info' => [
+            'gender' => 'mixed', 'children' => 'ask', 'pregnant' => 'ask', 'accessible' => 'no',
+            'languages' => ['fr', 'en', 'ar'], 'bring' => 'Maillot de bain conseillé ; serviettes, peignoir et gant de kessa fournis.',
+            'notes' => 'Arrivez 10 minutes avant votre rendez-vous.',
+        ]]);
+        $spa->treatments()->update(['featured_badge' => null]);
+        $t = $spa->treatments()->where('slug', 'hammam-massage')->first();
+        $t?->update(['included' => ['tea', 'pastries', 'robe', 'hammam_kit', 'rest_room'], 'featured_badge' => 'signature']);
+        $t?->steps()->orderBy('position')->get()->each(fn ($s, $i) => $s->update(['label' => ['Hammam & gommage savon noir', 'Massage à l’huile d’argan'][$i] ?? null]));
+        $spa->treatments()->where('slug', 'hammam-traditionnel')->update(['included' => json_encode(['tea', 'hammam_kit', 'towels'])]);
+        $spa->treatments()->where('slug', 'hammam-soin-visage')->update(['included' => json_encode(['tea', 'robe', 'rest_room'])]);
+        $spa->treatments()->where('slug', 'jacuzzi-hammam')->update(['included' => json_encode(['tea', 'terrace', 'towels'])]);
     }
 
     private function reviews(Spa $spa, array $rows): void
