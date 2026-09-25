@@ -3,6 +3,8 @@
 return [
     'tagline' => 'Spas & hammams',
     'nav_partner' => 'Partner area',
+    'nav_list_hint' => 'List a new hammam or spa on HammamLuxury',
+    'nav_partner_hint' => 'Manage my establishment',
     'nav_list' => 'List my spa',
     'hero_title' => 'Find your hammam, spa or massage',
     'hero_sub' => 'The best wellness venues in Morocco. Real-time availability, booking in 2 minutes, no account needed.',

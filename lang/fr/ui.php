@@ -3,6 +3,8 @@
 return [
     'tagline' => 'Spas & hammams',
     'nav_partner' => 'Espace partenaire',
+    'nav_list_hint' => 'Inscrire un nouveau hammam ou spa sur HammamLuxury',
+    'nav_partner_hint' => 'Accéder à la gestion de mon établissement',
     'nav_list' => 'Référencer mon spa',
     'hero_title' => 'Trouvez votre hammam, spa ou massage',
     'hero_sub' => 'Les meilleurs établissements de bien-être au Maroc. Disponibilités réelles, réservation en 2 minutes, sans compte.',

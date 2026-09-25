@@ -17,8 +17,10 @@
         <nav class="nav {{ $dark ? 'dark' : '' }}">
             <a class="logo" href="{{ route('home') }}">HammamLuxury<small>{{ __('ui.tagline') }}</small></a>
             <span class="sp"></span>
-            <a class="lnk desk-only" href="{{ route('filament.partner.auth.register') }}">{{ __('ui.nav_list') }}</a>
-            <a class="lnk ghost desk-only" href="{{ route('filament.partner.auth.login') }}">{{ __('ui.nav_partner') }}</a>
+            <div class="pro">
+                <a class="pbtn list" href="{{ route('filament.partner.auth.register') }}" title="{{ __('ui.nav_list_hint') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>{{ __('ui.nav_list') }}</span></a>
+                <a class="pbtn login" href="{{ route('filament.partner.auth.login') }}" title="{{ __('ui.nav_partner_hint') }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>{{ __('ui.nav_partner') }}</span></a>
+            </div>
             @php($other = app()->getLocale() === 'fr' ? 'en' : 'fr')
             <a class="lang" href="{{ preg_replace('#^'.preg_quote(url('/'), '#').'/[a-z]{2}#', url('/'.$other), url()->full()) }}" hreflang="{{ $other }}">{{ strtoupper($other) }}</a>
         </nav>

@@ -18,7 +18,10 @@
 </div>
 <div class="spa-layout">
     <div>
-        <section class="sec" style="padding-top:0" id="treatments">
+        @if ($card['description'])
+        <section class="sec" style="padding-top:0" id="about"><h2>{{ __('ui.about') }}</h2><p style="white-space:pre-line">{{ $card['description'] }}</p></section>
+        @endif
+        <section class="sec" @if (! $card['description']) style="padding-top:0" @endif id="treatments">
             <h2>{{ __('ui.treatments') }}</h2>
             <div class="card">
                 @foreach ($treatments as $t)
@@ -40,9 +43,6 @@
                 @endforeach
             </div>
         </section>
-        @if ($card['description'])
-        <section class="sec"><h2>{{ __('ui.about') }}</h2><p style="white-space:pre-line">{{ $card['description'] }}</p></section>
-        @endif
         @if ($card['lat'] !== null && $card['lng'] !== null)
         <section class="sec"><h2>{{ __('ui.location') }}</h2>
             <div class="card" style="padding:0;overflow:hidden" wire:ignore>
