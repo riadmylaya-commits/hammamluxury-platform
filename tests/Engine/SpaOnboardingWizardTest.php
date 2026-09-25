@@ -108,6 +108,14 @@ class SpaOnboardingWizardTest extends TestCase
         $this->assertSame(90, (int) $ritual->steps()->sum('duration_min'));
         $this->assertSame(6, $spa->onboarding_step);
 
+        // Rechargement : soins, horaires et capacités sont repris tels qu'enregistrés
+        $reloaded = Livewire::test(RegisterSpa::class);
+        $this->assertSame($spa->id, $reloaded->get('spaId'));
+        $this->assertCount(2, $reloaded->get('data.treatments'));
+        $this->assertSame('Hammam + massage', array_values($reloaded->get('data.treatments'))[1]['name_fr']);
+        $this->assertSame('10:00', array_values($reloaded->get('data.hours'))[0]['opens_min']);
+        $reloaded->assertFormSet(['hammam_capacity' => 8, 'massage_cabins' => 2, 'name' => 'Hammam Nadia']);
+
         // 7. récapitulatif + envoi
         $t->fillForm(['accept_terms' => true])->call('register')->assertHasNoFormErrors();
         $spa->refresh();

@@ -310,7 +310,7 @@ class RegisterSpa extends RegisterTenant
 
         $spa->load(['photos', 'categories', 'amenities', 'treatments', 'hours']);
 
-        return $state + [
+        return [
             'name' => $spa->name, 'category' => $spa->category, 'city_id' => $spa->city_id, 'area' => $spa->area, 'address' => $spa->address,
             'description_fr' => $spa->description_fr, 'description_en' => $spa->description_en,
             'spa_phone' => $spa->phone, 'spa_whatsapp' => $spa->whatsapp, 'email' => $spa->email, 'website' => $spa->website,
@@ -321,8 +321,8 @@ class RegisterSpa extends RegisterTenant
                 'name_fr' => $t->name_fr, 'name_en' => $t->name_en, 'category' => $t->category, 'duration_min' => $t->duration_min,
                 'price_solo' => $t->price_solo, 'price_couple' => $t->price_couple, 'description_fr' => $t->description_fr,
             ])->values()->all() ?: [],
-            'hours' => $spa->hours->sortBy(['weekday', 'opens_min'])->map(fn ($h) => ['weekday' => $h->weekday, 'opens_min' => $h->opens_min, 'closes_min' => $h->closes_min])->values()->all(),
-        ] + $this->service()->capacityOf($spa);
+            'hours' => $spa->hours->sortBy(['weekday', 'opens_min'])->map(fn ($h) => ['weekday' => $h->weekday, 'opens_min' => SpaHour::toHhmm($h->opens_min), 'closes_min' => SpaHour::toHhmm($h->closes_min)])->values()->all(),
+        ] + $this->service()->capacityOf($spa) + $state;
     }
 
     private function startStep(): int
