@@ -20,6 +20,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Set;
 use Illuminate\Support\HtmlString;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -69,7 +70,8 @@ class SpaForm
     public static function website(): TextInput
     {
         return TextInput::make('website')->label(__('partner.website'))->maxLength(190)->placeholder('www.mon-spa.com')
-            ->rule(fn () => WebsiteUrl::rule())->dehydrateStateUsing(fn (?string $state) => WebsiteUrl::normalize($state));
+            ->rule(fn () => WebsiteUrl::rule())->dehydrateStateUsing(fn (?string $state) => WebsiteUrl::normalize($state))
+            ->live(onBlur: true)->afterStateUpdated(fn (Set $set, ?string $state) => $set('website', WebsiteUrl::normalize($state) ?? $state));
     }
 
     public static function identity(): array
