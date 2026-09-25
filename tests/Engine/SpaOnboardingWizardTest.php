@@ -2,6 +2,7 @@
 
 namespace Tests\Engine;
 
+use App\Domain\Geo\Geocoder;
 use App\Domain\Geo\WebsiteUrl;
 use App\Domain\Partner\OnboardingService;
 use App\Filament\Partner\Pages\RegisterSpa;
@@ -343,6 +344,19 @@ class SpaOnboardingWizardTest extends TestCase
         $t->fillForm(['address' => 'Nulle part xyz']);
         $t->callFormComponentAction('location', 'locate')->assertNotified(__('partner.map_not_found'));
         $this->assertNull(Spa::first());
+    }
+
+    public function test_geocoder_falls_back_to_shorter_queries_for_full_addresses(): void
+    {
+        Http::fake(fn ($request) => $request['q'] === 'Rue de la Liberté, Guéliz, Marrakech'
+            ? Http::response([['lat' => '31.6356373', 'lon' => '-8.0114897', 'display_name' => 'Rue de la Liberté, Guéliz, Marrakech, Maroc']])
+            : Http::response([]));
+
+        $hit = app(Geocoder::class)->search('Rue de la Liberté, Guéliz, Marrakech, Maroc', 'Marrakech');
+
+        $this->assertSame(31.6356373, $hit['lat']);
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($r) => $r['q'] === 'Rue de la Liberté, Guéliz, Marrakech');
     }
 
     /** Brouillon prêt à l'étape donnée (1-based) pour tester une étape isolément. */
