@@ -37,7 +37,7 @@ class ActivityLogResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn (Builder $q) => $q->with(['user', 'subject']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user', 'subject']))
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')->label(__('admin.date'))->dateTime('d/m/Y H:i'),
                 Tables\Columns\TextColumn::make('panel')->label(__('admin.panel'))->badge(),

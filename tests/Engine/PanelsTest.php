@@ -63,6 +63,14 @@ class PanelsTest extends BookingFlowTestCase
         $this->actingAs($this->admin)->get('/partenaire/'.$this->otherSpa->slug)->assertOk();
     }
 
+    public function test_admin_list_pages_render(): void
+    {
+        $this->actingAs($this->admin);
+        foreach (['activity-logs', 'cities', 'categories', 'amenities', 'spas', 'partners', 'bookings'] as $slug) {
+            $this->get("/admin/$slug")->assertOk();
+        }
+    }
+
     public function test_partner_sees_only_own_treatments_and_can_create_package(): void
     {
         $this->otherSpa->treatments()->create(['slug' => 'secret', 'name_fr' => 'Soin secret', 'category' => 'massage', 'price_solo' => 100, 'duration_min' => 30]);
