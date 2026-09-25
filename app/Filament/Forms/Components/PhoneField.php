@@ -51,6 +51,6 @@ final class PhoneField
                 ->rules(fn (Get $get): array => [new PhoneRule((string) ($get($countryField) ?: PhoneNumber::DEFAULT_COUNTRY))])
                 ->dehydrateStateUsing(fn (?string $state, Get $get) => PhoneNumber::normalize($state, (string) ($get($countryField) ?: PhoneNumber::DEFAULT_COUNTRY)))
                 ->columnSpan(2),
-        ])->columns(3);
+        ])->columns(['default' => 3]);
     }
 }

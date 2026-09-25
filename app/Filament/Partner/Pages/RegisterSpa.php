@@ -172,8 +172,8 @@ class RegisterSpa extends RegisterTenant
                 ->itemLabel(fn (array $state) => $state['name_fr'] ?? null)
                 ->addActionLabel(__('partner.add_treatment'))
                 ->schema([
-                    TextInput::make('name_fr')->label(__('partner.name_fr'))->required()->maxLength(190)->columnSpan(2),
-                    TextInput::make('name_en')->label(__('partner.name_en'))->maxLength(190)->columnSpan(2),
+                    TextInput::make('name_fr')->label(__('partner.name_fr'))->required()->maxLength(190)->columnSpan(['default' => 1, 'lg' => 2]),
+                    TextInput::make('name_en')->label(__('partner.name_en'))->maxLength(190)->columnSpan(['default' => 1, 'lg' => 2]),
                     Select::make('category')->label(__('partner.category'))->options(__('ui.cat'))->required()->default('hammam')->native(false),
                     TextInput::make('duration_min')->label(__('partner.duration'))->numeric()->minValue(15)->maxValue(480)->step(5)->suffix('min')->required()->default(60),
                     TextInput::make('price_solo')->label(__('partner.price_solo'))->numeric()->minValue(1)->suffix(config('hl.currency'))->required(),
