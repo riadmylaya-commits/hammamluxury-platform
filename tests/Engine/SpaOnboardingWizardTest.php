@@ -168,6 +168,12 @@ class SpaOnboardingWizardTest extends TestCase
         Mail::assertQueued(SpaStatusMail::class, fn (SpaStatusMail $m) => $m->event === 'refused' && $m->hasTo('nadia@example.test'));
         $this->assertDatabaseHas('activity_logs', ['action' => 'spa.refused', 'subject_id' => $spa->id]);
 
+        // Le refus rouvre l'assistant du partenaire sur le récapitulatif, avec le motif, et permet de renvoyer
+        $spa->refresh();
+        $this->assertSame(6, $spa->onboarding_step);
+        $this->assertSame($spa->id, app(OnboardingService::class)->currentDraft($this->partner)->id);
+        Livewire::test(RegisterSpa::class)->assertSee('Photos floues, adresse incomplète.')->assertSet('spaId', $spa->id);
+
         $spa->update(['status' => 'published', 'status_note' => null]);
         OnboardingService::notifyDecision($spa, 'published');
         Mail::assertQueued(SpaStatusMail::class, fn (SpaStatusMail $m) => $m->event === 'published' && $m->hasTo('nadia@example.test'));

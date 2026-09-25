@@ -226,6 +226,8 @@ return [
     'summary_admin_note' => 'After submission your establishment is "Pending review". It will only be visible to guests after our team has checked it.',
     'spa_step_first' => 'Fill in the "Establishment" step first.',
     'resume_draft' => 'You are resuming the draft ":name"',
+    'refused_banner' => 'The admin team requested changes before publication:',
+    'refused_banner_help' => 'Fix the points above, then resubmit your listing for review from the summary step.',
     'resume_draft_help' => 'Your already validated steps are kept.',
     'start_new_spa' => 'List another establishment',
     'resume_other' => 'Resume ":name"',

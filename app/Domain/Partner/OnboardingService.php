@@ -200,6 +200,9 @@ class OnboardingService
     /** Décision admin : publication ou refus (motif dans status_note), avec e-mail au partenaire. */
     public static function notifyDecision(Spa $spa, string $decision): void
     {
+        if ($decision === 'refused' && $spa->onboarding_step === null) {
+            $spa->update(['onboarding_step' => count(self::STEPS) - 1]);
+        }
         ActivityLog::record("spa.$decision", $spa, array_filter(['name' => $spa->name, 'note' => $spa->status_note]));
         if ($email = $spa->partner?->user?->email) {
             Mail::to($email)->queue(new SpaStatusMail($spa, $decision, 'partner'));

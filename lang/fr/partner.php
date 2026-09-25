@@ -233,6 +233,8 @@ return [
     'summary_admin_note' => 'Après envoi, votre établissement passe en « En attente de validation ». Il ne sera visible des clients qu’après vérification par notre équipe.',
     'spa_step_first' => 'Renseignez d’abord l’étape « Établissement ».',
     'resume_draft' => 'Vous reprenez le brouillon « :name »',
+    'refused_banner' => 'L’administration a demandé des corrections avant publication :',
+    'refused_banner_help' => 'Corrigez les points indiqués puis renvoyez votre fiche pour validation depuis le récapitulatif.',
     'resume_draft_help' => 'Vos étapes déjà validées sont conservées.',
     'start_new_spa' => 'Référencer un autre établissement',
     'resume_other' => 'Reprendre « :name »',
