@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Js;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -143,6 +144,7 @@ class RegisterSpa extends RegisterTenant
         return Step::make(__('partner.step_photos'))->description(__('partner.step_photos_help', ['min' => $min, 'max' => $max]))->icon('heroicon-o-photo')->schema([
             SpaForm::photoUpload('photos', multiple: true)->label(__('partner.section_photos'))
                 ->minFiles($min)->maxFiles($max)->required()
+                ->extraAlpineAttributes(['x-init' => "\$el.addEventListener('FilePond:warning', (e) => { if (e.detail?.error?.body === 'Max files') new FilamentNotification().title(".Js::from(__('partner.photos_max_error', ['max' => $max])).').danger().send() })'])
                 ->validationMessages(['min' => __('partner.photos_min_error', ['min' => $min]), 'max' => __('partner.photos_max_error', ['max' => $max])]),
             Placeholder::make('photos_tip')->label('')->content(__('partner.photos_tip')),
         ])->afterValidation(function (Step $component) {
