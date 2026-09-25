@@ -48,9 +48,9 @@
                             @if ($t['price_group'])<div class="xs muted" style="margin-top:6px">{{ __('ui.formula.group') }} {{ number_format($t['price_group'], 0, ',', ' ') }} {{ $cur }}{{ __('ui.per_person') }}</div>@endif
                         </div>
                         <div class="r">
-                            <b>{{ number_format($t['price_from'], 0, ',', ' ') }} {{ $cur }}</b><span class="xs muted">{{ __('ui.per_person_solo') }}</span>
+                            <div class="solo"><b>{{ number_format($t['price_from'], 0, ',', ' ') }} {{ $cur }}</b><span class="xs muted">{{ __('ui.per_person_solo') }}</span></div>
                             @if ($t['price_couple'])<div class="duo"><span class="xs">{{ __('ui.for_two') }}</span><b>{{ number_format($t['price_couple'], 0, ',', ' ') }} {{ $cur }}</b></div>@endif
-                            <a class="btn sm" style="margin-top:8px" href="{{ route('spa.book', [$spa->slug, 'soin' => $t['id']]) }}">{{ __('ui.book') }}</a>
+                            <a class="btn sm" href="{{ route('spa.book', [$spa->slug, 'soin' => $t['id']]) }}">{{ __('ui.book') }}</a>
                         </div>
                     </div>
                 @endforeach

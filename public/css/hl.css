@@ -61,12 +61,13 @@ footer{padding:26px 0 40px;color:var(--muted);font-size:13px;border-top:1px soli
 .gallery{display:grid;grid-template-columns:1fr;gap:6px;border-radius:16px;overflow:hidden}.gallery .ph{height:230px}.gallery .ph:not(:first-child){display:none}
 .spa-h{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;margin:16px 0}.spa-h h1{font-size:26px}
 .treat{display:flex;gap:12px;padding:14px;align-items:flex-start}.treat+.treat{border-top:1px solid var(--line)}
-.treat h4{font-size:16px;margin-bottom:3px}.treat .r{text-align:right;flex:none}.treat .r b{font-size:17px;display:block}.treat .chip{margin-top:6px}
+.treat .sp{flex:1 1 auto;min-width:0}.treat h4{font-size:16px;margin-bottom:3px}.treat .r{text-align:right;flex:none}.treat .r b{font-size:17px;display:block}.treat .r .btn{margin-top:8px}.treat .chip{margin-top:6px}
 .treat.featured{background:linear-gradient(90deg,#fdf6ee,#fff);box-shadow:inset 3px 0 0 var(--accent,#b8743a)}
 .chip.badge{background:var(--accent,#b8743a);color:#fff;letter-spacing:.02em;margin-top:0!important;margin-bottom:6px}
-.pkg{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin:4px 0 2px;font-size:13px}.pkg-step{background:var(--soft);border-radius:8px;padding:3px 8px;white-space:nowrap}.pkg-plus{color:var(--muted);font-weight:700}
+.pkg{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin:4px 0 2px;font-size:13px}.pkg-step{background:var(--soft);border-radius:8px;padding:3px 8px}.pkg-plus{color:var(--muted);font-weight:700}
 .incl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}.incl>.xs{flex:none;margin-right:2px}.incl .chip{margin-top:0;font-weight:500}
 .treat .r .duo{margin-top:8px;background:var(--soft);border-radius:10px;padding:6px 10px;display:inline-block;text-align:center;color:var(--brand)}.treat .r .duo b{font-size:16px}.treat .r .duo .xs{display:block;font-weight:600}
+@media (max-width:599px){.treat{flex-wrap:wrap}.treat .r{width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;text-align:left;margin-top:4px}.treat .r .duo,.treat .r .btn{margin-top:0}.treat .r .duo{text-align:left}.treat .r .btn{margin-left:auto}}
 .practical{display:grid;grid-template-columns:1fr;gap:2px 16px;font-size:14px}.practical .b{font-weight:600;margin-top:8px}.practical .b:first-child{margin-top:0}
 .spa-layout{display:grid;gap:20px}.side{display:none;position:sticky;top:12px;align-self:start;padding:16px}
 .mbar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:12px;z-index:4;margin:0 -16px}

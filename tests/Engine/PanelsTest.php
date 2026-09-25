@@ -47,6 +47,7 @@ class PanelsTest extends BookingFlowTestCase
     public function test_partner_is_scoped_to_own_spa_and_cannot_enter_admin(): void
     {
         $this->actingAs($this->owner)->get('/partenaire/'.$this->spa->slug)->assertOk()->assertSee($this->spa->name);
+        $this->actingAs($this->owner)->get('/partenaire/'.$this->spa->slug.'/profile')->assertOk()->assertSee('Infos pratiques');
         $this->actingAs($this->owner)->get('/partenaire/'.$this->otherSpa->slug)->assertNotFound();
         $this->actingAs($this->owner)->get('/admin')->assertForbidden();
     }

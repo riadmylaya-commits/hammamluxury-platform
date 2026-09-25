@@ -22,6 +22,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Set;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -54,9 +55,9 @@ class SpaForm
     public static function services(): array
     {
         return [
-            CheckboxList::make('categories')->label(__('partner.experiences'))->relationship('categories', 'name_fr', fn ($q) => $q->active())
+            CheckboxList::make('categories')->label(__('partner.experiences'))->relationship('categories', 'name_fr', fn (Builder $query) => $query->active())
                 ->getOptionLabelFromRecordUsing(fn (Category $c) => $c->label())->columns(2)->helperText(__('partner.experiences_help')),
-            CheckboxList::make('amenities')->label(__('partner.amenities'))->relationship('amenities', 'name_fr', fn ($q) => $q->active())
+            CheckboxList::make('amenities')->label(__('partner.amenities'))->relationship('amenities', 'name_fr', fn (Builder $query) => $query->active())
                 ->getOptionLabelFromRecordUsing(fn (Amenity $a) => $a->label())->columns(2),
         ];
     }
