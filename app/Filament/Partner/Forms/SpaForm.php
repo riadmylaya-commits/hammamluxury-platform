@@ -2,7 +2,9 @@
 
 namespace App\Filament\Partner\Forms;
 
+use App\Domain\Geo\WebsiteUrl;
 use App\Domain\Media\PhotoProcessor;
+use App\Filament\Forms\Components\MapPicker;
 use App\Filament\Forms\Components\PhoneField;
 use App\Models\Amenity;
 use App\Models\Category;
@@ -58,6 +60,18 @@ class SpaForm
     }
 
     /** Champs minimaux pour créer un établissement. */
+    public static function map(): MapPicker
+    {
+        return MapPicker::make('location')->label(__('partner.map'))->helperText(__('partner.map_help'));
+    }
+
+    /** Site web saisi librement (avec ou sans https://), normalisé en URL complète à l'enregistrement. */
+    public static function website(): TextInput
+    {
+        return TextInput::make('website')->label(__('partner.website'))->maxLength(190)->placeholder('www.mon-spa.com')
+            ->rule(fn () => WebsiteUrl::rule())->dehydrateStateUsing(fn (?string $state) => WebsiteUrl::normalize($state));
+    }
+
     public static function identity(): array
     {
         return [
@@ -101,11 +115,12 @@ class SpaForm
                 ]),
 
             Section::make(__('partner.section_address'))->schema([
-                TextInput::make('address')->label(__('partner.address'))->maxLength(255)->columnSpanFull(),
+                TextInput::make('address')->label(__('partner.address'))->maxLength(255)->columnSpanFull()->helperText(__('partner.address_help')),
+                self::map()->columnSpanFull(),
                 PhoneField::make('phone', __('partner.phone'))->columnSpanFull(),
                 PhoneField::make('whatsapp', __('partner.whatsapp'))->columnSpanFull(),
                 TextInput::make('email')->label('E-mail')->email()->maxLength(190),
-                TextInput::make('website')->label(__('partner.website'))->url()->maxLength(190),
+                self::website(),
                 Placeholder::make('privacy')->label('')->content(__('partner.contact_privacy'))->columnSpanFull(),
             ])->columns(3),
 

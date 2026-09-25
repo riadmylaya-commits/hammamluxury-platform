@@ -19,6 +19,7 @@ return [
     'max_participants' => 20,
     'min_photos' => (int) env('HL_MIN_PHOTOS', 10),
     'max_photos' => (int) env('HL_MAX_PHOTOS', 40),
+    'geocoder_url' => env('HL_GEOCODER_URL', 'https://nominatim.openstreetmap.org/search'),
 
     'default_commission_pct' => (float) env('HL_DEFAULT_COMMISSION_PCT', 15),
     'lock_timeout_seconds' => 5,

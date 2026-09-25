@@ -75,6 +75,8 @@ class CatalogueService
             'description' => $spa->tr('description'),
             'city' => $spa->city,
             'area' => $spa->area,
+            'lat' => $spa->lat,
+            'lng' => $spa->lng,
             'category' => $spa->category,
             'category_label' => Category::labelsBySlug()[$spa->category] ?? $spa->category,
             'rating' => $spa->rating !== null ? (float) $spa->rating : null,

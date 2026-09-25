@@ -2,6 +2,7 @@
 
 namespace Tests\Engine;
 
+use App\Domain\Geo\WebsiteUrl;
 use App\Domain\Partner\OnboardingService;
 use App\Filament\Partner\Pages\RegisterSpa;
 use App\Mail\SpaStatusMail;
@@ -14,6 +15,7 @@ use App\Models\User;
 use Database\Seeders\ReferenceSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -63,9 +65,12 @@ class SpaOnboardingWizardTest extends TestCase
         $this->assertDatabaseCount('spas', 0);
 
         // 2. établissement → brouillon créé
-        $t->fillForm(['name' => 'Hammam Nadia', 'category' => 'hammam', 'city_id' => $city->id, 'area' => 'Médina', 'address' => '12 derb Test', 'description_fr' => str_repeat('Un hammam traditionnel au cœur de la médina. ', 3), 'spa_phone' => '+212524000000']);
+        $t->fillForm(['name' => 'Hammam Nadia', 'category' => 'hammam', 'city_id' => $city->id, 'area' => 'Médina', 'address' => '12 derb Test', 'description_fr' => str_repeat('Un hammam traditionnel au cœur de la médina. ', 3), 'spa_phone' => '+212524000000', 'website' => 'www.hammam-nadia.ma', 'location' => ['lat' => 31.6295, 'lng' => -7.9811]]);
         $this->next($t, 1)->assertHasNoFormErrors();
         $spa = Spa::where('name', 'Hammam Nadia')->firstOrFail();
+        $this->assertSame('https://www.hammam-nadia.ma', $spa->website);
+        $this->assertSame(31.6295, $spa->lat);
+        $this->assertSame(-7.9811, $spa->lng);
         $this->assertSame('draft', $spa->status);
         $this->assertSame(2, $spa->onboarding_step);
         $this->assertSame('hammam-nadia-marrakech', $spa->slug);
@@ -99,7 +104,7 @@ class SpaOnboardingWizardTest extends TestCase
         $this->assertSame(2, $spa->treatments()->count());
 
         // 6. horaires + capacité → ressources et étapes auto
-        $t->fillForm(['hours' => [['weekday' => 1, 'opens_min' => '10:00', 'closes_min' => '20:00'], ['weekday' => 6, 'opens_min' => '09:00', 'closes_min' => '22:00']], 'hammam_capacity' => 0, 'massage_cabins' => 0, 'treatment_rooms' => 0]);
+        $t->fillForm(['hours_every_day' => false, 'hours' => [['weekday' => 1, 'opens_min' => '10:00', 'closes_min' => '20:00'], ['weekday' => 6, 'opens_min' => '09:00', 'closes_min' => '22:00']], 'hammam_capacity' => 0, 'massage_cabins' => 0, 'treatment_rooms' => 0]);
         $this->next($t, 5)->assertHasFormErrors(['hammam_capacity']);
         $t->fillForm(['hammam_capacity' => 8, 'massage_cabins' => 2]);
         $this->next($t, 5)->assertHasNoFormErrors();
@@ -196,7 +201,7 @@ class SpaOnboardingWizardTest extends TestCase
         // Précédent jusqu'à l'étape 1 puis Suivant jusqu'au récapitulatif : rien n'est perdu, aucun doublon
         $again->fillForm(['treatments' => [['name_fr' => 'Massage relaxant', 'category' => 'massage', 'duration_min' => 60, 'price_solo' => 400]]]);
         $this->next($again, 4)->assertHasNoFormErrors();
-        $again->fillForm(['hours' => [['weekday' => 2, 'opens_min' => '10:00', 'closes_min' => '19:00']], 'hammam_capacity' => 0, 'massage_cabins' => 1, 'treatment_rooms' => 0]);
+        $again->fillForm(['hours_every_day' => false, 'hours' => [['weekday' => 2, 'opens_min' => '10:00', 'closes_min' => '19:00']], 'hammam_capacity' => 0, 'massage_cabins' => 1, 'treatment_rooms' => 0]);
         $this->next($again, 5)->assertHasNoFormErrors();
         foreach ([6, 5, 4, 3, 2, 1] as $s) {
             $again->call('dispatchFormEvent', 'wizard::previousStep', 'data', $s);
@@ -265,5 +270,86 @@ class SpaOnboardingWizardTest extends TestCase
         // Le brouillon repris est le second ; l'établissement publié n'est jamais proposé comme brouillon
         $this->assertSame($second->id, app(OnboardingService::class)->currentDraft($this->partner)->id);
         $this->assertNull(app(OnboardingService::class)->currentDraft($this->partner, $existing->id));
+    }
+
+    public function test_website_is_normalized_and_invalid_values_rejected(): void
+    {
+        $this->assertSame('https://riadmylaya.com', WebsiteUrl::normalize('riadmylaya.com'));
+        $this->assertSame('https://www.riadmylaya.com', WebsiteUrl::normalize(' www.riadmylaya.com/ '));
+        $this->assertSame('https://riadmylaya.com/spa', WebsiteUrl::normalize('http://riadmylaya.com/spa'));
+        $this->assertNull(WebsiteUrl::normalize(''));
+        $this->assertNull(WebsiteUrl::normalize('pas une url'));
+
+        $city = City::where('slug', 'marrakech')->firstOrFail();
+        $t = Livewire::test(RegisterSpa::class);
+        $this->next($t, 0);
+        $base = ['name' => 'Spa Web', 'category' => 'spa', 'city_id' => $city->id, 'address' => '1 rue Test', 'description_fr' => str_repeat('Spa test description assez longue. ', 2), 'spa_phone' => '+212524000000'];
+
+        $t->fillForm($base + ['website' => 'pas une url']);
+        $this->next($t, 1)->assertHasFormErrors(['website']);
+        $this->assertDatabaseCount('spas', 0);
+
+        $t->fillForm($base + ['website' => 'riadmylaya.com']);
+        $this->next($t, 1)->assertHasNoFormErrors();
+        $this->assertSame('https://riadmylaya.com', Spa::firstOrFail()->website);
+
+        $again = Livewire::test(RegisterSpa::class);
+        $again->assertFormSet(['website' => 'https://riadmylaya.com']);
+    }
+
+    public function test_every_day_hours_shortcut_creates_seven_rows_and_is_restored(): void
+    {
+        $spa = $this->draftAtStep(5);
+
+        $t = Livewire::test(RegisterSpa::class);
+        $t->assertFormSet(['hours_every_day' => true]);
+        $t->fillForm(['hours_every_day' => true, 'every_opens' => '10:00', 'every_closes' => '09:00', 'hammam_capacity' => 4, 'massage_cabins' => 0, 'treatment_rooms' => 0]);
+        $this->next($t, 5)->assertHasFormErrors(['every_closes']);
+        $this->assertSame(0, $spa->hours()->count());
+
+        $t->fillForm(['every_closes' => '20:00']);
+        $this->next($t, 5)->assertHasNoFormErrors();
+        $this->assertSame(7, $spa->hours()->count());
+        $this->assertSame([0, 1, 2, 3, 4, 5, 6], $spa->hours()->orderBy('weekday')->pluck('weekday')->all());
+        $this->assertSame([600], $spa->hours()->distinct()->pluck('opens_min')->all());
+        $this->assertSame([1200], $spa->hours()->distinct()->pluck('closes_min')->all());
+        $this->assertTrue($spa->fresh()->hasSameHoursEveryDay());
+
+        $again = Livewire::test(RegisterSpa::class);
+        $again->assertFormSet(['hours_every_day' => true, 'every_opens' => '10:00', 'every_closes' => '20:00']);
+
+        // passage en mode manuel : lundi fermé, samedi plus long
+        $again->fillForm(['hours_every_day' => false, 'hours' => [['weekday' => 1, 'opens_min' => '09:00', 'closes_min' => '19:00'], ['weekday' => 5, 'opens_min' => '09:00', 'closes_min' => '23:00']]]);
+        $this->next($again, 5)->assertHasNoFormErrors();
+        $this->assertSame(2, $spa->hours()->count());
+        $this->assertFalse($spa->fresh()->hasSameHoursEveryDay());
+        Livewire::test(RegisterSpa::class)->assertFormSet(['hours_every_day' => false]);
+    }
+
+    public function test_locate_action_geocodes_address_and_sets_marker(): void
+    {
+        Http::fake(fn ($request) => str_contains($request['q'], 'Nulle part')
+            ? Http::response([])
+            : Http::response([['lat' => '31.6300000', 'lon' => '-7.9800000', 'display_name' => 'Derb Test, Médina, Marrakech']]));
+        $city = City::where('slug', 'marrakech')->firstOrFail();
+
+        $t = Livewire::test(RegisterSpa::class);
+        $this->next($t, 0);
+        $t->fillForm(['address' => '12 derb Test', 'city_id' => $city->id]);
+        $t->callFormComponentAction('location', 'locate');
+        $t->assertFormSet(['location' => ['lat' => 31.63, 'lng' => -7.98]]);
+        Http::assertSent(fn ($r) => str_contains($r['q'], '12 derb Test') && str_contains($r['q'], 'Marrakech') && $r['countrycodes'] === 'ma');
+
+        $t->fillForm(['address' => 'Nulle part xyz']);
+        $t->callFormComponentAction('location', 'locate')->assertNotified(__('partner.map_not_found'));
+        $this->assertNull(Spa::first());
+    }
+
+    /** Brouillon prêt à l'étape donnée (1-based) pour tester une étape isolément. */
+    private function draftAtStep(int $step): Spa
+    {
+        $spa = $this->partner->spas()->create(['name' => 'Spa Etape', 'slug' => 'spa-etape', 'city_id' => City::where('slug', 'marrakech')->value('id'), 'city' => 'Marrakech', 'category' => 'spa', 'status' => 'draft', 'onboarding_step' => $step - 1, 'address' => '1 rue Test', 'phone' => '+212524000000', 'description_fr' => str_repeat('Description. ', 5)]);
+
+        return $spa;
     }
 }

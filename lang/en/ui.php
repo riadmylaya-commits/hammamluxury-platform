@@ -109,4 +109,6 @@ return [
     'footer_partner' => 'Partners',
     'footer_help' => 'Help',
     'footer_legal' => 'Legal notice',
+    'location' => 'Location',
+    'open_in_maps' => 'Open in Google Maps',
 ];

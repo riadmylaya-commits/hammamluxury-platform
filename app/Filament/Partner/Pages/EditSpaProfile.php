@@ -22,6 +22,14 @@ class EditSpaProfile extends EditTenantProfile
         return $form->schema(SpaForm::full());
     }
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        /** @var Spa $spa */
+        $spa = $this->tenant;
+
+        return $data + ['location' => $spa->location];
+    }
+
     protected function getFormActions(): array
     {
         return [

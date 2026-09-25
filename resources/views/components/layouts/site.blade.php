@@ -32,5 +32,20 @@
     <div><b>{{ __('ui.footer_help') }}</b><a href="#">FAQ</a><a href="#">Contact</a></div>
     <div><b>{{ __('ui.footer_legal') }}</b><a href="#">CGU</a><a href="#">Confidentialité</a></div>
 </div></footer>
+<script>
+(function () {
+    var el = document.getElementById('spa-map');
+    if (!el) return;
+    var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+    var js = document.createElement('script'); js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    js.onload = function () {
+        var ll = [parseFloat(el.dataset.lat), parseFloat(el.dataset.lng)];
+        var map = L.map(el, { scrollWheelZoom: false }).setView(ll, 15);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+        L.marker(ll).addTo(map).bindPopup(el.dataset.title);
+    };
+    document.head.appendChild(js);
+})();
+</script>
 </body>
 </html>

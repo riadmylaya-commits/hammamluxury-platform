@@ -111,4 +111,6 @@ return [
     'footer_partner' => 'Partenaires',
     'footer_help' => 'Aide',
     'footer_legal' => 'Mentions légales',
+    'location' => 'Localisation',
+    'open_in_maps' => 'Ouvrir dans Google Maps',
 ];

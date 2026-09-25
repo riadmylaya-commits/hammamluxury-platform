@@ -116,13 +116,14 @@ class RegisterSpa extends RegisterTenant
         return Step::make(__('partner.step_spa'))->description(__('partner.step_spa_help'))->icon('heroicon-o-building-storefront')->schema([
             Grid::make(2)->schema([
                 ...SpaForm::identity(),
-                TextInput::make('address')->label(__('partner.address'))->required()->maxLength(255)->columnSpanFull(),
+                TextInput::make('address')->label(__('partner.address'))->required()->maxLength(255)->columnSpanFull()->helperText(__('partner.address_help')),
+                SpaForm::map()->columnSpanFull(),
                 Textarea::make('description_fr')->label(__('partner.description_fr'))->rows(4)->required()->minLength(40)->maxLength(4000)->helperText(__('partner.description_help')),
                 Textarea::make('description_en')->label(__('partner.description_en'))->rows(4)->maxLength(4000),
                 PhoneField::make('spa_phone', __('partner.spa_phone'), required: true)->columnSpanFull(),
                 PhoneField::make('spa_whatsapp', __('partner.spa_whatsapp'))->columnSpanFull(),
                 TextInput::make('email')->label(__('partner.spa_email'))->email()->maxLength(190),
-                TextInput::make('website')->label(__('partner.website'))->url()->maxLength(190),
+                SpaForm::website(),
             ]),
             Placeholder::make('privacy')->label('')->content(__('partner.contact_privacy')),
         ])->afterValidation(function (Step $component) {
@@ -199,13 +200,18 @@ class RegisterSpa extends RegisterTenant
             ->dehydrateStateUsing(fn ($state) => SpaHour::toMinutes((string) $state));
 
         return Step::make(__('partner.step_hours'))->description(__('partner.step_hours_help'))->icon('heroicon-o-clock')->schema([
+            Toggle::make('hours_every_day')->label(__('partner.hours_every_day'))->helperText(__('partner.hours_every_day_help'))->live()->default(true),
+            Grid::make(2)->schema([
+                $time('every_opens', __('partner.opens'))->default('10:00'),
+                $time('every_closes', __('partner.closes'))->default('20:00'),
+            ])->visible(fn (Get $get) => (bool) $get('hours_every_day')),
             Repeater::make('hours')->label(__('partner.section_hours'))->minItems(1)->reorderable(false)
                 ->addActionLabel(__('partner.add_hours'))
                 ->schema([
                     Select::make('weekday')->label(__('partner.weekday'))->options(SpaForm::weekdays())->required()->native(false),
                     $time('opens_min', __('partner.opens')),
                     $time('closes_min', __('partner.closes')),
-                ])->columns(3),
+                ])->columns(3)->visible(fn (Get $get) => ! $get('hours_every_day')),
             Grid::make(3)->schema([
                 TextInput::make('hammam_capacity')->label(__('partner.hammam_capacity'))->numeric()->minValue(0)->maxValue(100)->default(0)->required()->helperText(__('partner.hammam_capacity_help')),
                 TextInput::make('massage_cabins')->label(__('partner.massage_cabins'))->numeric()->minValue(0)->maxValue(50)->default(0)->required()->helperText(__('partner.massage_cabins_help')),
@@ -217,12 +223,20 @@ class RegisterSpa extends RegisterTenant
             if (((int) $state['hammam_capacity'] + (int) $state['massage_cabins'] + (int) $state['treatment_rooms']) < 1) {
                 throw ValidationException::withMessages(['data.hammam_capacity' => __('partner.capacity_required')]);
             }
-            foreach ($state['hours'] ?? [] as $i => $h) {
-                if ((int) $h['closes_min'] <= (int) $h['opens_min']) {
-                    throw ValidationException::withMessages(["data.hours.$i.closes_min" => __('partner.hours_order_error')]);
+            if ($state['hours_every_day'] ?? false) {
+                if ((int) $state['every_closes'] <= (int) $state['every_opens']) {
+                    throw ValidationException::withMessages(['data.every_closes' => __('partner.hours_order_error')]);
                 }
+                $hours = array_map(fn (int $d) => ['weekday' => $d, 'opens_min' => $state['every_opens'], 'closes_min' => $state['every_closes']], range(0, 6));
+            } else {
+                foreach ($state['hours'] ?? [] as $i => $h) {
+                    if ((int) $h['closes_min'] <= (int) $h['opens_min']) {
+                        throw ValidationException::withMessages(["data.hours.$i.closes_min" => __('partner.hours_order_error')]);
+                    }
+                }
+                $hours = array_values($state['hours'] ?? []);
             }
-            $this->service()->saveHours($this->requireSpa(), array_values($state['hours'] ?? []), $state);
+            $this->service()->saveHours($this->requireSpa(), $hours, $state);
             $this->service()->markStep($this->requireSpa(), 6);
             $this->savedNotice();
         });
@@ -303,6 +317,9 @@ class RegisterSpa extends RegisterTenant
             'category' => 'hammam',
             'treatments' => [],
             'hours' => [],
+            'hours_every_day' => true,
+            'every_opens' => '10:00',
+            'every_closes' => '20:00',
             'hammam_capacity' => 0,
             'massage_cabins' => 0,
             'treatment_rooms' => 0,
@@ -316,7 +333,7 @@ class RegisterSpa extends RegisterTenant
         return [
             'name' => $spa->name, 'category' => $spa->category, 'city_id' => $spa->city_id, 'area' => $spa->area, 'address' => $spa->address,
             'description_fr' => $spa->description_fr, 'description_en' => $spa->description_en,
-            'spa_phone' => $spa->phone, 'spa_whatsapp' => $spa->whatsapp, 'email' => $spa->email, 'website' => $spa->website,
+            'spa_phone' => $spa->phone, 'spa_whatsapp' => $spa->whatsapp, 'email' => $spa->email, 'website' => $spa->website, 'location' => $spa->location,
             'photos' => $spa->photos->sortBy('sort_order')->pluck('path')->values()->all(),
             'categories' => $spa->categories->pluck('id')->all(),
             'amenities' => $spa->amenities->pluck('id')->all(),
@@ -325,6 +342,9 @@ class RegisterSpa extends RegisterTenant
                 'price_solo' => $t->price_solo, 'price_couple' => $t->price_couple, 'description_fr' => $t->description_fr,
             ])->values()->all() ?: [],
             'hours' => $spa->hours->sortBy(['weekday', 'opens_min'])->map(fn ($h) => ['weekday' => $h->weekday, 'opens_min' => SpaHour::toHhmm($h->opens_min), 'closes_min' => SpaHour::toHhmm($h->closes_min)])->values()->all(),
+            'hours_every_day' => $spa->hours->isEmpty() || $spa->hasSameHoursEveryDay(),
+            'every_opens' => SpaHour::toHhmm($spa->hours->first()?->opens_min ?? 600),
+            'every_closes' => SpaHour::toHhmm($spa->hours->first()?->closes_min ?? 1200),
         ] + $this->service()->capacityOf($spa) + $state;
     }
 

@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Domain\Geo\WebsiteUrl;
 use App\Models\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -18,6 +20,34 @@ class Spa extends Model
     protected $guarded = [];
 
     protected $casts = ['submitted_at' => 'datetime', 'published_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float'];
+
+    /** Position sur la carte : `['lat' => ?, 'lng' => ?]`, éditable comme un seul champ de formulaire. */
+    protected function location(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => ['lat' => $this->lat, 'lng' => $this->lng],
+            set: fn (?array $value) => [
+                'lat' => isset($value['lat']) && $value['lat'] !== '' ? (float) $value['lat'] : null,
+                'lng' => isset($value['lng']) && $value['lng'] !== '' ? (float) $value['lng'] : null,
+            ],
+        );
+    }
+
+    protected function website(): Attribute
+    {
+        return Attribute::set(fn (?string $value) => WebsiteUrl::normalize($value));
+    }
+
+    /** Vrai si les 7 jours ont exactement une même plage horaire (mode « tous les jours » de l'assistant). */
+    public function hasSameHoursEveryDay(): bool
+    {
+        $hours = $this->hours;
+        if ($hours->count() !== 7 || $hours->pluck('weekday')->unique()->count() !== 7) {
+            return false;
+        }
+
+        return $hours->map(fn ($h) => $h->opens_min.'-'.$h->closes_min)->unique()->count() === 1;
+    }
 
     protected static function booted(): void
     {
