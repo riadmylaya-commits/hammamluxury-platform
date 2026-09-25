@@ -6,10 +6,12 @@ use App\Domain\Booking\BookingException;
 use App\Domain\Catalogue\PublicationChecklist;
 use App\Filament\Admin\Resources\SpaResource\Pages\EditSpa;
 use App\Filament\Admin\Resources\SpaResource\Pages\ListSpas;
+use App\Filament\Partner\Pages\EditSpaProfile;
 use App\Filament\Partner\Resources\BookingResource\Pages\ListBookings;
 use App\Filament\Partner\Resources\BookingResource\Pages\ViewBooking;
 use App\Filament\Partner\Resources\TreatmentResource\Pages\CreateTreatment;
 use App\Filament\Partner\Resources\TreatmentResource\Pages\ListTreatments;
+use App\Models\City;
 use App\Models\Partner;
 use App\Models\Spa;
 use App\Models\Treatment;
@@ -70,6 +72,25 @@ class PanelsTest extends BookingFlowTestCase
         foreach (['activity-logs', 'cities', 'categories', 'amenities', 'spas', 'partners', 'bookings'] as $slug) {
             $this->get("/admin/$slug")->assertOk();
         }
+    }
+
+    public function test_partner_profile_saves_practical_info_with_existing_photos(): void
+    {
+        $this->spa->photos()->create(['path' => 'https://picsum.photos/seed/x/1200/800', 'sort_order' => 1, 'is_cover' => true]);
+        $this->spa->update(['city_id' => City::first()?->id ?? City::create(['slug' => 'marrakech', 'name_fr' => 'Marrakech', 'name_en' => 'Marrakech'])->id]);
+        $this->actingAs($this->owner);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        Livewire::test(EditSpaProfile::class)
+            ->fillForm(['practical_info.notes' => 'Arrivez 15 minutes avant', 'practical_info.gender' => 'mixed'])
+            ->call('save')->assertHasNoFormErrors();
+
+        $spa = $this->spa->fresh();
+        $this->assertSame('Arrivez 15 minutes avant', $spa->practical_info['notes']);
+        $this->assertSame('mixed', $spa->practical_info['gender']);
+        $this->assertSame(1, $spa->photos()->count(), 'photos existantes (URL) conservées');
+        $this->get('/fr/spa/'.$spa->slug)->assertSee('Arrivez 15 minutes avant');
     }
 
     public function test_partner_sees_only_own_treatments_and_can_create_package(): void

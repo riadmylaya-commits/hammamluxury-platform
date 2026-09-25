@@ -24,6 +24,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Set;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class SpaForm
@@ -41,7 +42,19 @@ class SpaForm
             ->acceptedFileTypes(PhotoProcessor::MIMES)->maxSize((int) (PhotoProcessor::MAX_BYTES / 1024))
             ->rules(PhotoProcessor::rules())
             ->helperText(__('partner.photo_rules', ['w' => PhotoProcessor::MIN_WIDTH, 'h' => PhotoProcessor::MIN_HEIGHT, 'mb' => (int) (PhotoProcessor::MAX_BYTES / 1024 / 1024)]))
-            ->saveUploadedFileUsing(fn (TemporaryUploadedFile $file) => PhotoProcessor::store($file));
+            ->saveUploadedFileUsing(fn (TemporaryUploadedFile $file) => PhotoProcessor::store($file))
+            ->fetchFileInformation(false)
+            ->getUploadedFileUsing(function (FileUpload $component, string $file): ?array {
+                if (Str::startsWith($file, ['http://', 'https://'])) {
+                    return ['name' => basename(parse_url($file, PHP_URL_PATH) ?: $file), 'size' => 0, 'type' => 'image/jpeg', 'url' => $file];
+                }
+                $disk = $component->getDisk();
+                if (! $disk->exists($file)) {
+                    return null;
+                }
+
+                return ['name' => basename($file), 'size' => $disk->size($file), 'type' => $disk->mimeType($file), 'url' => $disk->url($file)];
+            });
 
         return $multiple ? $upload->multiple()->reorderable()->appendFiles()->panelLayout('grid') : $upload;
     }
