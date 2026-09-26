@@ -111,8 +111,9 @@ class BookingService
             throw new BookingException('unavailable', implode(' ', $plan['errors']), 409);
         }
         $pct = $spa->partner->commissionPct();
+        $commissionable = round((float) ($quote['commissionable'] ?? $quote['total']), 2);
 
-        $booking = DB::transaction(function () use ($spa, $start, $quote, $customer, $status, $intentId, $locale, $plan, $pct) {
+        $booking = DB::transaction(function () use ($spa, $start, $quote, $customer, $status, $intentId, $locale, $plan, $pct, $commissionable) {
             $booking = Booking::create([
                 'spa_id' => $spa->id,
                 'user_id' => $customer['user_id'] ?? null,
@@ -122,9 +123,11 @@ class BookingService
                 'party' => $quote['party'],
                 'duration_min' => $quote['duration_min'],
                 'total' => $quote['total'],
+                'commissionable_amount' => $commissionable,
                 'commission_pct' => $pct,
-                'commission_amount' => round($quote['total'] * $pct / 100, 2),
+                'commission_amount' => round($commissionable * $pct / 100, 2),
                 'currency' => $quote['currency'],
+                'payment_status' => 'on_site',
                 'first_name' => $customer['first_name'] ?? '',
                 'last_name' => $customer['last_name'] ?? '',
                 'email' => $customer['email'] ?? '',
@@ -218,6 +221,32 @@ class BookingService
         }
 
         return $this->transition($booking, 'no_show', $actor);
+    }
+
+    /** Passe en « terminée » les réservations confirmées dont l'heure de fin est dépassée (sans action du partenaire). */
+    public function completePast(?CarbonImmutable $now = null): array
+    {
+        $now ??= CarbonImmutable::now();
+        $done = [];
+        $due = Booking::where('status', 'confirmed')->where('end_at', '<=', $now->subMinutes((int) config('hl.auto_complete_after_min', 60)))->get();
+        foreach ($due as $booking) {
+            $this->transition($booking, 'completed', 'system');
+            $done[] = $booking->id;
+        }
+
+        return $done;
+    }
+
+    public function setPaymentStatus(Booking $booking, string $actor, string $status): Booking
+    {
+        if (! in_array($status, Booking::PAYMENT_STATUSES, true)) {
+            throw BookingException::make('payment', 'invalid_payment_status');
+        }
+        $old = $booking->payment_status;
+        $booking->update(['payment_status' => $status]);
+        $booking->log('payment:'.$status, $actor, ['from' => $old]);
+
+        return $booking;
     }
 
     private function transition(Booking $booking, string $status, string $actor, array $extra = []): Booking

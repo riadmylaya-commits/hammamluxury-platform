@@ -8,6 +8,7 @@ use App\Domain\Phone\PhoneNumber;
 use App\Models\Booking;
 use App\Models\BookingParticipant;
 use Filament\Actions\Action as PageAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section;
@@ -55,17 +56,45 @@ class BookingActions
                 ->requiresConfirmation()->modalDescription(__('partner.decline_help'))
                 ->action(fn (Booking $b, array $data) => $run($b, 'decline', [$data['note'] ?? null])),
             $class::make('complete')->label(__('partner.complete'))->icon('heroicon-o-flag')->color('info')
-                ->visible(fn (Booking $b) => $b->isConfirmed() && $b->end_at->isPast())
+                ->visible(fn (Booking $b) => $actor === 'admin' && $b->isConfirmed() && $b->end_at->isPast())
                 ->action(fn (Booking $b) => $run($b, 'complete')),
             $class::make('no_show')->label(__('partner.no_show'))->icon('heroicon-o-user-minus')->color('gray')
                 ->visible(fn (Booking $b) => $b->isConfirmed() && $b->start_at->isPast())
                 ->requiresConfirmation()
                 ->action(fn (Booking $b) => $run($b, 'noShow')),
             $class::make('cancel')->label(__('partner.cancel'))->icon('heroicon-o-trash')->color('danger')
-                ->visible(fn (Booking $b) => $b->isConfirmed())
+                ->visible(fn (Booking $b) => $actor === 'admin' && $b->isConfirmed())
                 ->requiresConfirmation()->modalDescription(__('partner.cancel_help'))
                 ->action(fn (Booking $b) => $run($b, 'cancel')),
+            $class::make('payment')->label(__('partner.payment'))->icon('heroicon-o-banknotes')->color('gray')
+                ->visible(fn (Booking $b) => $b->isConfirmed() || $b->status === 'completed')
+                ->fillForm(fn (Booking $b) => ['payment_status' => $b->payment_status])
+                ->form([Select::make('payment_status')->label(__('partner.payment_status'))->options(__('partner.payment_statuses'))->required()->native(false)])
+                ->modalDescription(__('partner.payment_help'))
+                ->action(fn (Booking $b, array $data) => $run($b, 'setPaymentStatus', [$data['payment_status']])),
         ];
+    }
+
+    /** Ajout d'une note interne (jamais visible du client). */
+    public static function addNote(string $class = PageAction::class): PageAction|Action
+    {
+        return $class::make('addNote')->label(__('partner.add_note'))->icon('heroicon-o-pencil-square')->color('gray')
+            ->modalHeading(__('partner.internal_notes'))->modalDescription(__('partner.internal_notes_help'))
+            ->form([Textarea::make('body')->label(__('partner.note'))->rows(3)->required()->maxLength(1000)->placeholder(__('partner.note_placeholder'))])
+            ->action(function (Booking $b, array $data) {
+                $b->notes()->create(['spa_id' => $b->spa_id, 'user_id' => auth()->id(), 'body' => trim($data['body'])]);
+                Notification::make()->title(__('partner.note_saved'))->success()->send();
+            });
+    }
+
+    public static function paymentColor(string $status): string
+    {
+        return match ($status) {
+            'paid' => 'success',
+            'partial' => 'warning',
+            'refunded' => 'gray',
+            default => 'info',
+        };
     }
 
     /** Schéma d'infolist d'une réservation. */
@@ -84,8 +113,12 @@ class BookingActions
                 TextEntry::make('duration_min')->label(__('partner.duration'))->suffix(' min'),
                 TextEntry::make('total')->label(__('partner.total'))->formatStateUsing($money)->weight('bold'),
                 TextEntry::make('expires_at')->label(__('partner.expires_at'))->since()->visible(fn (Booking $b) => $b->isWaiting()),
+                TextEntry::make('payment_status')->label(__('partner.payment_status'))->badge()
+                    ->formatStateUsing(fn ($state) => __('partner.payment_statuses')[$state] ?? $state)->color(fn ($state) => self::paymentColor((string) $state)),
+                TextEntry::make('commissionable_amount')->label(__('partner.commissionable'))->getStateUsing(fn (Booking $b) => $b->commissionableAmount())->formatStateUsing($money)->visible($withCommission),
                 TextEntry::make('commission_amount')->label(__('partner.commission'))->formatStateUsing($money)
                     ->helperText(fn (Booking $b) => $b->commission_pct.' %')->visible($withCommission),
+                TextEntry::make('net')->label(__('partner.net_partner'))->getStateUsing(fn (Booking $b) => $b->netForPartner())->formatStateUsing($money)->weight('bold')->visible($withCommission),
             ])->columns(4),
 
             Section::make(__('partner.participants'))->schema([
@@ -107,6 +140,14 @@ class BookingActions
                 TextEntry::make('note')->label(__('partner.customer_note'))->placeholder('—')->columnSpanFull(),
                 TextEntry::make('partner_note')->label(__('partner.partner_note'))->placeholder('—')->columnSpanFull(),
             ])->columns(4),
+
+            Section::make(__('partner.internal_notes'))->description(__('partner.internal_notes_help'))->collapsed()->schema([
+                RepeatableEntry::make('notes')->label('')->schema([
+                    TextEntry::make('created_at')->label('')->dateTime('d/m/Y H:i'),
+                    TextEntry::make('user.name')->label('')->placeholder('—'),
+                    TextEntry::make('body')->label('')->columnSpan(2),
+                ])->columns(4),
+            ]),
 
             Section::make(__('partner.history'))->collapsed()->schema([
                 RepeatableEntry::make('events')->label('')->schema([

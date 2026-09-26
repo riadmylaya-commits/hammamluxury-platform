@@ -90,6 +90,8 @@ return [
         'spa.draft_created' => 'Establishment draft created',
         'spa.license_updated' => 'Operating licence entered / updated',
         'spa.submitted' => 'Listing submitted for review',
+        'extra.commissionable' => 'Extra subject to commission',
+        'extra.non_commissionable' => 'Extra excluded from commission',
         'spa.published' => 'Establishment published',
         'spa.refused' => 'Listing refused',
         'spa.suspended' => 'Establishment suspended',

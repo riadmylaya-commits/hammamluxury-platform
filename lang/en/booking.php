@@ -19,6 +19,7 @@ return [
     'intent_replayed' => 'This booking request has already been recorded.',
     'price_changed' => 'The price or duration of this treatment has changed, please review your selection.',
     'not_waiting' => 'This booking is no longer pending.',
+    'invalid_payment_status' => 'Invalid payment status.',
     'not_confirmed' => 'This booking is not confirmed.',
     'already_inactive' => 'This booking is already cancelled or closed.',
     'spa_not_bookable' => 'This venue is not accepting bookings at the moment.',

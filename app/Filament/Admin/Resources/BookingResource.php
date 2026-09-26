@@ -47,6 +47,9 @@ class BookingResource extends Resource
                 Tables\Columns\TextColumn::make('party')->label(__('partner.party')),
                 Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->sortable(),
                 Tables\Columns\TextColumn::make('commission_amount')->label(__('partner.commission'))->money(config('hl.currency'), locale: 'fr'),
+                Tables\Columns\TextColumn::make('payment_status')->label(__('partner.payment'))->badge()
+                    ->formatStateUsing(fn ($state) => __('partner.payment_statuses')[$state] ?? $state)
+                    ->color(fn ($state) => BookingActions::paymentColor((string) $state))->toggleable(),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => __('ui.status')[$state] ?? $state)
                     ->color(fn ($state) => BookingActions::statusColor($state)),

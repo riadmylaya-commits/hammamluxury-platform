@@ -19,6 +19,7 @@ return [
     'intent_replayed' => 'Cette demande de réservation a déjà été enregistrée.',
     'price_changed' => 'Le tarif ou la durée de cette prestation a changé, merci de vérifier à nouveau votre sélection.',
     'not_waiting' => 'Cette réservation n’est plus en attente.',
+    'invalid_payment_status' => 'Statut de paiement invalide.',
     'not_confirmed' => 'Cette réservation n’est pas confirmée.',
     'already_inactive' => 'Cette réservation est déjà annulée ou terminée.',
     'spa_not_bookable' => 'Cet établissement n’accepte pas de réservation pour le moment.',

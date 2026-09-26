@@ -33,7 +33,7 @@ class BookingController extends Controller
         return $this->guard(function () use ($spa, $request) {
             $quote = $this->quotes->fromRequest($spa, $request->all());
 
-            return response()->json(['data' => $quote], $quote['ok'] ? 200 : 422);
+            return response()->json(['data' => QuoteBuilder::publicView($quote)], $quote['ok'] ? 200 : 422);
         });
     }
 

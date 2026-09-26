@@ -11,6 +11,8 @@ class Booking extends Model
 {
     public const STATUSES = ['waiting', 'confirmed', 'declined', 'cancelled', 'expired', 'completed', 'no_show'];
 
+    public const PAYMENT_STATUSES = ['on_site', 'paid', 'partial', 'refunded'];
+
     /** Statuts qui ne consomment plus de capacité. */
     public const INACTIVE_STATUSES = ['declined', 'cancelled', 'expired', 'no_show'];
 
@@ -20,7 +22,7 @@ class Booking extends Model
         'quote' => 'array',
         'start_at' => 'datetime', 'end_at' => 'datetime', 'expires_at' => 'datetime',
         'expiration_notified_at' => 'datetime', 'confirmed_at' => 'datetime', 'cancelled_at' => 'datetime',
-        'total' => 'float', 'commission_pct' => 'float', 'commission_amount' => 'float',
+        'total' => 'float', 'commissionable_amount' => 'float', 'commission_pct' => 'float', 'commission_amount' => 'float',
     ];
 
     protected static function booted(): void
@@ -63,6 +65,23 @@ class Booking extends Model
     public function events(): HasMany
     {
         return $this->hasMany(BookingEvent::class);
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(BookingNote::class)->latest();
+    }
+
+    /** Montant sur lequel porte la commission (total si non figé). */
+    public function commissionableAmount(): float
+    {
+        return (float) ($this->commissionable_amount ?? $this->total);
+    }
+
+    /** Ce qui revient au partenaire une fois la commission HammamLuxury déduite. */
+    public function netForPartner(): float
+    {
+        return round((float) $this->total - (float) $this->commission_amount, 2);
     }
 
     public function isActive(): bool

@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources;
 use App\Domain\Catalogue\PublicationChecklist;
 use App\Domain\Partner\OnboardingService;
 use App\Filament\Admin\Resources\SpaResource\Pages;
+use App\Filament\Admin\Resources\SpaResource\RelationManagers;
 use App\Filament\Partner\Forms\SpaForm;
 use App\Models\Spa;
 use Filament\Forms;
@@ -146,6 +147,11 @@ class SpaResource extends Resource
                     ->url(fn (Spa $s) => url("/partenaire/{$s->slug}")),
                 Tables\Actions\EditAction::make(),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [RelationManagers\ExtrasRelationManager::class];
     }
 
     public static function getPages(): array

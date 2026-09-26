@@ -90,6 +90,8 @@ return [
         'spa.draft_created' => 'Brouillon d’établissement créé',
         'spa.license_updated' => 'Autorisation d’exploitation renseignée / modifiée',
         'spa.submitted' => 'Fiche envoyée pour validation',
+        'extra.commissionable' => 'Extra soumis à commission',
+        'extra.non_commissionable' => 'Extra exclu de la commission',
         'spa.published' => 'Établissement publié',
         'spa.refused' => 'Fiche refusée',
         'spa.suspended' => 'Établissement suspendu',

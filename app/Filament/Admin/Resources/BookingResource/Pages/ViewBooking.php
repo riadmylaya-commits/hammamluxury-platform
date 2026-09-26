@@ -13,6 +13,6 @@ class ViewBooking extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return BookingActions::all('admin', Action::class);
+        return [...BookingActions::all('admin', Action::class), BookingActions::addNote()];
     }
 }

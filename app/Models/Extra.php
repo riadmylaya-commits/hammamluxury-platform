@@ -12,7 +12,9 @@ class Extra extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['per_person' => 'bool', 'price' => 'float'];
+    protected $casts = ['per_person' => 'bool', 'commissionable' => 'bool', 'price' => 'float'];
+
+    protected $attributes = ['commissionable' => true];
 
     public function spa(): BelongsTo
     {

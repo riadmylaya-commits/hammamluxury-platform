@@ -10,6 +10,8 @@ return [
 
     // Délai avant expiration automatique d'une demande en attente non traitée par le partenaire.
     'waiting_ttl_hours' => (float) env('HL_WAITING_TTL_HOURS', 2),
+    // Délai (minutes) après l'heure de fin avant passage automatique en « terminée ».
+    'auto_complete_after_min' => (int) env('HL_AUTO_COMPLETE_AFTER_MIN', 60),
 
     // Pas de la grille de créneaux et délai minimum avant le début d'une prestation.
     'slot_step_minutes' => (int) env('HL_SLOT_STEP_MINUTES', 30),

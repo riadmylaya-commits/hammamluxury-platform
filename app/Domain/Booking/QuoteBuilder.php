@@ -2,6 +2,7 @@
 
 namespace App\Domain\Booking;
 
+use App\Domain\Catalogue\Presentation;
 use App\Models\Spa;
 use App\Models\Treatment;
 
@@ -95,6 +96,20 @@ class QuoteBuilder
         return ['total' => $party * $unit, 'formula' => $group !== null ? 'group' : 'solo', 'unit' => $unit];
     }
 
+    /** Devis sans les informations de commission (réponse publique / API). */
+    public static function publicView(array $quote): array
+    {
+        unset($quote['commissionable']);
+        foreach ($quote['lines'] as &$l) {
+            unset($l['commissionable']);
+            foreach ($l['extras'] as &$e) {
+                unset($e['commissionable']);
+            }
+        }
+
+        return $quote;
+    }
+
     /**
      * Devis complet.
      *
@@ -105,7 +120,7 @@ class QuoteBuilder
     {
         $quote = [
             'ok' => true, 'errors' => [], 'spa_id' => $spa->id, 'party' => 0, 'duration_min' => 0,
-            'total' => 0.0, 'currency' => config('hl.currency'), 'lines' => [], 'items' => [],
+            'total' => 0.0, 'commissionable' => 0.0, 'currency' => config('hl.currency'), 'lines' => [], 'items' => [],
         ];
 
         foreach ($participants as $p) {
@@ -128,16 +143,21 @@ class QuoteBuilder
             $extras = $t->extras->keyBy('id');
             $exLines = [];
             $exTotal = 0.0;
+            $exNonCommissionable = 0.0;
             $extraMin = 0;
             foreach ($p['extras'] as $eid => $qty) {
                 $e = $extras[$eid];
                 $mult = $e->per_person ? $party : 1;
                 $sub = round($e->price * $qty * $mult, 2);
                 $exTotal += $sub;
+                if (! $e->commissionable) {
+                    $exNonCommissionable += $sub;
+                }
                 $extraMin += $e->extra_min * $qty;
                 $exLines[] = [
                     'id' => $eid, 'name' => $e->tr('name'), 'qty' => $qty, 'per_person' => (int) $e->per_person,
                     'unit_price' => $e->price, 'price' => $sub, 'extra_min' => $e->extra_min * $qty,
+                    'commissionable' => (int) $e->commissionable,
                 ];
             }
 
@@ -153,16 +173,22 @@ class QuoteBuilder
                 'extras' => $exLines,
                 'extras_price' => round($exTotal, 2),
                 'price' => round($price['total'] + $exTotal, 2),
+                'commissionable' => round($price['total'] + $exTotal - $exNonCommissionable, 2),
                 'duration_min' => $duration,
+                'treatment_duration_min' => $t->computedDuration(),
+                'steps' => $t->steps->map(fn ($s) => ['label' => $s->displayLabel(), 'duration_min' => (int) $s->duration_min])->values()->all(),
+                'included' => array_map(fn ($k) => __('ui.included.'.$k), Presentation::cleanIncluded($t->included)),
             ];
             $quote['lines'][] = $line;
             $quote['items'][] = ['treatment' => $t->id, 'party' => $party, 'extras' => $p['extras'], 'participant_no' => (int) $p['participant_no']];
             $quote['party'] += $party;
             $quote['total'] += $line['price'];
+            $quote['commissionable'] += $line['commissionable'];
             $quote['duration_min'] = max($quote['duration_min'], $duration);
         }
 
         $quote['total'] = round($quote['total'], 2);
+        $quote['commissionable'] = round($quote['commissionable'], 2);
         $quote['fingerprint'] = self::fingerprint($quote);
 
         return $quote;
