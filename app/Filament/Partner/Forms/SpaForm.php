@@ -10,6 +10,7 @@ use App\Filament\Forms\Components\PhoneField;
 use App\Models\Amenity;
 use App\Models\Category;
 use App\Models\City;
+use App\Models\Spa;
 use App\Models\SpaHour;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
@@ -21,6 +22,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
@@ -93,10 +95,33 @@ class SpaForm
     {
         return [
             TextInput::make('name')->label(__('partner.spa_name'))->required()->maxLength(190),
-            Select::make('category')->label(__('partner.category'))->options(self::categories())->default('hammam')->required(),
+            Select::make('category')->label(__('partner.category'))->options(self::categories())->default('hammam')->required()->live(),
             self::citySelect(),
             TextInput::make('area')->label(__('partner.area'))->maxLength(120)->helperText(__('partner.area_help')),
         ];
+    }
+
+    /** @return array<string, string> */
+    public static function licenseAuthorities(): array
+    {
+        return collect(Spa::LICENSE_AUTHORITIES)->mapWithKeys(fn (string $k) => [$k => __('partner.license_authority_'.$k)])->all();
+    }
+
+    /** Autorisation administrative d'exploitation : numéro déclaré (facultatif), jamais affiché au public. */
+    public static function license(): Section
+    {
+        return Section::make(__('partner.license_section'))
+            ->description(fn (Get $get) => in_array($get('category'), Spa::LICENSE_EXPECTED_CATEGORIES, true)
+                ? __('partner.license_help_hammam') : __('partner.license_help_other'))
+            ->schema([
+                TextInput::make('license_number')->label(__('partner.license_number'))->maxLength(60)
+                    ->helperText(__('partner.license_number_help')),
+                Select::make('license_authority')->label(__('partner.license_authority'))->options(self::licenseAuthorities())
+                    ->native(false)->placeholder('—')->live(),
+                TextInput::make('license_authority_other')->label(__('partner.license_authority_other_name'))->maxLength(120)
+                    ->visible(fn (Get $get) => $get('license_authority') === 'other')
+                    ->required(fn (Get $get) => $get('license_authority') === 'other'),
+            ])->columns(2);
     }
 
     /** Infos pratiques (FAQ du spa), toutes facultatives, stockées dans `spas.practical_info`. */
@@ -132,6 +157,7 @@ class SpaForm
 
             Section::make(__('partner.section_services'))->schema(self::services())->columns(2),
 
+            self::license(),
             self::practical(),
 
             Section::make(__('partner.section_photos'))

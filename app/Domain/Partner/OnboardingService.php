@@ -54,7 +54,7 @@ class OnboardingService
     /** @param  array<string, mixed>  $data */
     public function saveSpa(Partner $partner, ?Spa $spa, array $data): Spa
     {
-        $attrs = collect($data)->only(['name', 'category', 'city_id', 'area', 'address', 'description_fr', 'description_en', 'phone', 'whatsapp', 'email', 'website', 'location', 'practical_info'])->all();
+        $attrs = collect($data)->only(['name', 'category', 'city_id', 'area', 'address', 'description_fr', 'description_en', 'phone', 'whatsapp', 'email', 'website', 'location', 'practical_info', ...Spa::LICENSE_FIELDS])->all();
 
         if ($spa) {
             $spa->update($attrs);

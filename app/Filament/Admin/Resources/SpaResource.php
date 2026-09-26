@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources;
 use App\Domain\Catalogue\PublicationChecklist;
 use App\Domain\Partner\OnboardingService;
 use App\Filament\Admin\Resources\SpaResource\Pages;
+use App\Filament\Partner\Forms\SpaForm;
 use App\Models\Spa;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -53,6 +54,15 @@ class SpaResource extends Resource
                 Forms\Components\TextInput::make('slug')->label('Slug')->required()->maxLength(120)->unique(ignoreRecord: true),
                 Forms\Components\Textarea::make('status_note')->label(__('admin.status_note'))->rows(3)->helperText(__('admin.status_note_help'))->columnSpanFull(),
             ])->columns(2),
+            Forms\Components\Section::make(__('partner.license_section'))->description(__('admin.license_admin_help'))->schema([
+                Forms\Components\TextInput::make('license_number')->label(__('partner.license_number'))->maxLength(60),
+                Forms\Components\Select::make('license_authority')->label(__('partner.license_authority'))->options(SpaForm::licenseAuthorities())->native(false)->placeholder('—')->live(),
+                Forms\Components\TextInput::make('license_authority_other')->label(__('partner.license_authority_other_name'))->maxLength(120)
+                    ->visible(fn (Forms\Get $get) => $get('license_authority') === 'other'),
+                Forms\Components\Placeholder::make('license_warning')->label('')->columnSpanFull()
+                    ->visible(fn (Spa $s) => $s->licenseExpected() && blank($s->license_number))
+                    ->content(new HtmlString('<span class="font-medium text-warning-600">'.e(__('admin.license_missing_warning')).'</span>')),
+            ])->columns(2),
             Forms\Components\Section::make(__('admin.checklist'))->schema([
                 Forms\Components\Placeholder::make('checks')->label('')->content(fn (Spa $s) => self::checklist($s)),
             ]),
@@ -64,6 +74,9 @@ class SpaResource extends Resource
         $html = '<ul class="space-y-1">';
         foreach (PublicationChecklist::checks($spa) as $label => $ok) {
             $html .= '<li class="'.($ok ? 'text-success-600' : 'text-danger-600 font-medium').'">'.($ok ? '[OK]' : '[!!]').' '.e($label).'</li>';
+        }
+        if ($spa->licenseExpected() && blank($spa->license_number)) {
+            $html .= '<li class="text-warning-600 font-medium">[ ? ] '.e(__('admin.license_missing_warning')).'</li>';
         }
         if (! PublicationChecklist::passes($spa)) {
             $html .= '<li class="font-semibold text-danger-600">'.e(__('admin.checklist_blocking')).'</li>';
@@ -85,13 +98,23 @@ class SpaResource extends Resource
                 Tables\Columns\TextColumn::make('treatments_count')->counts('treatments')->label(__('partner.treatments')),
                 Tables\Columns\TextColumn::make('bookings_count')->counts('bookings')->label(__('partner.bookings')),
                 Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->placeholder('—'),
+                Tables\Columns\TextColumn::make('license_number')->label(__('admin.license_col'))->toggleable()
+                    ->placeholder(fn (Spa $s) => $s->licenseExpected() ? __('admin.license_missing') : '—')
+                    ->color(fn (Spa $s) => blank($s->license_number) && $s->licenseExpected() ? 'warning' : null)
+                    ->description(fn (Spa $s) => $s->licenseAuthorityLabel()),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => self::statuses()[$state] ?? $state)
                     ->color(fn ($state) => match ($state) {
                         'published' => 'success', 'pending' => 'warning', 'suspended' => 'danger', default => 'gray'
                     }),
             ])
-            ->filters([Tables\Filters\SelectFilter::make('status')->options(self::statuses())])
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')->options(self::statuses()),
+                Tables\Filters\Filter::make('without_license')->label(__('admin.filter_without_license'))->toggle()
+                    ->query(fn (Builder $query) => $query->whereNull('license_number')),
+                Tables\Filters\Filter::make('hammam_without_license')->label(__('admin.filter_hammam_without_license'))->toggle()
+                    ->query(fn (Builder $query) => $query->whereNull('license_number')->whereIn('category', Spa::LICENSE_EXPECTED_CATEGORIES)),
+            ])
             ->actions([
                 Tables\Actions\Action::make('publish')->label(__('admin.publish'))->icon('heroicon-o-eye')->color('success')
                     ->visible(fn (Spa $s) => $s->status !== 'published')->requiresConfirmation()

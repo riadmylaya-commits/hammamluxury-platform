@@ -10,6 +10,7 @@
             <div class="font-semibold">{{ $spa->name }}</div>
             <div>{{ $spa->cityRef?->label() ?? $spa->city }}@if ($spa->area) · {{ $spa->area }}@endif · {{ \App\Models\Category::labelsBySlug()[$spa->category] ?? $spa->category }}</div>
             <div class="text-gray-500">{{ $spa->address }} · {{ $spa->phone }}@if ($spa->whatsapp && $spa->whatsapp !== $spa->phone) · WhatsApp {{ $spa->whatsapp }}@endif</div>
+            <div class="text-gray-500">{{ __('partner.license_number') }} : @if ($spa->license_number){{ $spa->license_number }}@if ($spa->licenseAuthorityLabel()) ({{ $spa->licenseAuthorityLabel() }})@endif @else <span class="{{ $spa->licenseExpected() ? 'text-amber-700' : '' }}">{{ __('partner.license_not_provided') }}</span>@endif</div>
         </div>
     </div>
 

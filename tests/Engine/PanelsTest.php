@@ -4,6 +4,7 @@ namespace Tests\Engine;
 
 use App\Domain\Booking\BookingException;
 use App\Domain\Catalogue\PublicationChecklist;
+use App\Filament\Admin\Resources\SpaResource;
 use App\Filament\Admin\Resources\SpaResource\Pages\EditSpa;
 use App\Filament\Admin\Resources\SpaResource\Pages\ListSpas;
 use App\Filament\Partner\Pages\EditSpaProfile;
@@ -91,6 +92,52 @@ class PanelsTest extends BookingFlowTestCase
         $this->assertSame('mixed', $spa->practical_info['gender']);
         $this->assertSame(1, $spa->photos()->count(), 'photos existantes (URL) conservées');
         $this->get('/fr/spa/'.$spa->slug)->assertSee('Arrivez 15 minutes avant');
+    }
+
+    public function test_operating_license_is_optional_editable_logged_filterable_and_never_public(): void
+    {
+        $this->spa->photos()->create(['path' => 'https://picsum.photos/seed/x/1200/800', 'sort_order' => 1, 'is_cover' => true]);
+        $this->spa->update(['city_id' => City::first()?->id ?? City::create(['slug' => 'marrakech', 'name_fr' => 'Marrakech', 'name_en' => 'Marrakech'])->id, 'category' => 'hammam']);
+        $this->actingAs($this->owner);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        // Facultatif : sauvegarde sans numéro, avertissement admin (non bloquant) pour un hammam.
+        Livewire::test(EditSpaProfile::class)->fillForm(['license_number' => ''])->call('save')->assertHasNoFormErrors();
+        $this->assertNull($this->spa->fresh()->license_number);
+        $this->assertTrue($this->spa->fresh()->licenseExpected());
+        $this->assertNotContains(__('admin.license_missing_warning'), array_keys(PublicationChecklist::checks($this->spa->fresh())), 'non bloquant');
+
+        // « Autre » sans nom exact : refusé ; puis saisie complète et journalisée.
+        Livewire::test(EditSpaProfile::class)->fillForm(['license_number' => 'AE-2026-0042', 'license_authority' => 'other', 'license_authority_other' => ''])
+            ->call('save')->assertHasFormErrors(['license_authority_other']);
+        Livewire::test(EditSpaProfile::class)->fillForm(['license_number' => ' AE-2026-0042 ', 'license_authority' => 'other', 'license_authority_other' => 'Préfecture de Marrakech'])
+            ->call('save')->assertHasNoFormErrors();
+        $spa = $this->spa->fresh();
+        $this->assertSame('AE-2026-0042', $spa->license_number);
+        $this->assertSame('Préfecture de Marrakech', $spa->licenseAuthorityLabel());
+        $this->assertDatabaseHas('activity_logs', ['action' => 'spa.license_updated', 'subject_id' => $spa->id, 'user_id' => $this->owner->id]);
+
+        // Commune : le libellé libre est effacé.
+        $spa->update(['license_authority' => 'commune']);
+        $this->assertNull($spa->fresh()->license_authority_other);
+        $this->assertSame('Commune', $spa->fresh()->licenseAuthorityLabel());
+
+        // Jamais public : fiche et API.
+        $this->get('/fr/spa/'.$spa->slug)->assertOk()->assertDontSee('AE-2026-0042');
+        $this->getJson('/api/v1/spas/'.$spa->slug)->assertOk()->assertDontSee('AE-2026-0042');
+
+        // Admin : visible, filtre « sans numéro » et « hammams sans numéro ».
+        $this->actingAs($this->admin);
+        Filament::setTenant(null);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $this->otherSpa->update(['category' => 'massage']);
+        Livewire::test(EditSpa::class, ['record' => $spa->getRouteKey()])->assertFormSet(['license_number' => 'AE-2026-0042', 'license_authority' => 'commune']);
+        Livewire::test(ListSpas::class)->assertSee('AE-2026-0042')
+            ->filterTable('without_license')->assertCanSeeTableRecords([$this->otherSpa])->assertCanNotSeeTableRecords([$spa])
+            ->resetTableFilters()->filterTable('hammam_without_license')->assertCanNotSeeTableRecords([$spa, $this->otherSpa]);
+        $this->assertStringContainsString(__('admin.license_missing_warning'), (string) SpaResource::checklist($this->otherSpa->fresh()->fill(['category' => 'hammam'])));
+        $this->assertStringNotContainsString(__('admin.license_missing_warning'), (string) SpaResource::checklist($spa));
     }
 
     public function test_partner_sees_only_own_treatments_and_can_create_package(): void

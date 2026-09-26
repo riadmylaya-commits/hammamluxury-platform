@@ -18,6 +18,13 @@ class Spa extends Model
 
     public const STATUSES = ['draft', 'pending', 'published', 'suspended'];
 
+    public const LICENSE_AUTHORITIES = ['commune', 'arrondissement', 'other'];
+
+    /** Catégories principales soumises à l'autorisation d'exploitation des hammams. */
+    public const LICENSE_EXPECTED_CATEGORIES = ['hammam', 'hammam-massage', 'hammam-prive'];
+
+    public const LICENSE_FIELDS = ['license_number', 'license_authority', 'license_authority_other'];
+
     protected $guarded = [];
 
     protected $casts = ['submitted_at' => 'datetime', 'published_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array'];
@@ -59,7 +66,37 @@ class Spa extends Model
             if ($spa->isDirty('practical_info')) {
                 $spa->practical_info = Presentation::cleanPractical($spa->practical_info);
             }
+            $spa->license_number = filled($spa->license_number) ? trim($spa->license_number) : null;
+            if (! in_array($spa->license_authority, self::LICENSE_AUTHORITIES, true)) {
+                $spa->license_authority = null;
+            }
+            if ($spa->license_authority !== 'other') {
+                $spa->license_authority_other = null;
+            }
         });
+        static::saved(function (self $spa) {
+            if ($spa->wasChanged(self::LICENSE_FIELDS) || ($spa->wasRecentlyCreated && filled($spa->license_number))) {
+                ActivityLog::record('spa.license_updated', $spa, array_filter([
+                    'name' => $spa->name,
+                    'number' => $spa->license_number,
+                    'authority' => $spa->licenseAuthorityLabel(),
+                ]));
+            }
+        });
+    }
+
+    public function licenseExpected(): bool
+    {
+        return in_array($this->category, self::LICENSE_EXPECTED_CATEGORIES, true);
+    }
+
+    public function licenseAuthorityLabel(): ?string
+    {
+        return match ($this->license_authority) {
+            null => null,
+            'other' => $this->license_authority_other ?: __('partner.license_authority_other'),
+            default => __('partner.license_authority_'.$this->license_authority),
+        };
     }
 
     public function partner(): BelongsTo

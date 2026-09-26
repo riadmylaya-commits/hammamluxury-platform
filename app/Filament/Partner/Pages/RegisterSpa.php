@@ -128,6 +128,7 @@ class RegisterSpa extends RegisterTenant
                 SpaForm::website(),
             ]),
             Placeholder::make('privacy')->label('')->content(__('partner.contact_privacy')),
+            SpaForm::license(),
             SpaForm::practical(),
         ])->afterValidation(function (Step $component) {
             $data = $component->getChildComponentContainer()->getState();
@@ -372,6 +373,7 @@ class RegisterSpa extends RegisterTenant
                 ])->values()->all() : [],
             ])->values()->all() ?: [],
             'practical_info' => $spa->practical_info ?? [],
+            'license_number' => $spa->license_number, 'license_authority' => $spa->license_authority, 'license_authority_other' => $spa->license_authority_other,
             'hours' => $spa->hours->sortBy(['weekday', 'opens_min'])->map(fn ($h) => ['weekday' => $h->weekday, 'opens_min' => SpaHour::toHhmm($h->opens_min), 'closes_min' => SpaHour::toHhmm($h->closes_min)])->values()->all(),
             'hours_every_day' => $spa->hours->isEmpty() || $spa->hasSameHoursEveryDay(),
             'every_opens' => SpaHour::toHhmm($spa->hours->first()?->opens_min ?? 600),
