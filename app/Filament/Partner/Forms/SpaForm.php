@@ -12,6 +12,8 @@ use App\Models\Category;
 use App\Models\City;
 use App\Models\Spa;
 use App\Models\SpaHour;
+use Filament\Forms\Components\Actions;
+use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
@@ -190,6 +192,27 @@ class SpaForm
             Section::make(__('partner.section_hours'))
                 ->description(__('partner.hours_help'))
                 ->schema([
+                    Actions::make([
+                        Action::make('hours_every_day')
+                            ->label(__('partner.hours_every_day'))
+                            ->icon('heroicon-o-calendar-days')
+                            ->color('gray')
+                            ->modalHeading(__('partner.hours_every_day'))
+                            ->modalDescription(__('partner.hours_every_day_profile_help'))
+                            ->modalSubmitActionLabel(__('partner.hours_every_day_apply'))
+                            ->form([
+                                TimePicker::make('opens')->label(__('partner.opens'))->seconds(false)->required()->default('10:00'),
+                                TimePicker::make('closes')->label(__('partner.closes'))->seconds(false)->required()->default('20:00')->after('opens')
+                                    ->validationMessages(['after' => __('partner.hours_order_error')]),
+                            ])
+                            ->action(function (array $data, Set $set) {
+                                $rows = [];
+                                foreach (range(0, 6) as $d) {
+                                    $rows[(string) Str::uuid()] = ['weekday' => $d, 'opens_min' => $data['opens'], 'closes_min' => $data['closes']];
+                                }
+                                $set('hours', $rows);
+                            }),
+                    ]),
                     Repeater::make('hours')
                         ->relationship()
                         ->label('')

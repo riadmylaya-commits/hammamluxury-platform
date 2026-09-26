@@ -94,6 +94,32 @@ class PanelsTest extends BookingFlowTestCase
         $this->get('/fr/spa/'.$spa->slug)->assertSee('Arrivez 15 minutes avant');
     }
 
+    public function test_partner_profile_every_day_shortcut_fills_seven_rows_then_saves(): void
+    {
+        $this->spa->photos()->create(['path' => 'https://picsum.photos/seed/x/1200/800', 'sort_order' => 1, 'is_cover' => true]);
+        $this->spa->update(['city_id' => City::first()?->id ?? City::create(['slug' => 'marrakech', 'name_fr' => 'Marrakech', 'name_en' => 'Marrakech'])->id]);
+        $this->actingAs($this->owner);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        $this->spa->hours()->where('weekday', '>', 2)->delete();
+        $this->assertLessThan(7, $this->spa->hours()->count());
+        Livewire::test(EditSpaProfile::class)
+            ->assertSee('Tous les jours')
+            ->callFormComponentAction('hours_every_dayAction', 'hours_every_day', ['opens' => '10:00', 'closes' => '09:00'])
+            ->assertHasFormComponentActionErrors(['closes'])
+            ->setFormComponentActionData(['opens' => '10:00', 'closes' => '20:00'])
+            ->callMountedFormComponentAction()
+            ->assertHasNoFormComponentActionErrors()
+            ->call('save')->assertHasNoFormErrors();
+
+        $hours = $this->spa->fresh()->hours()->orderBy('weekday')->get();
+        $this->assertCount(7, $hours);
+        $this->assertSame(range(0, 6), $hours->pluck('weekday')->all());
+        $this->assertSame([600], $hours->pluck('opens_min')->unique()->values()->all());
+        $this->assertSame([1200], $hours->pluck('closes_min')->unique()->values()->all());
+    }
+
     public function test_operating_license_is_optional_editable_logged_filterable_and_never_public(): void
     {
         $this->spa->photos()->create(['path' => 'https://picsum.photos/seed/x/1200/800', 'sort_order' => 1, 'is_cover' => true]);

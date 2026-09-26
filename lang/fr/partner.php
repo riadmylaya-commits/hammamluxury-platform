@@ -252,6 +252,8 @@ return [
     'map_empty' => 'Aucune position pour le moment.',
     'map_clear' => 'Effacer la position',
     'hours_every_day' => 'Tous les jours (lundi → dimanche)',
+    'hours_every_day_apply' => 'Appliquer aux 7 jours',
+    'hours_every_day_profile_help' => 'Mêmes horaires les 7 jours : les lignes ci-dessous sont remplacées, puis enregistrées avec la fiche. Vous pouvez ensuite ajuster ou supprimer un jour.',
     'hours_every_day_help' => 'Mêmes horaires les 7 jours. Désactivez pour saisir des horaires différents selon les jours ou des jours fermés.',
     // Présentation des formules
     'components' => 'Composantes de la formule',

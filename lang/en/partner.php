@@ -245,6 +245,8 @@ return [
     'map_empty' => 'No position yet.',
     'map_clear' => 'Clear position',
     'hours_every_day' => 'Every day (Monday → Sunday)',
+    'hours_every_day_apply' => 'Apply to all 7 days',
+    'hours_every_day_profile_help' => 'Same hours all 7 days: the rows below are replaced, then saved with the profile. You can still adjust or remove a day afterwards.',
     'hours_every_day_help' => 'Same hours all 7 days. Turn off to enter different hours per day or closed days.',
     // Treatment presentation
     'components' => 'Package components',
