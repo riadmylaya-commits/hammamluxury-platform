@@ -61,7 +61,7 @@ class SpaResource extends Resource
                     ->visible(fn (Forms\Get $get) => $get('license_authority') === 'other'),
                 Forms\Components\Placeholder::make('license_warning')->label('')->columnSpanFull()
                     ->visible(fn (Spa $s) => $s->licenseExpected() && blank($s->license_number))
-                    ->content(new HtmlString('<span class="font-medium text-warning-600">'.e(__('admin.license_missing_warning')).'</span>')),
+                    ->content(new HtmlString('<span class="font-medium" style="color: rgb(var(--warning-600))">'.e(__('admin.license_missing_warning')).'</span>')),
             ])->columns(2),
             Forms\Components\Section::make(__('admin.checklist'))->schema([
                 Forms\Components\Placeholder::make('checks')->label('')->content(fn (Spa $s) => self::checklist($s)),
@@ -76,7 +76,7 @@ class SpaResource extends Resource
             $html .= '<li class="'.($ok ? 'text-success-600' : 'text-danger-600 font-medium').'">'.($ok ? '[OK]' : '[!!]').' '.e($label).'</li>';
         }
         if ($spa->licenseExpected() && blank($spa->license_number)) {
-            $html .= '<li class="text-warning-600 font-medium">[ ? ] '.e(__('admin.license_missing_warning')).'</li>';
+            $html .= '<li class="font-medium" style="color: rgb(var(--warning-600))">[ ? ] '.e(__('admin.license_missing_warning')).'</li>';
         }
         if (! PublicationChecklist::passes($spa)) {
             $html .= '<li class="font-semibold text-danger-600">'.e(__('admin.checklist_blocking')).'</li>';
@@ -98,9 +98,9 @@ class SpaResource extends Resource
                 Tables\Columns\TextColumn::make('treatments_count')->counts('treatments')->label(__('partner.treatments')),
                 Tables\Columns\TextColumn::make('bookings_count')->counts('bookings')->label(__('partner.bookings')),
                 Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->placeholder('—'),
-                Tables\Columns\TextColumn::make('license_number')->label(__('admin.license_col'))->toggleable()
-                    ->placeholder(fn (Spa $s) => $s->licenseExpected() ? __('admin.license_missing') : '—')
-                    ->color(fn (Spa $s) => blank($s->license_number) && $s->licenseExpected() ? 'warning' : null)
+                Tables\Columns\TextColumn::make('license_number')->label(__('admin.license_col'))->toggleable()->badge()
+                    ->getStateUsing(fn (Spa $s) => $s->license_number ?: ($s->licenseExpected() ? __('admin.license_missing') : null))->placeholder('—')
+                    ->color(fn (Spa $s) => blank($s->license_number) ? 'warning' : 'gray')
                     ->description(fn (Spa $s) => $s->licenseAuthorityLabel()),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => self::statuses()[$state] ?? $state)
