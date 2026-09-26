@@ -1,0 +1,263 @@
+<?php
+
+namespace Tests\Engine;
+
+use App\Domain\Booking\BookingException;
+use App\Domain\Catalogue\PublicationChecklist;
+use App\Filament\Admin\Resources\SpaResource;
+use App\Filament\Admin\Resources\SpaResource\Pages\EditSpa;
+use App\Filament\Admin\Resources\SpaResource\Pages\ListSpas;
+use App\Filament\Partner\Pages\EditSpaProfile;
+use App\Filament\Partner\Resources\BookingResource\Pages\ListBookings;
+use App\Filament\Partner\Resources\BookingResource\Pages\ViewBooking;
+use App\Filament\Partner\Resources\TreatmentResource\Pages\CreateTreatment;
+use App\Filament\Partner\Resources\TreatmentResource\Pages\ListTreatments;
+use App\Models\City;
+use App\Models\Partner;
+use App\Models\Spa;
+use App\Models\Treatment;
+use App\Models\User;
+use Filament\Facades\Filament;
+use Livewire\Livewire;
+
+/** Espaces Filament : accès par rôle, cloisonnement par établissement, actions réservation et validation admin. */
+class PanelsTest extends BookingFlowTestCase
+{
+    private User $owner;
+
+    private User $admin;
+
+    private User $other;
+
+    private Spa $otherSpa;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->owner = $this->spa->partner->user;
+        $this->admin = User::create(['name' => 'Admin', 'email' => 'admin@example.test', 'password' => 'secret-test', 'role' => 'admin', 'email_verified_at' => now()]);
+        $this->other = User::create(['name' => 'Autre', 'email' => 'autre@example.test', 'password' => 'secret-test', 'role' => 'partner', 'email_verified_at' => now()]);
+        $p = Partner::create(['user_id' => $this->other->id, 'company_name' => 'Autre SARL', 'status' => 'approved']);
+        $this->otherSpa = Spa::create(['partner_id' => $p->id, 'slug' => 'autre-spa', 'name' => 'Autre Spa', 'city' => 'Fès', 'status' => 'draft']);
+    }
+
+    public function test_guests_are_redirected_to_login(): void
+    {
+        $this->get('/partenaire/'.$this->spa->slug)->assertRedirect('/partenaire/login');
+        $this->get('/admin')->assertRedirect('/admin/login');
+    }
+
+    public function test_partner_is_scoped_to_own_spa_and_cannot_enter_admin(): void
+    {
+        $this->actingAs($this->owner)->get('/partenaire/'.$this->spa->slug)->assertOk()->assertSee($this->spa->name);
+        $this->actingAs($this->owner)->get('/partenaire/'.$this->spa->slug.'/profile')->assertOk()->assertSee('Infos pratiques');
+        $this->actingAs($this->owner)->get('/partenaire/'.$this->otherSpa->slug)->assertNotFound();
+        $this->actingAs($this->owner)->get('/admin')->assertForbidden();
+    }
+
+    public function test_client_cannot_enter_partner_panel(): void
+    {
+        $client = User::create(['name' => 'Client', 'email' => 'c@example.test', 'password' => 'secret-test', 'role' => 'client']);
+        $this->actingAs($client)->get('/partenaire')->assertForbidden();
+    }
+
+    public function test_admin_enters_both_panels_and_any_tenant(): void
+    {
+        $this->actingAs($this->admin)->get('/admin')->assertOk()->assertSee('Partenaires');
+        $this->actingAs($this->admin)->get('/partenaire/'.$this->otherSpa->slug)->assertOk();
+    }
+
+    public function test_admin_list_pages_render(): void
+    {
+        $this->actingAs($this->admin);
+        foreach (['activity-logs', 'cities', 'categories', 'amenities', 'spas', 'partners', 'bookings'] as $slug) {
+            $this->get("/admin/$slug")->assertOk();
+        }
+    }
+
+    public function test_partner_profile_saves_practical_info_with_existing_photos(): void
+    {
+        $this->spa->photos()->create(['path' => 'https://picsum.photos/seed/x/1200/800', 'sort_order' => 1, 'is_cover' => true]);
+        $this->spa->update(['city_id' => City::first()?->id ?? City::create(['slug' => 'marrakech', 'name_fr' => 'Marrakech', 'name_en' => 'Marrakech'])->id]);
+        $this->actingAs($this->owner);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        Livewire::test(EditSpaProfile::class)
+            ->fillForm(['practical_info.notes' => 'Arrivez 15 minutes avant', 'practical_info.gender' => 'mixed'])
+            ->call('save')->assertHasNoFormErrors();
+
+        $spa = $this->spa->fresh();
+        $this->assertSame('Arrivez 15 minutes avant', $spa->practical_info['notes']);
+        $this->assertSame('mixed', $spa->practical_info['gender']);
+        $this->assertSame(1, $spa->photos()->count(), 'photos existantes (URL) conservées');
+        $this->get('/fr/spa/'.$spa->slug)->assertSee('Arrivez 15 minutes avant');
+    }
+
+    public function test_partner_profile_every_day_shortcut_fills_seven_rows_then_saves(): void
+    {
+        $this->spa->photos()->create(['path' => 'https://picsum.photos/seed/x/1200/800', 'sort_order' => 1, 'is_cover' => true]);
+        $this->spa->update(['city_id' => City::first()?->id ?? City::create(['slug' => 'marrakech', 'name_fr' => 'Marrakech', 'name_en' => 'Marrakech'])->id]);
+        $this->actingAs($this->owner);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        $this->spa->hours()->where('weekday', '>', 2)->delete();
+        $this->assertLessThan(7, $this->spa->hours()->count());
+        Livewire::test(EditSpaProfile::class)
+            ->assertSee('Tous les jours')
+            ->callFormComponentAction('hours_every_dayAction', 'hours_every_day', ['opens' => '10:00', 'closes' => '09:00'])
+            ->assertHasFormComponentActionErrors(['closes'])
+            ->setFormComponentActionData(['opens' => '10:00', 'closes' => '20:00'])
+            ->callMountedFormComponentAction()
+            ->assertHasNoFormComponentActionErrors()
+            ->call('save')->assertHasNoFormErrors();
+
+        $hours = $this->spa->fresh()->hours()->orderBy('weekday')->get();
+        $this->assertCount(7, $hours);
+        $this->assertSame(range(0, 6), $hours->pluck('weekday')->all());
+        $this->assertSame([600], $hours->pluck('opens_min')->unique()->values()->all());
+        $this->assertSame([1200], $hours->pluck('closes_min')->unique()->values()->all());
+    }
+
+    public function test_operating_license_is_optional_editable_logged_filterable_and_never_public(): void
+    {
+        $this->spa->photos()->create(['path' => 'https://picsum.photos/seed/x/1200/800', 'sort_order' => 1, 'is_cover' => true]);
+        $this->spa->update(['city_id' => City::first()?->id ?? City::create(['slug' => 'marrakech', 'name_fr' => 'Marrakech', 'name_en' => 'Marrakech'])->id, 'category' => 'hammam']);
+        $this->actingAs($this->owner);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        // Facultatif : sauvegarde sans numéro, avertissement admin (non bloquant) pour un hammam.
+        Livewire::test(EditSpaProfile::class)->fillForm(['license_number' => ''])->call('save')->assertHasNoFormErrors();
+        $this->assertNull($this->spa->fresh()->license_number);
+        $this->assertTrue($this->spa->fresh()->licenseExpected());
+        $this->assertNotContains(__('admin.license_missing_warning'), array_keys(PublicationChecklist::checks($this->spa->fresh())), 'non bloquant');
+
+        // « Autre » sans nom exact : refusé ; puis saisie complète et journalisée.
+        Livewire::test(EditSpaProfile::class)->fillForm(['license_number' => 'AE-2026-0042', 'license_authority' => 'other', 'license_authority_other' => ''])
+            ->call('save')->assertHasFormErrors(['license_authority_other']);
+        Livewire::test(EditSpaProfile::class)->fillForm(['license_number' => ' AE-2026-0042 ', 'license_authority' => 'other', 'license_authority_other' => 'Préfecture de Marrakech'])
+            ->call('save')->assertHasNoFormErrors();
+        $spa = $this->spa->fresh();
+        $this->assertSame('AE-2026-0042', $spa->license_number);
+        $this->assertSame('Préfecture de Marrakech', $spa->licenseAuthorityLabel());
+        $this->assertDatabaseHas('activity_logs', ['action' => 'spa.license_updated', 'subject_id' => $spa->id, 'user_id' => $this->owner->id]);
+
+        // Commune : le libellé libre est effacé.
+        $spa->update(['license_authority' => 'commune']);
+        $this->assertNull($spa->fresh()->license_authority_other);
+        $this->assertSame('Commune', $spa->fresh()->licenseAuthorityLabel());
+
+        // Jamais public : fiche et API.
+        $this->get('/fr/spa/'.$spa->slug)->assertOk()->assertDontSee('AE-2026-0042');
+        $this->getJson('/api/v1/spas/'.$spa->slug)->assertOk()->assertDontSee('AE-2026-0042');
+
+        // Admin : visible, filtre « sans numéro » et « hammams sans numéro ».
+        $this->actingAs($this->admin);
+        Filament::setTenant(null);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $this->otherSpa->update(['category' => 'massage']);
+        Livewire::test(EditSpa::class, ['record' => $spa->getRouteKey()])->assertFormSet(['license_number' => 'AE-2026-0042', 'license_authority' => 'commune']);
+        Livewire::test(ListSpas::class)->assertSee('AE-2026-0042')
+            ->filterTable('without_license')->assertCanSeeTableRecords([$this->otherSpa])->assertCanNotSeeTableRecords([$spa])
+            ->resetTableFilters()->filterTable('hammam_without_license')->assertCanNotSeeTableRecords([$spa, $this->otherSpa]);
+        $this->assertStringContainsString(__('admin.license_missing_warning'), (string) SpaResource::checklist($this->otherSpa->fresh()->fill(['category' => 'hammam'])));
+        $this->assertStringNotContainsString(__('admin.license_missing_warning'), (string) SpaResource::checklist($spa));
+    }
+
+    public function test_partner_sees_only_own_treatments_and_can_create_package(): void
+    {
+        $this->otherSpa->treatments()->create(['slug' => 'secret', 'name_fr' => 'Soin secret', 'category' => 'massage', 'price_solo' => 100, 'duration_min' => 30]);
+        $this->actingAs($this->owner);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        Livewire::test(ListTreatments::class)->assertCanSeeTableRecords($this->spa->treatments)->assertSee('Hammam + Massage')->assertDontSee('Soin secret');
+
+        $massage = $this->spa->resourceTypes->firstWhere('slug', 'massage');
+        $hammam = $this->spa->resourceTypes->firstWhere('slug', 'hammam');
+        Livewire::test(CreateTreatment::class)->fillForm([
+            'name_fr' => 'Rituel Royal', 'category' => 'ritual', 'status' => 'active', 'price_solo' => 900, 'party_min' => 1, 'party_max' => 2,
+            'steps' => [
+                ['resource_type_id' => $hammam->id, 'duration_min' => 30],
+                ['resource_type_id' => $massage->id, 'duration_min' => 90],
+            ],
+        ])->call('create')->assertHasNoFormErrors();
+
+        $t = Treatment::where('slug', 'rituel-royal')->firstOrFail();
+        $this->assertSame($this->spa->id, $t->spa_id);
+        $this->assertSame(120, $t->duration_min);
+        $this->assertSame([0, 30], $t->steps->pluck('offset_min')->all(), 'étapes séquentielles : offsets cumulés');
+        $this->assertSame(150.0, (float) $this->spa->fresh()->price_from, 'price_from = soin le moins cher');
+    }
+
+    public function test_partner_accepts_and_declines_bookings_releasing_capacity(): void
+    {
+        $a = $this->submit($this->intent('10:00', ['treatment' => $this->hm->id, 'party' => 1]))['booking'];
+        $b = $this->submit($this->intent('10:00', ['treatment' => $this->hm->id, 'party' => 1]))['booking'];
+        try {
+            $this->intent('10:00', ['treatment' => $this->m->id, 'party' => 1]);
+            $this->fail('les 2 cabines sont prises à 10:00');
+        } catch (BookingException $e) {
+            $this->assertSame('unavailable', $e->reason);
+        }
+
+        $this->actingAs($this->owner);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        Livewire::test(ListBookings::class)->assertCanSeeTableRecords([$a, $b]);
+        Livewire::test(ViewBooking::class, ['record' => $a->getRouteKey()])->assertSee($a->reference)->callAction('accept')->assertHasNoActionErrors();
+        $this->assertSame('confirmed', $a->fresh()->status);
+
+        Livewire::test(ViewBooking::class, ['record' => $b->getRouteKey()])->callAction('decline', ['note' => 'Cabine indisponible'])->assertHasNoActionErrors();
+        $b->refresh();
+        $this->assertSame('declined', $b->status);
+        $this->assertSame(0, $b->allocations()->where('status', 'active')->count());
+        $this->assertTrue($this->submit($this->intent('10:00', ['treatment' => $this->m->id, 'party' => 1]))['ok'], 'la cabine libérée est de nouveau réservable');
+
+        Livewire::test(ViewBooking::class, ['record' => $b->getRouteKey()])->assertActionHidden('accept');
+    }
+
+    public function test_admin_cannot_publish_incomplete_spa(): void
+    {
+        $this->actingAs($this->admin);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $this->otherSpa->update(['status' => 'pending']);
+
+        $this->assertFalse(PublicationChecklist::passes($this->otherSpa));
+        $this->assertCount(6, PublicationChecklist::failures($this->otherSpa));
+
+        Livewire::test(ListSpas::class)->callTableAction('publish', $this->otherSpa)->assertNotified();
+        $this->assertSame('pending', $this->otherSpa->refresh()->status);
+
+        Livewire::test(EditSpa::class, ['record' => $this->otherSpa->getRouteKey()])
+            ->fillForm(['status' => 'published'])->call('save')->assertNotified();
+        $this->assertSame('pending', $this->otherSpa->refresh()->status);
+        $this->getJson('/api/v1/spas')->assertOk()->assertJsonPath('meta.total', 1);
+    }
+
+    public function test_admin_publishes_spa_once_checklist_passes(): void
+    {
+        $this->actingAs($this->admin);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $spa = $this->spa;
+        $spa->update(['status' => 'pending', 'published_at' => null, 'category' => 'hammam', 'description_fr' => 'Description démo', 'address' => '1 rue Test', 'phone' => '+212600000000']);
+        foreach (range(1, 9) as $i) {
+            $spa->photos()->create(['path' => "/p/$i.jpg", 'sort_order' => $i, 'is_cover' => $i === 1]);
+        }
+        $this->assertSame([__('admin.chk_photos', ['min' => 10, 'n' => 9])], PublicationChecklist::failures($spa));
+        Livewire::test(ListSpas::class)->callTableAction('publish', $spa);
+        $this->assertSame('pending', $spa->refresh()->status);
+
+        $spa->photos()->create(['path' => '/p/10.jpg', 'sort_order' => 10]);
+        $this->assertTrue(PublicationChecklist::passes($spa));
+        Livewire::test(ListSpas::class)->assertCanSeeTableRecords([$spa, $this->otherSpa])
+            ->callTableAction('publish', $spa)->assertHasNoTableActionErrors();
+        $spa->refresh();
+        $this->assertSame('published', $spa->status);
+        $this->assertNotNull($spa->published_at);
+        $this->getJson('/api/v1/spas')->assertOk()->assertJsonPath('meta.total', 1);
+    }
+}
