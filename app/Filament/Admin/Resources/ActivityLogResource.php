@@ -41,7 +41,7 @@ class ActivityLogResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')->label(__('admin.date'))->dateTime('d/m/Y H:i'),
                 Tables\Columns\TextColumn::make('panel')->label(__('admin.panel'))->badge(),
-                Tables\Columns\TextColumn::make('action')->label(__('admin.action'))->formatStateUsing(fn (string $state) => __("admin.log_action.$state") !== "admin.log_action.$state" ? __("admin.log_action.$state") : $state)->searchable(),
+                Tables\Columns\TextColumn::make('action')->label(__('admin.action'))->formatStateUsing(fn (string $state) => __('admin.log_action')[$state] ?? $state)->searchable(),
                 Tables\Columns\TextColumn::make('user.name')->label(__('admin.user'))->default('—')->searchable(),
                 Tables\Columns\TextColumn::make('subject')->label(__('admin.subject'))
                     ->getStateUsing(fn (ActivityLog $l) => $l->subject ? class_basename($l->subject_type).' #'.$l->subject_id.(isset($l->subject->name) ? ' · '.$l->subject->name : '') : '—'),
