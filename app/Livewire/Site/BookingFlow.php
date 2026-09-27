@@ -41,6 +41,7 @@ class BookingFlow extends Component
     /** @var array<int,int> mode simple : extra id ⇒ quantité */
     public array $extras = [];
 
+    #[Url]
     public string $date = '';
 
     public string $time = '';
@@ -78,7 +79,8 @@ class BookingFlow extends Component
     {
         abort_unless($catalogue->bookableSpas()->whereKey($spa->id)->exists(), 404);
         $this->spa = $spa->load('hours');
-        $this->month = CarbonImmutable::now()->format('Y-m');
+        $this->date = CatalogueService::parseDate($this->date)?->format('Y-m-d') ?? '';
+        $this->month = ($this->date ? CarbonImmutable::parse($this->date) : CarbonImmutable::now())->format('Y-m');
         $this->phoneCountry = PhoneNumber::detectCountry();
         if ($this->treatment && ! $this->catalogue()->firstWhere('id', $this->treatment)) {
             $this->treatment = null;

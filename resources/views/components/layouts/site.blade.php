@@ -31,9 +31,10 @@
 <footer><div class="wrap foot">
     <div><b>HammamLuxury</b>{{ __('ui.footer_about') }}</div>
     <div><b>{{ __('ui.footer_partner') }}</b><a href="{{ route('filament.partner.auth.register') }}">{{ __('ui.nav_list') }}</a><a href="{{ route('filament.partner.auth.login') }}">{{ __('ui.nav_partner') }}</a></div>
-    <div><b>{{ __('ui.footer_help') }}</b><a href="#">FAQ</a><a href="#">Contact</a></div>
-    <div><b>{{ __('ui.footer_legal') }}</b><a href="#">CGU</a><a href="#">Confidentialité</a></div>
+    <div><b>{{ __('ui.footer_help') }}</b><a href="{{ route('page', 'faq') }}">{{ __('pages.faq.nav') }}</a><a href="{{ route('contact') }}">{{ __('pages.contact.nav') }}</a></div>
+    <div><b>{{ __('ui.footer_legal') }}</b><a href="{{ route('page', 'cgu') }}">{{ __('pages.terms.nav') }}</a><a href="{{ route('page', 'confidentialite') }}">{{ __('pages.privacy.nav') }}</a></div>
 </div></footer>
+<script src="{{ asset('js/hl-gallery.js') }}?v={{ filemtime(public_path('js/hl-gallery.js')) }}" defer></script>
 <script>
 (function () {
     var el = document.getElementById('spa-map');

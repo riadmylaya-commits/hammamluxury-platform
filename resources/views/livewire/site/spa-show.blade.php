@@ -1,10 +1,12 @@
 <div>
-<div class="gallery" style="margin-top:6px">
-    @forelse (array_slice($card['photos'], 0, 5) as $i => $p)
-        <div class="ph {{ ['', 'green', 'sand', 'blue', ''][$i] }}"><img src="{{ $p['url'] }}" alt="{{ $p['caption'] ?? $spa->name }}" @if ($i) loading="lazy" @endif></div>
+@php($photos = $card['photos'])
+<div class="gallery" style="margin-top:6px" @if ($photos) id="hl-gallery" data-photos='@json($photos)' data-i18n='@json($galleryI18n)' @endif>
+    @forelse (array_slice($photos, 0, 5) as $i => $p)
+        <button type="button" class="ph {{ ['', 'green', 'sand', 'blue', ''][$i] }}" data-index="{{ $i }}" aria-label="{{ __('ui.photo_of', ['n' => $i + 1, 'total' => count($photos)]) }}"><img src="{{ $p['url'] }}" alt="{{ $p['caption'] ?? $spa->name }}" @if ($i) loading="lazy" @endif></button>
     @empty
         @foreach (['', 'green', 'sand', 'blue', ''] as $c)<div class="ph {{ $c }}"><span>{{ $spa->name }}</span></div>@endforeach
     @endforelse
+    @if ($photos)<button type="button" class="gall-all" data-index="0">{{ __('ui.all_photos', ['count' => count($photos)]) }}</button>@endif
 </div>
 <div class="spa-h">
     <div class="sp">
@@ -50,7 +52,7 @@
                         <div class="r">
                             <div class="solo"><b>{{ number_format($t['price_from'], 0, ',', ' ') }} {{ $cur }}</b><span class="xs muted">{{ __('ui.per_person_solo') }}</span></div>
                             @if ($t['price_couple'])<div class="duo"><span class="xs">{{ __('ui.for_two') }}</span><b>{{ number_format($t['price_couple'], 0, ',', ' ') }} {{ $cur }}</b></div>@endif
-                            <a class="btn sm" href="{{ route('spa.book', [$spa->slug, 'soin' => $t['id']]) }}">{{ __('ui.book') }}</a>
+                            <a class="btn sm" href="{{ route('spa.book', [$spa->slug, 'soin' => $t['id']] + $bookParams) }}">{{ __('ui.book') }}</a>
                         </div>
                     </div>
                 @endforeach
@@ -83,13 +85,13 @@
     <aside class="side card">
         <div class="xs muted">{{ __('ui.from') }}</div>
         <div style="font-size:26px;font-weight:700">{{ $card['price_from'] ? number_format($card['price_from'], 0, ',', ' ').' '.config('hl.currency') : '—' }} <span class="small muted">{{ __('ui.per_person') }}</span></div>
-        <a class="btn full" style="margin-top:12px" href="{{ route('spa.book', $spa->slug) }}">{{ __('ui.book') }}</a>
+        <a class="btn full" style="margin-top:12px" href="{{ route('spa.book', [$spa->slug] + $bookParams) }}">{{ __('ui.book') }}</a>
         <div class="divider"></div>
         <div class="small muted">{{ __('ui.no_account') }}</div>
     </aside>
 </div>
 <div class="mbar">
     <div class="sp"><span class="xs muted">{{ __('ui.from') }}</span><br><b>{{ $card['price_from'] ? number_format($card['price_from'], 0, ',', ' ').' '.config('hl.currency') : '—' }}</b></div>
-    <a class="btn" href="{{ route('spa.book', $spa->slug) }}">{{ __('ui.book') }}</a>
+    <a class="btn" href="{{ route('spa.book', [$spa->slug] + $bookParams) }}">{{ __('ui.book') }}</a>
 </div>
 </div>
