@@ -36,4 +36,26 @@ class ResourceType extends Model
     {
         return $this->allocation_mode === 'unit';
     }
+
+    /** Famille de ressource (hammam|massage|soin|other) déduite du slug ou du nom, pour adapter les textes d'aide. */
+    public static function familyOf(?string $slug, ?string $name = null): string
+    {
+        $s = mb_strtolower((string) $slug.' '.(string) $name);
+        if (str_contains($s, 'hammam')) {
+            return 'hammam';
+        }
+        if (str_contains($s, 'massage') || str_contains($s, 'cabine') || str_contains($s, 'cabin')) {
+            return 'massage';
+        }
+        if (str_contains($s, 'soin') || str_contains($s, 'treatment') || str_contains($s, 'salle')) {
+            return 'soin';
+        }
+
+        return 'other';
+    }
+
+    public function family(): string
+    {
+        return self::familyOf($this->slug, $this->name_fr);
+    }
 }
