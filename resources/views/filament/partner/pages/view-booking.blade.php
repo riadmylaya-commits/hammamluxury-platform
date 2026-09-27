@@ -47,9 +47,20 @@
         .hl-tel{display:inline-flex;align-items:center;gap:.5rem;font-size:1.25rem;font-weight:700;text-decoration:none;color:#1d4ed8}
         .hl-panel{display:none;margin-top:1rem;border-top:1px solid #e5e7eb;padding-top:.75rem}
         .hl-panel.open{display:block}
+        .hl-count{position:absolute;top:.3rem;right:.4rem;background:#c4753b;color:#fff;border-radius:999px;font-size:.65rem;padding:.05rem .4rem}
+        .hl-thread{display:flex;flex-direction:column;gap:.5rem;max-height:22rem;overflow:auto;padding:.2rem 0}
+        .hl-msg{max-width:85%;border-radius:.8rem;padding:.5rem .75rem;background:#f3f4f6}
+        .hl-msg-partner,.hl-msg-admin{align-self:flex-end;background:#fdf1e7}
+        .dark .hl-msg{background:#1f2937}.dark .hl-msg-partner{background:#4a2f1c}
+        .hl-msg .hl-meta{font-size:.72rem;color:#6b7280}
+        .hl-msg p{margin:.15rem 0 0;white-space:pre-line;font-size:.95rem}
+        .hl-compose{display:flex;flex-direction:column;gap:.5rem;align-items:flex-end;margin-top:.75rem}
+        .hl-req{border-left:3px solid #f59e0b;padding:.5rem .75rem;margin-bottom:.5rem;background:#fffbeb;border-radius:0 .6rem .6rem 0}
+        .dark .hl-req{background:#3b2a12}
+        .hl-req p{margin:.2rem 0 0;white-space:pre-line}
     </style>
 
-    <div class="hl-sheet" x-data="{ panel: null }">
+    <div class="hl-sheet" x-data="{ panel: null }" x-init="if (location.hash === '#messages') panel = 'message'">
         {{-- En-tête : client, n°, statut, 3 actions --}}
         <div class="hl-card hl-span">
             <div class="hl-head">
@@ -70,8 +81,9 @@
                 <button type="button" class="hl-btn" @click="panel = panel === 'contact' ? null : 'contact'">
                     <x-heroicon-o-phone />{{ __('partner.contact') }}
                 </button>
-                <button type="button" class="hl-btn" disabled title="{{ __('partner.message_soon') }}">
+                <button type="button" class="hl-btn" style="position:relative" @click="panel = panel === 'message' ? null : 'message'">
                     <x-heroicon-o-chat-bubble-left-right />{{ __('partner.message') }}
+                    @if ($b->messages->isNotEmpty())<span class="hl-count">{{ $b->messages->count() }}</span>@endif
                 </button>
             </div>
 
@@ -87,6 +99,26 @@
                 @endif
                 @if ($b->note)
                     <div class="hl-row"><span class="hl-k">{{ __('partner.customer_note') }}</span><span class="hl-v" style="white-space:pre-line">{{ $b->note }}</span></div>
+                @endif
+            </div>
+
+            <div class="hl-panel" :class="{ open: panel === 'message' }" id="messages">
+                <p class="hl-muted" style="margin-bottom:.6rem">{{ __('partner.messages_help') }}</p>
+                <div class="hl-thread">
+                    @forelse ($b->messages as $m)
+                        <div class="hl-msg hl-msg-{{ $m->sender }}" wire:key="msg-{{ $m->id }}">
+                            <div class="hl-meta">{{ __('partner.senders.'.$m->sender) }} · {{ $m->created_at->format('d/m/Y H:i') }}</div>
+                            <p>{{ $m->body }}</p>
+                        </div>
+                    @empty
+                        <p class="hl-muted">{{ __('partner.no_messages') }}</p>
+                    @endforelse
+                </div>
+                @if ($b->isActive() || $b->status === 'completed')
+                    <form wire:submit="sendMessage" class="hl-compose">
+                        <textarea wire:model="messageBody" rows="3" maxlength="2000" class="fi-input" style="width:100%;border:1px solid #d1d5db;border-radius:.6rem;padding:.6rem" placeholder="{{ __('partner.message_placeholder') }}" required></textarea>
+                        <x-filament::button type="submit" size="sm" icon="heroicon-o-paper-airplane" wire:loading.attr="disabled">{{ __('partner.send_message') }}</x-filament::button>
+                    </form>
                 @endif
             </div>
 
@@ -169,6 +201,28 @@
                 @endforeach
             @endforelse
         </div>
+
+        {{-- Demandes d'annulation --}}
+        @if ($b->cancellationRequests->isNotEmpty())
+            <div class="hl-card hl-span">
+                <h3>{{ __('partner.cancellation_requests') }}</h3>
+                @foreach ($b->cancellationRequests as $r)
+                    <div class="hl-req" wire:key="req-{{ $r->id }}">
+                        <div class="hl-head">
+                            <span class="hl-muted">{{ $r->created_at->format('d/m/Y H:i') }}</span>
+                            <span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::requestColor($r->status) }}">{{ __('partner.cancellation_steps.'.$r->step()) }}</span>
+                        </div>
+                        <p>{{ $r->reason }}</p>
+                        @if ($r->client_response)
+                            <p class="hl-muted">{{ __('partner.client_response') }} : {{ __('partner.client_responses.'.$r->client_response) }} ({{ $r->client_responded_at?->format('d/m/Y H:i') }})</p>
+                        @endif
+                        @if ($r->isPending())
+                            <p class="hl-muted">{{ __('partner.cancellation_pending_help') }}</p>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @endif
 
         {{-- Notes internes --}}
         <div class="hl-card hl-span">

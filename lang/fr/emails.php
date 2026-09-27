@@ -28,4 +28,29 @@ return [
         'published' => ['subject' => 'Votre établissement :spa est en ligne', 'title' => 'Félicitations, :spa est publié !', 'intro' => 'Votre fiche a été validée par notre équipe et est maintenant visible des clients. Vous recevrez les demandes de réservation par e-mail.', 'button' => 'Accéder à mon espace partenaire'],
         'refused' => ['subject' => 'Votre fiche :spa nécessite des modifications', 'title' => 'Des modifications sont nécessaires', 'intro' => 'Notre équipe a examiné la fiche « :spa » et ne peut pas la publier en l’état. Corrigez les points ci-dessous puis renvoyez-la pour validation.', 'button' => 'Compléter ma fiche'],
     ],
+
+    'cancellation' => [
+        'reason' => 'Motif indiqué par l’établissement',
+        'decision_note' => 'Commentaire HammamLuxury',
+        'response' => ['accepted' => 'a accepté', 'refused' => 'a refusé', 'none' => 'n’a pas encore répondu'],
+        'button' => ['client' => 'Répondre depuis ma réservation', 'partner' => 'Voir la réservation', 'admin' => 'Traiter la demande'],
+        'requested' => [
+            'client' => ['subject' => 'Demande d’annulation de :spa — réservation :ref', 'title' => ':spa demande à annuler votre réservation :ref', 'intro' => 'Bonjour :name, l’établissement :spa a demandé l’annulation de votre réservation. Rien n’est annulé pour l’instant : votre réservation reste confirmée tant que HammamLuxury n’a pas pris de décision. Merci de nous indiquer depuis votre page de suivi si vous acceptez ou refusez cette annulation.'],
+            'admin' => ['subject' => 'Demande d’annulation :ref — :spa', 'title' => 'Nouvelle demande d’annulation', 'intro' => 'L’établissement :spa demande l’annulation de la réservation de :name. Le client a été informé ; la décision finale vous appartient.'],
+        ],
+        'client_response' => [
+            'admin' => ['subject' => 'Réponse du client — demande d’annulation :ref', 'title' => 'Le client a répondu', 'intro' => 'Le client :name :response la demande d’annulation de :spa. Vous pouvez maintenant prendre la décision finale.'],
+            'partner' => ['subject' => 'Réponse du client — demande d’annulation :ref', 'title' => 'Le client a répondu à votre demande', 'intro' => 'Le client :name :response votre demande d’annulation. HammamLuxury va prendre la décision finale ; la réservation reste confirmée jusque-là.'],
+        ],
+        'refused' => [
+            'partner' => ['subject' => 'Demande d’annulation :ref refusée', 'title' => 'Votre demande d’annulation est refusée', 'intro' => 'HammamLuxury a refusé votre demande d’annulation de la réservation de :name. La réservation reste confirmée : merci d’accueillir le client comme prévu.'],
+            'client' => ['subject' => 'Votre réservation :ref est maintenue — :spa', 'title' => 'Votre réservation est maintenue', 'intro' => 'Bonne nouvelle :name : HammamLuxury a refusé la demande d’annulation de :spa. Votre réservation reste confirmée.'],
+        ],
+    ],
+    'message' => [
+        'button' => 'Ouvrir la conversation',
+        'footer' => 'Ne répondez pas à cet e-mail : utilisez la messagerie HammamLuxury pour que l’échange reste attaché à la réservation.',
+        'partner' => ['subject' => 'Nouveau message client — :ref', 'title' => 'Nouveau message de :name', 'intro' => 'Le client de la réservation :ref chez :spa vous a écrit :'],
+        'client' => ['subject' => 'Nouveau message de :spa — réservation :ref', 'title' => 'Nouveau message de :spa', 'intro' => 'Bonjour :name, l’établissement vous a écrit au sujet de votre réservation :'],
+    ],
 ];

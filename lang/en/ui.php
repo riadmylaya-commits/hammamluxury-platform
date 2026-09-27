@@ -142,4 +142,27 @@ return [
         'ask' => 'On request',
         'lang_fr' => 'French', 'lang_en' => 'English', 'lang_ar' => 'Arabic', 'lang_es' => 'Spanish', 'lang_de' => 'German', 'lang_it' => 'Italian',
     ],
+
+    // Step B — partner cancellation request
+    'cancel_request_title' => 'Cancellation request from the establishment',
+    'cancel_request_intro' => 'On :date, :spa asked to cancel your booking. Your booking stays confirmed until HammamLuxury makes a decision.',
+    'cancel_request_ask' => 'Do you agree to this cancellation? Your answer is sent to HammamLuxury, which makes the final decision.',
+    'cancel_request_accept' => 'I accept the cancellation',
+    'cancel_request_refuse' => 'I want to keep my booking',
+    'cancel_request_note' => 'If you refuse, HammamLuxury will contact the establishment to find a solution for you.',
+    'cancel_request_your_answer' => 'Your answer:',
+    'cancel_request_answers' => ['accepted' => 'you accept the cancellation', 'refused' => 'you want to keep your booking'],
+    'cancel_request_waiting_admin' => 'Awaiting HammamLuxury’s decision.',
+    'cancel_request_decision' => ['accepted' => 'HammamLuxury accepted the request: your booking is cancelled.', 'refused' => 'HammamLuxury refused the request: your booking is maintained.', 'closed' => 'Request no longer applicable.'],
+    'cancel_request_answered' => 'Thank you, your answer has been sent to HammamLuxury.',
+    'cancel_request_none' => 'No cancellation request in progress.',
+
+    // Step C — messaging
+    'messages_title' => 'Messages with the establishment',
+    'messages_help' => 'Talk directly with :spa about this booking. You will receive an e-mail for each new message.',
+    'message_placeholder' => 'Your message (arrival time, preference, question…)',
+    'send_message' => 'Send',
+    'message_sent' => 'Message sent to the establishment.',
+    'no_messages' => 'No messages yet.',
+    'you' => 'You',
 ];

@@ -4,6 +4,7 @@ namespace App\Filament\Shared;
 
 use App\Domain\Booking\BookingException;
 use App\Domain\Booking\BookingService;
+use App\Domain\Booking\CancellationService;
 use App\Domain\Phone\PhoneNumber;
 use App\Models\Booking;
 use App\Models\BookingParticipant;
@@ -66,6 +67,19 @@ class BookingActions
                 ->visible(fn (Booking $b) => $actor === 'admin' && $b->isConfirmed())
                 ->requiresConfirmation()->modalDescription(__('partner.cancel_help'))
                 ->action(fn (Booking $b) => $run($b, 'cancel')),
+            $class::make('requestCancellation')->label(__('partner.request_cancellation'))->icon('heroicon-o-hand-raised')->color('danger')
+                ->visible(fn (Booking $b) => $actor === 'partner' && $b->canRequestCancellation())
+                ->modalHeading(__('partner.request_cancellation'))->modalDescription(__('partner.request_cancellation_help'))
+                ->form([Textarea::make('reason')->label(__('partner.cancellation_reason'))->rows(4)->required()->minLength(10)->maxLength(1000)->placeholder(__('partner.cancellation_reason_placeholder'))])
+                ->modalSubmitActionLabel(__('partner.send_request'))
+                ->action(function (Booking $b, array $data) {
+                    try {
+                        app(CancellationService::class)->request($b, auth()->user(), $data['reason']);
+                        Notification::make()->title(__('partner.cancellation_requested'))->body(__('partner.cancellation_requested_body'))->success()->send();
+                    } catch (BookingException $e) {
+                        Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
+                    }
+                }),
             $class::make('payment')->label(__('partner.payment'))->icon('heroicon-o-banknotes')->color('gray')
                 ->visible(fn (Booking $b) => $b->isConfirmed() || $b->status === 'completed')
                 ->fillForm(fn (Booking $b) => ['payment_status' => $b->payment_status])
@@ -85,6 +99,16 @@ class BookingActions
                 $b->notes()->create(['spa_id' => $b->spa_id, 'user_id' => auth()->id(), 'body' => trim($data['body'])]);
                 Notification::make()->title(__('partner.note_saved'))->success()->send();
             });
+    }
+
+    public static function requestColor(string $status): string
+    {
+        return match ($status) {
+            'pending' => 'warning',
+            'accepted' => 'danger',
+            'refused' => 'success',
+            default => 'gray',
+        };
     }
 
     public static function paymentColor(string $status): string
@@ -147,6 +171,28 @@ class BookingActions
                     TextEntry::make('user.name')->label('')->placeholder('—'),
                     TextEntry::make('body')->label('')->columnSpan(2),
                 ])->columns(4),
+            ]),
+
+            Section::make(__('partner.cancellation_requests'))->collapsed()->visible(fn (Booking $b) => $b->cancellationRequests()->exists())->schema([
+                RepeatableEntry::make('cancellationRequests')->label('')->schema([
+                    TextEntry::make('created_at')->label(__('partner.requested_at'))->dateTime('d/m/Y H:i'),
+                    TextEntry::make('status')->label(__('partner.status'))->badge()
+                        ->formatStateUsing(fn ($state) => __('partner.cancellation_statuses')[$state] ?? $state)->color(fn ($state) => self::requestColor($state)),
+                    TextEntry::make('client_response')->label(__('partner.client_response'))->placeholder(__('partner.no_response_yet'))
+                        ->formatStateUsing(fn ($state) => __('partner.client_responses')[$state] ?? $state),
+                    TextEntry::make('decided_at')->label(__('partner.decided_at'))->dateTime('d/m/Y H:i')->placeholder('—'),
+                    TextEntry::make('reason')->label(__('partner.cancellation_reason'))->columnSpanFull(),
+                    TextEntry::make('decision_note')->label(__('partner.decision_note'))->placeholder('—')->columnSpanFull()->visible($withCommission),
+                ])->columns(4),
+            ]),
+
+            Section::make(__('partner.messages'))->description(__('partner.messages_admin_help'))->collapsed()->visible($withCommission)->schema([
+                RepeatableEntry::make('messages')->label('')->schema([
+                    TextEntry::make('created_at')->label('')->dateTime('d/m/Y H:i'),
+                    TextEntry::make('sender')->label('')->badge()->formatStateUsing(fn ($state) => __('partner.senders')[$state] ?? $state)
+                        ->color(fn ($state) => $state === 'client' ? 'info' : 'primary'),
+                    TextEntry::make('body')->label('')->columnSpan(2),
+                ])->columns(4)->placeholder(__('partner.no_messages')),
             ]),
 
             Section::make(__('partner.history'))->collapsed()->schema([

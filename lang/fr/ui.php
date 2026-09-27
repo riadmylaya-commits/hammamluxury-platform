@@ -144,4 +144,27 @@ return [
         'ask' => 'Sur demande',
         'lang_fr' => 'Français', 'lang_en' => 'Anglais', 'lang_ar' => 'Arabe', 'lang_es' => 'Espagnol', 'lang_de' => 'Allemand', 'lang_it' => 'Italien',
     ],
+
+    // Étape B — demande d'annulation du partenaire
+    'cancel_request_title' => 'Demande d’annulation de l’établissement',
+    'cancel_request_intro' => ':spa a demandé le :date l’annulation de votre réservation. Votre réservation reste confirmée tant que HammamLuxury n’a pas pris de décision.',
+    'cancel_request_ask' => 'Acceptez-vous cette annulation ? Votre réponse est transmise à HammamLuxury, qui prend la décision finale.',
+    'cancel_request_accept' => 'J’accepte l’annulation',
+    'cancel_request_refuse' => 'Je souhaite conserver ma réservation',
+    'cancel_request_note' => 'Si vous refusez, HammamLuxury interviendra auprès de l’établissement pour vous proposer une solution.',
+    'cancel_request_your_answer' => 'Votre réponse :',
+    'cancel_request_answers' => ['accepted' => 'vous acceptez l’annulation', 'refused' => 'vous souhaitez conserver votre réservation'],
+    'cancel_request_waiting_admin' => 'En attente de la décision HammamLuxury.',
+    'cancel_request_decision' => ['accepted' => 'HammamLuxury a accepté la demande : votre réservation est annulée.', 'refused' => 'HammamLuxury a refusé la demande : votre réservation est maintenue.', 'closed' => 'Demande sans objet.'],
+    'cancel_request_answered' => 'Merci, votre réponse a été transmise à HammamLuxury.',
+    'cancel_request_none' => 'Aucune demande d’annulation en cours.',
+
+    // Étape C — messagerie
+    'messages_title' => 'Messagerie avec l’établissement',
+    'messages_help' => 'Échangez directement avec :spa au sujet de cette réservation. Vous recevrez un e-mail à chaque nouveau message.',
+    'message_placeholder' => 'Votre message (heure d’arrivée, préférence, question…)',
+    'send_message' => 'Envoyer',
+    'message_sent' => 'Message envoyé à l’établissement.',
+    'no_messages' => 'Aucun message pour l’instant.',
+    'you' => 'Vous',
 ];

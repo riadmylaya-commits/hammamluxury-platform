@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class Booking extends Model
@@ -70,6 +71,32 @@ class Booking extends Model
     public function notes(): HasMany
     {
         return $this->hasMany(BookingNote::class)->latest();
+    }
+
+    public function cancellationRequests(): HasMany
+    {
+        return $this->hasMany(CancellationRequest::class)->latest();
+    }
+
+    public function pendingCancellationRequest(): HasOne
+    {
+        return $this->hasOne(CancellationRequest::class)->where('status', 'pending')->latestOfMany();
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(BookingMessage::class)->oldest();
+    }
+
+    public function unreadMessagesFor(string $reader): int
+    {
+        return $this->messages()->unreadFor($reader)->count();
+    }
+
+    /** Le partenaire peut demander l'annulation d'une réservation confirmée et à venir, une seule demande en cours à la fois. */
+    public function canRequestCancellation(): bool
+    {
+        return $this->isConfirmed() && $this->start_at->isFuture() && ! $this->pendingCancellationRequest()->exists();
     }
 
     /** Montant sur lequel porte la commission (total si non figé). */

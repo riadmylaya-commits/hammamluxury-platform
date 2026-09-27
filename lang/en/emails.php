@@ -28,4 +28,29 @@ return [
         'published' => ['subject' => 'Your establishment :spa is live', 'title' => 'Congratulations, :spa is published!', 'intro' => 'Your listing has been approved by our team and is now visible to guests. You will receive booking requests by e-mail.', 'button' => 'Go to my partner area'],
         'refused' => ['subject' => 'Your listing :spa needs changes', 'title' => 'Changes are needed', 'intro' => 'Our team reviewed the listing ":spa" and cannot publish it as is. Fix the points below and submit it again.', 'button' => 'Complete my listing'],
     ],
+
+    'cancellation' => [
+        'reason' => 'Reason given by the establishment',
+        'decision_note' => 'HammamLuxury comment',
+        'response' => ['accepted' => 'accepted', 'refused' => 'refused', 'none' => 'has not answered yet'],
+        'button' => ['client' => 'Answer from my booking page', 'partner' => 'View booking', 'admin' => 'Process the request'],
+        'requested' => [
+            'client' => ['subject' => 'Cancellation request from :spa — booking :ref', 'title' => ':spa asks to cancel your booking :ref', 'intro' => 'Hello :name, :spa has requested the cancellation of your booking. Nothing is cancelled yet: your booking stays confirmed until HammamLuxury makes a decision. Please tell us from your booking page whether you accept or refuse this cancellation.'],
+            'admin' => ['subject' => 'Cancellation request :ref — :spa', 'title' => 'New cancellation request', 'intro' => ':spa requests the cancellation of :name’s booking. The customer has been informed; the final decision is yours.'],
+        ],
+        'client_response' => [
+            'admin' => ['subject' => 'Customer answer — cancellation request :ref', 'title' => 'The customer has answered', 'intro' => 'Customer :name :response the cancellation request from :spa. You can now make the final decision.'],
+            'partner' => ['subject' => 'Customer answer — cancellation request :ref', 'title' => 'The customer answered your request', 'intro' => 'Customer :name :response your cancellation request. HammamLuxury will make the final decision; the booking stays confirmed until then.'],
+        ],
+        'refused' => [
+            'partner' => ['subject' => 'Cancellation request :ref refused', 'title' => 'Your cancellation request is refused', 'intro' => 'HammamLuxury refused your request to cancel :name’s booking. The booking stays confirmed: please welcome the customer as planned.'],
+            'client' => ['subject' => 'Your booking :ref is maintained — :spa', 'title' => 'Your booking is maintained', 'intro' => 'Good news :name: HammamLuxury refused the cancellation request from :spa. Your booking stays confirmed.'],
+        ],
+    ],
+    'message' => [
+        'button' => 'Open the conversation',
+        'footer' => 'Please do not reply to this e-mail: use HammamLuxury messaging so the exchange stays attached to the booking.',
+        'partner' => ['subject' => 'New customer message — :ref', 'title' => 'New message from :name', 'intro' => 'The customer of booking :ref at :spa wrote to you:'],
+        'client' => ['subject' => 'New message from :spa — booking :ref', 'title' => 'New message from :spa', 'intro' => 'Hello :name, the establishment wrote to you about your booking:'],
+    ],
 ];

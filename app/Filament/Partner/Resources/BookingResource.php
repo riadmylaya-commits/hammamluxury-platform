@@ -5,6 +5,7 @@ namespace App\Filament\Partner\Resources;
 use App\Filament\Partner\Resources\BookingResource\Pages;
 use App\Filament\Shared\BookingActions;
 use App\Models\Booking;
+use App\Models\BookingMessage;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -31,14 +32,25 @@ class BookingResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $n = static::getEloquentQuery()->where('status', 'waiting')->count();
+        $n = static::getEloquentQuery()->where('status', 'waiting')->count() + static::unreadMessages();
 
         return $n ? (string) $n : null;
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'warning';
+        return static::unreadMessages() ? 'danger' : 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return __('partner.badge_tooltip');
+    }
+
+    /** Messages clients non lus sur l'établissement courant. */
+    public static function unreadMessages(): int
+    {
+        return BookingMessage::whereIn('booking_id', static::getEloquentQuery()->select('bookings.id'))->unreadFor('partner')->count();
     }
 
     public static function canCreate(): bool
@@ -50,7 +62,7 @@ class BookingResource extends Resource
     {
         return $table
             ->defaultSort('start_at', 'desc')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with('participants'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('participants')->withCount(['messages as unread_count' => fn ($q) => $q->unreadFor('partner')]))
             ->columns([
                 Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')->sortable()
                     ->description(fn (Booking $b) => '→ '.$b->end_at->format('H:i').' · '.$b->duration_min.' min'),
@@ -63,6 +75,8 @@ class BookingResource extends Resource
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => __('ui.status')[$state] ?? $state)
                     ->color(fn ($state) => BookingActions::statusColor($state)),
+                Tables\Columns\TextColumn::make('unread_count')->label('')->badge()->color('danger')->icon('heroicon-o-chat-bubble-left-right')
+                    ->formatStateUsing(fn ($state) => $state ?: null)->tooltip(__('partner.unread_messages')),
                 Tables\Columns\TextColumn::make('reference')->label(__('partner.reference'))->searchable()->toggleable(),
             ])
             ->filters([

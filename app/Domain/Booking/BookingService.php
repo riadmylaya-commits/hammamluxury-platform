@@ -202,7 +202,13 @@ class BookingService
             throw BookingException::make('status', 'already_inactive', [], 409);
         }
 
-        return $this->transition($booking, 'cancelled', $actor, ['cancelled_at' => now(), 'cancelled_by' => $actor, 'expires_at' => null]);
+        $booking = $this->transition($booking, 'cancelled', $actor, ['cancelled_at' => now(), 'cancelled_by' => $actor, 'expires_at' => null]);
+
+        // Une demande d'annulation encore ouverte n'a plus d'objet une fois la réservation annulée.
+        $booking->cancellationRequests()->where('status', 'pending')
+            ->update(['status' => 'closed', 'decided_at' => now(), 'decision_note' => 'booking_cancelled:'.$actor]);
+
+        return $booking;
     }
 
     public function complete(Booking $booking, string $actor = 'partner'): Booking

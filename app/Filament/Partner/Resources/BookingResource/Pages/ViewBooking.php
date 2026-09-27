@@ -2,11 +2,14 @@
 
 namespace App\Filament\Partner\Resources\BookingResource\Pages;
 
+use App\Domain\Booking\BookingException;
+use App\Domain\Messaging\MessageService;
 use App\Domain\Phone\PhoneNumber;
 use App\Filament\Partner\Resources\BookingResource;
 use App\Filament\Shared\BookingActions;
 use App\Models\Booking;
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
 /** Fiche réservation partenaire : une seule page, lisible sur téléphone, avec tout ce qu'il faut préparer. */
@@ -15,6 +18,27 @@ class ViewBooking extends ViewRecord
     protected static string $resource = BookingResource::class;
 
     protected static string $view = 'filament.partner.pages.view-booking';
+
+    public string $messageBody = '';
+
+    /** Ouvrir la fiche marque comme lus les messages du client. */
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+        app(MessageService::class)->markRead($this->record, 'partner');
+    }
+
+    public function sendMessage(): void
+    {
+        try {
+            app(MessageService::class)->send($this->record, 'partner', $this->messageBody, auth()->user());
+            $this->messageBody = '';
+            $this->record->unsetRelation('messages');
+            Notification::make()->title(__('partner.message_sent'))->success()->send();
+        } catch (BookingException $e) {
+            Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
+        }
+    }
 
     public function getTitle(): string
     {
@@ -50,7 +74,7 @@ class ViewBooking extends ViewRecord
     public function sheet(): array
     {
         /** @var Booking $b */
-        $b = $this->record->loadMissing(['spa', 'participants', 'notes.user']);
+        $b = $this->record->loadMissing(['spa', 'participants', 'notes.user', 'messages', 'cancellationRequests']);
         $q = $b->quote ?? [];
         $iso = PhoneNumber::countryOf($b->phone);
 

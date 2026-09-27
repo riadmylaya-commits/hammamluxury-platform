@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Domain\Booking\CancellationService;
 use App\Domain\Catalogue\PublicationChecklist;
 use App\Domain\Partner\OnboardingService;
 use App\Filament\Admin\Resources\SpaResource\Pages;
@@ -98,6 +99,14 @@ class SpaResource extends Resource
                 Tables\Columns\TextColumn::make('partner.company_name')->label(__('admin.partner'))->searchable(),
                 Tables\Columns\TextColumn::make('treatments_count')->counts('treatments')->label(__('partner.treatments')),
                 Tables\Columns\TextColumn::make('bookings_count')->counts('bookings')->label(__('partner.bookings')),
+                Tables\Columns\TextColumn::make('cancellation_requests_count')->counts('cancellationRequests')->label(__('admin.cancellation_col'))->sortable()
+                    ->formatStateUsing(function ($state, Spa $s) {
+                        $rate = CancellationService::rateFor($s->id);
+
+                        return $state ? $state.' ('.rtrim(rtrim(number_format($rate['rate'], 1, ',', ''), '0'), ',').' %)' : '0';
+                    })
+                    ->color(fn ($state, Spa $s) => $state && CancellationService::rateFor($s->id)['rate'] >= 20 ? 'danger' : ($state ? 'warning' : 'gray'))->badge()
+                    ->tooltip(__('admin.cancellation_col_help')),
                 Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->placeholder('—'),
                 Tables\Columns\TextColumn::make('license_number')->label(__('admin.license_col'))->toggleable()->badge()
                     ->getStateUsing(fn (Spa $s) => $s->license_number ?: ($s->licenseExpected() ? __('admin.license_missing') : null))->placeholder('—')

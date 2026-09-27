@@ -176,6 +176,16 @@ class Spa extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function cancellationRequests(): HasMany
+    {
+        return $this->hasMany(CancellationRequest::class);
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(BookingMessage::class);
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);

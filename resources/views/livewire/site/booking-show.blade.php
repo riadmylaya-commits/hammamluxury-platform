@@ -40,6 +40,53 @@
         @endif
     </div>
 
+    @php($cr = $b->cancellationRequests->first())
+    @if ($cr && ($cr->isPending() || $cr->decided_at?->gt(now()->subDays(30))))
+        <div class="card" style="padding:16px;margin-top:14px;border-left:4px solid {{ $cr->isPending() ? '#d98e04' : ($cr->status === 'accepted' ? '#b42318' : '#1a7f4b') }}" id="cancellation">
+            <b class="small">{{ __('ui.cancel_request_title') }}</b>
+            <p class="small" style="margin:6px 0">{{ __('ui.cancel_request_intro', ['spa' => $b->spa->name, 'date' => $cr->created_at->locale(app()->getLocale())->isoFormat('LLL')]) }}</p>
+            <blockquote class="small" style="margin:6px 0;padding:8px 12px;background:#f6f1ea;border-radius:8px">{{ $cr->reason }}</blockquote>
+            @if ($cr->isPending())
+                @if ($cr->client_response)
+                    <p class="small"><b>{{ __('ui.cancel_request_your_answer') }}</b> {{ __('ui.cancel_request_answers.'.$cr->client_response) }} · {{ __('ui.cancel_request_waiting_admin') }}</p>
+                @else
+                    <p class="small">{{ __('ui.cancel_request_ask') }}</p>
+                    <div class="row" style="gap:8px;flex-wrap:wrap">
+                        <button class="btn sm" type="button" wire:click="respondCancellation('accepted')" wire:loading.attr="disabled">{{ __('ui.cancel_request_accept') }}</button>
+                        <button class="btn sec sm" type="button" wire:click="respondCancellation('refused')" wire:loading.attr="disabled">{{ __('ui.cancel_request_refuse') }}</button>
+                    </div>
+                    <p class="xs muted" style="margin-top:6px">{{ __('ui.cancel_request_note') }}</p>
+                @endif
+            @else
+                <p class="small"><b>{{ __('ui.cancel_request_decision.'.$cr->status) }}</b></p>
+            @endif
+        </div>
+    @endif
+
+    @if ($b->isActive() || $b->status === 'completed' || $b->messages->isNotEmpty())
+        <div class="card" style="padding:16px;margin-top:14px" id="messages">
+            <h3 style="font-size:17px">{{ __('ui.messages_title') }}</h3>
+            <p class="muted xs" style="margin:4px 0 10px">{{ __('ui.messages_help', ['spa' => $b->spa->name]) }}</p>
+            <div class="hl-thread">
+                @forelse ($b->messages as $m)
+                    <div class="hl-msg {{ $m->sender === 'client' ? 'hl-msg-me' : '' }}" wire:key="msg-{{ $m->id }}">
+                        <div class="xs muted">{{ $m->sender === 'client' ? __('ui.you') : $b->spa->name }} · {{ $m->created_at->locale(app()->getLocale())->isoFormat('lll') }}</div>
+                        <p style="margin:2px 0 0;white-space:pre-line">{{ $m->body }}</p>
+                    </div>
+                @empty
+                    <p class="small muted">{{ __('ui.no_messages') }}</p>
+                @endforelse
+            </div>
+            @if ($b->isActive() || $b->status === 'completed')
+                <form wire:submit="sendMessage" style="margin-top:10px">
+                    <textarea wire:model="messageBody" rows="3" maxlength="2000" required placeholder="{{ __('ui.message_placeholder') }}" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font:inherit"></textarea>
+                    <div class="row" style="justify-content:flex-end;margin-top:6px"><button class="btn sm" type="submit" wire:loading.attr="disabled">{{ __('ui.send_message') }}</button></div>
+                </form>
+            @endif
+        </div>
+        <style>.hl-thread{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto}.hl-msg{background:#f6f1ea;border-radius:12px;padding:8px 12px;max-width:85%;font-size:14px}.hl-msg-me{align-self:flex-end;background:#e8f3ec}</style>
+    @endif
+
     @if ($b->isActive())
         <div style="margin-top:14px" x-data="{ ask: false }">
             <button class="btn bad sm" type="button" x-show="!ask" x-on:click="ask = true">{{ __('ui.cancel_booking') }}</button>
