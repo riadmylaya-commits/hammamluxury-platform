@@ -47,6 +47,15 @@ class PanelsTest extends BookingFlowTestCase
         $this->get('/admin')->assertRedirect('/admin/login');
     }
 
+    public function test_promotions_are_hidden_from_admin_unless_feature_enabled(): void
+    {
+        $this->actingAs($this->admin)->get('/admin/promotions')->assertForbidden();
+        $this->actingAs($this->admin)->get('/admin')->assertOk()->assertDontSee('/admin/promotions');
+
+        config(['hl.features.promotions' => true]);
+        $this->actingAs($this->admin)->get('/admin/promotions')->assertOk();
+    }
+
     public function test_partner_is_scoped_to_own_spa_and_cannot_enter_admin(): void
     {
         $this->actingAs($this->owner)->get('/partenaire/'.$this->spa->slug)->assertOk()->assertSee($this->spa->name);
