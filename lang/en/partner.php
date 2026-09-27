@@ -108,6 +108,7 @@ return [
         'other' => 'After saving, add your units in the “Units” tab with the number of people for each.',
     ],
     'resources' => 'Units',
+    'unit' => 'unit',
     'resource_name' => 'Name',
     'unit_name_ex' => ['hammam' => 'Hammam 1', 'massage' => 'Cabin 1, Duo cabin…', 'soin' => 'Room 1', 'other' => 'Unit 1'],
     'unit_name_help' => ['pool' => 'Name shown in your schedule.', 'unit' => 'One name per unit, to find it easily in your schedule.'],
