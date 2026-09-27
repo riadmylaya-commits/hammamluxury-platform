@@ -147,7 +147,8 @@ return [
 
     // Étape B — demande d'annulation du partenaire
     'cancel_request_title' => 'Demande d’annulation de l’établissement',
-    'cancel_request_intro' => ':spa a demandé le :date l’annulation de votre réservation. Votre réservation reste confirmée tant que HammamLuxury n’a pas pris de décision.',
+    'cancel_request_intro' => ':spa a demandé le :date l’annulation de votre réservation.',
+    'cancel_request_stays_confirmed' => 'Votre réservation reste confirmée tant que HammamLuxury n’a pas pris de décision.',
     'cancel_request_ask' => 'Acceptez-vous cette annulation ? Votre réponse est transmise à HammamLuxury, qui prend la décision finale.',
     'cancel_request_accept' => 'J’accepte l’annulation',
     'cancel_request_refuse' => 'Je souhaite conserver ma réservation',
@@ -165,6 +166,7 @@ return [
     'message_placeholder' => 'Votre message (heure d’arrivée, préférence, question…)',
     'send_message' => 'Envoyer',
     'message_sent' => 'Message envoyé à l’établissement.',
+    'messages_closed' => 'La conversation est close : cette réservation est terminée ou annulée. Les messages échangés restent consultables.',
     'no_messages' => 'Aucun message pour l’instant.',
     'you' => 'Vous',
 ];

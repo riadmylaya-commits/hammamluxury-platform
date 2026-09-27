@@ -145,7 +145,8 @@ return [
 
     // Step B — partner cancellation request
     'cancel_request_title' => 'Cancellation request from the establishment',
-    'cancel_request_intro' => 'On :date, :spa asked to cancel your booking. Your booking stays confirmed until HammamLuxury makes a decision.',
+    'cancel_request_intro' => 'On :date, :spa asked to cancel your booking.',
+    'cancel_request_stays_confirmed' => 'Your booking stays confirmed until HammamLuxury makes a decision.',
     'cancel_request_ask' => 'Do you agree to this cancellation? Your answer is sent to HammamLuxury, which makes the final decision.',
     'cancel_request_accept' => 'I accept the cancellation',
     'cancel_request_refuse' => 'I want to keep my booking',
@@ -163,6 +164,7 @@ return [
     'message_placeholder' => 'Your message (arrival time, preference, question…)',
     'send_message' => 'Send',
     'message_sent' => 'Message sent to the establishment.',
+    'messages_closed' => 'This conversation is closed: the booking is over or cancelled. Previous messages remain available.',
     'no_messages' => 'No messages yet.',
     'you' => 'You',
 ];

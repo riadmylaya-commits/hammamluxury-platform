@@ -44,7 +44,7 @@
     @if ($cr && ($cr->isPending() || $cr->decided_at?->gt(now()->subDays(30))))
         <div class="card" style="padding:16px;margin-top:14px;border-left:4px solid {{ $cr->isPending() ? '#d98e04' : ($cr->status === 'accepted' ? '#b42318' : '#1a7f4b') }}" id="cancellation">
             <b class="small">{{ __('ui.cancel_request_title') }}</b>
-            <p class="small" style="margin:6px 0">{{ __('ui.cancel_request_intro', ['spa' => $b->spa->name, 'date' => $cr->created_at->locale(app()->getLocale())->isoFormat('LLL')]) }}</p>
+            <p class="small" style="margin:6px 0">{{ __('ui.cancel_request_intro', ['spa' => $b->spa->name, 'date' => $cr->created_at->locale(app()->getLocale())->isoFormat('LLL')]) }}@if ($cr->isPending()) {{ __('ui.cancel_request_stays_confirmed') }}@endif</p>
             <blockquote class="small" style="margin:6px 0;padding:8px 12px;background:#f6f1ea;border-radius:8px">{{ $cr->reason }}</blockquote>
             @if ($cr->isPending())
                 @if ($cr->client_response)
@@ -66,7 +66,7 @@
     @if ($b->isActive() || $b->status === 'completed' || $b->messages->isNotEmpty())
         <div class="card" style="padding:16px;margin-top:14px" id="messages">
             <h3 style="font-size:17px">{{ __('ui.messages_title') }}</h3>
-            <p class="muted xs" style="margin:4px 0 10px">{{ __('ui.messages_help', ['spa' => $b->spa->name]) }}</p>
+            <p class="muted xs" style="margin:4px 0 10px">{{ ($b->isActive() || $b->status === 'completed') ? __('ui.messages_help', ['spa' => $b->spa->name]) : __('ui.messages_closed') }}</p>
             <div class="hl-thread">
                 @forelse ($b->messages as $m)
                     <div class="hl-msg {{ $m->sender === 'client' ? 'hl-msg-me' : '' }}" wire:key="msg-{{ $m->id }}">
@@ -111,7 +111,7 @@
         @if ($b->hotel)<dt>{{ __('ui.hotel') }}</dt><dd>{{ $b->hotel }}</dd>@endif
     </dl>
     <div class="tot"><span>{{ __('ui.recap_total') }}</span><span>{{ $fmt($b->total) }}</span></div>
-    <div class="xs muted" style="text-align:right">{{ __('ui.pay_on_site') }}</div>
+    <div class="xs muted" style="text-align:right">{{ $b->payment_status === 'on_site' ? __('ui.pay_on_site') : __('partner.payment_statuses.'.$b->payment_status) }}</div>
 </aside>
 </div>
 </div>
