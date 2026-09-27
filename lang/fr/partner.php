@@ -329,4 +329,5 @@ return [
         'notified:cancelled' => 'E-mails envoyés (annulation)', 'notified:expired' => 'E-mails envoyés (expiration)',
         'payment:on_site' => 'Paiement : à payer sur place', 'payment:paid' => 'Paiement : payé', 'payment:partial' => 'Paiement : partiel', 'payment:refunded' => 'Paiement : remboursé',
     ],
+    'actors' => ['client' => 'client', 'partner' => 'établissement', 'admin' => 'HammamLuxury', 'system' => 'automatique'],
 ];

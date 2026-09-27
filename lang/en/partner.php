@@ -322,4 +322,5 @@ return [
         'notified:cancelled' => 'E-mails sent (cancellation)', 'notified:expired' => 'E-mails sent (expiry)',
         'payment:on_site' => 'Payment: to pay on site', 'payment:paid' => 'Payment: paid', 'payment:partial' => 'Payment: partial', 'payment:refunded' => 'Payment: refunded',
     ],
+    'actors' => ['client' => 'guest', 'partner' => 'venue', 'admin' => 'HammamLuxury', 'system' => 'automatic'],
 ];

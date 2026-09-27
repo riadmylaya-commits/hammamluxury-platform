@@ -7,6 +7,7 @@ use App\Models\Extra;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /** Extras d'un établissement : seule l'administration décide s'ils sont soumis à commission. */
@@ -22,7 +23,7 @@ class ExtrasRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($q) => $q->with('treatment'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('treatment'))
             ->columns([
                 Tables\Columns\TextColumn::make('name_fr')->label(__('partner.extra'))->description(fn (Extra $e) => $e->treatment?->tr('name')),
                 Tables\Columns\TextColumn::make('price')->label(__('partner.extra_price'))->money(config('hl.currency'), locale: 'fr'),

@@ -154,7 +154,9 @@
                         <div class="hl-muted" style="margin-top:.6rem">{{ __('partner.extras') }} :</div>
                         @foreach ($l['extras'] as $e)
                             <div class="hl-extra">
-                                <span>{{ $e['name'] }}@if(($e['qty'] ?? 1) > 1) ×{{ $e['qty'] }}@endif @if(! empty($e['extra_min']))<span class="hl-muted"> — +{{ $e['extra_min'] }} min</span>@endif</span>
+                                @php($mult = ($e['qty'] ?? 1) * (! empty($e['per_person']) ? $l['party'] : 1))
+                                <span>{{ $e['name'] }}@if(! empty($e['extra_min']))<span class="hl-muted"> — +{{ $e['extra_min'] }} min</span>@endif
+                                    @if ($mult > 1)<span class="hl-muted"> — {{ $money($e['unit_price']) }} × {{ $mult }}@if(! empty($e['per_person'])) {{ __('partner.pers') }}@endif</span>@endif</span>
                                 <span>{{ $money($e['price']) }}</span>
                             </div>
                         @endforeach
@@ -192,7 +194,7 @@
         <div class="hl-card hl-span">
             <h3>{{ __('partner.history') }}</h3>
             @foreach ($b->events->sortByDesc('created_at') as $ev)
-                <div class="hl-row"><span class="hl-k">{{ $ev->created_at->format('d/m/Y H:i') }}</span><span class="hl-v">{{ __('partner.events.'.$ev->type) !== 'partner.events.'.$ev->type ? __('partner.events.'.$ev->type) : $ev->type }}@if($ev->actor) <span class="hl-muted">· {{ $ev->actor }}</span>@endif</span></div>
+                <div class="hl-row"><span class="hl-k">{{ $ev->created_at->format('d/m/Y H:i') }}</span><span class="hl-v">{{ __('partner.events.'.$ev->type) !== 'partner.events.'.$ev->type ? __('partner.events.'.$ev->type) : $ev->type }}@if($ev->actor) <span class="hl-muted">· {{ __('partner.actors.'.$ev->actor) !== 'partner.actors.'.$ev->actor ? __('partner.actors.'.$ev->actor) : $ev->actor }}</span>@endif</span></div>
             @endforeach
         </div>
     </div>

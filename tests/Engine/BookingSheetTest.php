@@ -3,8 +3,12 @@
 namespace Tests\Engine;
 
 use App\Domain\Booking\QuoteBuilder;
+use App\Filament\Admin\Resources\SpaResource\Pages\EditSpa;
+use App\Filament\Admin\Resources\SpaResource\RelationManagers\ExtrasRelationManager;
 use App\Filament\Partner\Resources\BookingResource\Pages\ViewBooking;
+use App\Models\ActivityLog;
 use App\Models\LedgerEntry;
+use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
@@ -90,5 +94,19 @@ class BookingSheetTest extends BookingFlowTestCase
         // Le client ne voit jamais les notes internes.
         $this->get(route('booking.show', ['locale' => 'fr', 'token' => $b->manage_token]))
             ->assertOk()->assertDontSee('masseuse femme')->assertDontSee('commissionnable');
+    }
+
+    public function test_admin_toggles_extra_commissionability_from_spa_page(): void
+    {
+        $admin = User::create(['name' => 'Admin', 'email' => 'admin@example.test', 'password' => 'secret-test', 'role' => 'admin', 'email_verified_at' => now()]);
+        $this->actingAs($admin);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        Livewire::test(ExtrasRelationManager::class, ['ownerRecord' => $this->spa, 'pageClass' => EditSpa::class])
+            ->assertCanSeeTableRecords([$this->cr, $this->the])
+            ->assertSee('Soumis à commission')
+            ->call('updateTableColumnState', 'commissionable', $this->cr->getKey(), false);
+        $this->assertFalse($this->cr->fresh()->commissionable);
+        $this->assertTrue(ActivityLog::where('action', 'extra.non_commissionable')->exists());
     }
 }
