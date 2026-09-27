@@ -23,10 +23,10 @@ return [
     'max_photos' => (int) env('HL_MAX_PHOTOS', 40),
     'geocoder_url' => env('HL_GEOCODER_URL', 'https://nominatim.openstreetmap.org/search'),
 
-    // Adresse de réception du formulaire Contact public.
+    // Formulaire Contact public : adresse de réception.
+    'contact_email' => env('HL_CONTACT_EMAIL', 'admin@hammamluxury.com'),
     // Date de dernière mise à jour affichée sur CGU / confidentialité / FAQ.
     'legal_updated_at' => env('HL_LEGAL_UPDATED_AT', '2026-09-24'),
-    'contact_email' => env('HL_CONTACT_EMAIL', 'admin@hammamluxury.com'),
 
     'default_commission_pct' => (float) env('HL_DEFAULT_COMMISSION_PCT', 15),
     'lock_timeout_seconds' => 5,
