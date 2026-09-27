@@ -27,6 +27,12 @@ return [
     'features' => [
         'promotions' => (bool) env('HL_FEATURE_PROMOTIONS', false),
     ],
+
+    // Formulaire Contact public : adresse de réception.
+    'contact_email' => env('HL_CONTACT_EMAIL', 'admin@hammamluxury.com'),
+    // Date de dernière mise à jour affichée sur CGU / confidentialité / FAQ.
+    'legal_updated_at' => env('HL_LEGAL_UPDATED_AT', '2026-09-24'),
+
     'default_commission_pct' => (float) env('HL_DEFAULT_COMMISSION_PCT', 15),
     'lock_timeout_seconds' => 5,
 ];
