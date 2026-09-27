@@ -20,6 +20,16 @@ class ResourcesRelationManager extends RelationManager
         return __('partner.resources');
     }
 
+    protected static function getModelLabel(): ?string
+    {
+        return __('partner.unit');
+    }
+
+    protected static function getPluralModelLabel(): ?string
+    {
+        return __('partner.resources');
+    }
+
     public function form(Form $form): Form
     {
         /** @var ResourceType $type */

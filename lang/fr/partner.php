@@ -112,6 +112,7 @@ return [
         'other' => 'Après l’enregistrement, ajoutez vos unités dans l’onglet « Unités » avec le nombre de personnes de chacune.',
     ],
     'resources' => 'Unités',
+    'unit' => 'unité',
     'resource_name' => 'Nom',
     'unit_name_ex' => ['hammam' => 'Hammam 1', 'massage' => 'Cabine 1, Cabine duo…', 'soin' => 'Salle 1', 'other' => 'Unité 1'],
     'unit_name_help' => ['pool' => 'Nom affiché dans votre planning.', 'unit' => 'Un nom par unité, pour vous y retrouver dans le planning.'],

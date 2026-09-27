@@ -76,7 +76,9 @@ class PartnerResourcesUxTest extends BookingFlowTestCase
             ->mountTableAction('create')
             ->assertSee('Nombre de personnes par réservation')
             ->assertSee('1 pour une cabine solo, 2 pour une cabine duo')
-            ->assertDontSee('Personnes min.');
+            ->assertDontSee('Personnes min.')
+            ->assertSee('Créer unité')
+            ->assertDontSee('Créer resource');
 
         $rm->callTableAction('create', data: ['name' => 'Cabine duo', 'capacity' => 2, 'status' => 'active'])->assertHasNoTableActionErrors();
         $rm->callTableAction('create', data: ['name' => 'Cabine 3', 'capacity' => 1, 'status' => 'active'])->assertHasNoTableActionErrors();
