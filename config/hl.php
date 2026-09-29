@@ -23,6 +23,10 @@ return [
     'max_photos' => (int) env('HL_MAX_PHOTOS', 40),
     'geocoder_url' => env('HL_GEOCODER_URL', 'https://nominatim.openstreetmap.org/search'),
 
+    // Fonctionnalités mises en attente (code et données conservés).
+    'features' => [
+        'promotions' => (bool) env('HL_FEATURE_PROMOTIONS', false),
+    ],
     'default_commission_pct' => (float) env('HL_DEFAULT_COMMISSION_PCT', 15),
     'lock_timeout_seconds' => 5,
 ];

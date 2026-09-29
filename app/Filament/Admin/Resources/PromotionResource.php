@@ -19,6 +19,11 @@ class PromotionResource extends Resource
 
     protected static ?int $navigationSort = 40;
 
+    public static function canAccess(): bool
+    {
+        return (bool) config('hl.features.promotions');
+    }
+
     public static function getModelLabel(): string
     {
         return __('admin.promotion');
