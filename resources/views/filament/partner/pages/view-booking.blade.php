@@ -123,11 +123,15 @@
             </div>
 
             <div class="hl-panel" :class="{ open: panel === 'contact' }">
-                @if ($s['tel'])
+                @if (! $s['contact_visible'])
+                    <span class="hl-big">🔒 {{ __('partner.contact_hidden_until_confirmed') }}</span>
+                    <p class="hl-muted" style="margin-top:.35rem">{{ __('partner.contact_hidden_help') }}</p>
+                @elseif ($s['tel'])
                     <a class="hl-tel" href="{{ $s['tel'] }}"><x-heroicon-o-phone style="width:1.3rem;height:1.3rem" />{{ $s['phone'] }}</a>
                     <p class="hl-muted" style="margin-top:.35rem">{{ __('partner.contact_help') }}
                         @if ($s['whatsapp']) · <a href="{{ $s['whatsapp'] }}" target="_blank" rel="noopener" style="text-decoration:underline">WhatsApp</a> @endif
                     </p>
+                    <p class="hl-muted" style="margin-top:.35rem">{{ __('partner.contact_platform_reminder') }}</p>
                 @else
                     <span class="hl-big">{{ $s['phone'] ?: '—' }}</span>
                 @endif
@@ -143,6 +147,12 @@
             <div class="hl-row"><span class="hl-k">{{ __('partner.establishment') }}</span><span class="hl-v">{{ $b->spa->name }}</span></div>
             @if ($b->isWaiting() && $b->expires_at)
                 <div class="hl-row"><span class="hl-k">{{ __('partner.expires_at') }}</span><span class="hl-v">{{ $b->expires_at->diffForHumans() }}</span></div>
+            @endif
+            @if ($b->isConfirmed())
+                <p class="hl-muted" style="margin-top:.5rem">{{ __('partner.no_show_window_hint', ['until' => $s['no_show_until']->translatedFormat('j F') .' '. $s['no_show_until']->format('H\hi')]) }}</p>
+            @endif
+            @if ($b->status === 'no_show')
+                <div class="hl-row"><span class="hl-k">{{ __('partner.no_show_fee') }}</span><span class="hl-v">{{ $b->no_show_fee_waived ? __('partner.no_show_fee_waived') : $money($b->no_show_fee) }}</span></div>
             @endif
         </div>
 
@@ -212,13 +222,34 @@
                             <span class="hl-muted">{{ $r->created_at->format('d/m/Y H:i') }}</span>
                             <span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::requestColor($r->status) }}">{{ __('partner.cancellation_steps.'.$r->step()) }}</span>
                         </div>
+                        @if ($r->reason_code)<p><b>{{ __('partner.cancellation_reason_codes.'.$r->reason_code) }}</b></p>@endif
                         <p>{{ $r->reason }}</p>
+                        @if ($r->proposed_start_at)
+                            <p class="hl-muted">{{ __('partner.proposed_start_at') }} : {{ $r->proposed_start_at->translatedFormat('j F Y') }} {{ $r->proposed_start_at->format('H\hi') }}@if($r->proposal_response) — {{ __('partner.proposal_responses.'.$r->proposal_response) }}@endif</p>
+                        @endif
                         @if ($r->client_response)
                             <p class="hl-muted">{{ __('partner.client_response') }} : {{ __('partner.client_responses.'.$r->client_response) }} ({{ $r->client_responded_at?->format('d/m/Y H:i') }})</p>
                         @endif
                         @if ($r->isPending())
                             <p class="hl-muted">{{ __('partner.cancellation_pending_help') }}</p>
                         @endif
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
+        {{-- Signalements client --}}
+        @if ($b->incidents->isNotEmpty())
+            <div class="hl-card hl-span">
+                <h3>{{ __('partner.guest_reports') }}</h3>
+                @foreach ($b->incidents as $i)
+                    <div class="hl-req" wire:key="inc-{{ $i->id }}">
+                        <div class="hl-head">
+                            <span class="hl-muted">{{ $i->created_at->format('d/m/Y H:i') }}</span>
+                            <span class="hl-badge hl-badge-warning">{{ __('partner.report_categories.'.$i->category) }}</span>
+                        </div>
+                        <p>{{ $i->description }}</p>
+                        <p class="hl-muted">{{ __('partner.report_sent_body') }}</p>
                     </div>
                 @endforeach
             </div>
@@ -235,7 +266,6 @@
                 <div class="hl-note" wire:key="note-{{ $n->id }}">
                     <div class="hl-meta">
                         <span>{{ $n->created_at->format('d/m/Y H:i') }}@if($n->user) · {{ $n->user->name }}@endif</span>
-                        {{ ($this->deleteNoteAction)(['note' => $n->id]) }}
                     </div>
                     <p>{{ $n->body }}</p>
                 </div>

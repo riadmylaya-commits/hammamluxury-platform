@@ -56,10 +56,10 @@ class CancellationAndMessagingTest extends BookingFlowTestCase
 
         $page = Livewire::test(ViewBooking::class, ['record' => $b->getRouteKey()])
             ->assertActionHidden('cancel')->assertActionVisible('requestCancellation');
-        $page->callAction('requestCancellation', ['reason' => 'court'])->assertHasActionErrors(['reason']);
+        $page->callAction('requestCancellation', ['reason_code' => 'staff_unavailable', 'reason' => 'court'])->assertHasActionErrors(['reason']);
         $this->assertSame(0, $b->cancellationRequests()->count());
 
-        $page->callAction('requestCancellation', ['reason' => 'Thérapeute malade, aucun remplacement possible ce jour.'])->assertHasNoActionErrors();
+        $page->callAction('requestCancellation', ['reason_code' => 'staff_unavailable', 'reason' => 'Thérapeute malade, aucun remplacement possible ce jour.'])->assertHasNoActionErrors();
         $r = $b->cancellationRequests()->first();
         $this->assertSame('pending', $r->status);
         $this->assertSame($this->spa->partner->user_id, $r->requested_by);

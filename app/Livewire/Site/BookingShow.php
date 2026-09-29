@@ -61,6 +61,24 @@ class BookingShow extends Component
         }
     }
 
+    /** Réponse du client à la nouvelle date proposée par HammamLuxury : accepter déplace la réservation, refuser la laisse confirmée. */
+    public function respondProposal(string $response, CancellationService $cancellations): void
+    {
+        $request = $this->booking->pendingCancellationRequest()->first();
+        if (! $request || ! $request->hasOpenProposal()) {
+            $this->error = __('ui.cancel_request_none');
+
+            return;
+        }
+        try {
+            $cancellations->clientRespondProposal($request, $response);
+            $this->booking->refresh()->unsetRelation('cancellationRequests');
+            $this->flash = $response === 'accepted' ? __('ui.proposal_accepted_ok') : __('ui.cancel_request_answered');
+        } catch (BookingException $e) {
+            $this->error = $e->getMessage();
+        }
+    }
+
     public function sendMessage(MessageService $messages): void
     {
         try {

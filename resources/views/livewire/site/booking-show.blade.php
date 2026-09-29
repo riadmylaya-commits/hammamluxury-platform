@@ -2,7 +2,7 @@
 @php($b = $booking)
 @php($cur = config('hl.currency'))
 @php($fmt = fn ($n) => number_format($n, 0, ',', ' ').' '.$cur)
-@php($tone = ['waiting' => 'warn', 'confirmed' => 'ok', 'completed' => 'ok', 'declined' => 'bad', 'cancelled' => 'grey', 'expired' => 'grey', 'no_show' => 'grey'][$b->status])
+@php($tone = ['waiting' => 'warn', 'confirmed' => 'ok', 'completed' => 'ok', 'declined' => 'bad', 'cancelled' => 'grey', 'expired' => 'grey', 'no_show' => 'grey', 'partner_no_show' => 'bad'][$b->status])
 @if ($new && $b->isWaiting())
     <div class="check">✓</div>
     <h1 style="text-align:center;font-size:26px">{{ __('ui.done_title') }}</h1>
@@ -46,8 +46,21 @@
             <b class="small">{{ __('ui.cancel_request_title') }}</b>
             <p class="small" style="margin:6px 0">{{ __('ui.cancel_request_intro', ['spa' => $b->spa->name, 'date' => $cr->created_at->locale(app()->getLocale())->isoFormat('LLL')]) }}@if ($cr->isPending()) {{ __('ui.cancel_request_stays_confirmed') }}@endif</p>
             <blockquote class="small" style="margin:6px 0;padding:8px 12px;background:#f6f1ea;border-radius:8px">{{ $cr->reason }}</blockquote>
-            @if ($cr->isPending())
-                @if ($cr->client_response)
+            @if ($cr->isPending() && $cr->hasOpenProposal())
+                <div style="margin:8px 0;padding:10px 12px;background:#eef6f0;border-radius:8px">
+                    <p class="small" style="margin:0"><b>{{ __('ui.proposal_title') }}</b> {{ __('ui.proposal_intro', ['date' => $cr->proposed_start_at->locale(app()->getLocale())->isoFormat('LLLL')]) }}</p>
+                    @if ($cr->proposal_note)<blockquote class="small" style="margin:6px 0;padding:6px 10px;background:#fff;border-radius:6px">{{ $cr->proposal_note }}</blockquote>@endif
+                    <p class="small" style="margin:6px 0">{{ __('ui.proposal_ask') }}</p>
+                    <div class="row" style="gap:8px;flex-wrap:wrap">
+                        <button class="btn sm" type="button" wire:click="respondProposal('accepted')" wire:loading.attr="disabled">{{ __('ui.proposal_accept') }}</button>
+                        <button class="btn sec sm" type="button" wire:click="respondProposal('refused')" wire:loading.attr="disabled">{{ __('ui.proposal_refuse') }}</button>
+                    </div>
+                    <p class="xs muted" style="margin-top:6px">{{ __('ui.proposal_note') }}</p>
+                </div>
+            @elseif ($cr->isPending())
+                @if ($cr->proposal_response === 'refused')
+                    <p class="small"><b>{{ __('ui.cancel_request_your_answer') }}</b> {{ __('ui.proposal_refused_answer') }} · {{ __('ui.cancel_request_waiting_admin') }}</p>
+                @elseif ($cr->client_response)
                     <p class="small"><b>{{ __('ui.cancel_request_your_answer') }}</b> {{ __('ui.cancel_request_answers.'.$cr->client_response) }} · {{ __('ui.cancel_request_waiting_admin') }}</p>
                 @else
                     <p class="small">{{ __('ui.cancel_request_ask') }}</p>
@@ -93,7 +106,7 @@
             <div class="row" x-show="ask" x-cloak><span class="small">{{ __('ui.cancel_confirm') }}</span><button class="btn bad sm" type="button" wire:click="cancel">{{ __('ui.cancel_booking') }}</button><button class="btn ghost sm" type="button" x-on:click="ask = false">{{ __('ui.back') }}</button></div>
         </div>
     @else
-        <a class="btn sec sm" style="margin-top:14px" href="{{ route('spa.show', $b->spa->slug) }}">{{ __('ui.book_again') }}</a>
+        <a class="btn sec sm" style="margin-top:14px" href="{{ route('spa.show', ['spa' => $b->spa->slug]) }}">{{ __('ui.book_again') }}</a>
     @endif
 </div>
 <aside class="card recap">

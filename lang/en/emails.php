@@ -46,6 +46,26 @@ return [
             'partner' => ['subject' => 'Cancellation request :ref refused', 'title' => 'Your cancellation request is refused', 'intro' => 'HammamLuxury refused your request to cancel :name’s booking. The booking stays confirmed: please welcome the customer as planned.'],
             'client' => ['subject' => 'Your booking :ref is maintained — :spa', 'title' => 'Your booking is maintained', 'intro' => 'Good news :name: HammamLuxury refused the cancellation request from :spa. Your booking stays confirmed.'],
         ],
+        'proposed' => [
+            'client' => ['subject' => 'New date proposal — booking :ref', 'title' => 'HammamLuxury proposes a new date', 'intro' => 'Hello :name, following :spa’s request, HammamLuxury proposes to move your booking to the date below. Your current booking stays confirmed until you accept. You can accept or refuse from your booking page.'],
+        ],
+        'rescheduled' => [
+            'client' => ['subject' => 'Your booking :ref has been moved — :spa', 'title' => 'New date confirmed', 'intro' => 'Hello :name, your booking at :spa is confirmed for the new date below.'],
+            'partner' => ['subject' => 'Booking :ref moved to a new date', 'title' => 'The customer accepted the new date', 'intro' => 'Customer :name accepted the new date proposed by HammamLuxury. The booking is confirmed for the slot below and the cancellation request is closed.'],
+            'admin' => ['subject' => 'New date accepted — booking :ref', 'title' => 'The customer accepted the new date', 'intro' => 'Customer :name accepted the new date for the booking at :spa. The cancellation request is closed.'],
+        ],
+        'proposal_refused' => [
+            'admin' => ['subject' => 'New date refused — cancellation request :ref', 'title' => 'The customer refused the new date', 'intro' => 'Customer :name refused the new date proposed for the booking at :spa. The original booking stays confirmed; the final decision is yours.'],
+        ],
+        'proposed_date' => 'Proposed new date',
+        'proposal_note' => 'HammamLuxury details',
+    ],
+    'guest_report' => [
+        'subject' => 'Guest report — booking :ref (:spa)',
+        'title' => 'New guest misconduct report',
+        'intro' => ':spa reported an incident concerning the guest of booking :ref. No automatic action is taken: please review the report.',
+        'category' => 'Reason',
+        'button' => 'View the report',
     ],
     'message' => [
         'button' => 'Open the conversation',

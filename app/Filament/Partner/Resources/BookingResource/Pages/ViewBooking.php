@@ -61,28 +61,22 @@ class ViewBooking extends ViewRecord
         return BookingActions::addNote()->record($this->record);
     }
 
-    public function deleteNoteAction(): Action
-    {
-        return Action::make('deleteNote')->label(__('partner.delete_note'))->link()->color('danger')->size('xs')
-            ->requiresConfirmation()
-            ->action(function (array $arguments) {
-                $this->record->notes()->whereKey($arguments['note'])->delete();
-            });
-    }
-
     /** @return array<string, mixed> données prêtes à afficher */
     public function sheet(): array
     {
         /** @var Booking $b */
-        $b = $this->record->loadMissing(['spa', 'participants', 'notes.user', 'messages', 'cancellationRequests']);
+        $b = $this->record->loadMissing(['spa', 'participants', 'notes.user', 'messages', 'cancellationRequests', 'incidents']);
         $q = $b->quote ?? [];
         $iso = PhoneNumber::countryOf($b->phone);
+        $contact = $b->contactVisibleToPartner();
 
         return [
-            'phone' => PhoneNumber::format($b->phone),
-            'tel' => PhoneNumber::isValid($b->phone) ? 'tel:'.$b->phone : null,
-            'whatsapp' => PhoneNumber::whatsappUrl($b->phone),
+            'contact_visible' => $contact,
+            'phone' => $contact ? PhoneNumber::format($b->phone) : null,
+            'tel' => $contact && PhoneNumber::isValid($b->phone) ? 'tel:'.$b->phone : null,
+            'whatsapp' => $contact ? PhoneNumber::whatsappUrl($b->phone) : null,
             'dial' => $iso ? PhoneNumber::countryName($iso).' (+'.PhoneNumber::dialCode($iso).')' : null,
+            'no_show_until' => $b->end_at->addHours(Booking::NO_SHOW_WINDOW_HOURS),
             'language' => __('ui.practical.lang_'.$b->locale) !== 'ui.practical.lang_'.$b->locale ? __('ui.practical.lang_'.$b->locale) : strtoupper($b->locale),
             'lines' => $q['lines'] ?? [],
             'commissionable' => $b->commissionableAmount(),

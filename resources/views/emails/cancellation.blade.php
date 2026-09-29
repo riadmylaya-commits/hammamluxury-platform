@@ -10,6 +10,12 @@
 @if($event === 'requested')
 **{{ __('emails.cancellation.reason') }} :** {{ $request->reason }}
 @endif
+@if($event === 'proposed' && $request->proposed_start_at)
+**{{ __('emails.cancellation.proposed_date') }} :** {{ $request->proposed_start_at->translatedFormat('l j F Y') }} · {{ $request->proposed_start_at->format('H:i') }}
+@if($request->proposal_note)
+**{{ __('emails.cancellation.proposal_note') }} :** {{ $request->proposal_note }}
+@endif
+@endif
 @if($event === 'refused' && $request->decision_note)
 **{{ __('emails.cancellation.decision_note') }} :** {{ $request->decision_note }}
 @endif
