@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mise à jour d'une release déjà installée (à lancer en root après un `git push <serveur> HEAD:staging`).
+# Mise à jour d'une release déjà installée (à lancer en root après un `git push <serveur> HEAD:staging` ou `HEAD:main` en production).
 set -euo pipefail
 APP=/var/www/hammamluxury
 sudo -u deploy -H bash -euo pipefail <<'EOS'

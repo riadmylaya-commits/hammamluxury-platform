@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Spa;
 use App\Models\SpaHour;
 use App\Models\Treatment;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -18,8 +19,13 @@ class CatalogueService
         return Spa::query()->where('status', 'published')->whereHas('partner', fn ($q) => $q->where('status', 'approved'));
     }
 
-    /** Recherche par ville/zone/nom (insensible à la casse, accents non normalisés). */
-    public function search(?string $q, ?string $category = null): Builder
+    public const SORTS = ['recommended', 'price_asc', 'price_desc'];
+
+    /**
+     * Recherche par ville/zone/nom (insensible à la casse, accents non normalisés).
+     * Une date ne garde que les établissements ouverts ce jour-là et non fermés par un blocage couvrant toute la journée.
+     */
+    public function search(?string $q, ?string $category = null, ?CarbonImmutable $date = null, string $sort = 'recommended'): Builder
     {
         $query = $this->bookableSpas()->with(['photos', 'categories', 'amenities'])->withCount(['treatments' => fn ($t) => $t->where('status', 'active')]);
         if ($q = trim((string) $q)) {
@@ -29,8 +35,40 @@ class CatalogueService
         if ($category) {
             $query->whereHas('treatments', fn ($t) => $t->where('status', 'active')->where('category', $category));
         }
+        if ($date) {
+            $this->openOn($query, $date);
+        }
 
-        return $query->orderByDesc('rating')->orderBy('name');
+        return match ($sort) {
+            'price_asc' => $query->orderByRaw('price_from IS NULL')->orderBy('price_from')->orderBy('name'),
+            'price_desc' => $query->orderByDesc('price_from')->orderBy('name'),
+            default => $query->orderByDesc('rating')->orderBy('name'),
+        };
+    }
+
+    private function openOn(Builder $query, CarbonImmutable $date): void
+    {
+        $weekday = $date->dayOfWeekIso - 1;
+        $dayStart = $date->startOfDay();
+        $dayEnd = $date->addDay()->startOfDay();
+
+        $query->whereHas('hours', fn ($h) => $h->where('weekday', $weekday))
+            ->whereDoesntHave('blocks', fn ($b) => $b->where('scope', 'spa')->where('start_at', '<=', $dayStart)->where('end_at', '>=', $dayEnd));
+    }
+
+    /** Date de recherche valide (Y-m-d, aujourd'hui ou plus tard), sinon null. */
+    public static function parseDate(?string $value): ?CarbonImmutable
+    {
+        if (! $value || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return null;
+        }
+        try {
+            $d = CarbonImmutable::createFromFormat('Y-m-d', $value, config('hl.timezone'))->startOfDay();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $d->lt(CarbonImmutable::today(config('hl.timezone'))) ? null : $d;
     }
 
     /** @return Collection<int, array> prestations actives d'un spa avec formules, étapes et extras */

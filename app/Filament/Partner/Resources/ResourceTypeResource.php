@@ -35,17 +35,24 @@ class ResourceTypeResource extends Resource
     {
         return $form->schema([
             Forms\Components\TextInput::make('name_fr')->label(__('partner.name_fr'))->required()->maxLength(190)
+                ->placeholder(__('partner.resource_type_placeholder'))
                 ->live(onBlur: true)->afterStateUpdated(fn (Forms\Set $set, ?string $state) => $set('slug', Str::slug((string) $state))),
             Forms\Components\TextInput::make('name_en')->label(__('partner.name_en'))->maxLength(190),
-            Forms\Components\TextInput::make('slug')->label('Identifiant')->required()->maxLength(60)->alphaDash(),
+            Forms\Components\TextInput::make('slug')->label('Identifiant')->required()->maxLength(60)->alphaDash()->live(onBlur: true),
             Forms\Components\Select::make('kind')->label(__('partner.kind'))->options([
                 'room' => __('partner.kind_room'), 'therapist' => __('partner.kind_therapist'), 'equipment' => __('partner.kind_equipment'),
             ])->default('room')->required(),
-            Forms\Components\Radio::make('allocation_mode')->label(__('partner.allocation_mode'))->options([
-                'pool' => __('partner.mode_pool'), 'unit' => __('partner.mode_unit'),
-            ])->descriptions([
-                'pool' => __('partner.mode_pool_help'), 'unit' => __('partner.mode_unit_help'),
-            ])->default('unit')->required()->columnSpanFull(),
+            Forms\Components\Radio::make('allocation_mode')->label(__('partner.allocation_mode'))
+                ->helperText(__('partner.allocation_mode_help'))
+                ->options(['pool' => __('partner.mode_pool'), 'unit' => __('partner.mode_unit')])
+                ->descriptions(function (Forms\Get $get): array {
+                    $f = ResourceType::familyOf($get('slug'), $get('name_fr'));
+
+                    return ['pool' => __("partner.mode_pool_ex.$f"), 'unit' => __("partner.mode_unit_ex.$f")];
+                })
+                ->default('unit')->required()->columnSpanFull(),
+            Forms\Components\Placeholder::make('units_hint')->label('')->columnSpanFull()
+                ->content(fn (Forms\Get $get) => __('partner.units_hint.'.ResourceType::familyOf($get('slug'), $get('name_fr')))),
         ])->columns(2);
     }
 
