@@ -25,6 +25,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->passwordReset()
             ->brandName('HammamLuxury · Administration')
             ->colors(['primary' => Color::hex('#c4753b')])
             ->font('Inter')

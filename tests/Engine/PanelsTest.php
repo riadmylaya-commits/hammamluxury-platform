@@ -47,6 +47,12 @@ class PanelsTest extends BookingFlowTestCase
         $this->get('/admin')->assertRedirect('/admin/login');
     }
 
+    public function test_admin_can_request_a_password_reset_link(): void
+    {
+        $this->get('/admin/password-reset/request')->assertOk();
+        $this->get('/admin/login')->assertSee('/admin/password-reset/request');
+    }
+
     public function test_partner_is_scoped_to_own_spa_and_cannot_enter_admin(): void
     {
         $this->actingAs($this->owner)->get('/partenaire/'.$this->spa->slug)->assertOk()->assertSee($this->spa->name);
