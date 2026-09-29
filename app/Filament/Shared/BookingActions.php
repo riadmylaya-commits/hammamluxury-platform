@@ -84,7 +84,7 @@ class BookingActions
                         'apply' => __('partner.no_show_fee_apply', ['amount' => number_format((float) $b->total, 0, ',', ' ').' '.config('hl.currency')]),
                         'waive' => __('partner.no_show_fee_waive'),
                     ])->descriptions([
-                        'apply' => __('partner.no_show_fee_apply_help', ['commission' => number_format((float) $b->commission_amount, 0, ',', ' ').' '.config('hl.currency')]),
+                        'apply' => __('partner.no_show_fee_apply_help', ['commission' => number_format((float) $b->commission_amount, 2, ',', ' ').' '.config('hl.currency')]),
                         'waive' => __('partner.no_show_fee_waive_help'),
                     ])->default('apply'),
                     Textarea::make('note')->label(__('partner.no_show_note'))->rows(2)->maxLength(500),
@@ -201,9 +201,9 @@ class BookingActions
                     ->formatStateUsing(fn ($state, Booking $b) => $b->nothingDue() ? __('partner.nothing_due_short') : (__('partner.payment_statuses')[$state] ?? $state))
                     ->color(fn ($state, Booking $b) => $b->nothingDue() ? 'gray' : self::paymentColor((string) $state)),
                 TextEntry::make('commissionable_amount')->label(__('partner.commissionable'))->getStateUsing(fn (Booking $b) => $b->commissionableAmount())->formatStateUsing($money)->visible($withCommission),
-                TextEntry::make('commission_amount')->label(__('partner.commission'))->formatStateUsing($money)
-                    ->helperText(fn (Booking $b) => $b->commission_pct.' %')->visible($withCommission),
-                TextEntry::make('net')->label(__('partner.net_partner'))->getStateUsing(fn (Booking $b) => $b->netForPartner())->formatStateUsing($money)->weight('bold')->visible($withCommission),
+                TextEntry::make('commission_amount')->label(__('partner.commission'))->getStateUsing(fn (Booking $b) => $b->commissionDue())->formatStateUsing($money)
+                    ->helperText(fn (Booking $b) => $b->nothingDue() ? __('partner.nothing_due') : $b->commission_pct.' %')->visible($withCommission),
+                TextEntry::make('net')->label(__('partner.net_partner'))->getStateUsing(fn (Booking $b) => $b->netDue())->formatStateUsing($money)->weight('bold')->visible($withCommission),
                 TextEntry::make('no_show_fee')->label(__('partner.no_show_fee'))->badge()->visible(fn (Booking $b) => $b->status === 'no_show')
                     ->getStateUsing(fn (Booking $b) => $b->no_show_fee_waived ? __('partner.no_show_fee_waived') : $money($b->no_show_fee))
                     ->color(fn (Booking $b) => $b->no_show_fee_waived ? 'gray' : 'warning'),

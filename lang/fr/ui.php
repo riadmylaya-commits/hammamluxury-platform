@@ -95,6 +95,7 @@ return [
     'recap_extras' => 'Extras',
     'recap_total' => 'Total',
     'pay_on_site' => 'à régler sur place',
+    'nothing_due' => 'aucun montant à régler',
     'formula' => ['solo' => 'Solo', 'couple' => 'Formule couple', 'group' => 'Formule groupe'],
     'slot_gone' => 'Ce créneau n’est plus disponible. Veuillez en choisir un autre.',
     // Suivi

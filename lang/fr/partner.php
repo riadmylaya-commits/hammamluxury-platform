@@ -381,6 +381,9 @@ return [
     'report_evidence' => 'Preuve (facultatif)',
     'send_report' => 'Envoyer le signalement',
     'report_sent' => 'Signalement envoyé',
+    'nothing_due' => 'Aucun montant dû sur cette réservation : aucune commission HammamLuxury.',
+    'nothing_due_short' => 'Rien à régler',
+    'report_statuses' => ['open' => 'En cours d’examen', 'reviewed' => 'Examiné par HammamLuxury — signalement retenu', 'dismissed' => 'Examiné par HammamLuxury — classé sans suite'],
     'report_sent_body' => 'HammamLuxury a été informé et examinera le signalement. Il est conservé dans l’historique.',
     'guest_reports' => 'Signalements client',
 
