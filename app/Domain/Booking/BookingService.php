@@ -7,6 +7,7 @@ use App\Domain\Privacy\ContactMasker;
 use App\Events\BookingCreated;
 use App\Events\BookingExpired;
 use App\Events\BookingStatusChanged;
+use App\Models\ActivityLog;
 use App\Models\Allocation;
 use App\Models\Booking;
 use App\Models\LedgerEntry;
@@ -184,7 +185,10 @@ class BookingService
             throw BookingException::make('status', 'not_waiting', [], 409);
         }
 
-        return $this->transition($booking, 'confirmed', $actor, ['confirmed_at' => now(), 'expires_at' => null, 'partner_note' => $note]);
+        $booking = $this->transition($booking, 'confirmed', $actor, ['confirmed_at' => now(), 'expires_at' => null, 'partner_note' => $note, 'contact_revealed_at' => now()]);
+        $booking->log('contact:revealed', 'system', ['fields' => ['phone', 'whatsapp']]);
+
+        return $booking;
     }
 
     public function decline(Booking $booking, string $actor = 'partner', ?string $note = null): Booking
@@ -220,13 +224,96 @@ class BookingService
         return $this->transition($booking, 'completed', $actor);
     }
 
-    public function noShow(Booking $booking, string $actor = 'partner'): Booking
+    /**
+     * Client absent. Le partenaire ne peut déclarer qu'entre l'heure du rendez-vous et NO_SHOW_WINDOW_HOURS après la fin
+     * prévue ; l'administration peut corriger à tout moment après le rendez-vous, y compris une réservation déjà terminée.
+     * Frais appliqués → le total reste dû et la commission HammamLuxury est conservée ; frais abandonnés → geste commercial, rien de dû.
+     */
+    public function noShow(Booking $booking, string $actor = 'partner', bool $applyFee = true, ?string $note = null): Booking
+    {
+        if ($actor === 'admin') {
+            if (! in_array($booking->status, ['confirmed', 'completed'], true) || $booking->start_at->gt(now())) {
+                throw BookingException::make('status', 'no_show_not_allowed', [], 409);
+            }
+        } elseif (! $booking->partnerNoShowWindowOpen()) {
+            throw BookingException::make('status', $booking->isConfirmed() && $booking->start_at->isPast() ? 'no_show_window_closed' : 'no_show_not_allowed', [], 409);
+        }
+
+        $fee = $applyFee ? round((float) $booking->total, 2) : 0.0;
+        $booking = $this->transition($booking, 'no_show', $actor, [
+            'no_show_fee' => $fee,
+            'no_show_fee_waived' => ! $applyFee,
+            'no_show_at' => now(),
+        ]);
+        $booking->log($applyFee ? 'no_show:fee_applied' : 'no_show:fee_waived', $actor, array_filter(['fee' => $fee, 'commission' => $applyFee ? $booking->commission_amount : 0, 'note' => $note]));
+        ActivityLog::record($applyFee ? 'booking.no_show_fee_applied' : 'booking.no_show_fee_waived', $booking, array_filter(['ref' => $booking->reference, 'fee' => $fee, 'note' => $note]), $actor);
+
+        return $booking;
+    }
+
+    /** Réservation non honorée par l'établissement : incident sérieux, aucune commission, enregistré par l'administration seulement. */
+    public function partnerNoShow(Booking $booking, string $actor = 'admin', ?string $note = null): Booking
+    {
+        if ($actor !== 'admin') {
+            throw BookingException::make('actor', 'admin_only', [], 403);
+        }
+        if (! in_array($booking->status, ['confirmed', 'completed'], true) || $booking->start_at->gt(now())) {
+            throw BookingException::make('status', 'no_show_not_allowed', [], 409);
+        }
+
+        $booking = $this->transition($booking, 'partner_no_show', $actor, ['no_show_at' => now()]);
+        $booking->cancellationRequests()->where('status', 'pending')
+            ->update(['status' => 'closed', 'decided_at' => now(), 'decision_note' => 'partner_no_show']);
+        ActivityLog::record('booking.partner_no_show', $booking, array_filter(['ref' => $booking->reference, 'note' => $note]), $actor);
+
+        return $booking;
+    }
+
+    /**
+     * Déplace une réservation confirmée vers un nouveau créneau (même formule, même prix) : re-planification sous verrou
+     * en excluant ses propres allocations, puis remplacement atomique des allocations.
+     */
+    public function reschedule(Booking $booking, CarbonImmutable $start, string $actor = 'admin'): Booking
     {
         if (! $booking->isConfirmed()) {
             throw BookingException::make('status', 'not_confirmed', [], 409);
         }
+        $spa = $booking->spa;
+        $quote = $booking->quote ?? [];
+        if (empty($quote['items'])) {
+            throw BookingException::make('quote', 'quote_missing', [], 409);
+        }
 
-        return $this->transition($booking, 'no_show', $actor);
+        return $this->engine->withLock($spa, function () use ($booking, $spa, $start, $quote, $actor) {
+            $plan = $this->engine->plan($spa, $this->engine->expandNeeds($spa, $start, $quote['items']), $booking->id);
+            if (! $plan['ok']) {
+                throw new BookingException('unavailable', implode(' ', $plan['errors']), 409);
+            }
+            $old = $booking->start_at;
+
+            DB::transaction(function () use ($booking, $spa, $start, $plan, $actor, $old) {
+                $this->release($booking);
+                $participantIds = $booking->participants()->pluck('id', 'participant_no')->all();
+                foreach ($plan['allocations'] as $a) {
+                    $booking->allocations()->create([
+                        'spa_id' => $spa->id,
+                        'resource_id' => $a['resource_id'],
+                        'resource_type_id' => $a['resource_type_id'],
+                        'treatment_id' => $a['treatment_id'],
+                        'booking_participant_id' => $participantIds[$a['participant_no']] ?? null,
+                        'start_at' => $a['start_at'],
+                        'end_at' => $a['end_at'],
+                        'party' => $a['party'],
+                        'status' => 'active',
+                    ]);
+                }
+                $booking->update(['start_at' => $start, 'end_at' => $start->addMinutes($booking->duration_min)]);
+                $booking->log('rescheduled', $actor, ['from' => $old->toDateTimeString(), 'to' => $start->toDateTimeString()]);
+                ActivityLog::record('booking.rescheduled', $booking, ['ref' => $booking->reference, 'from' => $old->toDateTimeString(), 'to' => $start->toDateTimeString()], $actor);
+            });
+
+            return $booking->refresh();
+        });
     }
 
     /** Passe en « terminée » les réservations confirmées dont l'heure de fin est dépassée (sans action du partenaire). */
@@ -234,7 +321,7 @@ class BookingService
     {
         $now ??= CarbonImmutable::now();
         $done = [];
-        $due = Booking::where('status', 'confirmed')->where('end_at', '<=', $now->subMinutes((int) config('hl.auto_complete_after_min', 60)))->get();
+        $due = Booking::where('status', 'confirmed')->where('end_at', '<', $now->subMinutes((int) config('hl.auto_complete_after_min', 60)))->get();
         foreach ($due as $booking) {
             $this->transition($booking, 'completed', 'system');
             $done[] = $booking->id;
@@ -263,11 +350,15 @@ class BookingService
             if (in_array($status, Booking::INACTIVE_STATUSES, true)) {
                 $this->release($booking);
             }
-            if ($status === 'completed') {
+            // Commission due : prestation réalisée, ou client absent avec frais facturés. Retirée si la prestation est requalifiée sans frais.
+            $commissionDue = $status === 'completed' || ($status === 'no_show' && ! ($extra['no_show_fee_waived'] ?? false));
+            if ($commissionDue) {
                 LedgerEntry::firstOrCreate(
                     ['booking_id' => $booking->id, 'type' => 'commission'],
                     ['partner_id' => $booking->spa->partner_id, 'amount' => $booking->commission_amount, 'currency' => $booking->currency],
                 );
+            } elseif ($old === 'completed') {
+                LedgerEntry::where('booking_id', $booking->id)->where('type', 'commission')->delete();
             }
             $booking->log($status, $actor, ['from' => $old]);
         });

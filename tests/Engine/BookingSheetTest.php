@@ -54,8 +54,8 @@ class BookingSheetTest extends BookingFlowTestCase
         Mail::fake();
         $this->bookings->accept($b, 'partner');
 
-        $this->assertSame([], $this->bookings->completePast($b->end_at->addMinutes(30)), 'Pas encore : délai de grâce non écoulé');
-        $this->assertSame([$b->id], $this->bookings->completePast($b->end_at->addMinutes(61)));
+        $this->assertSame([], $this->bookings->completePast($b->end_at->addMinutes(239)), 'Pas encore : fenêtre no-show partenaire (end_at + 4 h) ouverte');
+        $this->assertSame([$b->id], $this->bookings->completePast($b->end_at->addMinutes(241)));
         $this->assertSame('completed', $b->fresh()->status);
         $this->assertSame(60.0, (float) LedgerEntry::where('booking_id', $b->id)->value('amount'), '15 % de 400');
         $this->assertSame([], $this->bookings->completePast($b->end_at->addDay()), 'Idempotent');

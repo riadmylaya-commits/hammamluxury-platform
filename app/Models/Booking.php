@@ -10,12 +10,15 @@ use Illuminate\Support\Str;
 
 class Booking extends Model
 {
-    public const STATUSES = ['waiting', 'confirmed', 'declined', 'cancelled', 'expired', 'completed', 'no_show'];
+    public const STATUSES = ['waiting', 'confirmed', 'declined', 'cancelled', 'expired', 'completed', 'no_show', 'partner_no_show'];
 
     public const PAYMENT_STATUSES = ['on_site', 'paid', 'partial', 'refunded'];
 
     /** Statuts qui ne consomment plus de capacité. */
-    public const INACTIVE_STATUSES = ['declined', 'cancelled', 'expired', 'no_show'];
+    public const INACTIVE_STATUSES = ['declined', 'cancelled', 'expired', 'no_show', 'partner_no_show'];
+
+    /** Fenêtre (heures après la fin prévue) pendant laquelle le partenaire peut déclarer lui-même un no-show. */
+    public const NO_SHOW_WINDOW_HOURS = 4;
 
     protected $guarded = [];
 
@@ -23,7 +26,9 @@ class Booking extends Model
         'quote' => 'array',
         'start_at' => 'datetime', 'end_at' => 'datetime', 'expires_at' => 'datetime',
         'expiration_notified_at' => 'datetime', 'confirmed_at' => 'datetime', 'cancelled_at' => 'datetime',
+        'no_show_at' => 'datetime', 'contact_revealed_at' => 'datetime',
         'total' => 'float', 'commissionable_amount' => 'float', 'commission_pct' => 'float', 'commission_amount' => 'float',
+        'no_show_fee' => 'float', 'no_show_fee_waived' => 'bool',
     ];
 
     protected static function booted(): void
@@ -83,6 +88,11 @@ class Booking extends Model
         return $this->hasOne(CancellationRequest::class)->where('status', 'pending')->latestOfMany();
     }
 
+    public function incidents(): HasMany
+    {
+        return $this->hasMany(ClientIncident::class)->latest();
+    }
+
     public function messages(): HasMany
     {
         return $this->hasMany(BookingMessage::class)->oldest();
@@ -97,6 +107,33 @@ class Booking extends Model
     public function canRequestCancellation(): bool
     {
         return $this->isConfirmed() && $this->start_at->isFuture() && ! $this->pendingCancellationRequest()->exists();
+    }
+
+    /**
+     * Le partenaire peut déclarer un no-show entre l'heure du rendez-vous et NO_SHOW_WINDOW_HOURS après la fin prévue ;
+     * au-delà, seule l'administration peut corriger.
+     */
+    public function partnerNoShowWindowOpen(): bool
+    {
+        return $this->isConfirmed() && $this->start_at->lte(now()) && now()->lte($this->end_at->addHours(self::NO_SHOW_WINDOW_HOURS));
+    }
+
+    /** Le partenaire peut signaler un comportement du client à partir de l'heure du rendez-vous. */
+    public function canReportGuest(): bool
+    {
+        return in_array($this->status, ['confirmed', 'completed', 'no_show'], true) && $this->start_at->lte(now());
+    }
+
+    /** Coordonnées (téléphone / WhatsApp) accessibles au partenaire uniquement une fois la réservation confirmée. */
+    public function contactVisibleToPartner(): bool
+    {
+        return in_array($this->status, ['confirmed', 'completed', 'no_show', 'partner_no_show'], true);
+    }
+
+    /** Empreinte stable du client (téléphone puis e-mail) pour rapprocher les signalements entre établissements. */
+    public function clientKey(): string
+    {
+        return hash('sha256', mb_strtolower(trim($this->phone ?: $this->email ?: (string) $this->id)));
     }
 
     /** Montant sur lequel porte la commission (total si non figé). */
