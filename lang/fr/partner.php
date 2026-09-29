@@ -371,7 +371,7 @@ return [
     'actors' => ['client' => 'client', 'partner' => 'établissement', 'admin' => 'HammamLuxury', 'system' => 'automatique'],
 
     // Étape B — demande d'annulation
-    'request_cancellation' => 'Demander une annulation',
+    'request_cancellation' => 'Demander une annulation exceptionnelle',
     'request_cancellation_help' => 'Vous ne pouvez pas annuler directement une réservation confirmée. Expliquez le motif : le client sera informé et HammamLuxury prendra la décision finale. La réservation reste confirmée pendant le traitement.',
     'cancellation_reason' => 'Motif de la demande d’annulation',
     'cancellation_reason_placeholder' => 'Ex. : fermeture exceptionnelle pour travaux, thérapeute indisponible…',

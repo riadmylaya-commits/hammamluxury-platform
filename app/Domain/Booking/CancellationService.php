@@ -26,7 +26,7 @@ class CancellationService
     public function request(Booking $booking, ?User $requester, string $reason, ?string $reasonCode = null, ?string $evidencePath = null): CancellationRequest
     {
         $reason = trim($reason);
-        if (mb_strlen($reason) < 10) {
+        if (mb_strlen($reason) < 20) {
             throw BookingException::make('reason', 'cancellation_reason_required', [], 422);
         }
         if ($reasonCode !== null && ! in_array($reasonCode, CancellationRequest::REASON_CODES, true)) {

@@ -43,7 +43,7 @@ return [
     ],
     'formula' => ['solo' => 'Solo', 'couple' => 'Couple', 'group' => 'Groupe'],
 
-    'cancellation_reason_required' => 'Merci d’indiquer le motif de la demande d’annulation (10 caractères minimum).',
+    'cancellation_reason_required' => 'Merci d’indiquer le motif de la demande d’annulation (20 caractères minimum).',
     'cancellation_not_allowed' => 'Une demande d’annulation n’est possible que pour une réservation confirmée à venir, sans demande déjà en cours.',
     'cancellation_already_answered' => 'Vous avez déjà répondu à cette demande.',
     'cancellation_already_decided' => 'Cette demande a déjà été traitée.',

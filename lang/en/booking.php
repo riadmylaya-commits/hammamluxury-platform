@@ -43,7 +43,7 @@ return [
     ],
     'formula' => ['solo' => 'Solo', 'couple' => 'Couple', 'group' => 'Group'],
 
-    'cancellation_reason_required' => 'Please give the reason for the cancellation request (at least 10 characters).',
+    'cancellation_reason_required' => 'Please give the reason for the cancellation request (at least 20 characters).',
     'cancellation_not_allowed' => 'A cancellation request is only possible for an upcoming confirmed booking without a pending request.',
     'cancellation_already_answered' => 'You have already answered this request.',
     'cancellation_already_decided' => 'This request has already been processed.',

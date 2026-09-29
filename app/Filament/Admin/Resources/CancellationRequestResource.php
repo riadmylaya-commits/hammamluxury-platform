@@ -156,7 +156,7 @@ class CancellationRequestResource extends Resource
             Section::make(__('admin.cancellation_timeline'))->schema([
                 TextEntry::make('created_at')->label(__('partner.cancellation_steps.received'))->dateTime('d/m/Y H:i'),
                 TextEntry::make('client_notified_at')->label(__('admin.client_informed'))->dateTime('d/m/Y H:i')->placeholder('—'),
-                TextEntry::make('client_response')->label(__('partner.client_response'))->badge()->placeholder(__('partner.no_response_yet'))
+                TextEntry::make('client_response')->label(__('partner.client_response'))->badge()->placeholder(fn (CancellationRequest $r) => $r->status === 'rescheduled' ? '—' : __('partner.no_response_yet'))
                     ->formatStateUsing(fn ($state) => __('partner.client_responses')[$state] ?? $state)->color(fn ($state) => $state === 'accepted' ? 'success' : 'danger')
                     ->helperText(fn (CancellationRequest $r) => $r->client_responded_at?->format('d/m/Y H:i')),
                 TextEntry::make('proposed_start_at')->label(__('partner.proposed_start_at'))->dateTime('d/m/Y H:i')->placeholder('—')

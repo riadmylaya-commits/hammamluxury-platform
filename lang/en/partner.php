@@ -364,7 +364,7 @@ return [
     'actors' => ['client' => 'guest', 'partner' => 'venue', 'admin' => 'HammamLuxury', 'system' => 'automatic'],
 
     // Step B — cancellation request
-    'request_cancellation' => 'Request a cancellation',
+    'request_cancellation' => 'Request an exceptional cancellation',
     'request_cancellation_help' => 'You cannot cancel a confirmed booking directly. Explain the reason: the customer will be informed and HammamLuxury will make the final decision. The booking stays confirmed while it is processed.',
     'cancellation_reason' => 'Reason for the cancellation request',
     'cancellation_reason_placeholder' => 'E.g. exceptional closure for works, therapist unavailable…',
