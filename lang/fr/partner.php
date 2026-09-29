@@ -303,7 +303,7 @@ return [
     'total_duration' => 'Durée totale',
     'included' => 'Inclus',
     'pricing' => 'Prix, commission et net',
-    'customer_total' => 'Prix total payé par le client',
+    'customer_total' => 'Prix de la réservation',
     'commissionable' => 'Montant commissionnable',
     'commission_hl' => 'Commission HammamLuxury (:pct %)',
     'net_partner' => 'Net partenaire',

@@ -296,7 +296,7 @@ return [
     'total_duration' => 'Total duration',
     'included' => 'Included',
     'pricing' => 'Price, commission and net',
-    'customer_total' => 'Total paid by the guest',
+    'customer_total' => 'Booking price',
     'commissionable' => 'Commissionable amount',
     'commission_hl' => 'HammamLuxury commission (:pct%)',
     'net_partner' => 'Partner net',

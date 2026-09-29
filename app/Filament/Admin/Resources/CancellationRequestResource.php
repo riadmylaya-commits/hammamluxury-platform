@@ -82,7 +82,7 @@ class CancellationRequestResource extends Resource
             $class::make('proposeDate')->label(__('admin.propose_date'))->icon('heroicon-o-calendar-days')->color('info')
                 ->visible(fn (CancellationRequest $r) => $r->isPending() && ! $r->hasOpenProposal())
                 ->form([
-                    DateTimePicker::make('start_at')->label(__('partner.proposed_start_at'))->required()->seconds(false)->minutesStep(15)->native(false)->minDate(now()),
+                    DateTimePicker::make('start_at')->label(__('partner.proposed_start_at'))->required()->seconds(false)->minutesStep(15)->native(false)->displayFormat('d/m/Y H:i')->minDate(now()),
                     Textarea::make('note')->label(__('admin.proposal_note'))->rows(3)->maxLength(1000)->placeholder(__('admin.proposal_note_placeholder')),
                 ])
                 ->modalDescription(__('admin.propose_date_help'))
@@ -156,7 +156,7 @@ class CancellationRequestResource extends Resource
             Section::make(__('admin.cancellation_timeline'))->schema([
                 TextEntry::make('created_at')->label(__('partner.cancellation_steps.received'))->dateTime('d/m/Y H:i'),
                 TextEntry::make('client_notified_at')->label(__('admin.client_informed'))->dateTime('d/m/Y H:i')->placeholder('—'),
-                TextEntry::make('client_response')->label(__('partner.client_response'))->badge()->placeholder(fn (CancellationRequest $r) => $r->status === 'rescheduled' ? '—' : __('partner.no_response_yet'))
+                TextEntry::make('client_response')->label(__('partner.client_response'))->badge()->placeholder(fn (CancellationRequest $r) => $r->status === 'rescheduled' || $r->proposal_response ? '—' : __('partner.no_response_yet'))
                     ->formatStateUsing(fn ($state) => __('partner.client_responses')[$state] ?? $state)->color(fn ($state) => $state === 'accepted' ? 'success' : 'danger')
                     ->helperText(fn (CancellationRequest $r) => $r->client_responded_at?->format('d/m/Y H:i')),
                 TextEntry::make('proposed_start_at')->label(__('partner.proposed_start_at'))->dateTime('d/m/Y H:i')->placeholder('—')
