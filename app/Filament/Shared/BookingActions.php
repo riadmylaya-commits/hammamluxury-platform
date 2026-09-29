@@ -126,7 +126,7 @@ class BookingActions
                     Select::make('reason_code')->label(__('partner.cancellation_reason_code'))->required()->native(false)->live()
                         ->options(collect(CancellationRequest::REASON_CODES)->mapWithKeys(fn ($c) => [$c => __('partner.cancellation_reason_codes.'.$c)])->all()),
                     Textarea::make('reason')->label(__('partner.cancellation_reason'))->rows(4)->required()
-                        ->minLength(fn (Get $get) => $get('reason_code') === 'other' ? 30 : 10)->maxLength(1000)
+                        ->minLength(fn (Get $get) => $get('reason_code') === 'other' ? 30 : 20)->maxLength(1000)
                         ->placeholder(__('partner.cancellation_reason_placeholder'))
                         ->helperText(fn (Get $get) => $get('reason_code') === 'other' ? __('partner.cancellation_other_help') : null),
                     self::evidenceUpload(__('partner.cancellation_evidence')),
