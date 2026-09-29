@@ -118,10 +118,17 @@ class Booking extends Model
         return $this->isConfirmed() && $this->start_at->lte(now()) && now()->lte($this->end_at->addHours(self::NO_SHOW_WINDOW_HOURS));
     }
 
-    /** Le partenaire peut signaler un comportement du client à partir de l'heure du rendez-vous. */
+    /** Le partenaire peut signaler un comportement du client dans la même fenêtre que le no-show : du rendez-vous à la fin + 4 h. */
     public function canReportGuest(): bool
     {
-        return in_array($this->status, ['confirmed', 'completed', 'no_show'], true) && $this->start_at->lte(now());
+        return in_array($this->status, ['confirmed', 'completed', 'no_show'], true)
+            && $this->start_at->lte(now())
+            && now()->lte($this->end_at->copy()->addHours(self::NO_SHOW_WINDOW_HOURS));
+    }
+
+    public function partnerWindowClosed(): bool
+    {
+        return now()->gt($this->end_at->copy()->addHours(self::NO_SHOW_WINDOW_HOURS));
     }
 
     /** Coordonnées (téléphone / WhatsApp) accessibles au partenaire uniquement une fois la réservation confirmée. */

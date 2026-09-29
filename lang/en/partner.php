@@ -362,6 +362,7 @@ return [
     'no_show_confirm' => 'Record the no-show',
     'no_show_fee' => 'No-show fee',
     'no_show_fee_waived' => 'Waived (goodwill gesture)',
+    'no_show_window_closed' => 'Window closed: no-show declaration and guest reports were possible until :until. For any correction, contact HammamLuxury.',
     'no_show_window_hint' => 'Guest absent? The “Guest no-show” button is available from the appointment time until :until. After that, contact HammamLuxury.',
     'partner_no_show' => 'Not honoured by the venue',
     'partner_no_show_help' => 'The venue did not receive the guest despite a confirmed booking. Serious incident recorded in the partner history; no commission.',

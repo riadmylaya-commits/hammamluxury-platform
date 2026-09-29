@@ -369,6 +369,7 @@ return [
     'no_show_confirm' => 'Enregistrer le no-show',
     'no_show_fee' => 'Frais de no-show',
     'no_show_fee_waived' => 'Abandonnés (geste commercial)',
+    'no_show_window_closed' => 'Fenêtre expirée : la déclaration de no-show et le signalement étaient possibles jusqu’au :until. Pour toute correction, contactez HammamLuxury.',
     'no_show_window_hint' => 'Client absent ? Le bouton « Client absent » est disponible de l’heure du rendez-vous jusqu’au :until. Au-delà, contactez HammamLuxury.',
     'partner_no_show' => 'Non honorée par l’établissement',
     'partner_no_show_help' => 'L’établissement n’a pas reçu le client malgré une réservation confirmée. Incident sérieux inscrit à l’historique du partenaire ; aucune commission.',

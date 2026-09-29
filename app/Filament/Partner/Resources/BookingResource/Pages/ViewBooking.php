@@ -76,7 +76,7 @@ class ViewBooking extends ViewRecord
             'tel' => $contact && PhoneNumber::isValid($b->phone) ? 'tel:'.$b->phone : null,
             'whatsapp' => $contact ? PhoneNumber::whatsappUrl($b->phone) : null,
             'dial' => $iso ? PhoneNumber::countryName($iso).' (+'.PhoneNumber::dialCode($iso).')' : null,
-            'no_show_until' => $b->end_at->addHours(Booking::NO_SHOW_WINDOW_HOURS),
+            'no_show_until' => $b->end_at->copy()->addHours(Booking::NO_SHOW_WINDOW_HOURS),
             'language' => __('ui.practical.lang_'.$b->locale) !== 'ui.practical.lang_'.$b->locale ? __('ui.practical.lang_'.$b->locale) : strtoupper($b->locale),
             'lines' => $q['lines'] ?? [],
             'commissionable' => $b->commissionableAmount(),

@@ -148,7 +148,9 @@
             @if ($b->isWaiting() && $b->expires_at)
                 <div class="hl-row"><span class="hl-k">{{ __('partner.expires_at') }}</span><span class="hl-v">{{ $b->expires_at->diffForHumans() }}</span></div>
             @endif
-            @if ($b->isConfirmed())
+            @if (in_array($b->status, ['confirmed', 'completed'], true) && $b->partnerWindowClosed())
+                <p class="hl-muted" style="margin-top:.5rem">{{ __('partner.no_show_window_closed', ['until' => $s['no_show_until']->translatedFormat('j F') .' '. $s['no_show_until']->format('H\hi')]) }}</p>
+            @elseif ($b->isConfirmed())
                 <p class="hl-muted" style="margin-top:.5rem">{{ __('partner.no_show_window_hint', ['until' => $s['no_show_until']->translatedFormat('j F') .' '. $s['no_show_until']->format('H\hi')]) }}</p>
             @endif
             @if ($b->status === 'no_show')
