@@ -70,7 +70,7 @@
                 </div>
                 <div style="display:flex;gap:.4rem;flex-wrap:wrap">
                     <span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::statusColor($b->status) }}">{{ $statuses[$b->status] ?? $b->status }}</span>
-                    <span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::paymentColor($b->payment_status) }}">{{ $payments[$b->payment_status] ?? $b->payment_status }}</span>
+                    @if ($b->nothingDue())<span class="hl-badge hl-badge-gray">{{ __('partner.nothing_due_short') }}</span>@else<span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::paymentColor($b->payment_status) }}">{{ $payments[$b->payment_status] ?? $b->payment_status }}</span>@endif
                 </div>
             </div>
 

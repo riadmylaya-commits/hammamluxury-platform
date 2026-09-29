@@ -198,7 +198,8 @@ class BookingActions
                 TextEntry::make('total')->label(__('partner.total'))->formatStateUsing($money)->weight('bold'),
                 TextEntry::make('expires_at')->label(__('partner.expires_at'))->since()->visible(fn (Booking $b) => $b->isWaiting()),
                 TextEntry::make('payment_status')->label(__('partner.payment_status'))->badge()
-                    ->formatStateUsing(fn ($state) => __('partner.payment_statuses')[$state] ?? $state)->color(fn ($state) => self::paymentColor((string) $state)),
+                    ->formatStateUsing(fn ($state, Booking $b) => $b->nothingDue() ? __('partner.nothing_due_short') : (__('partner.payment_statuses')[$state] ?? $state))
+                    ->color(fn ($state, Booking $b) => $b->nothingDue() ? 'gray' : self::paymentColor((string) $state)),
                 TextEntry::make('commissionable_amount')->label(__('partner.commissionable'))->getStateUsing(fn (Booking $b) => $b->commissionableAmount())->formatStateUsing($money)->visible($withCommission),
                 TextEntry::make('commission_amount')->label(__('partner.commission'))->formatStateUsing($money)
                     ->helperText(fn (Booking $b) => $b->commission_pct.' %')->visible($withCommission),
