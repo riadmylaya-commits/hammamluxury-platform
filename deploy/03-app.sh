@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # Runs as root on the server. Expects code already pushed to /var/www/hammamluxury (git, owner deploy).
+# Variables : HL_ENV (staging|production), HL_URL, HL_SERVER_NAME, HL_MAIL_FROM.
 set -euo pipefail
 APP=/var/www/hammamluxury
+HL_ENV=${HL_ENV:-staging}
+HL_URL=${HL_URL:-https://staging.hammamluxury.com}
+HL_SERVER_NAME=${HL_SERVER_NAME:-staging.hammamluxury.com}
+HL_MAIL_FROM=${HL_MAIL_FROM:-no-reply@hammamluxury.com}
 DBPASS=$(cat /root/.hl_db_password)
 DEMO_FILE=/root/.hl_demo_password
 [ -f $DEMO_FILE ] || { openssl rand -base64 18 | tr -d '/+=' | head -c 16 >$DEMO_FILE; chmod 600 $DEMO_FILE; }
@@ -10,10 +15,10 @@ DEMOPASS=$(cat $DEMO_FILE)
 cd $APP
 if [ ! -f .env ]; then
   cp .env.example .env
-  sed -i "s|^APP_ENV=.*|APP_ENV=staging|; s|^APP_DEBUG=.*|APP_DEBUG=false|; s|^APP_URL=.*|APP_URL=https://staging.hammamluxury.com|" .env
+  sed -i "s|^APP_ENV=.*|APP_ENV=${HL_ENV}|; s|^APP_DEBUG=.*|APP_DEBUG=false|; s|^APP_URL=.*|APP_URL=${HL_URL}|" .env
   sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DBPASS}|" .env
   sed -i "s|^SESSION_DRIVER=.*|SESSION_DRIVER=redis|; s|^QUEUE_CONNECTION=.*|QUEUE_CONNECTION=redis|; s|^CACHE_STORE=.*|CACHE_STORE=redis|" .env
-  sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"no-reply@staging.hammamluxury.com\"|" .env
+  sed -i "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=\"${HL_MAIL_FROM}\"|" .env
   grep -q '^HL_DEMO_PASSWORD=' .env || echo "HL_DEMO_PASSWORD=${DEMOPASS}" >>.env
   grep -q '^LOG_CHANNEL=' .env && sed -i "s|^LOG_CHANNEL=.*|LOG_CHANNEL=daily|" .env
   chown deploy:deploy .env; chmod 640 .env
@@ -57,11 +62,11 @@ supervisorctl restart hl-queue >/dev/null || supervisorctl start hl-queue
 sleep 2; supervisorctl status hl-queue
 
 # Nginx vhost (HTTP for now; certbot will add TLS)
-cat >/etc/nginx/sites-available/hammamluxury <<'EOF'
+cat >/etc/nginx/sites-available/hammamluxury <<EOF
 server {
     listen 80;
     listen [::]:80;
-    server_name staging.hammamluxury.com 91.99.97.205;
+    server_name ${HL_SERVER_NAME};
     root /var/www/hammamluxury/public;
     index index.php;
     charset utf-8;
@@ -70,16 +75,16 @@ server {
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";
 
-    location / { try_files $uri $uri/ /index.php?$query_string; }
+    location / { try_files \$uri \$uri/ /index.php?\$query_string; }
     location = /favicon.ico { access_log off; log_not_found off; }
     location = /robots.txt  { access_log off; log_not_found off; }
-    location ~ \.php$ {
+    location ~ \.php\$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php8.3-fpm.sock;
         fastcgi_hide_header X-Powered-By;
     }
     location ~ /\.(?!well-known).* { deny all; }
-    location ~* \.(css|js|jpg|jpeg|png|gif|webp|svg|woff2?)$ { try_files $uri /index.php?$query_string; expires 30d; access_log off; }
+    location ~* \.(css|js|jpg|jpeg|png|gif|webp|svg|woff2?)\$ { try_files \$uri /index.php?\$query_string; expires 30d; access_log off; }
 }
 EOF
 ln -sf /etc/nginx/sites-available/hammamluxury /etc/nginx/sites-enabled/hammamluxury
