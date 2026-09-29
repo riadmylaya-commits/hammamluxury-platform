@@ -7,7 +7,9 @@ use App\Domain\Booking\CancellationService;
 use App\Filament\Admin\Resources\CancellationRequestResource\Pages;
 use App\Filament\Shared\BookingActions;
 use App\Models\CancellationRequest;
+use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
@@ -17,6 +19,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
 
 /** Demandes d'annulation partenaire : information client, réponse, décision finale HammamLuxury, historique. */
 class CancellationRequestResource extends Resource
@@ -76,6 +79,24 @@ class CancellationRequestResource extends Resource
                 ->visible(fn (CancellationRequest $r) => $r->isPending())
                 ->form([$note])->requiresConfirmation()->modalDescription(__('admin.refuse_cancellation_help'))
                 ->action(fn (CancellationRequest $r, array $data) => $decide($r, 'refused', $data['note'] ?? null)),
+            $class::make('proposeDate')->label(__('admin.propose_date'))->icon('heroicon-o-calendar-days')->color('info')
+                ->visible(fn (CancellationRequest $r) => $r->isPending() && ! $r->hasOpenProposal())
+                ->form([
+                    DateTimePicker::make('start_at')->label(__('partner.proposed_start_at'))->required()->seconds(false)->minutesStep(15)->native(false)->displayFormat('d/m/Y H:i')->minDate(now()),
+                    Textarea::make('note')->label(__('admin.proposal_note'))->rows(3)->maxLength(1000)->placeholder(__('admin.proposal_note_placeholder')),
+                ])
+                ->modalDescription(__('admin.propose_date_help'))
+                ->action(function (CancellationRequest $r, array $data) {
+                    try {
+                        app(CancellationService::class)->propose($r, auth()->user(), CarbonImmutable::parse($data['start_at']), $data['note'] ?? null);
+                        Notification::make()->title(__('admin.proposal_sent'))->success()->send();
+                    } catch (BookingException $e) {
+                        Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
+                    }
+                }),
+            $class::make('evidence')->label(__('admin.view_evidence'))->icon('heroicon-o-paper-clip')->color('gray')
+                ->visible(fn (CancellationRequest $r) => $r->evidence_path && Storage::disk('local')->exists($r->evidence_path))
+                ->action(fn (CancellationRequest $r) => Storage::disk('local')->download($r->evidence_path)),
         ];
     }
 
@@ -91,6 +112,9 @@ class CancellationRequestResource extends Resource
                 Tables\Columns\TextColumn::make('spa.name')->label(__('admin.spa'))->searchable()->description(fn (CancellationRequest $r) => $r->spa->partner?->company_name),
                 Tables\Columns\TextColumn::make('booking.start_at')->label(__('partner.date_time'))->dateTime('d/m/Y H:i'),
                 Tables\Columns\TextColumn::make('booking.customer')->label(__('partner.customer'))->getStateUsing(fn (CancellationRequest $r) => $r->booking->customerName()),
+                Tables\Columns\TextColumn::make('reason_code')->label(__('partner.cancellation_reason_code'))->badge()->color('gray')->placeholder('—')
+                    ->formatStateUsing(fn ($state) => __('partner.cancellation_reason_codes')[$state] ?? $state)
+                    ->icon(fn (CancellationRequest $r) => $r->evidence_path ? 'heroicon-o-paper-clip' : null),
                 Tables\Columns\TextColumn::make('reason')->label(__('partner.cancellation_reason'))->limit(60)->wrap()->tooltip(fn (CancellationRequest $r) => $r->reason),
                 Tables\Columns\TextColumn::make('step')->label(__('partner.status'))->badge()->getStateUsing(fn (CancellationRequest $r) => $r->step())
                     ->formatStateUsing(fn ($state) => __('partner.cancellation_steps')[$state] ?? $state)
@@ -119,15 +143,25 @@ class CancellationRequestResource extends Resource
                 TextEntry::make('booking.status')->label(__('admin.booking_status'))->badge()
                     ->formatStateUsing(fn ($state) => __('ui.status')[$state] ?? $state)->color(fn ($state) => BookingActions::statusColor($state)),
                 TextEntry::make('booking.total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr'),
+                TextEntry::make('reason_code')->label(__('partner.cancellation_reason_code'))->badge()->color('gray')->placeholder('—')
+                    ->formatStateUsing(fn ($state) => __('partner.cancellation_reason_codes')[$state] ?? $state),
+                TextEntry::make('evidence_path')->label(__('partner.cancellation_evidence'))->placeholder('—')
+                    ->formatStateUsing(fn () => __('admin.evidence_attached')),
+                TextEntry::make('previous')->label(__('admin.previous_requests'))->badge()->color(fn ($state) => $state > 0 ? 'warning' : 'gray')
+                    ->getStateUsing(fn (CancellationRequest $r) => CancellationRequest::where('spa_id', $r->spa_id)->where('id', '!=', $r->id)->where('created_at', '>=', now()->subDays(90))->count())
+                    ->helperText(__('admin.previous_requests_help')),
                 TextEntry::make('reason')->label(__('partner.cancellation_reason'))->columnSpanFull(),
             ])->columns(4),
 
             Section::make(__('admin.cancellation_timeline'))->schema([
                 TextEntry::make('created_at')->label(__('partner.cancellation_steps.received'))->dateTime('d/m/Y H:i'),
                 TextEntry::make('client_notified_at')->label(__('admin.client_informed'))->dateTime('d/m/Y H:i')->placeholder('—'),
-                TextEntry::make('client_response')->label(__('partner.client_response'))->badge()->placeholder(__('partner.no_response_yet'))
+                TextEntry::make('client_response')->label(__('partner.client_response'))->badge()->placeholder(fn (CancellationRequest $r) => $r->status === 'rescheduled' || $r->proposal_response ? '—' : __('partner.no_response_yet'))
                     ->formatStateUsing(fn ($state) => __('partner.client_responses')[$state] ?? $state)->color(fn ($state) => $state === 'accepted' ? 'success' : 'danger')
                     ->helperText(fn (CancellationRequest $r) => $r->client_responded_at?->format('d/m/Y H:i')),
+                TextEntry::make('proposed_start_at')->label(__('partner.proposed_start_at'))->dateTime('d/m/Y H:i')->placeholder('—')
+                    ->helperText(fn (CancellationRequest $r) => $r->proposal_response ? (__('partner.proposal_responses')[$r->proposal_response] ?? $r->proposal_response).' · '.$r->proposal_responded_at?->format('d/m/Y H:i') : ($r->proposed_at ? __('partner.no_response_yet') : null)),
+                TextEntry::make('proposal_note')->label(__('admin.proposal_note'))->placeholder('—')->visible(fn (CancellationRequest $r) => $r->proposal_note),
                 TextEntry::make('status')->label(__('admin.final_decision'))->badge()
                     ->formatStateUsing(fn ($state) => __('partner.cancellation_statuses')[$state] ?? $state)->color(fn ($state) => BookingActions::requestColor($state))
                     ->helperText(fn (CancellationRequest $r) => trim(($r->decided_at?->format('d/m/Y H:i') ?? '').' '.($r->decider?->name ?? ''))),

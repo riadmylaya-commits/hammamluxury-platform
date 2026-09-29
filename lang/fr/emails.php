@@ -46,6 +46,26 @@ return [
             'partner' => ['subject' => 'Demande d’annulation :ref refusée', 'title' => 'Votre demande d’annulation est refusée', 'intro' => 'HammamLuxury a refusé votre demande d’annulation de la réservation de :name. La réservation reste confirmée : merci d’accueillir le client comme prévu.'],
             'client' => ['subject' => 'Votre réservation :ref est maintenue — :spa', 'title' => 'Votre réservation est maintenue', 'intro' => 'Bonne nouvelle :name : HammamLuxury a refusé la demande d’annulation de :spa. Votre réservation reste confirmée.'],
         ],
+        'proposed' => [
+            'client' => ['subject' => 'Proposition de nouvelle date — réservation :ref', 'title' => 'HammamLuxury vous propose une nouvelle date', 'intro' => 'Bonjour :name, suite à la demande de :spa, HammamLuxury vous propose de déplacer votre réservation à la date indiquée ci-dessous. Votre réservation actuelle reste confirmée tant que vous n’avez pas accepté. Vous pouvez accepter ou refuser depuis votre page de suivi.'],
+        ],
+        'rescheduled' => [
+            'client' => ['subject' => 'Votre réservation :ref a été déplacée — :spa', 'title' => 'Nouvelle date confirmée', 'intro' => 'Bonjour :name, votre réservation chez :spa est confirmée à la nouvelle date ci-dessous.'],
+            'partner' => ['subject' => 'Réservation :ref déplacée à une nouvelle date', 'title' => 'Le client a accepté la nouvelle date', 'intro' => 'Le client :name a accepté la nouvelle date proposée par HammamLuxury. La réservation est confirmée au créneau ci-dessous et la demande d’annulation est close.'],
+            'admin' => ['subject' => 'Nouvelle date acceptée — réservation :ref', 'title' => 'Le client a accepté la nouvelle date', 'intro' => 'Le client :name a accepté la nouvelle date pour la réservation chez :spa. La demande d’annulation est close.'],
+        ],
+        'proposal_refused' => [
+            'admin' => ['subject' => 'Nouvelle date refusée — demande d’annulation :ref', 'title' => 'Le client a refusé la nouvelle date', 'intro' => 'Le client :name a refusé la nouvelle date proposée pour la réservation chez :spa. La réservation d’origine reste confirmée ; la décision finale vous appartient.'],
+        ],
+        'proposed_date' => 'Nouvelle date proposée',
+        'proposal_note' => 'Précisions HammamLuxury',
+    ],
+    'guest_report' => [
+        'subject' => 'Signalement client — réservation :ref (:spa)',
+        'title' => 'Nouveau signalement de comportement client',
+        'intro' => 'L’établissement :spa a signalé un incident concernant le client de la réservation :ref. Aucune mesure automatique n’est prise : merci d’examiner le signalement.',
+        'category' => 'Motif',
+        'button' => 'Voir le signalement',
     ],
     'message' => [
         'button' => 'Ouvrir la conversation',
