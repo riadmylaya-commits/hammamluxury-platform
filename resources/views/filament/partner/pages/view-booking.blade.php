@@ -161,14 +161,17 @@
             <h3>{{ __('partner.pricing') }}</h3>
             <div class="hl-row"><span class="hl-k">{{ __('partner.customer_total') }}</span><span class="hl-v">{{ $money($b->total) }}</span></div>
             <div class="hl-row"><span class="hl-k">{{ __('partner.commissionable') }}</span><span class="hl-v">{{ $money($s['commissionable']) }}</span></div>
-            <div class="hl-row"><span class="hl-k">{{ __('partner.commission_hl', ['pct' => rtrim(rtrim(number_format($b->commission_pct, 2, ',', ''), '0'), ',')]) }}</span><span class="hl-v hl-minus">− {{ $money($b->commission_amount) }}</span></div>
-            <div class="hl-total"><span>{{ __('partner.net_partner') }}</span><span class="hl-net">{{ $money($s['net']) }}</span></div>
+            <div class="hl-row"><span class="hl-k">{{ __('partner.commission_hl', ['pct' => rtrim(rtrim(number_format($b->commission_pct, 2, ',', ''), '0'), ',')]) }}</span><span class="hl-v hl-minus">− {{ $money($b->commissionDue()) }}</span></div>
+            <div class="hl-total"><span>{{ __('partner.net_partner') }}</span><span class="hl-net">{{ $money($b->netDue()) }}</span></div>
+            @if ($b->nothingDue())
+                <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.nothing_due') }}</p>
+            @endif
             @if ($s['commissionable'] < $b->total)
                 <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.non_commissionable_note') }}</p>
             @endif
             <div class="hl-row" style="margin-top:.6rem;border-top:1px solid #e5e7eb;border-bottom:0">
                 <span class="hl-k">{{ __('partner.payment') }}</span>
-                <span class="hl-v"><span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::paymentColor($b->payment_status) }}">{{ $payments[$b->payment_status] ?? $b->payment_status }}</span></span>
+                <span class="hl-v">@if ($b->nothingDue())<span class="hl-badge hl-badge-gray">{{ __('partner.nothing_due_short') }}</span>@else<span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::paymentColor($b->payment_status) }}">{{ $payments[$b->payment_status] ?? $b->payment_status }}</span>@endif</span>
             </div>
         </div>
 
@@ -249,7 +252,7 @@
                             <span class="hl-badge hl-badge-warning">{{ __('partner.report_categories.'.$i->category) }}</span>
                         </div>
                         <p>{{ $i->description }}</p>
-                        <p class="hl-muted">{{ __('partner.report_sent_body') }}</p>
+                        <p class="hl-muted">{{ $i->status === 'open' ? __('partner.report_sent_body') : __('partner.report_statuses.'.$i->status) }}</p>
                     </div>
                 @endforeach
             </div>

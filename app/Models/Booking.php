@@ -148,6 +148,26 @@ class Booking extends Model
         return round((float) $this->total - (float) $this->commission_amount, 2);
     }
 
+    /** Rien n'est dû : réservation non honorée par l'établissement, no-show sans frais, ou réservation refusée/annulée/expirée. */
+    public function nothingDue(): bool
+    {
+        return $this->status === 'partner_no_show'
+            || ($this->status === 'no_show' && $this->no_show_fee_waived)
+            || in_array($this->status, ['declined', 'cancelled', 'expired'], true);
+    }
+
+    /** Commission effectivement due (0 lorsque rien n'est facturé). */
+    public function commissionDue(): float
+    {
+        return $this->nothingDue() ? 0.0 : (float) $this->commission_amount;
+    }
+
+    /** Net partenaire effectivement dû. */
+    public function netDue(): float
+    {
+        return $this->nothingDue() ? 0.0 : $this->netForPartner();
+    }
+
     public function isActive(): bool
     {
         return ! in_array($this->status, self::INACTIVE_STATUSES, true);

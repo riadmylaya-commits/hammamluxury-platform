@@ -124,7 +124,7 @@
         @if ($b->hotel)<dt>{{ __('ui.hotel') }}</dt><dd>{{ $b->hotel }}</dd>@endif
     </dl>
     <div class="tot"><span>{{ __('ui.recap_total') }}</span><span>{{ $fmt($b->total) }}</span></div>
-    <div class="xs muted" style="text-align:right">{{ $b->payment_status === 'on_site' ? __('ui.pay_on_site') : __('partner.payment_statuses.'.$b->payment_status) }}</div>
+    <div class="xs muted" style="text-align:right">{{ $b->nothingDue() ? __('ui.nothing_due') : ($b->payment_status === 'on_site' ? __('ui.pay_on_site') : __('partner.payment_statuses.'.$b->payment_status)) }}</div>
 </aside>
 </div>
 </div>

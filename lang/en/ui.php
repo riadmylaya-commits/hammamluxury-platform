@@ -104,6 +104,7 @@ return [
     'recap_extras' => 'Extras',
     'recap_total' => 'Total',
     'pay_on_site' => 'to pay at the venue',
+    'nothing_due' => 'nothing to pay',
     'formula' => ['solo' => 'Solo', 'couple' => 'Couple rate', 'group' => 'Group rate'],
     'slot_gone' => 'This time slot is no longer available. Please choose another one.',
     'booking_ref' => 'Booking :ref',

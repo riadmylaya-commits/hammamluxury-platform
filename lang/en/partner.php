@@ -408,6 +408,9 @@ return [
     'report_evidence' => 'Evidence (optional)',
     'send_report' => 'Send the report',
     'report_sent' => 'Report sent',
+    'nothing_due' => 'Nothing is due on this booking: no HammamLuxury commission.',
+    'nothing_due_short' => 'Nothing to pay',
+    'report_statuses' => ['open' => 'Under review', 'reviewed' => 'Reviewed by HammamLuxury — report upheld', 'dismissed' => 'Reviewed by HammamLuxury — dismissed'],
     'report_sent_body' => 'HammamLuxury has been informed and will review the report. It is kept in the history.',
     'guest_reports' => 'Guest reports',
 
