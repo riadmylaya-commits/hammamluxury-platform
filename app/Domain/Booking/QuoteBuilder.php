@@ -73,7 +73,7 @@ class QuoteBuilder
     {
         $r = (string) ($req['rate'] ?? 'standard');
 
-        return in_array($r, ['nr', 'non_refundable'], true) ? 'non_refundable' : 'standard';
+        return CancellationPolicy::nrEnabled() && in_array($r, ['nr', 'non_refundable'], true) ? 'non_refundable' : 'standard';
     }
 
     /**

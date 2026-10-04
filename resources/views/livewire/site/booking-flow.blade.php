@@ -25,7 +25,7 @@
         @endforeach
     @endif
 
-    @if ($quote['ok'] && ($treatment || $advanced))
+    @if ($quote['ok'] && ($treatment || $advanced) && \App\Domain\Policy\CancellationPolicy::nrEnabled())
         <div class="divider"></div>
         <h3 style="font-size:16px;margin-bottom:8px">{{ __('ui.policy.rate_title') }}</h3>
         <div class="rates">

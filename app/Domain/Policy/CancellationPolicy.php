@@ -21,6 +21,12 @@ class CancellationPolicy
 
     public const RATES = ['standard', 'non_refundable'];
 
+    /** Le tarif non remboursable est-il proposé sur la plateforme ? */
+    public static function nrEnabled(): bool
+    {
+        return (bool) config('hl.features.non_refundable');
+    }
+
     public static function isValidHours(mixed $h): bool
     {
         return in_array((int) $h, self::HOURS, true);
