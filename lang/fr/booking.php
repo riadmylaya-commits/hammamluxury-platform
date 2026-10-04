@@ -70,4 +70,7 @@ return [
     'review_rejection_reason_required' => 'Un motif de refus lié au contenu est obligatoire ; la note seule n’est pas un motif.',
     'review_rejection_note_required' => 'Merci de préciser le motif « Autre » (10 caractères minimum).',
     'review_reply_not_allowed' => 'Vous ne pouvez répondre qu’à un avis publié, et une réponse est déjà enregistrée.',
+||||||| 5d0e378
+    'nr_unavailable' => 'Le tarif Non remboursable n’est pas proposé pour « :name ».',
+    'conditions' => 'Conditions',
 ];

@@ -70,4 +70,7 @@ return [
     'review_rejection_reason_required' => 'A content-related rejection reason is required; the rating alone is not a reason.',
     'review_rejection_note_required' => 'Please specify the “Other” reason (at least 10 characters).',
     'review_reply_not_allowed' => 'You can only reply to a published review, and a reply is already recorded.',
+||||||| 5d0e378
+    'nr_unavailable' => 'The Non-refundable rate is not offered for “:name”.',
+    'conditions' => 'Conditions',
 ];

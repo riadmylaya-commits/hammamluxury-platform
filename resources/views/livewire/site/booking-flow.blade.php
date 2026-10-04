@@ -25,6 +25,24 @@
         @endforeach
     @endif
 
+    @if ($quote['ok'] && ($treatment || $advanced))
+        <div class="divider"></div>
+        <h3 style="font-size:16px;margin-bottom:8px">{{ __('ui.policy.rate_title') }}</h3>
+        <div class="rates">
+            <button type="button" class="opt rate" aria-pressed="{{ $rate !== 'non_refundable' ? 'true' : 'false' }}" wire:click="setRate('standard')">
+                <div><b>{{ __('ui.policy.standard') }}</b><div class="xs muted">{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($quote['cancellation_hours'])]) }}</div></div>
+                <div class="r"><b>{{ $fmt($quote['standard_total']) }}</b></div>
+            </button>
+            @if ($this->nrAvailable())
+                @php($nrPct = collect($quote['lines'])->pluck('nr_discount_pct')->filter()->min() ?? collect($treatments)->whereIn('id', $advanced ? array_column($participants, 'treatment') : [$treatment])->pluck('nr_discount_pct')->filter()->min())
+                <button type="button" class="opt rate" aria-pressed="{{ $rate === 'non_refundable' ? 'true' : 'false' }}" wire:click="setRate('non_refundable')">
+                    <div><span class="chip acc xs">{{ __('ui.policy.non_refundable') }} · −{{ $nrPct }} %</span><div class="xs muted" style="margin-top:4px">{{ __('ui.policy.nr_desc', ['pct' => $nrPct]) }}</div></div>
+                    <div class="r"><b>{{ $rate === 'non_refundable' ? $fmt($quote['total']) : $fmt(\App\Domain\Policy\CancellationPolicy::discounted($quote['standard_total'] - collect($quote['lines'])->sum('extras_price'), $nrPct) + collect($quote['lines'])->sum('extras_price')) }}</b></div>
+                </button>
+            @endif
+        </div>
+    @endif
+
     <div class="divider"></div>
     <div class="row"><b>{{ __('ui.party') }}</b><span class="sp"></span>
         <div class="qty"><button type="button" wire:click="changeParty(-1)" @disabled($party <= 1)>−</button><b>{{ $party }}</b><button type="button" wire:click="changeParty(1)">+</button></div></div>
@@ -114,6 +132,7 @@
         </div>
         <div class="fld"><label>{{ __('ui.hotel') }}</label><input class="inp" wire:model="hotel"></div>
         <div class="fld"><label>{{ __('ui.note') }}</label><textarea class="inp" rows="2" wire:model="note"></textarea><span class="xs muted">{{ __('ui.note_privacy') }}</span></div>
+        <div class="notice {{ ($quote['rate'] ?? 'standard') === 'non_refundable' ? 'warn' : 'info' }}" id="policy"><b>{{ __('ui.policy.title') }}</b> — @if (($quote['rate'] ?? 'standard') === 'non_refundable'){{ __('ui.policy.nr_booking', ['pct' => $quote['nr_discount_pct'], 'amount' => $fmt($quote['total'])]) }}@else{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($quote['cancellation_hours'] ?? 24)]) }} {{ __('ui.policy.free_until', ['date' => \Carbon\CarbonImmutable::parse("$date $time")->subHours($quote['cancellation_hours'] ?? 24)->locale(app()->getLocale())->isoFormat('LLL')]) }}@endif</div>
         <label class="small row" style="align-items:flex-start"><input type="checkbox" wire:model="terms" style="margin-top:3px"> <span>{!! __('ui.accept_terms', ['url' => route('page', 'cgu')]) !!}</span></label>@error('terms')<span class="ferr">{{ $message }}</span>@enderror
         <div class="notice info">{{ __('ui.no_payment', ['hours' => config('hl.waiting_ttl_hours')]) }} {{ __('ui.no_account') }}</div>
         <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" wire:loading.attr="disabled"><span wire:loading.remove wire:target="submit">{{ __('ui.submit') }}</span><span wire:loading wire:target="submit">{{ __('ui.submitting') }}</span></button></div>

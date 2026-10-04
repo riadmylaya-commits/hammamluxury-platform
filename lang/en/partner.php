@@ -446,4 +446,22 @@ return [
     'review_reply_hint' => 'At least :min characters. Your reply is checked by HammamLuxury before publication and must follow the same rules as reviews (courtesy, no personal data).',
     'review_reply_sent' => 'Reply sent: it will be published once checked by HammamLuxury.',
     'review_reply_status' => ['pending' => 'Awaiting check', 'published' => 'Published', 'rejected' => 'Rejected'],
+||||||| 5d0e378
+
+    'cancellation_policy_help' => 'HammamLuxury offers these deadlines; you choose the one that applies to your establishment. Before the deadline the client cancels for free; after, 100% of the amount is due.',
+    'treatment_cancellation_hours' => 'Cancellation deadline for this treatment',
+    'treatment_cancellation_help' => 'Leave empty to apply the establishment deadline.',
+    'spa_default' => 'Establishment deadline',
+    'nr_discount_pct' => 'Non-refundable rate: discount',
+    'nr_discount_help' => 'Optional. At least 10% off the Standard rate; solo / couple / group prices are computed automatically. Leave empty to not offer this rate.',
+    'nr_preview' => 'Non-refundable: solo :solo:couple:group',
+    'rate_type' => 'Rate',
+    'rate_types' => ['standard' => 'Standard', 'non_refundable' => 'Non-refundable'],
+    'conditions' => 'Conditions frozen at booking',
+    'free_until' => 'Free cancellation until',
+    'standard_total' => 'Standard reference price',
+    'cancel_fee' => 'Cancellation fee (100% due)',
+    'cancel_free' => 'Free cancellation (within deadline)',
+    'cancel_by_partner' => 'Exceptional cancellation accepted: nothing is due by the client',
+    'nr_booking_note' => 'Non-refundable booking: if the client cancels, 100% of the amount remains due and the commission is kept.',
 ];

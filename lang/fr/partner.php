@@ -42,7 +42,7 @@ return [
     'slot_step' => 'Pas des créneaux',
     'default_value' => 'Par défaut : :v',
     'min_lead' => 'Délai minimum avant réservation',
-    'cancellation_hours' => 'Annulation gratuite jusqu’à',
+    'cancellation_hours' => 'Annulation gratuite jusqu’à (avant le rendez-vous)',
 
     // Soins
     'treatment' => 'Soin',
@@ -453,4 +453,22 @@ return [
     'review_reply_hint' => 'Au moins :min caractères. Votre réponse est vérifiée par HammamLuxury avant publication et doit respecter les mêmes règles que les avis (courtoisie, pas de données personnelles).',
     'review_reply_sent' => 'Réponse envoyée : elle sera publiée après vérification par HammamLuxury.',
     'review_reply_status' => ['pending' => 'En attente de vérification', 'published' => 'Publiée', 'rejected' => 'Refusée'],
+||||||| 5d0e378
+
+    'cancellation_policy_help' => 'HammamLuxury propose ces délais ; vous choisissez celui qui s’applique à votre établissement. Avant la limite, le client annule gratuitement ; après, 100 % du montant reste dû.',
+    'treatment_cancellation_hours' => 'Délai d’annulation pour cette prestation',
+    'treatment_cancellation_help' => 'Laissez vide pour appliquer le délai de l’établissement.',
+    'spa_default' => 'Délai de l’établissement',
+    'nr_discount_pct' => 'Tarif Non remboursable : réduction',
+    'nr_discount_help' => 'Facultatif. Au moins 10 % de réduction sur le tarif Standard ; les prix solo / couple / groupe sont calculés automatiquement. Laissez vide pour ne pas proposer ce tarif.',
+    'nr_preview' => 'Non remboursable : solo :solo:couple:group',
+    'rate_type' => 'Tarif',
+    'rate_types' => ['standard' => 'Standard', 'non_refundable' => 'Non remboursable'],
+    'conditions' => 'Conditions figées à la réservation',
+    'free_until' => 'Annulation gratuite jusqu’au',
+    'standard_total' => 'Prix Standard de référence',
+    'cancel_fee' => 'Frais d’annulation (100 % dus)',
+    'cancel_free' => 'Annulation gratuite (dans le délai)',
+    'cancel_by_partner' => 'Annulation exceptionnelle acceptée : rien n’est dû par le client',
+    'nr_booking_note' => 'Réservation Non remboursable : en cas d’annulation par le client, 100 % du montant reste dû et la commission est conservée.',
 ];
