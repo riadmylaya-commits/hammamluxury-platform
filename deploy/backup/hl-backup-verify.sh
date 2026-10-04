@@ -14,9 +14,9 @@ import sys,json,datetime
 s=json.loads(sys.argv[1])
 if not s: print(10**6); sys.exit()
 t=datetime.datetime.fromisoformat(s[-1]["time"].split(".")[0]+"+00:00" if "+" not in s[-1]["time"] and "Z" in s[-1]["time"] else s[-1]["time"][:19]+s[-1]["time"][-6:])
-print(int((datetime.datetime.now(datetime.timezone.utc)-t).total_seconds()//3600))' "$json")
-  [ "$age" -le "$MAX_AGE_H" ] || fail "Dernier instantané « $tag » vieux de ${age} h (max ${MAX_AGE_H} h)."
+print(int((datetime.datetime.now(datetime.timezone.utc)-t).total_seconds()//60))' "$json")
+  [ "$age" -le $((MAX_AGE_H*60)) ] || fail "Dernier instantané « $tag » vieux de $((age/60)) h $((age%60)) min (max ${MAX_AGE_H} h)."
 done
 status=$(python3 -c 'import json;print(json.load(open("/var/lib/hl-backup/last.json"))["status"])' 2>/dev/null || echo unknown)
 [ "$status" = ok ] || fail "Dernière exécution de hl-backup.sh : statut « $status »."
-echo "$(date -Is) vérification OK (db et files < ${MAX_AGE_H} h)"
+echo "$(date -Is) vérification OK (db et files < ${MAX_AGE_H} h, dernier il y a $((age/60)) h $((age%60)) min)"
