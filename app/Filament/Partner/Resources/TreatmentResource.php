@@ -107,7 +107,11 @@ class TreatmentResource extends Resource
         if (! CancellationPolicy::isValidDiscount($pct) || $solo === null || $solo === '') {
             return null;
         }
-        $f = fn ($v) => number_format(CancellationPolicy::discounted((float) $v, $pct), 0, ',', ' ').' '.config('hl.currency');
+        $f = function ($v) use ($pct) {
+            $nr = CancellationPolicy::discounted((float) $v, $pct);
+
+            return number_format($nr, fmod($nr, 1) ? 2 : 0, ',', ' ').' '.config('hl.currency');
+        };
         $couple = $get('price_couple');
         $group = $get('price_group');
 
