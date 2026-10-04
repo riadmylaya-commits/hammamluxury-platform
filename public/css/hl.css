@@ -141,3 +141,5 @@ body.lb-open{overflow:hidden}
 .prose summary::after{content:"+";color:var(--muted);font-weight:400}.prose details[open] summary::after{content:"–"}.prose details p{margin:8px 0 0}
 .frm{display:grid;gap:14px}.frm textarea.inp{resize:vertical;min-height:120px}.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 @media (max-width:599px){.grid2{grid-template-columns:1fr}}
+
+.rates{display:grid;gap:8px}.opt.rate{align-items:center}.opt.rate .chip.acc{font-weight:700}.notice.warn{background:#fff8ec;border-color:#f1d9a8;color:#6a4a08}@media(min-width:700px){.rates{grid-template-columns:1fr 1fr}}

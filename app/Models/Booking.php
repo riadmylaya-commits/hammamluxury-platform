@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Domain\Policy\CancellationPolicy;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -29,6 +31,7 @@ class Booking extends Model
         'no_show_at' => 'datetime', 'contact_revealed_at' => 'datetime',
         'total' => 'float', 'commissionable_amount' => 'float', 'commission_pct' => 'float', 'commission_amount' => 'float',
         'no_show_fee' => 'float', 'no_show_fee_waived' => 'bool',
+        'standard_total' => 'float', 'cancel_fee' => 'float', 'cancellation_hours' => 'int', 'nr_discount_pct' => 'int',
     ];
 
     protected static function booted(): void
@@ -155,12 +158,51 @@ class Booking extends Model
         return round((float) $this->total - (float) $this->commission_amount, 2);
     }
 
-    /** Rien n'est dû : réservation non honorée par l'établissement, no-show sans frais, ou réservation refusée/annulée/expirée. */
+    /** Rien n'est dû : non honorée par l'établissement, no-show sans frais, refusée/expirée, ou annulée sans frais. */
     public function nothingDue(): bool
     {
         return $this->status === 'partner_no_show'
             || ($this->status === 'no_show' && $this->no_show_fee_waived)
-            || in_array($this->status, ['declined', 'cancelled', 'expired'], true);
+            || ($this->status === 'cancelled' && ! $this->cancel_fee)
+            || in_array($this->status, ['declined', 'expired'], true);
+    }
+
+    /* ------------------------------------------------------------------ Conditions figées à la réservation */
+
+    public function isNonRefundable(): bool
+    {
+        return $this->rate_type === 'non_refundable';
+    }
+
+    public function cancellationHours(): int
+    {
+        return (int) ($this->cancellation_hours ?? $this->spa?->cancellation_hours ?? CancellationPolicy::DEFAULT_HOURS);
+    }
+
+    /** Date limite d'annulation gratuite (tarif standard uniquement). */
+    public function freeCancellationUntil(): ?CarbonInterface
+    {
+        return $this->isNonRefundable() ? null : CancellationPolicy::deadline($this->start_at, $this->cancellationHours());
+    }
+
+    /** Une annulation client maintenant est-elle gratuite ? */
+    public function freeCancellationOpen(?CarbonInterface $now = null): bool
+    {
+        $until = $this->freeCancellationUntil();
+
+        return $until !== null && ($now ?? now())->lt($until);
+    }
+
+    /** Frais qu'entraînerait une annulation client maintenant (0 ou 100 % du montant). */
+    public function cancelFeeNow(?CarbonInterface $now = null): float
+    {
+        return $this->freeCancellationOpen($now) ? 0.0 : round((float) $this->total, 2);
+    }
+
+    /** Économie réalisée avec le tarif non remboursable. */
+    public function nrSaving(): float
+    {
+        return $this->isNonRefundable() && $this->standard_total !== null ? round((float) $this->standard_total - (float) $this->total, 2) : 0.0;
     }
 
     /** Commission effectivement due (0 lorsque rien n'est facturé). */

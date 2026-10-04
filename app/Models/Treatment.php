@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Domain\Booking\QuoteBuilder;
 use App\Domain\Catalogue\Presentation;
+use App\Domain\Policy\CancellationPolicy;
 use App\Models\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,7 +18,7 @@ class Treatment extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['price_solo' => 'float', 'price_couple' => 'float', 'price_group' => 'float', 'included' => 'array'];
+    protected $casts = ['price_solo' => 'float', 'price_couple' => 'float', 'price_group' => 'float', 'included' => 'array', 'cancellation_hours' => 'int', 'nr_discount_pct' => 'int'];
 
     /** Une seule formule mise en avant par établissement : poser un badge retire celui des autres. */
     protected static function booted(): void
@@ -28,6 +29,12 @@ class Treatment extends Model
             }
             if ($t->included !== null) {
                 $t->included = Presentation::cleanIncluded($t->included) ?: null;
+            }
+            if ($t->cancellation_hours !== null && ! CancellationPolicy::isValidHours($t->cancellation_hours)) {
+                $t->cancellation_hours = null;
+            }
+            if ($t->nr_discount_pct !== null && ! CancellationPolicy::isValidDiscount($t->nr_discount_pct)) {
+                $t->nr_discount_pct = null;
             }
         });
         static::saved(function (self $t) {
@@ -50,6 +57,17 @@ class Treatment extends Model
     public function extras(): HasMany
     {
         return $this->hasMany(Extra::class);
+    }
+
+    /** Délai d'annulation applicable : surcharge de la prestation, sinon celui de l'établissement. */
+    public function cancellationHours(): int
+    {
+        return (int) ($this->cancellation_hours ?? $this->spa?->cancellation_hours ?? CancellationPolicy::DEFAULT_HOURS);
+    }
+
+    public function hasNonRefundable(): bool
+    {
+        return CancellationPolicy::isValidDiscount($this->nr_discount_pct);
     }
 
     public function isActive(): bool

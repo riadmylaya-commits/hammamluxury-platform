@@ -3,6 +3,7 @@
 namespace App\Domain\Booking;
 
 use App\Domain\Catalogue\Presentation;
+use App\Domain\Policy\CancellationPolicy;
 use App\Models\Spa;
 use App\Models\Treatment;
 
@@ -67,6 +68,14 @@ class QuoteBuilder
         return $out;
     }
 
+    /** Type de tarif demandé (standard par défaut ; « nr » / « non_refundable » acceptés). */
+    public static function rateFromRequest(array $req): string
+    {
+        $r = (string) ($req['rate'] ?? 'standard');
+
+        return in_array($r, ['nr', 'non_refundable'], true) ? 'non_refundable' : 'standard';
+    }
+
     /**
      * Prix d'une prestation pour `party` personnes.
      *
@@ -116,12 +125,16 @@ class QuoteBuilder
      * @param  array  $participants  sortie de participantsFromRequest()
      * @return array{ok:bool, errors:string[], spa_id:int, party:int, duration_min:int, total:float, currency:string, lines:array, items:array, fingerprint:string}
      */
-    public function build(Spa $spa, array $participants): array
+    public function build(Spa $spa, array $participants, string $rate = 'standard'): array
     {
+        $nr = $rate === 'non_refundable';
         $quote = [
             'ok' => true, 'errors' => [], 'spa_id' => $spa->id, 'party' => 0, 'duration_min' => 0,
             'total' => 0.0, 'commissionable' => 0.0, 'currency' => config('hl.currency'), 'lines' => [], 'items' => [],
+            'rate' => $nr ? 'non_refundable' : 'standard', 'standard_total' => 0.0, 'nr_discount_pct' => null, 'nr_available' => true,
+            'cancellation_hours' => (int) $spa->cancellation_hours,
         ];
+        $pcts = [];
 
         foreach ($participants as $p) {
             $t = $this->engine->resolveTreatment($spa, (int) $p['treatment_id']);
@@ -140,6 +153,22 @@ class QuoteBuilder
             }
 
             $price = self::treatmentPrice($t, $party);
+            $standardBase = round($price['total'], 2);
+            if (! $t->hasNonRefundable()) {
+                $quote['nr_available'] = false;
+            }
+            if ($nr) {
+                if (! $t->hasNonRefundable()) {
+                    $quote['ok'] = false;
+                    $quote['errors'][] = __('booking.nr_unavailable', ['name' => $t->tr('name')]);
+
+                    continue;
+                }
+                $price['total'] = CancellationPolicy::discounted($standardBase, $t->nr_discount_pct);
+                $price['unit'] = $party > 0 ? $price['total'] / $party : $price['total'];
+                $pcts[] = (int) $t->nr_discount_pct;
+            }
+            $quote['cancellation_hours'] = max($quote['cancellation_hours'], $t->cancellationHours());
             $extras = $t->extras->keyBy('id');
             $exLines = [];
             $exTotal = 0.0;
@@ -170,6 +199,9 @@ class QuoteBuilder
                 'formula' => $price['formula'],
                 'unit_price' => round($price['unit'], 2),
                 'base_price' => round($price['total'], 2),
+                'standard_base_price' => $standardBase,
+                'nr_discount_pct' => $nr ? (int) $t->nr_discount_pct : null,
+                'cancellation_hours' => $t->cancellationHours(),
                 'extras' => $exLines,
                 'extras_price' => round($exTotal, 2),
                 'price' => round($price['total'] + $exTotal, 2),
@@ -183,12 +215,15 @@ class QuoteBuilder
             $quote['items'][] = ['treatment' => $t->id, 'party' => $party, 'extras' => $p['extras'], 'participant_no' => (int) $p['participant_no']];
             $quote['party'] += $party;
             $quote['total'] += $line['price'];
+            $quote['standard_total'] += $standardBase + $exTotal;
             $quote['commissionable'] += $line['commissionable'];
             $quote['duration_min'] = max($quote['duration_min'], $duration);
         }
 
         $quote['total'] = round($quote['total'], 2);
+        $quote['standard_total'] = round($quote['standard_total'], 2);
         $quote['commissionable'] = round($quote['commissionable'], 2);
+        $quote['nr_discount_pct'] = $nr && $pcts ? min($pcts) : null;
         $quote['fingerprint'] = self::fingerprint($quote);
 
         return $quote;
@@ -196,7 +231,7 @@ class QuoteBuilder
 
     public function fromRequest(Spa $spa, array $req): array
     {
-        return $this->build($spa, $this->participantsFromRequest($spa, $req));
+        return $this->build($spa, $this->participantsFromRequest($spa, $req), self::rateFromRequest($req));
     }
 
     /** Empreinte stable d'un devis : mêmes lignes, extras, total et durée → même empreinte. */
@@ -212,7 +247,7 @@ class QuoteBuilder
             $flat[] = $l['participant_no'].':'.$l['treatment_id'].':'.$l['party'].':'.implode(',', $ex);
         }
 
-        return md5(implode('|', $flat).'|'.$quote['total'].'|'.$quote['duration_min']);
+        return md5(implode('|', $flat).'|'.$quote['total'].'|'.$quote['duration_min'].'|'.($quote['rate'] ?? 'standard').'|'.($quote['cancellation_hours'] ?? ''));
     }
 
     /** Libellé court d'un devis (« 2 × Hammam + Massage (+ Massage crânien) »). */

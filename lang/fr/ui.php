@@ -59,7 +59,6 @@ return [
     'book_this' => 'Réserver ce soin',
     'choose_treatment' => 'Choisissez un soin',
     'contact_after' => 'Adresse exacte et coordonnées de l’établissement communiquées après confirmation.',
-    'cancel_policy' => 'Annulation gratuite jusqu’à :hours h avant le rendez-vous.',
     'features' => ['private_hammam' => 'Hammam privatif', 'couples' => 'Espace couples', 'women_only' => 'Réservé aux femmes (créneaux)', 'pool' => 'Piscine', 'parking' => 'Parking', 'tea' => 'Thé offert', 'rooftop' => 'Terrasse', 'hotel_pickup' => 'Navette hôtel'],
     // Flux de réservation
     'step_treatment' => 'Soin',
@@ -188,4 +187,27 @@ return [
     'messages_closed' => 'La conversation est close : cette réservation est terminée ou annulée. Les messages échangés restent consultables.',
     'no_messages' => 'Aucun message pour l’instant.',
     'you' => 'Vous',
+
+    // Politique d'annulation & tarifs
+    'policy' => [
+        'hours' => [8 => '8 h — dernière minute', 24 => '24 h', 48 => '48 h', 72 => '72 h', 168 => '7 jours', 360 => '15 jours', 504 => '21 jours'],
+        'title' => 'Conditions d’annulation',
+        'rate_title' => 'Choisissez votre tarif',
+        'standard' => 'Tarif Standard',
+        'non_refundable' => 'Non remboursable',
+        'standard_desc' => 'Annulation gratuite jusqu’à :label avant le rendez-vous. Passé ce délai, 100 % du montant reste dû.',
+        'nr_desc' => 'Meilleur prix : −:pct %. Aucun remboursement en cas d’annulation : 100 % du montant reste dû.',
+        'nr_saving' => 'Vous économisez :amount',
+        'free_until' => 'Annulation gratuite jusqu’au :date.',
+        'late_now' => 'Le délai d’annulation gratuite est dépassé : en cas d’annulation, 100 % du montant (:amount) reste dû.',
+        'nr_booking' => 'Tarif Non remboursable (−:pct %) : en cas d’annulation, 100 % du montant (:amount) reste dû.',
+        'frozen' => 'Ces conditions ont été acceptées lors de la réservation et restent attachées à celle-ci.',
+        'fee_due' => 'Frais d’annulation : :amount',
+        'cancel_free_confirm' => 'Annulation gratuite — confirmer ?',
+        'cancel_fee_confirm' => 'Attention : 100 % du montant (:amount) restera dû. Confirmer l’annulation ?',
+        'summary_standard' => 'Standard · annulation gratuite jusqu’à :label avant',
+        'summary_nr' => 'Non remboursable · −:pct %',
+        'spa_policy' => 'Annulation gratuite jusqu’à :label avant le rendez-vous (sauf tarif Non remboursable).',
+        'nr_from' => 'Non remboursable : :price (−:pct %)',
+    ],
 ];

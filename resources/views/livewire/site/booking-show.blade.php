@@ -40,6 +40,19 @@
         @endif
     </div>
 
+    @if ($b->isActive() || $b->status === 'cancelled')
+        <div class="card" style="padding:16px;margin-top:14px" id="conditions">
+            <b class="small">{{ __('ui.policy.title') }}</b>
+            <p class="small" style="margin:6px 0">
+                @if ($b->isNonRefundable())<span class="chip acc xs">{{ __('ui.policy.summary_nr', ['pct' => $b->nr_discount_pct]) }}</span> {{ __('ui.policy.nr_booking', ['pct' => $b->nr_discount_pct, 'amount' => $fmt($b->total)]) }}
+                @else{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($b->cancellationHours())]) }} @if ($b->isActive()){{ $b->freeCancellationOpen() ? __('ui.policy.free_until', ['date' => $b->freeCancellationUntil()->locale(app()->getLocale())->isoFormat('LLL')]) : __('ui.policy.late_now', ['amount' => $fmt($b->total)]) }}@endif
+                @endif
+            </p>
+            @if ($b->status === 'cancelled' && $b->cancel_fee)<p class="small" style="margin:6px 0;color:#b42318"><b>{{ __('ui.policy.fee_due', ['amount' => $fmt($b->cancel_fee)]) }}</b></p>@endif
+            <p class="xs muted" style="margin:0">{{ __('ui.policy.frozen') }}</p>
+        </div>
+    @endif
+
     @php($cr = $b->cancellationRequests->first())
     @if ($cr && ($cr->isPending() || $cr->decided_at?->gt(now()->subDays(30))))
         <div class="card" style="padding:16px;margin-top:14px;border-left:4px solid {{ $cr->isPending() ? '#d98e04' : ($cr->status === 'accepted' ? '#b42318' : '#1a7f4b') }}" id="cancellation">
@@ -103,7 +116,7 @@
     @if ($b->isActive())
         <div style="margin-top:14px" x-data="{ ask: false }">
             <button class="btn bad sm" type="button" x-show="!ask" x-on:click="ask = true">{{ __('ui.cancel_booking') }}</button>
-            <div class="row" x-show="ask" x-cloak><span class="small">{{ __('ui.cancel_confirm') }}</span><button class="btn bad sm" type="button" wire:click="cancel">{{ __('ui.cancel_booking') }}</button><button class="btn ghost sm" type="button" x-on:click="ask = false">{{ __('ui.back') }}</button></div>
+            <div class="row" x-show="ask" x-cloak><span class="small">{{ $b->freeCancellationOpen() ? __('ui.policy.cancel_free_confirm') : __('ui.policy.cancel_fee_confirm', ['amount' => $fmt($b->total)]) }}</span><button class="btn bad sm" type="button" wire:click="cancel">{{ __('ui.cancel_booking') }}</button><button class="btn ghost sm" type="button" x-on:click="ask = false">{{ __('ui.back') }}</button></div>
         </div>
     @else
         <a class="btn sec sm" style="margin-top:14px" href="{{ route('spa.show', ['spa' => $b->spa->slug]) }}">{{ __('ui.book_again') }}</a>
@@ -124,6 +137,7 @@
         @if ($b->hotel)<dt>{{ __('ui.hotel') }}</dt><dd>{{ $b->hotel }}</dd>@endif
     </dl>
     <div class="tot"><span>{{ __('ui.recap_total') }}</span><span>{{ $fmt($b->total) }}</span></div>
+    @if ($b->nrSaving() > 0)<div class="xs muted" style="text-align:right">{{ __('ui.policy.non_refundable') }} · {{ __('ui.policy.nr_saving', ['amount' => $fmt($b->nrSaving())]) }}</div>@endif
     <div class="xs muted" style="text-align:right">{{ $b->nothingDue() ? __('ui.nothing_due') : ($b->payment_status === 'on_site' ? __('ui.pay_on_site') : __('partner.payment_statuses.'.$b->payment_status)) }}</div>
 </aside>
 </div>
