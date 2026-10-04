@@ -29,18 +29,45 @@ class RequireTwoFactor
             return $next($request);
         }
 
+        $livewire = $route === 'livewire.update' || $request->is('livewire/update');
+        if ($livewire && $this->onlyTwoFactorComponents($request)) {
+            return $next($request);
+        }
+
         $panel = Filament::getCurrentPanel()?->getId() ?? 'admin';
 
         if ($user->hasTwoFactor() && ! $this->twoFactor->hasPassed($user)) {
+            abort_if($livewire, 403);
             session(['url.intended' => $request->fullUrl()]);
 
             return redirect()->route("filament.{$panel}.two-factor.challenge");
         }
 
         if ($user->mustEnableTwoFactor() && ! $user->hasTwoFactor()) {
+            abort_if($livewire, 403);
+
             return redirect()->route("filament.{$panel}.two-factor.setup");
         }
 
         return $next($request);
+    }
+
+    /** Une requête Livewire ne concernant que les pages 2FA (activation / vérification) doit passer. */
+    private function onlyTwoFactorComponents(Request $request): bool
+    {
+        $components = $request->input('components', []);
+        if (! is_array($components) || $components === []) {
+            return false;
+        }
+
+        foreach ($components as $component) {
+            $snapshot = json_decode((string) ($component['snapshot'] ?? ''), true);
+            $name = (string) ($snapshot['memo']['name'] ?? '');
+            if (! str_contains($name, 'two-factor')) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
