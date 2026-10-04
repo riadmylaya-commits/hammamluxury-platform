@@ -210,6 +210,7 @@ return [
         'summary_standard' => 'Standard · annulation gratuite jusqu’à :label avant',
         'summary_nr' => 'Non remboursable · −:pct %',
         'spa_policy' => 'Annulation gratuite jusqu’à :label avant le rendez-vous (sauf tarif Non remboursable).',
+        'spa_policy_standard' => 'Annulation gratuite jusqu’à :label avant le rendez-vous.',
         'nr_from' => 'Non remboursable : :price (−:pct %)',
     ],
 ];

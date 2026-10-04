@@ -80,7 +80,7 @@
                     <span @class(['b' => $i === now()->dayOfWeekIso - 1])>{{ $d }}</span><span @class(['muted' => empty($card['hours'][$i])])>{{ empty($card['hours'][$i]) ? __('ui.closed') : implode(', ', $card['hours'][$i]) }}</span>
                 @endforeach
             </div>
-            <p class="muted small" style="margin-top:10px">{{ __('ui.contact_after') }} {{ __('ui.policy.spa_policy', ['label' => \App\Domain\Policy\CancellationPolicy::label((int) $spa->cancellation_hours)]) }}</p>
+            <p class="muted small" style="margin-top:10px">{{ __('ui.contact_after') }} {{ __(\App\Domain\Policy\CancellationPolicy::nrEnabled() ? 'ui.policy.spa_policy' : 'ui.policy.spa_policy_standard', ['label' => \App\Domain\Policy\CancellationPolicy::label((int) $spa->cancellation_hours)]) }}</p>
         </section>
     </div>
     <aside class="side card">
