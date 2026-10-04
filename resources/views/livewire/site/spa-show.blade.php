@@ -78,7 +78,7 @@
                 <p class="muted small">{{ __('ui.review.none_yet') }}</p>
             @else
                 <div class="card" style="padding:16px;margin-bottom:12px">
-                    <div class="rv-sum"><span class="big">{{ number_format($card['rating'], 1) }}</span><div><div class="stars" style="color:var(--accent,#b8743a)">{{ str_repeat('★', (int) round($card['rating'])) }}{{ str_repeat('☆', 5 - (int) round($card['rating'])) }}</div><div class="small muted">{{ __('ui.reviews', ['count' => $card['reviews_count']]) }} · {{ __('ui.review.all_verified') }}</div></div></div>
+                    <div class="rv-sum"><span class="big">{{ number_format($card['rating'], 1, app()->getLocale() === 'fr' ? ',' : '.', ' ') }}</span><div><div class="stars" style="color:var(--accent,#b8743a)">{{ str_repeat('★', (int) round($card['rating'])) }}{{ str_repeat('☆', 5 - (int) round($card['rating'])) }}</div><div class="small muted">{{ __('ui.reviews', ['count' => $card['reviews_count']]) }} · {{ __('ui.review.all_verified') }}</div></div></div>
                     @if ($criteriaAvg)<div class="rv-crit-sum">@foreach ($criteriaAvg as $k => $v)<span>{{ __('ui.review.criteria.'.$k) }} <b>{{ [1 => '🙁', 2 => '😐', 3 => '😊'][(int) round($v)] }}</b></span>@endforeach</div>@endif
                 </div>
                 <div class="rv-list">

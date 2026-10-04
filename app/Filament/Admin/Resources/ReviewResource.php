@@ -115,9 +115,9 @@ class ReviewResource extends Resource
                 Tables\Columns\TextColumn::make('spa.name')->label(__('admin.spa'))->searchable(),
                 Tables\Columns\TextColumn::make('author_name')->label(__('admin.author'))->description(fn (Review $r) => $r->booking?->reference),
                 Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->formatStateUsing(fn ($state) => str_repeat('★', (int) $state).str_repeat('☆', 5 - (int) $state))->sortable(),
-                Tables\Columns\TextColumn::make('body')->label(__('admin.review'))->limit(80)->wrap()->description(fn (Review $r) => $r->title),
-                Tables\Columns\TextColumn::make('photos_count')->label(__('admin.review_photos'))->badge()->color('gray')->formatStateUsing(fn ($state) => $state ?: null),
-                Tables\Columns\IconColumn::make('booking_id')->label(__('admin.verified'))->boolean()->getStateUsing(fn (Review $r) => $r->isVerified()),
+                Tables\Columns\TextColumn::make('body')->label(__('admin.review'))->limit(60)->tooltip(fn (Review $r) => $r->body)->description(fn (Review $r) => $r->title),
+                Tables\Columns\TextColumn::make('photos_count')->label(__('admin.review_photos'))->badge()->color('gray')->formatStateUsing(fn ($state) => $state ?: null)->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\IconColumn::make('booking_id')->label(__('admin.verified'))->boolean()->getStateUsing(fn (Review $r) => $r->isVerified())->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => __("admin.r_$state"))
                     ->color(fn ($state) => match ($state) {
