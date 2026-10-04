@@ -21,7 +21,9 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
             {{ $this->regenerateAction }}
-            {{ $this->disableAction }}
+            @if ($this->disableAction->isVisible())
+                {{ $this->disableAction }}
+            @endif
             <x-filament::button tag="a" href="{{ $this->continueUrl() }}" color="primary">{{ __('security.continue') }}</x-filament::button>
         </div>
     @else
