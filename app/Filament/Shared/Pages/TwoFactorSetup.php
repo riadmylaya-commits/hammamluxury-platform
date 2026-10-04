@@ -78,8 +78,16 @@ class TwoFactorSetup extends SimplePage implements HasForms
     {
         return Action::make('regenerate')->label(__('security.regenerate'))->color('gray')->icon('heroicon-o-arrow-path')
             ->requiresConfirmation()
-            ->form([TextInput::make('password')->label(__('security.current_password'))->password()->required()->currentPassword()])
-            ->action(function (TwoFactor $twoFactor) {
+            ->form([
+                TextInput::make('password')->label(__('security.current_password'))->password()->required()->currentPassword(),
+                TextInput::make('code')->label(__('security.code'))->required()->maxLength(12),
+            ])
+            ->action(function (array $data, TwoFactor $twoFactor) {
+                if (! $twoFactor->challenge(auth()->user(), $data['code'])) {
+                    Notification::make()->title(__('security.invalid_code'))->danger()->send();
+
+                    return;
+                }
                 $this->recoveryCodes = $twoFactor->regenerateRecoveryCodes(auth()->user());
                 Notification::make()->title(__('security.regenerated'))->success()->send();
             });
