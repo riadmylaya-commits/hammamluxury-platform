@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Installe les sauvegardes sur le serveur (root). Idempotent.
-# Variables : HL_RESTIC_REPOSITORY (obligatoire, ex. sftp:u123@u123.your-storagebox.de:/hl-staging ou s3:...),
+# Variables : HL_RESTIC_REPOSITORY (obligatoire, ex. sftp:hl-storagebox:hl-staging via alias ssh, ou s3:...),
 #             HL_BACKUP_HOUR (défaut 03), HL_VERIFY_HOUR (défaut 07), et éventuellement AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY, B2_*.
 set -euo pipefail
 : "${HL_RESTIC_REPOSITORY:?HL_RESTIC_REPOSITORY requis}"

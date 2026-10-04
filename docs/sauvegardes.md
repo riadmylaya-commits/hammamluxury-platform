@@ -18,12 +18,28 @@ Scripts : `deploy/backup/` (installés dans `/usr/local/sbin/` par `install.sh`)
 - 07:15 UTC, `hl-backup-verify.sh` (indépendant) : exige un instantané `db` **et** `files` de moins de 26 h dans le dépôt distant et un dernier statut `ok`.
 - Toute erreur (sauvegarde, contrôle, dépôt inaccessible) → e-mail via `php artisan hl:alert` à `HL_ALERT_EMAIL` (défaut `HL_CONTACT_EMAIL`), SMTP de l'application.
 
+## Destination (staging) : Hetzner Storage Box dédié
+
+Staging envoie ses sauvegardes sur un **Hetzner Storage Box dédié** (`hammamluxury-staging-backup`, `u682965`, Helsinki, 1 To), donc hors du serveur staging. Rien n'est configuré pour la production (destination séparée à prévoir avant l'ouverture).
+
+- Accès : clé SSH dédiée `/root/.ssh/hl_storagebox` (ed25519, sans mot de passe stocké sur le serveur), déposée dans `.ssh/authorized_keys` du Storage Box ; alias `/root/.ssh/config` :
+  ```
+  Host hl-storagebox
+    HostName u682965.your-storagebox.de
+    Port 23
+    User u682965
+    IdentityFile /root/.ssh/hl_storagebox
+    IdentitiesOnly yes
+  ```
+- Dépôt restic : `RESTIC_REPOSITORY=sftp:hl-storagebox:hl-staging` (chemin **relatif** au home du Storage Box ; un chemin absolu `/hl-staging` est refusé par Hetzner). Mot de passe restic : `/etc/hl-backup/restic.password` (à conserver dans le gestionnaire de mots de passe).
+- Le mot de passe du Storage Box n'est utilisé que pour déposer la clé publique ; il n'est enregistré nulle part sur le serveur.
+
 ## Installation / changement de destination
 ```bash
-HL_RESTIC_REPOSITORY='sftp:uXXXX@uXXXX.your-storagebox.de:/hl-staging' HL_HOST_TAG=hl-staging bash deploy/backup/install.sh
+HL_RESTIC_REPOSITORY='sftp:hl-storagebox:hl-staging' HL_HOST_TAG=hl-staging bash deploy/backup/install.sh
 /usr/local/sbin/hl-backup.sh && /usr/local/sbin/hl-backup-verify.sh
 ```
-Destinations possibles : `sftp:` (Hetzner Storage Box, clé SSH root → storage box), `s3:` (AWS/Scaleway/MinIO, `AWS_ACCESS_KEY_ID/SECRET`), `b2:` (Backblaze). Utiliser un compte/sous-compte dédié, droits limités au dépôt.
+Autres destinations possibles : `s3:` (AWS/Scaleway/MinIO, `AWS_ACCESS_KEY_ID/SECRET`), `b2:` (Backblaze). Toujours un compte/sous-compte dédié, droits limités au dépôt. Après tout changement : sauvegarde réelle puis test de restauration.
 
 ## Test de restauration (isolé, sans toucher au serveur en service)
 Sur une autre machine disposant de `restic` et d'un MariaDB :
@@ -34,7 +50,7 @@ deploy/backup/hl-restore.sh /tmp/hl-restore hl_restore_test hl-staging        # 
 Le script restaure fichiers + base dans `/tmp/hl-restore/files` et la base `hl_restore_test`, puis affiche le nombre de tables, `users/partners/spas/bookings/...` et le nombre de fichiers. À réaliser **au moins une fois par trimestre** et après tout changement de destination.
 
 ## Procédure de reprise après panne complète du serveur
-1. Récupérer : mot de passe restic (gestionnaire de mots de passe), accès à la destination (Storage Box / S3), dépôt Git.
+1. Récupérer : mot de passe restic (gestionnaire de mots de passe), accès au Storage Box (console Hetzner : mot de passe ou nouvelle clé SSH déposée dans `.ssh/authorized_keys`), dépôt Git.
 2. Nouveau serveur Ubuntu 24.04 : suivre `docs/deploy-vps.md` (paquets, Nginx, PHP 8.3, MariaDB, Redis, Supervisor, utilisateur `deploy`, clone du dépôt dans `/var/www/hammamluxury`, `composer install`, `npm run build`). Ne pas lancer `migrate --seed`.
 3. Installer restic et restaurer vers un dossier isolé :
    `hl-restore.sh /root/restore hl_platform hl-staging` (crée/alimente la base `hl_platform` ; vérifier les compteurs affichés).
