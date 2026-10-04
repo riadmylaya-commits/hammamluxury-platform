@@ -80,6 +80,7 @@ class PartnerPanelProvider extends PanelProvider
                 MenuItem::make()->label(fn () => __('security.menu'))->icon('heroicon-o-shield-check')
                     ->url(fn () => route('filament.'.filament()->getId().'.two-factor.setup')),
             ])
+            ->livewireComponents([TwoFactorSetup::class, TwoFactorChallenge::class])
             ->authMiddleware([Authenticate::class, RequireTwoFactor::class]);
     }
 }
