@@ -72,8 +72,8 @@ server {
     charset utf-8;
     client_max_body_size 25m;
 
-    add_header X-Frame-Options "SAMEORIGIN";
-    add_header X-Content-Type-Options "nosniff";
+    # En-têtes de sécurité (HSTS, CSP, Referrer/Permissions-Policy…) : middleware Laravel SecurityHeaders.
+    server_tokens off;
 
     location / { try_files \$uri \$uri/ /index.php?\$query_string; }
     location = /favicon.ico { access_log off; log_not_found off; }
