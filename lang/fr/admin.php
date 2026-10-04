@@ -54,6 +54,7 @@ return [
     'author' => 'Auteur',
     'verified' => 'Vérifié',
     'r_pending' => 'À modérer',
+    'r_pending_filter' => 'À modérer (avis ou réponse)',
     'r_published' => 'Publié',
     'r_rejected' => 'Rejeté',
     'reject' => 'Rejeter',

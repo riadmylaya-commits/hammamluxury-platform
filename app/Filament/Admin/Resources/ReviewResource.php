@@ -131,11 +131,15 @@ class ReviewResource extends Resource
                 Tables\Columns\TextColumn::make('submitted_at')->label(__('admin.review_submitted_at'))->dateTime('d/m/Y H:i')->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')->options([
-                    'pending' => __('admin.r_pending'),
+                Tables\Filters\SelectFilter::make('status')->label(__('partner.status'))->options([
+                    'pending' => __('admin.r_pending_filter'),
                     'published' => __('admin.r_published'),
                     'rejected' => __('admin.r_rejected'),
-                ])->default('pending'),
+                ])->default('pending')->query(fn (Builder $q, array $data) => match ($data['value'] ?? null) {
+                    'pending' => $q->whereRaw('(status = ? or reply_status = ?)', ['pending', 'pending']),
+                    null, '' => $q,
+                    default => $q->where('status', $data['value']),
+                }),
                 Tables\Filters\TernaryFilter::make('reply_pending')->label(__('admin.review_reply_pending'))
                     ->queries(true: fn (Builder $q) => $q->where('reply_status', 'pending'), false: fn (Builder $q) => $q->where(fn ($q) => $q->whereNull('reply_status')->orWhere('reply_status', '!=', 'pending'))),
             ])

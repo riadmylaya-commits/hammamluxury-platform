@@ -93,12 +93,22 @@ class ReviewForm extends Component
     {
         unset($this->photos[$index]);
         $this->photos = array_values($this->photos);
+        $this->clearPhotoErrors();
     }
 
     public function updatedPhotos(): void
     {
         $this->photos = array_slice(array_values($this->photos), 0, Review::MAX_PHOTOS);
-        $this->resetErrorBag('photos');
+        $this->clearPhotoErrors();
+    }
+
+    private function clearPhotoErrors(): void
+    {
+        foreach (array_keys($this->getErrorBag()->toArray()) as $key) {
+            if (str_starts_with($key, 'photos')) {
+                $this->resetErrorBag($key);
+            }
+        }
     }
 
     public function submit(ReviewService $reviews): void
