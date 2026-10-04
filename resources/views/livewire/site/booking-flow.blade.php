@@ -1,6 +1,6 @@
 <div>
 @php($cur = config('hl.currency'))
-@php($fmt = fn ($n) => number_format($n, 0, ',', ' ').' '.$cur)
+@php($fmt = fn ($n) => number_format($n, fmod((float) $n, 1) ? 2 : 0, ',', ' ').' '.$cur)
 <div class="row" style="margin-top:6px"><a class="lnk small" href="{{ route('spa.show', $spa->slug) }}">← {{ $spa->name }}</a></div>
 <div class="steps">
     @foreach ([1 => 'step_treatment', 2 => 'step_datetime', 3 => 'step_details'] as $n => $label)

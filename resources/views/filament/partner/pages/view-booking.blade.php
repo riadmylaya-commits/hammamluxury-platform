@@ -174,7 +174,7 @@
             @if ($b->nothingDue())
                 <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.nothing_due') }}</p>
             @endif
-            @if ($s['commissionable'] < $b->total)
+            @if ($s['commissionable'] < $b->total && ! $b->nothingDue())
                 <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.non_commissionable_note') }}</p>
             @endif
             <div class="hl-row" style="margin-top:.6rem;border-top:1px solid #e5e7eb;border-bottom:0">
