@@ -225,7 +225,6 @@ return [
         'cta_button' => 'Write my review',
         'status' => ['pending' => 'Your review is being checked.', 'published' => 'Your review is published on the venue page.', 'rejected' => 'Your review could not be published because it does not follow our content rules. Contact us with any question.'],
     ],
-||||||| 5d0e378
 
     'policy' => [
         'hours' => [8 => '8 h — last minute', 24 => '24 h', 48 => '48 h', 72 => '72 h', 168 => '7 days', 360 => '15 days', 504 => '21 days'],

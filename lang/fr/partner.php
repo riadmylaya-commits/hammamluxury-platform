@@ -453,7 +453,6 @@ return [
     'review_reply_hint' => 'Au moins :min caractères. Votre réponse est vérifiée par HammamLuxury avant publication et doit respecter les mêmes règles que les avis (courtoisie, pas de données personnelles).',
     'review_reply_sent' => 'Réponse envoyée : elle sera publiée après vérification par HammamLuxury.',
     'review_reply_status' => ['pending' => 'En attente de vérification', 'published' => 'Publiée', 'rejected' => 'Refusée'],
-||||||| 5d0e378
 
     'cancellation_policy_help' => 'HammamLuxury propose ces délais ; vous choisissez celui qui s’applique à votre établissement. Avant la limite, le client annule gratuitement ; après, 100 % du montant reste dû.',
     'treatment_cancellation_hours' => 'Délai d’annulation pour cette prestation',

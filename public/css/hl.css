@@ -155,6 +155,5 @@ body.lb-open{overflow:hidden}
 .rv-reply{margin-top:10px;padding:10px 12px;background:var(--soft);border-radius:10px;font-size:14px}.rv-reply b{display:block;font-size:12px;color:var(--brand);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
 .rv-sum{display:flex;align-items:center;gap:14px;margin-bottom:12px}.rv-sum .big{font-size:40px;font-weight:700;line-height:1}.rv-crit-sum{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:13px}.rv-crit-sum span b{float:right}
 @media (max-width:599px){.rv-crit-sum{grid-template-columns:1fr}}
-||||||| 5d0e378
 
 .rates{display:grid;gap:8px}.opt.rate{align-items:center}.opt.rate .chip.acc{font-weight:700}.notice.warn{background:#fff8ec;border-color:#f1d9a8;color:#6a4a08}@media(min-width:700px){.rates{grid-template-columns:1fr 1fr}}

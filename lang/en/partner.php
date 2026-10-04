@@ -446,7 +446,6 @@ return [
     'review_reply_hint' => 'At least :min characters. Your reply is checked by HammamLuxury before publication and must follow the same rules as reviews (courtesy, no personal data).',
     'review_reply_sent' => 'Reply sent: it will be published once checked by HammamLuxury.',
     'review_reply_status' => ['pending' => 'Awaiting check', 'published' => 'Published', 'rejected' => 'Rejected'],
-||||||| 5d0e378
 
     'cancellation_policy_help' => 'HammamLuxury offers these deadlines; you choose the one that applies to your establishment. Before the deadline the client cancels for free; after, 100% of the amount is due.',
     'treatment_cancellation_hours' => 'Cancellation deadline for this treatment',

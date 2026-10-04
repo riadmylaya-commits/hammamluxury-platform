@@ -227,7 +227,6 @@ return [
         'cta_button' => 'Donner mon avis',
         'status' => ['pending' => 'Votre avis est en cours de vérification.', 'published' => 'Votre avis est publié sur la fiche de l’établissement.', 'rejected' => 'Votre avis n’a pas pu être publié car il ne respecte pas nos règles de contenu. Contactez-nous pour toute question.'],
     ],
-||||||| 5d0e378
 
     // Politique d'annulation & tarifs
     'policy' => [
