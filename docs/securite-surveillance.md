@@ -4,7 +4,7 @@
 | En-tête | Valeur |
 |---|---|
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (HTTPS uniquement ; `HL_HSTS=false` pour désactiver) |
-| `Content-Security-Policy[-Report-Only]` | `default-src 'self'` ; scripts/styles `self` + inline/eval (Livewire, Alpine, Filament) + `unpkg.com` (Leaflet) ; polices `fonts.bunny.net` ; images `self`, `data:`, `blob:`, tuiles OpenStreetMap, `picsum.photos` (démo) ; `frame-ancestors 'self'` ; `object-src 'none'` ; `report-uri /csp-report` |
+| `Content-Security-Policy[-Report-Only]` | `default-src 'self'` ; scripts/styles `self` + inline/eval (Livewire, Alpine, Filament) + `unpkg.com` (Leaflet) ; polices `fonts.bunny.net` ; images `self`, `data:`, `blob:`, tuiles OpenStreetMap, `picsum.photos` (démo), `ui-avatars.com` (avatars Filament) ; `frame-ancestors 'self'` ; `object-src 'none'` ; `report-uri /csp-report` |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
 | `Permissions-Policy` | caméra, micro, géolocalisation, paiement, USB désactivés |
 | `X-Frame-Options` / `X-Content-Type-Options` | `SAMEORIGIN` / `nosniff` |
