@@ -203,6 +203,8 @@ return [
         'nr_booking' => 'Tarif Non remboursable (−:pct %) : en cas d’annulation, 100 % du montant (:amount) reste dû.',
         'frozen' => 'Ces conditions ont été acceptées lors de la réservation et restent attachées à celle-ci.',
         'fee_due' => 'Frais d’annulation : :amount',
+        'cancelled_free' => 'Réservation annulée sans frais : aucun montant à régler.',
+        'nr_booking_waived' => 'Tarif Non remboursable : annulation acceptée à titre exceptionnel, aucun frais retenu.',
         'cancel_free_confirm' => 'Annulation gratuite — confirmer ?',
         'cancel_fee_confirm' => 'Attention : 100 % du montant (:amount) restera dû. Confirmer l’annulation ?',
         'summary_standard' => 'Standard · annulation gratuite jusqu’à :label avant',

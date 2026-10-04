@@ -44,11 +44,11 @@
         <div class="card" style="padding:16px;margin-top:14px" id="conditions">
             <b class="small">{{ __('ui.policy.title') }}</b>
             <p class="small" style="margin:6px 0">
-                @if ($b->isNonRefundable())<span class="chip acc xs">{{ __('ui.policy.summary_nr', ['pct' => $b->nr_discount_pct]) }}</span> {{ __('ui.policy.nr_booking', ['pct' => $b->nr_discount_pct, 'amount' => $fmt($b->total)]) }}
+                @if ($b->isNonRefundable())<span class="chip acc xs">{{ __('ui.policy.summary_nr', ['pct' => $b->nr_discount_pct]) }}</span> {{ $b->status === 'cancelled' && ! $b->cancel_fee ? __('ui.policy.nr_booking_waived') : __('ui.policy.nr_booking', ['pct' => $b->nr_discount_pct, 'amount' => $fmt($b->total)]) }}
                 @else{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($b->cancellationHours())]) }} @if ($b->isActive()){{ $b->freeCancellationOpen() ? __('ui.policy.free_until', ['date' => $b->freeCancellationUntil()->locale(app()->getLocale())->isoFormat('LLL')]) : __('ui.policy.late_now', ['amount' => $fmt($b->total)]) }}@endif
                 @endif
             </p>
-            @if ($b->status === 'cancelled' && $b->cancel_fee)<p class="small" style="margin:6px 0;color:#b42318"><b>{{ __('ui.policy.fee_due', ['amount' => $fmt($b->cancel_fee)]) }}</b></p>@endif
+            @if ($b->status === 'cancelled')<p class="small" style="margin:6px 0;color:{{ $b->cancel_fee ? '#b42318' : '#1b7f4b' }}"><b>{{ $b->cancel_fee ? __('ui.policy.fee_due', ['amount' => $fmt($b->cancel_fee)]) : __('ui.policy.cancelled_free') }}</b></p>@endif
             <p class="xs muted" style="margin:0">{{ __('ui.policy.frozen') }}</p>
         </div>
     @endif

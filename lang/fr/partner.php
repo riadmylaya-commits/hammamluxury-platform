@@ -456,7 +456,7 @@ return [
     'conditions' => 'Conditions figées à la réservation',
     'free_until' => 'Annulation gratuite jusqu’au',
     'standard_total' => 'Prix Standard de référence',
-    'cancel_fee' => 'Frais d’annulation (100 % dus)',
+    'cancel_fee' => 'Frais d’annulation',
     'cancel_free' => 'Annulation gratuite (dans le délai)',
     'cancel_by_partner' => 'Annulation exceptionnelle acceptée : rien n’est dû par le client',
     'nr_booking_note' => 'Réservation Non remboursable : en cas d’annulation par le client, 100 % du montant reste dû et la commission est conservée.',

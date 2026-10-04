@@ -449,7 +449,7 @@ return [
     'conditions' => 'Conditions frozen at booking',
     'free_until' => 'Free cancellation until',
     'standard_total' => 'Standard reference price',
-    'cancel_fee' => 'Cancellation fee (100% due)',
+    'cancel_fee' => 'Cancellation fee',
     'cancel_free' => 'Free cancellation (within deadline)',
     'cancel_by_partner' => 'Exceptional cancellation accepted: nothing is due by the client',
     'nr_booking_note' => 'Non-refundable booking: if the client cancels, 100% of the amount remains due and the commission is kept.',

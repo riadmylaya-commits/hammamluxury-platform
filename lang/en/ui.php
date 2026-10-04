@@ -200,6 +200,8 @@ return [
         'nr_booking' => 'Non-refundable rate (−:pct%): if you cancel, 100% of the amount (:amount) remains due.',
         'frozen' => 'These conditions were accepted at booking time and remain attached to this booking.',
         'fee_due' => 'Cancellation fee: :amount',
+        'cancelled_free' => 'Booking cancelled free of charge: nothing to pay.',
+        'nr_booking_waived' => 'Non-refundable rate: cancellation accepted as an exception, no fee charged.',
         'cancel_free_confirm' => 'Free cancellation — confirm?',
         'cancel_fee_confirm' => 'Warning: 100% of the amount (:amount) will remain due. Confirm cancellation?',
         'summary_standard' => 'Standard · free cancellation up to :label before',
