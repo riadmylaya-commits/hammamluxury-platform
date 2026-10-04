@@ -73,7 +73,7 @@ class TreatmentResource extends Resource
                 ->schema([
                     Forms\Components\Select::make('cancellation_hours')->label(__('partner.treatment_cancellation_hours'))->options(CancellationPolicy::options())
                         ->placeholder(__('partner.spa_default'))->native(false)->helperText(__('partner.treatment_cancellation_help')),
-                    Forms\Components\TextInput::make('nr_discount_pct')->label(__('partner.nr_discount_pct'))->numeric()->minValue(CancellationPolicy::MIN_NR_DISCOUNT)->maxValue(CancellationPolicy::MAX_NR_DISCOUNT)->suffix('%')->live(onBlur: true)
+                    Forms\Components\TextInput::make('nr_discount_pct')->label(__('partner.nr_discount_pct'))->numeric()->minValue(CancellationPolicy::MIN_NR_DISCOUNT)->maxValue(CancellationPolicy::MAX_NR_DISCOUNT)->suffix('%')->live(onBlur: true)->visible(fn () => CancellationPolicy::nrEnabled())
                         ->helperText(fn (Forms\Get $get) => self::nrPreview($get) ?? __('partner.nr_discount_help')),
                 ])->columns(2),
 
@@ -139,7 +139,7 @@ class TreatmentResource extends Resource
                 Tables\Columns\TextColumn::make('duration_min')->label(__('partner.duration'))->suffix(' min'),
                 Tables\Columns\TextColumn::make('price_solo')->label(__('partner.price_solo'))->money(config('hl.currency'), locale: 'fr'),
                 Tables\Columns\TextColumn::make('price_couple')->label(__('partner.price_couple'))->money(config('hl.currency'), locale: 'fr')->placeholder('—'),
-                Tables\Columns\TextColumn::make('nr_discount_pct')->label(__('ui.policy.non_refundable'))->formatStateUsing(fn ($state) => '−'.$state.' %')->placeholder('—')->badge()->color('success'),
+                Tables\Columns\TextColumn::make('nr_discount_pct')->label(__('ui.policy.non_refundable'))->formatStateUsing(fn ($state) => '−'.$state.' %')->placeholder('—')->badge()->color('success')->visible(fn () => CancellationPolicy::nrEnabled()),
                 Tables\Columns\TextColumn::make('cancellation_hours')->label(__('partner.cancellation_hours'))->formatStateUsing(fn ($state) => CancellationPolicy::label((int) $state))->placeholder(__('partner.spa_default'))->toggleable(),
                 Tables\Columns\TextColumn::make('extras_count')->counts('extras')->label(__('partner.extras')),
                 Tables\Columns\IconColumn::make('status')->label(__('partner.status'))->boolean(fn ($state) => $state === 'active')->getStateUsing(fn (Treatment $t) => $t->status === 'active'),

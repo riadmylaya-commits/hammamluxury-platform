@@ -22,6 +22,21 @@ class CancellationPolicyTest extends BookingFlowTestCase
         parent::setUp();
         URL::defaults(['locale' => 'fr']);
         app()->setLocale('fr');
+        config(['hl.features.non_refundable' => true]);
+    }
+
+    public function test_non_refundable_rate_is_fully_hidden_when_feature_disabled(): void
+    {
+        config(['hl.features.non_refundable' => false]);
+        $this->hm->update(['nr_discount_pct' => 15]);
+        $this->assertFalse($this->hm->fresh()->hasNonRefundable(), 'Réduction enregistrée mais tarif NR non proposé');
+        $q = $this->quote(['participants' => [['treatment' => $this->hm->id]], 'rate' => 'nr']);
+        $this->assertTrue($q['ok'] && $q['rate'] === 'standard' && $q['nr_available'] === false && (float) $q['total'] === 600.0, 'Une demande NR retombe sur le tarif standard');
+        $b = $this->submit($this->intent('10:00', ['treatment' => $this->hm->id, 'party' => 1, 'rate' => 'nr']))['booking'];
+        $this->assertTrue($b->rate_type === 'standard' && (float) $b->total === 600.0 && $b->nr_discount_pct === null, 'Réservation créée en Standard plein tarif');
+        $html = Livewire::test(BookingFlow::class, ['spa' => $this->spa])->set('treatment', $this->hm->id)->set('date', $b->start_at->toDateString())->set('time', '14:00')->html();
+        $this->assertStringNotContainsString(__('ui.policy.non_refundable'), $html, 'Aucune mention Non remboursable dans le tunnel');
+        $this->assertStringNotContainsString(__('ui.policy.rate_title'), $html, 'Pas de choix de tarif');
     }
 
     public function test_policy_frozen_and_treatment_override_is_strictest(): void

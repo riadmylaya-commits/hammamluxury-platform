@@ -67,7 +67,7 @@ class Treatment extends Model
 
     public function hasNonRefundable(): bool
     {
-        return CancellationPolicy::isValidDiscount($this->nr_discount_pct);
+        return CancellationPolicy::nrEnabled() && CancellationPolicy::isValidDiscount($this->nr_discount_pct);
     }
 
     public function isActive(): bool

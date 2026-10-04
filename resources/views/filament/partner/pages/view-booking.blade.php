@@ -153,7 +153,7 @@
             @elseif ($b->isConfirmed())
                 <p class="hl-muted" style="margin-top:.5rem">{{ __('partner.no_show_window_hint', ['until' => $s['no_show_until']->translatedFormat('j F') .' '. $s['no_show_until']->format('H\hi')]) }}</p>
             @endif
-            <div class="hl-row"><span class="hl-k">{{ __('partner.rate_type') }}</span><span class="hl-v">{{ __('partner.rate_types.'.$b->rate_type) }}@if ($b->isNonRefundable()) · −{{ $b->nr_discount_pct }} %@endif</span></div>
+            @if ($b->isNonRefundable() || \App\Domain\Policy\CancellationPolicy::nrEnabled())<div class="hl-row"><span class="hl-k">{{ __('partner.rate_type') }}</span><span class="hl-v">{{ __('partner.rate_types.'.$b->rate_type) }}@if ($b->isNonRefundable()) · −{{ $b->nr_discount_pct }} %@endif</span></div>@endif
             @if (! $b->isNonRefundable())<div class="hl-row"><span class="hl-k">{{ __('partner.free_until') }}</span><span class="hl-v">{{ $b->freeCancellationUntil()->translatedFormat('j F Y') }} {{ $b->freeCancellationUntil()->format('H\hi') }} ({{ \App\Domain\Policy\CancellationPolicy::label($b->cancellationHours()) }})</span></div>
             @else<p class="hl-muted" style="margin-top:.4rem">{{ __('partner.nr_booking_note') }}</p>@endif
             @if ($b->status === 'cancelled')
