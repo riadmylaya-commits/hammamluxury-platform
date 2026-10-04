@@ -443,4 +443,14 @@ return [
     'unread_messages' => 'Messages non lus',
     'senders' => ['client' => 'Client', 'partner' => 'Établissement', 'admin' => 'HammamLuxury'],
     'badge_tooltip' => 'Demandes en attente + messages clients non lus',
+
+    'review' => 'Avis',
+    'reviews' => 'Avis clients',
+    'review_date' => 'Publié le',
+    'review_reply' => 'Votre réponse',
+    'review_no_reply' => 'Pas de réponse',
+    'review_reply_action' => 'Répondre',
+    'review_reply_hint' => 'Au moins :min caractères. Votre réponse est vérifiée par HammamLuxury avant publication et doit respecter les mêmes règles que les avis (courtoisie, pas de données personnelles).',
+    'review_reply_sent' => 'Réponse envoyée : elle sera publiée après vérification par HammamLuxury.',
+    'review_reply_status' => ['pending' => 'En attente de vérification', 'published' => 'Publiée', 'rejected' => 'Refusée'],
 ];

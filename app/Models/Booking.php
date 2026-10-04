@@ -93,6 +93,11 @@ class Booking extends Model
         return $this->hasMany(ClientIncident::class)->latest();
     }
 
+    public function review(): HasOne
+    {
+        return $this->hasOne(Review::class);
+    }
+
     public function messages(): HasMany
     {
         return $this->hasMany(BookingMessage::class)->oldest();

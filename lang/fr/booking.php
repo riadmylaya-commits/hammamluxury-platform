@@ -61,4 +61,13 @@ return [
     'invalid' => 'Valeur invalide.',
     'message_invalid' => 'Le message est vide ou dépasse :max caractères.',
     'message_closed' => 'La messagerie est fermée pour cette réservation.',
+
+    'review_not_eligible' => 'Seule une prestation réellement effectuée via HammamLuxury peut faire l’objet d’un avis, et une seule fois.',
+    'review_already_submitted' => 'Un avis a déjà été déposé pour cette réservation.',
+    'review_rating_required' => 'Merci de choisir une note de 1 à 5 étoiles.',
+    'review_body_required' => 'Merci de rédiger un commentaire d’au moins :min caractères.',
+    'review_too_many_photos' => 'Vous pouvez joindre au maximum :max photos.',
+    'review_rejection_reason_required' => 'Un motif de refus lié au contenu est obligatoire ; la note seule n’est pas un motif.',
+    'review_rejection_note_required' => 'Merci de préciser le motif « Autre » (10 caractères minimum).',
+    'review_reply_not_allowed' => 'Vous ne pouvez répondre qu’à un avis publié, et une réponse est déjà enregistrée.',
 ];

@@ -73,6 +73,29 @@
             </div>
         </section>
         @endif
+        <section class="sec" id="reviews"><h2>{{ __('ui.review.section') }}</h2>
+            @if ($reviews->isEmpty())
+                <p class="muted small">{{ __('ui.review.none_yet') }}</p>
+            @else
+                <div class="card" style="padding:16px;margin-bottom:12px">
+                    <div class="rv-sum"><span class="big">{{ number_format($card['rating'], 1) }}</span><div><div class="stars" style="color:var(--accent,#b8743a)">{{ str_repeat('★', (int) round($card['rating'])) }}{{ str_repeat('☆', 5 - (int) round($card['rating'])) }}</div><div class="small muted">{{ __('ui.reviews', ['count' => $card['reviews_count']]) }} · {{ __('ui.review.all_verified') }}</div></div></div>
+                    @if ($criteriaAvg)<div class="rv-crit-sum">@foreach ($criteriaAvg as $k => $v)<span>{{ __('ui.review.criteria.'.$k) }} <b>{{ [1 => '🙁', 2 => '😐', 3 => '😊'][(int) round($v)] }}</b></span>@endforeach</div>@endif
+                </div>
+                <div class="rv-list">
+                @foreach ($reviews as $r)
+                    <article class="card rv-item">
+                        <div class="rv-head"><span class="stars">{{ str_repeat('★', (int) $r->rating) }}{{ str_repeat('☆', 5 - (int) $r->rating) }}</span><b class="small">{{ $r->author_name }}</b><span class="chip ok xs">✓ {{ __('ui.review.verified') }}</span><span class="sp"></span><span class="xs muted">{{ $r->published_at?->locale(app()->getLocale())->isoFormat('LL') }}</span></div>
+                        @if ($r->title)<h4>{{ $r->title }}</h4>@endif
+                        <p>{{ $r->body }}</p>
+                        @if ($r->liked)<p class="small"><b style="color:var(--ok)">+</b> {{ $r->liked }}</p>@endif
+                        @if ($r->improve)<p class="small"><b style="color:var(--bad)">−</b> {{ $r->improve }}</p>@endif
+                        @if ($r->photos->isNotEmpty())<div class="rv-ph">@foreach ($r->photos as $ph)@if ($url = $ph->publicUrl())<a href="{{ $url }}" target="_blank" rel="noopener"><img src="{{ $url }}" alt="" loading="lazy"></a>@endif @endforeach</div>@endif
+                        @if ($r->replyPublished())<div class="rv-reply"><b>{{ __('ui.review.reply_from', ['spa' => $spa->name]) }}</b>{{ $r->reply }}</div>@endif
+                    </article>
+                @endforeach
+                </div>
+            @endif
+        </section>
         <section class="sec"><h2>{{ __('ui.hours') }}</h2>
             <div class="card hours" style="padding:14px">
                 @foreach (__('ui.days') as $i => $d)

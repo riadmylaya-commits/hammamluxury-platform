@@ -28,8 +28,16 @@ class SpaShow extends Component
         $this->date = CatalogueService::parseDate($this->date)?->format('Y-m-d') ?? '';
         $card = $catalogue->spaCard($this->spa);
         $treatments = $catalogue->treatments($this->spa);
+        $reviews = $this->spa->reviews()->published()->with('photos')->latest('published_at')->limit(30)->get();
+        $criteria = [];
+        foreach ($reviews->pluck('criteria')->filter() as $set) {
+            foreach ($set as $k => $v) {
+                $criteria[$k][] = $v;
+            }
+        }
+        $criteriaAvg = array_map(fn ($vals) => round(array_sum($vals) / count($vals), 1), $criteria);
 
-        return view('livewire.site.spa-show', ['card' => $card, 'treatments' => $treatments, 'bookParams' => array_filter(['date' => $this->date]),
+        return view('livewire.site.spa-show', ['card' => $card, 'treatments' => $treatments, 'reviews' => $reviews, 'criteriaAvg' => $criteriaAvg, 'bookParams' => array_filter(['date' => $this->date]),
             'galleryI18n' => ['of' => __('ui.photo_of'), 'close' => __('ui.close'), 'prev' => __('ui.prev'), 'next' => __('ui.next')]])
             ->title($this->spa->name.' · '.$this->spa->city);
     }
