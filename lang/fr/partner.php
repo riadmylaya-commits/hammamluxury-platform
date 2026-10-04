@@ -470,4 +470,10 @@ return [
     'cancel_free' => 'Annulation gratuite (dans le délai)',
     'cancel_by_partner' => 'Annulation exceptionnelle acceptée : rien n’est dû par le client',
     'nr_booking_note' => 'Réservation Non remboursable : en cas d’annulation par le client, 100 % du montant reste dû et la commission est conservée.',
+    'calendar_view' => 'Vue Calendrier',
+    'list_view' => 'Vue Liste',
+    'cal_legend_blue' => 'Confirmée / à venir',
+    'cal_legend_gray' => 'Terminée',
+    'cal_legend_none' => 'Annulées et refusées : pas de point',
+    'cal_no_bookings' => 'Aucune réservation ce jour-là.',
 ];

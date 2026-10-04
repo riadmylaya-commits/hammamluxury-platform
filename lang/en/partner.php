@@ -463,4 +463,10 @@ return [
     'cancel_free' => 'Free cancellation (within deadline)',
     'cancel_by_partner' => 'Exceptional cancellation accepted: nothing is due by the client',
     'nr_booking_note' => 'Non-refundable booking: if the client cancels, 100% of the amount remains due and the commission is kept.',
+    'calendar_view' => 'Calendar view',
+    'list_view' => 'List view',
+    'cal_legend_blue' => 'Confirmed / upcoming',
+    'cal_legend_gray' => 'Completed',
+    'cal_legend_none' => 'Cancelled and declined: no dot',
+    'cal_no_bookings' => 'No bookings on this day.',
 ];
