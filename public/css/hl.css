@@ -44,7 +44,7 @@ footer{padding:26px 0 40px;color:var(--muted);font-size:13px;border-top:1px soli
 .hero{background:linear-gradient(180deg,#1f4d3f,#2e6b57);color:#fff;padding:0 0 34px;border-radius:0 0 28px 28px}
 .hero h1{font-size:27px;overflow-wrap:anywhere;line-height:1.15;margin:16px 0 6px}.hero p{margin:0 0 18px;opacity:.9}
 .search{background:#fff;border-radius:16px;padding:10px;display:grid;gap:8px;box-shadow:0 10px 30px rgba(0,0,0,.2);color:var(--ink)}
-.search .fld{padding:6px 8px}.search .inp{border:0;padding:8px 4px;font-size:16px;font-weight:600}.search .btn{height:52px}
+.search .fld{padding:6px 8px}.search .inp{border:1px solid var(--ink);border-radius:10px;padding:10px 12px;font-size:16px;font-weight:600;transition:box-shadow .15s}.search .inp:hover{box-shadow:0 0 0 1px var(--ink)}.search .inp:focus{outline:0;box-shadow:0 0 0 1.5px var(--ink)}.search .btn{height:52px}
 .trust{display:grid;gap:12px;margin-top:18px}
 .trust>div{display:flex;gap:10px;align-items:flex-start;font-size:14px}.trust b{display:block}.trust i{width:34px;height:34px;flex:none;border-radius:10px;background:var(--soft);display:grid;place-items:center;color:var(--brand);font-style:normal;font-weight:700}
 .hscroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory}.hscroll>*{scroll-snap-align:start;flex:none}
