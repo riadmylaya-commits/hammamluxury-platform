@@ -247,6 +247,7 @@ return [
         'summary_standard' => 'Standard · free cancellation up to :label before',
         'summary_nr' => 'Non-refundable · −:pct%',
         'spa_policy' => 'Free cancellation up to :label before the appointment (except Non-refundable rate).',
+        'spa_policy_standard' => 'Free cancellation up to :label before the appointment.',
         'nr_from' => 'Non-refundable: :price (−:pct%)',
     ],
 ];
