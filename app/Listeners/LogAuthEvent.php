@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Models\ActivityLog;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -14,7 +15,7 @@ class LogAuthEvent
     public function handle(Login|Failed|Logout $event): void
     {
         $request = request();
-        $panel = str_starts_with($request->path(), 'admin') ? 'admin' : (str_starts_with($request->path(), 'partenaire') ? 'partner' : 'site');
+        $panel = Filament::getCurrentPanel()?->getId() ?? $this->panelFromPath($request->path());
         $props = ['ip' => $request->ip(), 'agent' => mb_substr((string) $request->userAgent(), 0, 190), 'panel' => $panel];
         $user = $event->user instanceof User ? $event->user : null;
 
@@ -33,5 +34,14 @@ class LogAuthEvent
             'properties' => $props,
             'ip' => $request->ip(),
         ]);
+    }
+
+    private function panelFromPath(string $path): string
+    {
+        return match (true) {
+            str_starts_with($path, 'admin') => 'admin',
+            str_starts_with($path, 'partenaire') => 'partner',
+            default => 'site',
+        };
     }
 }
