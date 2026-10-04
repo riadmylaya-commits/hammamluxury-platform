@@ -1,7 +1,7 @@
 <div>
 @php($b = $booking)
 @php($cur = config('hl.currency'))
-@php($fmt = fn ($n) => number_format($n, 0, ',', ' ').' '.$cur)
+@php($fmt = fn ($n) => number_format($n, fmod((float) $n, 1) ? 2 : 0, ',', ' ').' '.$cur)
 @php($tone = ['waiting' => 'warn', 'confirmed' => 'ok', 'completed' => 'ok', 'declined' => 'bad', 'cancelled' => 'grey', 'expired' => 'grey', 'no_show' => 'grey', 'partner_no_show' => 'bad'][$b->status])
 @if ($new && $b->isWaiting())
     <div class="check">✓</div>
