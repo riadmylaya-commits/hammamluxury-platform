@@ -34,6 +34,10 @@ return [
         // Tarif Non remboursable (réduction ≥ 10 % sur le tarif standard) : désactivé, seul le tarif Standard est proposé.
         'non_refundable' => (bool) env('HL_FEATURE_NON_REFUNDABLE', false),
     ],
+    'security' => [
+        // Double authentification TOTP exigée pour tout compte administrateur.
+        'admin_2fa_required' => (bool) env('HL_ADMIN_2FA_REQUIRED', true),
+    ],
     'default_commission_pct' => (float) env('HL_DEFAULT_COMMISSION_PCT', 15),
     'lock_timeout_seconds' => 5,
 ];

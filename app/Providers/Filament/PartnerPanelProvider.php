@@ -5,6 +5,9 @@ namespace App\Providers\Filament;
 use App\Filament\Partner\Pages\EditSpaProfile;
 use App\Filament\Partner\Pages\Register as RegisterPartner;
 use App\Filament\Partner\Pages\RegisterSpa;
+use App\Filament\Shared\Pages\TwoFactorChallenge;
+use App\Filament\Shared\Pages\TwoFactorSetup;
+use App\Http\Middleware\RequireTwoFactor;
 use App\Http\Responses\PartnerRegistrationResponse;
 use App\Models\Spa;
 use Filament\Http\Middleware\Authenticate;
@@ -22,6 +25,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /** Espace partenaire : un compte, un ou plusieurs établissements (tenant = Spa). */
@@ -68,6 +72,14 @@ class PartnerPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->authMiddleware([Authenticate::class]);
+            ->authenticatedRoutes(function () {
+                Route::get('/securite', TwoFactorSetup::class)->name('two-factor.setup');
+                Route::get('/securite/verification', TwoFactorChallenge::class)->name('two-factor.challenge');
+            })
+            ->userMenuItems([
+                MenuItem::make()->label(fn () => __('security.menu'))->icon('heroicon-o-shield-check')
+                    ->url(fn () => route('filament.'.filament()->getId().'.two-factor.setup')),
+            ])
+            ->authMiddleware([Authenticate::class, RequireTwoFactor::class]);
     }
 }
