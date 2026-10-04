@@ -52,7 +52,7 @@
                         <div class="r">
                             <div class="solo"><b>{{ number_format($t['price_from'], 0, ',', ' ') }} {{ $cur }}</b><span class="xs muted">{{ __('ui.per_person_solo') }}</span></div>
                             @if ($t['price_couple'])<div class="duo"><span class="xs">{{ __('ui.for_two') }}</span><b>{{ number_format($t['price_couple'], 0, ',', ' ') }} {{ $cur }}</b></div>@endif
-                            @if ($t['nr_discount_pct'])<div class="xs" style="color:var(--brand);font-weight:600">{{ __('ui.policy.nr_from', ['price' => number_format($t['nr_price_from'], 0, ',', ' ').' '.$cur, 'pct' => $t['nr_discount_pct']]) }}</div>@endif
+                            @if ($t['nr_discount_pct'])<div class="xs" style="color:var(--brand);font-weight:600">{{ __('ui.policy.nr_from', ['price' => number_format($t['nr_price_from'], fmod($t['nr_price_from'], 1) ? 2 : 0, ',', ' ').' '.$cur, 'pct' => $t['nr_discount_pct']]) }}</div>@endif
                             <a class="btn sm" href="{{ route('spa.book', [$spa->slug, 'soin' => $t['id']] + $bookParams) }}">{{ __('ui.book') }}</a>
                         </div>
                     </div>
