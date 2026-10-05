@@ -6,6 +6,7 @@ use App\Domain\Booking\BookingException;
 use App\Domain\Booking\BookingService;
 use App\Domain\Booking\CapacityEngine;
 use App\Domain\Partner\OnboardingService;
+use App\Filament\Admin\Resources\BookingDeclineResource\Pages\ListBookingDeclines;
 use App\Models\Allocation;
 use App\Models\Block;
 use App\Models\BookingDecline;
@@ -19,6 +20,7 @@ use Database\Seeders\ReferenceSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 /** Lot 4 — refus structuré d'une demande : motif obligatoire, libération du créneau, traçabilité Admin, suivi « plus de place ». */
@@ -168,6 +170,16 @@ class BookingDeclineTest extends TestCase
         $this->actingAs($admin)->get('/admin/booking-declines/'.$d->id)->assertOk()->assertSee('Groupe déjà prévu')->assertSee($this->owner->name);
         $this->actingAs($admin)->get('/admin/bookings/'.$b->id)->assertOk()->assertSee(__('partner.decline_reasons.full'))->assertSee('Groupe déjà prévu');
         $this->actingAs($admin)->get('/admin/spas')->assertOk()->assertSee('1 (1)');
+
+        $second = $this->request(15);
+        Block::create(['spa_id' => $this->spa->id, 'scope' => 'spa', 'start_at' => $this->day->setTime(14, 0), 'end_at' => $this->day->setTime(18, 0), 'kind' => 'closed']);
+        $this->bookings->decline($second, 'partner', 'full', null, $this->owner->id);
+        $justified = BookingDecline::where('booking_id', $second->id)->firstOrFail();
+        Livewire::test(ListBookingDeclines::class)
+            ->assertCanSeeTableRecords([$d, $justified])
+            ->filterTable('suspicious')
+            ->assertCanSeeTableRecords([$d])
+            ->assertCanNotSeeTableRecords([$justified]);
     }
 
     public function test_client_never_sees_internal_reason_or_note(): void

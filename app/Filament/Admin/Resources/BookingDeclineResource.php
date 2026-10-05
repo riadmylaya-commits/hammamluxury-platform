@@ -89,7 +89,7 @@ class BookingDeclineResource extends Resource
                 Tables\Filters\SelectFilter::make('reason')->label(__('partner.decline_reason'))->options(__('partner.decline_reasons')),
                 Tables\Filters\SelectFilter::make('spa_id')->label(__('admin.spa'))->relationship('spa', 'name')->searchable()->preload(),
                 Tables\Filters\Filter::make('suspicious')->label(__('admin.decline_suspicious_only'))
-                    ->query(fn (Builder $q) => $q->where('reason', 'full')->where('engine_available', true)),
+                    ->query(fn (Builder $query) => $query->where('reason', 'full')->where('engine_available', true)),
             ])
             ->actions([Tables\Actions\ViewAction::make()])
             ->emptyStateHeading(__('admin.no_declines'));
