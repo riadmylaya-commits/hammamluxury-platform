@@ -45,8 +45,8 @@ class BlockResource extends Resource
             Forms\Components\Select::make('resource_id')->label(__('partner.resource_name'))
                 ->options(fn () => SpaResource::where('spa_id', Filament::getTenant()->id)->pluck('name', 'id'))
                 ->visible(fn (Forms\Get $get) => $get('scope') === 'resource')->required(fn (Forms\Get $get) => $get('scope') === 'resource'),
-            Forms\Components\DateTimePicker::make('start_at')->label(__('partner.block_start'))->seconds(false)->required()->native(false)->live(onBlur: true)->closeOnDateSelection(),
-            Forms\Components\DateTimePicker::make('end_at')->label(__('partner.block_end'))->seconds(false)->required()->native(false)->live(onBlur: true)->closeOnDateSelection()
+            Forms\Components\DateTimePicker::make('start_at')->label(__('partner.block_start'))->seconds(false)->required()->native(true),
+            Forms\Components\DateTimePicker::make('end_at')->label(__('partner.block_end'))->seconds(false)->required()->native(true)
                 ->rule(fn (Forms\Get $get) => function (string $attribute, $value, \Closure $fail) use ($get) {
                     if ($get('start_at') && $value && ! Carbon::parse($value)->gt(Carbon::parse($get('start_at')))) {
                         $fail(__('partner.block_end_after_start'));
