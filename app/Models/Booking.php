@@ -194,6 +194,12 @@ class Booking extends Model
         return $this->status === 'confirmed';
     }
 
+    /** Confirmée dès la création (réservation instantanée ou saisie partenaire), sans décision ultérieure de l'établissement. */
+    public function instantConfirmed(): bool
+    {
+        return $this->confirmed_at !== null && ! $this->events()->where('type', 'confirmed')->exists();
+    }
+
     public function customerName(): string
     {
         return trim($this->first_name.' '.$this->last_name);

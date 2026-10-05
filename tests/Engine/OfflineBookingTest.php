@@ -178,6 +178,8 @@ class OfflineBookingTest extends TestCase
         $this->assertNotNull($b1->confirmed_at);
         $this->assertTrue($b1->events()->where('type', 'notified:confirmed')->exists());
         $this->assertFalse($b1->events()->where('type', 'notified:created')->exists());
+        $this->assertTrue($b1->instantConfirmed(), 'suivi client : « Réservation confirmée », pas « Demande envoyée »');
+        $this->get(route('booking.show', ['locale' => 'fr', 'token' => $b1->manage_token]))->assertOk()->assertSee(__('ui.timeline_instant.confirm'))->assertDontSee(__('ui.timeline.confirm'));
 
         // Configuration redevenue incomplète (horaires supprimés puis un seul jour rétabli sans praticienne suffisante) → retour au circuit demande.
         app(OnboardingService::class)->saveTreatments($spa, [
@@ -188,6 +190,9 @@ class OfflineBookingTest extends TestCase
         $this->assertTrue($spa->instant_booking);
         $this->assertFalse($spa->instantBookingActive());
         $book($spa, '12:00', false);
+        $b2 = $spa->bookings()->latest('id')->firstOrFail();
+        $this->assertSame('waiting', $b2->status);
+        $this->assertFalse($b2->instantConfirmed());
         $b2 = $spa->bookings()->latest('id')->firstOrFail();
         $this->assertSame('waiting', $b2->status);
         $this->assertNotNull($b2->expires_at);
