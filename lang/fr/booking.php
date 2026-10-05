@@ -62,4 +62,7 @@ return [
     'invalid' => 'Valeur invalide.',
     'message_invalid' => 'Le message est vide ou dépasse :max caractères.',
     'message_closed' => 'La messagerie est fermée pour cette réservation.',
+
+    'past_date' => 'Impossible d’enregistrer une réservation à une date passée.',
+    'channel' => 'Canal de réception inconnu.',
 ];

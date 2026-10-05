@@ -154,4 +154,19 @@ return [
     'incident_dismiss' => 'Classer sans suite',
     'incident_admin_note' => 'Note interne HammamLuxury',
     'incident_reviewed_by' => 'Examiné par',
+
+    // Lot 3 — configuration complète et réservation instantanée
+    'readiness' => 'Configuration de la capacité et réservation instantanée',
+    'readiness_help' => 'La réservation instantanée ne peut être activée que si la configuration est complète. Si elle redevient incomplète, les réservations repassent automatiquement par la confirmation du partenaire.',
+    'ready_hours' => 'Horaires d’ouverture renseignés',
+    'ready_treatments' => 'Chaque soin actif a un tarif, une durée et des étapes valides',
+    'ready_resources' => 'Ressources actives (capacité ≥ 1) couvrant chaque étape',
+    'ready_staff' => 'Praticien(ne)s suffisant(e)s (:have pour un maximum requis de :n)',
+    'ready_rotation' => 'Temps de rotation défini sur les cabines/salles',
+    'ready_published' => 'Fiche publiée',
+    'readiness_ok' => 'Configuration complète.',
+    'readiness_ko' => 'Configuration incomplète : réservation instantanée impossible.',
+    'instant_booking' => 'Réservation instantanée',
+    'instant_booking_help' => 'Les réservations clients sont confirmées immédiatement, sans validation du partenaire.',
+    'instant_booking_at' => 'Activée le',
 ];

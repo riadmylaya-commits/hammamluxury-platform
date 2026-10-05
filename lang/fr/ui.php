@@ -116,6 +116,8 @@ return [
     'status' => ['waiting' => 'En attente de confirmation', 'confirmed' => 'Confirmée', 'declined' => 'Refusée par l’établissement', 'cancelled' => 'Annulée', 'expired' => 'Expirée', 'completed' => 'Terminée', 'no_show' => 'Non présenté', 'partner_no_show' => 'Non honorée par l’établissement'],
     'status_hint' => ['waiting' => 'L’établissement doit confirmer votre demande avant :deadline. Vous recevrez un e-mail.', 'confirmed' => 'Votre réservation est confirmée. Présentez-vous 10 minutes avant l’heure.', 'declined' => 'L’établissement n’a pas pu accepter cette demande. Le créneau a été libéré.', 'cancelled' => 'Cette réservation a été annulée.', 'expired' => 'Aucune réponse de l’établissement dans le délai : la demande a expiré et le créneau a été libéré.', 'completed' => 'Merci de votre visite !', 'no_show' => 'Vous ne vous êtes pas présenté à ce rendez-vous.', 'partner_no_show' => 'L’établissement n’a pas honoré cette réservation confirmée. HammamLuxury a enregistré l’incident et vous contactera.'],
     'done_title' => 'Demande envoyée !',
+    'done_title_instant' => 'Réservation confirmée !',
+    'timeline_instant' => ['sent' => 'Réservation enregistrée', 'confirm' => 'Confirmation immédiate'],
     'done_sub' => 'Un e-mail de confirmation a été envoyé à :email.',
     'timeline' => ['sent' => 'Demande envoyée', 'confirm' => 'Confirmation par l’établissement', 'visit' => 'Votre soin'],
     'spa_contact' => 'Adresse & contact',
@@ -191,4 +193,8 @@ return [
     'messages_closed' => 'La conversation est close : cette réservation est terminée ou annulée. Les messages échangés restent consultables.',
     'no_messages' => 'Aucun message pour l’instant.',
     'you' => 'Vous',
+
+    'instant_title' => 'Confirmation immédiate.',
+    'instant_help' => 'Aucun paiement en ligne : vous réglez sur place. Votre réservation est confirmée dès l’envoi, sans attendre de réponse de l’établissement.',
+    'submit_instant' => 'Confirmer ma réservation',
 ];

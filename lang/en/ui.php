@@ -114,6 +114,8 @@ return [
     'status' => ['waiting' => 'Awaiting confirmation', 'confirmed' => 'Confirmed', 'declined' => 'Declined by the venue', 'cancelled' => 'Cancelled', 'expired' => 'Expired', 'completed' => 'Completed', 'no_show' => 'No-show', 'partner_no_show' => 'Not honoured by the venue'],
     'status_hint' => ['waiting' => 'The venue must confirm your request before :deadline. You will receive an e-mail.', 'confirmed' => 'Your booking is confirmed. Please arrive 10 minutes early.', 'declined' => 'The venue could not accept this request. The slot has been released.', 'cancelled' => 'This booking has been cancelled.', 'expired' => 'The venue did not reply in time: the request expired and the slot was released.', 'completed' => 'Thank you for your visit!', 'no_show' => 'You did not show up for this appointment.', 'partner_no_show' => 'The venue did not honour this confirmed booking. HammamLuxury has recorded the incident and will contact you.'],
     'done_title' => 'Request sent!',
+    'done_title_instant' => 'Booking confirmed!',
+    'timeline_instant' => ['sent' => 'Booking recorded', 'confirm' => 'Instant confirmation'],
     'done_sub' => 'A confirmation e-mail has been sent to :email.',
     'timeline' => ['sent' => 'Request sent', 'confirm' => 'Confirmation by the venue', 'visit' => 'Your treatment'],
     'spa_contact' => 'Address & contact',
@@ -189,4 +191,8 @@ return [
     'messages_closed' => 'This conversation is closed: the booking is over or cancelled. Previous messages remain available.',
     'no_messages' => 'No messages yet.',
     'you' => 'You',
+
+    'instant_title' => 'Instant confirmation.',
+    'instant_help' => 'No online payment: you pay on site. Your booking is confirmed as soon as you submit it, with no wait for the venue’s reply.',
+    'submit_instant' => 'Confirm my booking',
 ];

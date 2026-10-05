@@ -154,4 +154,19 @@ return [
     'incident_dismiss' => 'Dismiss',
     'incident_admin_note' => 'HammamLuxury internal note',
     'incident_reviewed_by' => 'Reviewed by',
+
+    // Lot 3 — complete configuration and instant booking
+    'readiness' => 'Capacity configuration and instant booking',
+    'readiness_help' => 'Instant booking can only be enabled when the configuration is complete. If it becomes incomplete again, bookings automatically go back through partner confirmation.',
+    'ready_hours' => 'Opening hours set',
+    'ready_treatments' => 'Every active treatment has a price, a duration and valid steps',
+    'ready_resources' => 'Active resources (capacity ≥ 1) covering every step',
+    'ready_staff' => 'Enough therapists (:have for a maximum requirement of :n)',
+    'ready_rotation' => 'Rotation time set on cabins/rooms',
+    'ready_published' => 'Listing published',
+    'readiness_ok' => 'Configuration complete.',
+    'readiness_ko' => 'Configuration incomplete: instant booking not possible.',
+    'instant_booking' => 'Instant booking',
+    'instant_booking_help' => 'Client bookings are confirmed immediately, without partner validation.',
+    'instant_booking_at' => 'Enabled on',
 ];

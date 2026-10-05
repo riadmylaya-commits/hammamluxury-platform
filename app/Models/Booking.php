@@ -12,6 +12,10 @@ class Booking extends Model
 {
     public const STATUSES = ['waiting', 'confirmed', 'declined', 'cancelled', 'expired', 'completed', 'no_show', 'partner_no_show'];
 
+    public const SOURCES = ['online', 'partner'];
+
+    public const CHANNELS = ['phone', 'whatsapp', 'walk_in', 'email', 'other'];
+
     public const PAYMENT_STATUSES = ['on_site', 'paid', 'partial', 'refunded'];
 
     /** Statuts qui ne consomment plus de capacité. */
@@ -188,6 +192,12 @@ class Booking extends Model
     public function isConfirmed(): bool
     {
         return $this->status === 'confirmed';
+    }
+
+    /** Confirmée dès la création (réservation instantanée ou saisie partenaire), sans décision ultérieure de l'établissement. */
+    public function instantConfirmed(): bool
+    {
+        return $this->confirmed_at !== null && ! $this->events()->where('type', 'confirmed')->exists();
     }
 
     public function customerName(): string
