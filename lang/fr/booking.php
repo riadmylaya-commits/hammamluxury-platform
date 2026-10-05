@@ -64,6 +64,8 @@ return [
     'invalid' => 'Valeur invalide.',
     'message_invalid' => 'Le message est vide ou dépasse :max caractères.',
     'message_closed' => 'La messagerie est fermée pour cette réservation.',
+    'nr_unavailable' => 'Le tarif Non remboursable n’est pas proposé pour « :name ».',
+    'conditions' => 'Conditions',
 
     'past_date' => 'Impossible d’enregistrer une réservation à une date passée.',
     'channel' => 'Canal de réception inconnu.',

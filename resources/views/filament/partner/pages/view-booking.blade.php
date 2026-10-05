@@ -165,6 +165,12 @@
             @elseif ($b->isConfirmed())
                 <p class="hl-muted" style="margin-top:.5rem">{{ __('partner.no_show_window_hint', ['until' => $s['no_show_until']->translatedFormat('j F') .' '. $s['no_show_until']->format('H\hi')]) }}</p>
             @endif
+            @if ($b->isNonRefundable() || \App\Domain\Policy\CancellationPolicy::nrEnabled())<div class="hl-row"><span class="hl-k">{{ __('partner.rate_type') }}</span><span class="hl-v">{{ __('partner.rate_types.'.$b->rate_type) }}@if ($b->isNonRefundable()) · −{{ $b->nr_discount_pct }} %@endif</span></div>@endif
+            @if (! $b->isNonRefundable())<div class="hl-row"><span class="hl-k">{{ __('partner.free_until') }}</span><span class="hl-v">{{ $b->freeCancellationUntil()->translatedFormat('j F Y') }} {{ $b->freeCancellationUntil()->format('H\hi') }} ({{ \App\Domain\Policy\CancellationPolicy::label($b->cancellationHours()) }})</span></div>
+            @else<p class="hl-muted" style="margin-top:.4rem">{{ __('partner.nr_booking_note') }}</p>@endif
+            @if ($b->status === 'cancelled')
+                <div class="hl-row"><span class="hl-k">{{ __('partner.cancel_fee') }}</span><span class="hl-v">{{ $b->cancel_fee ? $money($b->cancel_fee) : ($b->cancelled_by === 'client' ? __('partner.cancel_free') : __('partner.cancel_by_partner')) }}</span></div>
+            @endif
             @if ($b->status === 'no_show')
                 <div class="hl-row"><span class="hl-k">{{ __('partner.no_show_fee') }}</span><span class="hl-v">{{ $b->no_show_fee_waived ? __('partner.no_show_fee_waived') : $money($b->no_show_fee) }}</span></div>
             @endif
@@ -184,7 +190,7 @@
             @if ($b->nothingDue())
                 <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.nothing_due') }}</p>
             @endif
-            @if ($b->source !== 'partner' && $s['commissionable'] < $b->total)
+            @if ($b->source !== 'partner' && $s['commissionable'] < $b->total && ! $b->nothingDue())
                 <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.non_commissionable_note') }}</p>
             @endif
             <div class="hl-row" style="margin-top:.6rem;border-top:1px solid #e5e7eb;border-bottom:0">

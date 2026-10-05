@@ -79,7 +79,7 @@ class ViewBooking extends ViewRecord
             'no_show_until' => $b->end_at->copy()->addHours(Booking::NO_SHOW_WINDOW_HOURS),
             'language' => __('ui.practical.lang_'.$b->locale) !== 'ui.practical.lang_'.$b->locale ? __('ui.practical.lang_'.$b->locale) : strtoupper($b->locale),
             'lines' => $q['lines'] ?? [],
-            'commissionable' => $b->commissionableAmount(),
+            'commissionable' => $b->nothingDue() ? 0.0 : $b->commissionableAmount(),
             'net' => $b->netForPartner(),
             'duration' => self::humanDuration($b->duration_min),
         ];

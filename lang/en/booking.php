@@ -64,6 +64,8 @@ return [
     'invalid' => 'Invalid value.',
     'message_invalid' => 'The message is empty or longer than :max characters.',
     'message_closed' => 'Messaging is closed for this booking.',
+    'nr_unavailable' => 'The Non-refundable rate is not offered for “:name”.',
+    'conditions' => 'Conditions',
 
     'past_date' => 'A booking cannot be recorded on a past date.',
     'channel' => 'Unknown reception channel.',

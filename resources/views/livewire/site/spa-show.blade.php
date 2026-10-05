@@ -52,6 +52,7 @@
                         <div class="r">
                             <div class="solo"><b>{{ number_format($t['price_from'], 0, ',', ' ') }} {{ $cur }}</b><span class="xs muted">{{ __('ui.per_person_solo') }}</span></div>
                             @if ($t['price_couple'])<div class="duo"><span class="xs">{{ __('ui.for_two') }}</span><b>{{ number_format($t['price_couple'], 0, ',', ' ') }} {{ $cur }}</b></div>@endif
+                            @if ($t['nr_discount_pct'])<div class="xs" style="color:var(--brand);font-weight:600">{{ __('ui.policy.nr_from', ['price' => number_format($t['nr_price_from'], fmod($t['nr_price_from'], 1) ? 2 : 0, ',', ' ').' '.$cur, 'pct' => $t['nr_discount_pct']]) }}</div>@endif
                             <a class="btn sm" href="{{ route('spa.book', [$spa->slug, 'soin' => $t['id']] + $bookParams) }}">{{ __('ui.book') }}</a>
                         </div>
                     </div>
@@ -79,7 +80,7 @@
                     <span @class(['b' => $i === now()->dayOfWeekIso - 1])>{{ $d }}</span><span @class(['muted' => empty($card['hours'][$i])])>{{ empty($card['hours'][$i]) ? __('ui.closed') : implode(', ', $card['hours'][$i]) }}</span>
                 @endforeach
             </div>
-            <p class="muted small" style="margin-top:10px">{{ __('ui.contact_after') }} {{ __('ui.cancel_policy', ['hours' => $spa->cancellation_hours]) }}</p>
+            <p class="muted small" style="margin-top:10px">{{ __('ui.contact_after') }} {{ __(\App\Domain\Policy\CancellationPolicy::nrEnabled() ? 'ui.policy.spa_policy' : 'ui.policy.spa_policy_standard', ['label' => \App\Domain\Policy\CancellationPolicy::label((int) $spa->cancellation_hours)]) }}</p>
         </section>
     </div>
     <aside class="side card">

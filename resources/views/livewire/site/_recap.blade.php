@@ -10,6 +10,7 @@
     @if ($time)<dt>{{ __('ui.recap_time') }}</dt><dd>{{ $time }} → {{ \Carbon\CarbonImmutable::parse("$date $time")->addMinutes($quote['duration_min'])->format('H:i') }}</dd>@endif
     <dt>{{ __('ui.recap_party') }}</dt><dd>{{ $quote['party'] }}</dd>
     <dt>{{ __('ui.recap_duration') }}</dt><dd>{{ $quote['duration_min'] }} {{ __('ui.min') }}</dd>
+    <dt>{{ __('ui.policy.title') }}</dt><dd>@if (($quote['rate'] ?? 'standard') === 'non_refundable')<span class="chip acc xs">{{ __('ui.policy.summary_nr', ['pct' => $quote['nr_discount_pct']]) }}</span><br><span class="xs muted">{{ __('ui.policy.nr_saving', ['amount' => $fmt($quote['standard_total'] - $quote['total'])]) }}</span>@else<span class="xs">{{ __('ui.policy.summary_standard', ['label' => \App\Domain\Policy\CancellationPolicy::label($quote['cancellation_hours'] ?? 24)]) }}</span>@endif</dd>
 </dl>
 <div class="tot"><span>{{ __('ui.recap_total') }}</span><span>{{ $fmt($quote['total']) }}</span></div>
 <div class="xs muted" style="text-align:right">{{ __('ui.pay_on_site') }}</div>

@@ -31,6 +31,8 @@ return [
     // Fonctionnalités mises en attente (code et données conservés).
     'features' => [
         'promotions' => (bool) env('HL_FEATURE_PROMOTIONS', false),
+        // Tarif Non remboursable (réduction ≥ 10 % sur le tarif standard) : désactivé, seul le tarif Standard est proposé.
+        'non_refundable' => (bool) env('HL_FEATURE_NON_REFUNDABLE', false),
     ],
     'default_commission_pct' => (float) env('HL_DEFAULT_COMMISSION_PCT', 15),
     'lock_timeout_seconds' => 5,

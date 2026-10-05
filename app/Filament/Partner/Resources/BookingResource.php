@@ -99,6 +99,7 @@ class BookingResource extends Resource
     {
         return [
             'index' => Pages\ListBookings::route('/'),
+            'calendar' => Pages\CalendarBookings::route('/calendrier'),
             'view' => Pages\ViewBooking::route('/{record}'),
         ];
     }
