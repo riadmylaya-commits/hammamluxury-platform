@@ -149,6 +149,7 @@ return [
     'scope_resource' => 'Une ressource précise',
     'block_start' => 'Début',
     'block_end' => 'Fin',
+    'block_end_after_start' => 'La fin doit être postérieure au début.',
     'block_kind' => 'Motif',
     'kind_block_closed' => 'Fermeture',
     'kind_block_holiday' => 'Jour férié / congés',

@@ -12,6 +12,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
 
 /** Fermetures et indisponibilités : tout l'établissement, un type de ressource ou une ressource précise. */
 class BlockResource extends Resource
@@ -44,8 +45,13 @@ class BlockResource extends Resource
             Forms\Components\Select::make('resource_id')->label(__('partner.resource_name'))
                 ->options(fn () => SpaResource::where('spa_id', Filament::getTenant()->id)->pluck('name', 'id'))
                 ->visible(fn (Forms\Get $get) => $get('scope') === 'resource')->required(fn (Forms\Get $get) => $get('scope') === 'resource'),
-            Forms\Components\DateTimePicker::make('start_at')->label(__('partner.block_start'))->seconds(false)->required()->native(false),
-            Forms\Components\DateTimePicker::make('end_at')->label(__('partner.block_end'))->seconds(false)->required()->native(false)->after('start_at'),
+            Forms\Components\DateTimePicker::make('start_at')->label(__('partner.block_start'))->seconds(false)->required()->native(false)->live(onBlur: true)->closeOnDateSelection(),
+            Forms\Components\DateTimePicker::make('end_at')->label(__('partner.block_end'))->seconds(false)->required()->native(false)->live(onBlur: true)->closeOnDateSelection()
+                ->rule(fn (Forms\Get $get) => function (string $attribute, $value, \Closure $fail) use ($get) {
+                    if ($get('start_at') && $value && ! Carbon::parse($value)->gt(Carbon::parse($get('start_at')))) {
+                        $fail(__('partner.block_end_after_start'));
+                    }
+                }),
             Forms\Components\Select::make('kind')->label(__('partner.block_kind'))->options(
                 collect(Block::KINDS)->mapWithKeys(fn ($k) => [$k => __("partner.kind_block_$k")])->all()
             )->default('closed')->required(),

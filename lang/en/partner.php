@@ -144,6 +144,7 @@ return [
     'scope_resource' => 'A specific resource',
     'block_start' => 'Start',
     'block_end' => 'End',
+    'block_end_after_start' => 'The end must be after the start.',
     'block_kind' => 'Reason',
     'kind_block_closed' => 'Closure',
     'kind_block_holiday' => 'Public holiday / leave',

@@ -84,7 +84,7 @@ class BookingResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('source')->label(__('partner.source'))->options(__('partner.sources')),
                 Tables\Filters\SelectFilter::make('status')->label(__('partner.status'))->options(__('ui.status'))->default('waiting')->multiple(),
-                Tables\Filters\Filter::make('upcoming')->label(__('partner.upcoming'))->query(fn (Builder $q) => $q->where('start_at', '>=', now())),
+                Tables\Filters\Filter::make('upcoming')->label(__('partner.upcoming'))->query(fn (Builder $query) => $query->where('start_at', '>=', now())),
             ])
             ->actions([Tables\Actions\ViewAction::make(), ...BookingActions::all('partner')])
             ->emptyStateHeading(__('partner.no_bookings'));

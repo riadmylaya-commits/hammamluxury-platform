@@ -7,6 +7,8 @@ use App\Domain\Booking\BookingService;
 use App\Domain\Booking\CapacityEngine;
 use App\Domain\Partner\OnboardingService;
 use App\Filament\Admin\Resources\BookingDeclineResource\Pages\ListBookingDeclines;
+use App\Filament\Partner\Resources\BlockResource\Pages\CreateBlock;
+use App\Filament\Partner\Resources\BookingResource\Pages\ListBookings;
 use App\Models\Allocation;
 use App\Models\Block;
 use App\Models\BookingDecline;
@@ -17,6 +19,7 @@ use App\Models\SpaHour;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Database\Seeders\ReferenceSeeder;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
@@ -193,5 +196,41 @@ class BookingDeclineTest extends TestCase
             ->assertDontSee('Note interne')
             ->assertDontSee('impayé')
             ->assertDontSee(__('partner.decline_reasons.other'));
+    }
+
+    public function test_partner_upcoming_filter_hides_past_bookings(): void
+    {
+        $future = $this->request(10);
+        $past = $this->request(12);
+        $past->forceFill(['start_at' => now()->subDays(2), 'end_at' => now()->subDays(2)->addHour()])->save();
+
+        $this->actingAs($this->owner);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        Livewire::test(ListBookings::class)
+            ->assertCanSeeTableRecords([$future, $past])
+            ->filterTable('upcoming')
+            ->assertCanSeeTableRecords([$future])
+            ->assertCanNotSeeTableRecords([$past]);
+    }
+
+    public function test_partner_block_form_accepts_a_valid_range_and_rejects_an_inverted_one(): void
+    {
+        $this->actingAs($this->owner);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        Livewire::test(CreateBlock::class)
+            ->fillForm(['scope' => 'spa', 'kind' => 'closed', 'start_at' => $this->day->setTime(11, 0)->format('Y-m-d H:i'), 'end_at' => $this->day->setTime(10, 0)->format('Y-m-d H:i')])
+            ->call('create')->assertHasFormErrors(['end_at']);
+        $this->assertSame(0, Block::count());
+
+        Livewire::test(CreateBlock::class)
+            ->fillForm(['scope' => 'spa', 'kind' => 'closed', 'start_at' => $this->day->setTime(10, 0)->format('Y-m-d H:i'), 'end_at' => $this->day->setTime(11, 0)->format('Y-m-d H:i')])
+            ->call('create')->assertHasNoFormErrors();
+        $block = Block::firstOrFail();
+        $this->assertSame([$this->day->setTime(10, 0)->format('Y-m-d H:i'), $this->day->setTime(11, 0)->format('Y-m-d H:i')], [$block->start_at->format('Y-m-d H:i'), $block->end_at->format('Y-m-d H:i')]);
+        $this->assertFalse(app(CapacityEngine::class)->check($this->spa, $this->day->setTime(10, 0), [['treatment' => $this->spa->treatments()->value('id'), 'party' => 1]])['ok']);
     }
 }
