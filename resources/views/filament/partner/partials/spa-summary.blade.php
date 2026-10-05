@@ -38,7 +38,9 @@
             <div class="mt-2 text-gray-500">
                 @if ($capacity['hammam_capacity']) {{ __('partner.hammam_capacity') }} : {{ $capacity['hammam_capacity'] }} · @endif
                 @if ($capacity['massage_cabins']) {{ __('partner.massage_cabins') }} : {{ $capacity['massage_cabins'] }} · @endif
-                @if ($capacity['treatment_rooms']) {{ __('partner.treatment_rooms') }} : {{ $capacity['treatment_rooms'] }} @endif
+                @if ($capacity['treatment_rooms']) {{ __('partner.treatment_rooms') }} : {{ $capacity['treatment_rooms'] }} · @endif
+                @if ($capacity['therapists']) {{ __('partner.therapists') }} : {{ $capacity['therapists'] }} · @endif
+                @if ($capacity['cabin_buffer_min']) {{ __('partner.cabin_buffer_min') }} : {{ $capacity['cabin_buffer_min'] }} min @endif
             </div>
         </div>
     </div>
