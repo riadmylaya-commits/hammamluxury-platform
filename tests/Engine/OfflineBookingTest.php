@@ -209,7 +209,7 @@ class OfflineBookingTest extends TestCase
         } catch (BookingException $e) {
             $this->assertSame('unavailable', $e->reason);
         }
-        $this->bookings->decline($online);
+        $this->bookings->decline($online, 'partner', 'full');
         $offline = $this->bookings->bookOffline($this->spa, $this->day->setTime(16, 0), $items, $this->customer(), 'phone');
         $this->assertSame('confirmed', $offline->status);
     }

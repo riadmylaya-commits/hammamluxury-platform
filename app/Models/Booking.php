@@ -92,6 +92,16 @@ class Booking extends Model
         return $this->hasOne(CancellationRequest::class)->where('status', 'pending')->latestOfMany();
     }
 
+    public function decline(): HasOne
+    {
+        return $this->hasOne(BookingDecline::class)->latestOfMany();
+    }
+
+    public function declines(): HasMany
+    {
+        return $this->hasMany(BookingDecline::class);
+    }
+
     public function incidents(): HasMany
     {
         return $this->hasMany(ClientIncident::class)->latest();
