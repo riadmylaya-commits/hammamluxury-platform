@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Catalogue\CapacityReadiness;
 use App\Domain\Catalogue\Presentation;
 use App\Domain\Geo\WebsiteUrl;
 use App\Models\Concerns\Translatable;
@@ -27,7 +28,7 @@ class Spa extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['submitted_at' => 'datetime', 'published_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array'];
+    protected $casts = ['instant_booking' => 'bool', 'instant_booking_at' => 'datetime', 'submitted_at' => 'datetime', 'published_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array'];
 
     /** Position sur la carte : `['lat' => ?, 'lng' => ?]`, éditable comme un seul champ de formulaire. */
     protected function location(): Attribute
@@ -204,6 +205,12 @@ class Spa extends Model
     public function isPublished(): bool
     {
         return $this->status === 'published';
+    }
+
+    /** Réservation instantanée effective : activée par l'Admin ET configuration toujours complète (sinon retour au circuit demande → confirmation). */
+    public function instantBookingActive(): bool
+    {
+        return $this->instant_booking && CapacityReadiness::passes($this);
     }
 
     public function coverPhoto(): ?SpaPhoto

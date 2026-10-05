@@ -189,4 +189,8 @@ return [
     'messages_closed' => 'This conversation is closed: the booking is over or cancelled. Previous messages remain available.',
     'no_messages' => 'No messages yet.',
     'you' => 'You',
+
+    'instant_title' => 'Instant confirmation.',
+    'instant_help' => 'No online payment: you pay on site. Your booking is confirmed as soon as you submit it, with no wait for the venue’s reply.',
+    'submit_instant' => 'Confirm my booking',
 ];

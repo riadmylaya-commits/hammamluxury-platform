@@ -12,6 +12,10 @@ class Booking extends Model
 {
     public const STATUSES = ['waiting', 'confirmed', 'declined', 'cancelled', 'expired', 'completed', 'no_show', 'partner_no_show'];
 
+    public const SOURCES = ['online', 'partner'];
+
+    public const CHANNELS = ['phone', 'whatsapp', 'walk_in', 'email', 'other'];
+
     public const PAYMENT_STATUSES = ['on_site', 'paid', 'partial', 'refunded'];
 
     /** Statuts qui ne consomment plus de capacité. */

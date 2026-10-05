@@ -197,6 +197,8 @@ class BookingActions
                 TextEntry::make('duration_min')->label(__('partner.duration'))->suffix(' min'),
                 TextEntry::make('total')->label(__('partner.total'))->formatStateUsing($money)->weight('bold'),
                 TextEntry::make('expires_at')->label(__('partner.expires_at'))->since()->visible(fn (Booking $b) => $b->isWaiting()),
+                TextEntry::make('source')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')
+                    ->formatStateUsing(fn ($state, Booking $b) => (__('partner.sources')[$state] ?? $state).($b->channel ? ' · '.(__('partner.channels')[$b->channel] ?? $b->channel) : '')),
                 TextEntry::make('payment_status')->label(__('partner.payment_status'))->badge()
                     ->formatStateUsing(fn ($state, Booking $b) => $b->nothingDue() ? __('partner.nothing_due_short') : (__('partner.payment_statuses')[$state] ?? $state))
                     ->color(fn ($state, Booking $b) => $b->nothingDue() ? 'gray' : self::paymentColor((string) $state)),

@@ -120,8 +120,12 @@
         <div class="fld"><label>{{ __('ui.hotel') }}</label><input class="inp" wire:model="hotel"></div>
         <div class="fld"><label>{{ __('ui.note') }}</label><textarea class="inp" rows="2" wire:model="note"></textarea><span class="xs muted">{{ __('ui.note_privacy') }}</span></div>
         <label class="small row" style="align-items:flex-start"><input type="checkbox" wire:model="terms" style="margin-top:3px"> <span>{!! __('ui.accept_terms', ['url' => route('page', 'cgu')]) !!}</span></label>@error('terms')<span class="ferr">{{ $message }}</span>@enderror
-        <div class="notice info">{{ __('ui.no_payment', ['hours' => config('hl.waiting_ttl_hours')]) }} {{ __('ui.no_account') }}</div>
-        <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" wire:loading.attr="disabled"><span wire:loading.remove wire:target="submit">{{ __('ui.submit') }}</span><span wire:loading wire:target="submit">{{ __('ui.submitting') }}</span></button></div>
+        @if ($spa->instantBookingActive())
+            <div class="notice info"><b>{{ __('ui.instant_title') }}</b> {{ __('ui.instant_help') }} {{ __('ui.no_account') }}</div>
+        @else
+            <div class="notice info">{{ __('ui.no_payment', ['hours' => config('hl.waiting_ttl_hours')]) }} {{ __('ui.no_account') }}</div>
+        @endif
+        <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" wire:loading.attr="disabled"><span wire:loading.remove wire:target="submit">{{ $spa->instantBookingActive() ? __('ui.submit_instant') : __('ui.submit') }}</span><span wire:loading wire:target="submit">{{ __('ui.submitting') }}</span></button></div>
     </form>
 @endif
 </div>

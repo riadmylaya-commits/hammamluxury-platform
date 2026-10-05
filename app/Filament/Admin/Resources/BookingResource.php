@@ -50,11 +50,14 @@ class BookingResource extends Resource
                 Tables\Columns\TextColumn::make('payment_status')->label(__('partner.payment'))->badge()
                     ->formatStateUsing(fn ($state) => __('partner.payment_statuses')[$state] ?? $state)
                     ->color(fn ($state) => BookingActions::paymentColor((string) $state))->toggleable(),
+                Tables\Columns\TextColumn::make('source')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')
+                    ->formatStateUsing(fn ($state, Booking $b) => $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : __('partner.sources')[$state] ?? $state),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => __('ui.status')[$state] ?? $state)
                     ->color(fn ($state) => BookingActions::statusColor($state)),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('source')->label(__('partner.source'))->options(__('partner.sources')),
                 Tables\Filters\SelectFilter::make('status')->options(__('ui.status'))->multiple(),
                 Tables\Filters\SelectFilter::make('spa_id')->label(__('admin.spa'))->relationship('spa', 'name'),
             ])

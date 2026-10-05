@@ -191,4 +191,8 @@ return [
     'messages_closed' => 'La conversation est close : cette réservation est terminée ou annulée. Les messages échangés restent consultables.',
     'no_messages' => 'Aucun message pour l’instant.',
     'you' => 'Vous',
+
+    'instant_title' => 'Confirmation immédiate.',
+    'instant_help' => 'Aucun paiement en ligne : vous réglez sur place. Votre réservation est confirmée dès l’envoi, sans attendre de réponse de l’établissement.',
+    'submit_instant' => 'Confirmer ma réservation',
 ];
