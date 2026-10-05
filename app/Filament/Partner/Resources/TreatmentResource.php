@@ -92,6 +92,9 @@ class TreatmentResource extends Resource
                                 ->required(),
                             Forms\Components\TextInput::make('duration_min')->label(__('partner.duration'))->numeric()->minValue(5)->step(5)->suffix('min')->required()->default(60),
                             Forms\Components\TextInput::make('label')->label(__('partner.step_label'))->maxLength(120)->placeholder(__('partner.component_label_help')),
+                            Forms\Components\Select::make('staff_per_person')->label(__('partner.staff_per_person'))->options(__('partner.staff_options_all'))->default(0)->native(false)->dehydrateStateUsing(fn ($state) => (int) $state)
+                                ->helperText(__('partner.staff_per_person_help')),
+                            Forms\Components\Toggle::make('parallel_with_previous')->label(__('partner.component_parallel'))->helperText(__('partner.component_parallel_help'))->inline(false)->default(false)->dehydrateStateUsing(fn ($state) => (bool) $state),
                         ])
                         ->columns(3)
                         ->addActionLabel(__('partner.add_step'))
@@ -154,13 +157,16 @@ class TreatmentResource extends Resource
         return [ExtrasRelationManager::class];
     }
 
-    /** Les étapes saisies par le partenaire s'enchaînent : offsets cumulés, durée totale dérivée des étapes persistées. */
+    /** Les étapes s'enchaînent (ou démarrent avec la précédente si « en parallèle ») : offsets recalculés, durée totale dérivée des étapes persistées. */
     public static function syncDuration(Treatment $t): void
     {
-        $offset = 0;
+        $offsets = [];
+        $end = 0;
         foreach ($t->steps()->orderBy('position')->orderBy('id')->get() as $i => $step) {
-            $step->update(['offset_min' => $offset, 'position' => $i]);
-            $offset += (int) $step->duration_min;
+            $parallel = $i > 0 && $step->parallel_with_previous;
+            $offsets[$i] = $parallel ? $offsets[$i - 1] : $end;
+            $step->update(['offset_min' => $offsets[$i], 'position' => $i, 'parallel_with_previous' => $parallel]);
+            $end = max($end, $offsets[$i] + (int) $step->duration_min);
         }
         $t->load('steps');
         $t->update(['duration_min' => $t->computedDuration() ?: 60]);

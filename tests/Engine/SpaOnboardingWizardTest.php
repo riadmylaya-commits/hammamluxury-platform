@@ -108,11 +108,13 @@ class SpaOnboardingWizardTest extends TestCase
         $t->fillForm(['hours_every_day' => false, 'hours' => [['weekday' => 1, 'opens_min' => '10:00', 'closes_min' => '20:00'], ['weekday' => 6, 'opens_min' => '09:00', 'closes_min' => '22:00']], 'hammam_capacity' => 0, 'massage_cabins' => 0, 'treatment_rooms' => 0]);
         $this->next($t, 5)->assertHasFormErrors(['hammam_capacity']);
         $t->fillForm(['hammam_capacity' => 8, 'massage_cabins' => 2]);
+        $this->next($t, 5)->assertHasFormErrors(['therapists']);
+        $t->fillForm(['therapists' => 2, 'cabin_buffer_min' => 15]);
         $this->next($t, 5)->assertHasNoFormErrors();
         $spa->refresh();
         $this->assertSame(2, $spa->hours()->count());
         $this->assertSame(600, $spa->hours()->where('weekday', 1)->value('opens_min'));
-        $this->assertSame(3, $spa->resources()->where('status', 'active')->count());
+        $this->assertSame(5, $spa->resources()->where('status', 'active')->count(), 'hammam + 2 cabines + 2 praticien(ne)s');
         $this->assertSame(8, $spa->resources()->whereHas('type', fn ($q) => $q->where('slug', 'hammam'))->value('capacity'));
         $ritual = $spa->treatments()->where('category', 'ritual')->first();
         $this->assertSame(2, $ritual->steps()->count());
@@ -205,7 +207,7 @@ class SpaOnboardingWizardTest extends TestCase
         // Précédent jusqu'à l'étape 1 puis Suivant jusqu'au récapitulatif : rien n'est perdu, aucun doublon
         $again->fillForm(['treatments' => [['name_fr' => 'Massage relaxant', 'category' => 'massage', 'duration_min' => 60, 'price_solo' => 400]]]);
         $this->next($again, 4)->assertHasNoFormErrors();
-        $again->fillForm(['hours_every_day' => false, 'hours' => [['weekday' => 2, 'opens_min' => '10:00', 'closes_min' => '19:00']], 'hammam_capacity' => 0, 'massage_cabins' => 1, 'treatment_rooms' => 0]);
+        $again->fillForm(['hours_every_day' => false, 'hours' => [['weekday' => 2, 'opens_min' => '10:00', 'closes_min' => '19:00']], 'hammam_capacity' => 0, 'massage_cabins' => 1, 'treatment_rooms' => 0, 'therapists' => 1]);
         $this->next($again, 5)->assertHasNoFormErrors();
         foreach ([6, 5, 4, 3, 2, 1] as $s) {
             $again->call('dispatchFormEvent', 'wizard::previousStep', 'data', $s);

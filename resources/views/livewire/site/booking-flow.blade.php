@@ -99,6 +99,11 @@
             @endforeach
         </div>
     </div>
+    @if (! $date && $spa->hours->isEmpty())
+        <div class="notice" style="margin-top:12px"><b>{{ __('ui.no_slots_at_all') }}</b><br>{{ __('booking.not_configured') }}</div>
+    @elseif (! $date && ! collect($calendar)->contains(fn ($c) => $c && $c['open'] && ! $c['past']))
+        <div class="notice" style="margin-top:12px"><b>{{ __('ui.no_slots_month') }}</b><br><span class="muted">{{ __('ui.try_other_month') }}</span></div>
+    @endif
     @if ($date)
         <h3 style="font-size:17px;margin:18px 0 8px">{{ __('ui.pick_time') }} — {{ \Carbon\CarbonImmutable::parse($date)->locale(app()->getLocale())->isoFormat('dddd D MMMM') }}</h3>
         <div wire:loading wire:target="pickDate" class="muted small">{{ __('ui.loading_slots') }}</div>
@@ -134,8 +139,12 @@
         <div class="fld"><label>{{ __('ui.note') }}</label><textarea class="inp" rows="2" wire:model="note"></textarea><span class="xs muted">{{ __('ui.note_privacy') }}</span></div>
         <div class="notice {{ ($quote['rate'] ?? 'standard') === 'non_refundable' ? 'warn' : 'info' }}" id="policy"><b>{{ __('ui.policy.title') }}</b> — @if (($quote['rate'] ?? 'standard') === 'non_refundable'){{ __('ui.policy.nr_booking', ['pct' => $quote['nr_discount_pct'], 'amount' => $fmt($quote['total'])]) }}@else{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($quote['cancellation_hours'] ?? 24)]) }} {{ __('ui.policy.free_until', ['date' => \Carbon\CarbonImmutable::parse("$date $time")->subHours($quote['cancellation_hours'] ?? 24)->locale(app()->getLocale())->isoFormat('LLL')]) }}@endif</div>
         <label class="small row" style="align-items:flex-start"><input type="checkbox" wire:model="terms" style="margin-top:3px"> <span>{!! __('ui.accept_terms', ['url' => route('page', 'cgu')]) !!}</span></label>@error('terms')<span class="ferr">{{ $message }}</span>@enderror
-        <div class="notice info">{{ __('ui.no_payment', ['hours' => config('hl.waiting_ttl_hours')]) }} {{ __('ui.no_account') }}</div>
-        <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" wire:loading.attr="disabled"><span wire:loading.remove wire:target="submit">{{ __('ui.submit') }}</span><span wire:loading wire:target="submit">{{ __('ui.submitting') }}</span></button></div>
+        @if ($spa->instantBookingActive())
+            <div class="notice info"><b>{{ __('ui.instant_title') }}</b> {{ __('ui.instant_help') }} {{ __('ui.no_account') }}</div>
+        @else
+            <div class="notice info">{{ __('ui.no_payment', ['hours' => config('hl.waiting_ttl_hours')]) }} {{ __('ui.no_account') }}</div>
+        @endif
+        <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" wire:loading.attr="disabled"><span wire:loading.remove wire:target="submit">{{ $spa->instantBookingActive() ? __('ui.submit_instant') : __('ui.submit') }}</span><span wire:loading wire:target="submit">{{ __('ui.submitting') }}</span></button></div>
     </form>
 @endif
 </div>

@@ -70,9 +70,21 @@
                 </div>
                 <div style="display:flex;gap:.4rem;flex-wrap:wrap">
                     <span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::statusColor($b->status) }}">{{ $statuses[$b->status] ?? $b->status }}</span>
+                    @if ($b->source === 'partner')<span class="hl-badge hl-badge-info">{{ __('partner.sources.partner') }}@if($b->channel) · {{ __('partner.channels.'.$b->channel) }}@endif</span>@endif
                     @if ($b->nothingDue())<span class="hl-badge hl-badge-gray">{{ __('partner.nothing_due_short') }}</span>@else<span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::paymentColor($b->payment_status) }}">{{ $payments[$b->payment_status] ?? $b->payment_status }}</span>@endif
                 </div>
             </div>
+
+            @if ($b->decline)
+                <div class="hl-panel open" style="border-left:3px solid #991b1b">
+                    <h3>{{ __('partner.declined_block') }}</h3>
+                    <div class="hl-row"><span class="hl-k">{{ __('partner.decline_reason') }}</span><span class="hl-v">{{ __('partner.decline_reasons')[$b->decline->reason] ?? $b->decline->reason }}</span></div>
+                    <div class="hl-row"><span class="hl-k">{{ __('partner.declined_by') }}</span><span class="hl-v">{{ $b->decline->user?->name ?? (__('admin.decline_actors')[$b->decline->actor] ?? $b->decline->actor) }} · {{ $b->decline->created_at->format('d/m/Y H:i') }}</span></div>
+                    @if ($b->decline->note)
+                        <div class="hl-row"><span class="hl-k">{{ __('partner.decline_note') }}</span><span class="hl-v" style="white-space:pre-line">{{ $b->decline->note }}</span></div>
+                    @endif
+                </div>
+            @endif
 
             <div class="hl-actions">
                 <button type="button" class="hl-btn" @click="panel = panel === 'client' ? null : 'client'">
@@ -168,13 +180,17 @@
         <div class="hl-card">
             <h3>{{ __('partner.pricing') }}</h3>
             <div class="hl-row"><span class="hl-k">{{ __('partner.customer_total') }}</span><span class="hl-v">{{ $money($b->total) }}</span></div>
+            @if ($b->source === 'partner')
+                <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.offline_no_commission') }}</p>
+            @else
             <div class="hl-row"><span class="hl-k">{{ __('partner.commissionable') }}</span><span class="hl-v">{{ $money($s['commissionable']) }}</span></div>
             <div class="hl-row"><span class="hl-k">{{ __('partner.commission_hl', ['pct' => rtrim(rtrim(number_format($b->commission_pct, 2, ',', ''), '0'), ',')]) }}</span><span class="hl-v hl-minus">− {{ $money($b->commissionDue()) }}</span></div>
             <div class="hl-total"><span>{{ __('partner.net_partner') }}</span><span class="hl-net">{{ $money($b->netDue()) }}</span></div>
+            @endif
             @if ($b->nothingDue())
                 <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.nothing_due') }}</p>
             @endif
-            @if ($s['commissionable'] < $b->total && ! $b->nothingDue())
+            @if ($b->source !== 'partner' && $s['commissionable'] < $b->total && ! $b->nothingDue())
                 <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.non_commissionable_note') }}</p>
             @endif
             <div class="hl-row" style="margin-top:.6rem;border-top:1px solid #e5e7eb;border-bottom:0">

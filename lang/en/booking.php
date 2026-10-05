@@ -8,6 +8,7 @@ return [
     'choose_treatment' => 'Choose at least one treatment.',
     'too_many_participants' => 'Too many participants.',
     'closed' => 'The venue is closed at this time (the treatment must end before closing).',
+    'not_configured' => 'This venue has not set its opening hours yet: no booking is possible for now.',
     'capacity_insufficient' => 'Not enough capacity for “:type” (:treatment) at :time: :party person(s) requested, :missing place(s) missing.',
     'first_checked' => 'First time checked: :errors',
     'no_slot_today' => 'No time allows this treatment to finish within opening hours that day. Choose another date, fewer people or a shorter treatment.',
@@ -18,6 +19,8 @@ return [
     'intent_invalid' => 'Invalid booking request.',
     'intent_replayed' => 'This booking request has already been recorded.',
     'price_changed' => 'The price or duration of this treatment has changed, please review your selection.',
+    'reason_required' => 'Please choose the reason for declining.',
+    'note_required_other' => 'Please describe the “Other” reason in a few words.',
     'not_waiting' => 'This booking is no longer pending.',
     'invalid_payment_status' => 'Invalid payment status.',
     'not_confirmed' => 'This booking is not confirmed.',
@@ -63,4 +66,7 @@ return [
     'message_closed' => 'Messaging is closed for this booking.',
     'nr_unavailable' => 'The Non-refundable rate is not offered for “:name”.',
     'conditions' => 'Conditions',
+
+    'past_date' => 'A booking cannot be recorded on a past date.',
+    'channel' => 'Unknown reception channel.',
 ];

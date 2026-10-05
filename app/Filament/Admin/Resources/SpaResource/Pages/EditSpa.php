@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\SpaResource\Pages;
 
+use App\Domain\Catalogue\CapacityReadiness;
 use App\Domain\Catalogue\PublicationChecklist;
 use App\Domain\Partner\OnboardingService;
 use App\Filament\Admin\Resources\SpaResource;
@@ -27,6 +28,15 @@ class EditSpa extends EditRecord
         }
         if (($data['status'] ?? null) === 'published') {
             $data['published_at'] = $spa->published_at ?? now();
+        }
+        $wantsInstant = (bool) ($data['instant_booking'] ?? false);
+        if ($wantsInstant && ! $spa->instant_booking && ! CapacityReadiness::passes($spa)) {
+            Notification::make()->title(__('admin.readiness_ko'))->body(implode(' · ', CapacityReadiness::failures($spa)))->danger()->send();
+            $this->halt();
+        }
+        if ($wantsInstant !== (bool) $spa->instant_booking) {
+            $data['instant_booking_at'] = $wantsInstant ? now() : null;
+            ActivityLog::record($wantsInstant ? 'spa.instant_booking_on' : 'spa.instant_booking_off', $spa);
         }
 
         return $data;

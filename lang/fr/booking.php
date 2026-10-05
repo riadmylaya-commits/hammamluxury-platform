@@ -8,6 +8,7 @@ return [
     'choose_treatment' => 'Choisissez au moins une prestation.',
     'too_many_participants' => 'Nombre de participants trop élevé.',
     'closed' => 'L’établissement est fermé sur cet horaire (la prestation doit se terminer avant la fermeture).',
+    'not_configured' => 'Cet établissement n’a pas encore renseigné ses horaires : aucune réservation possible pour le moment.',
     'capacity_insufficient' => 'Capacité insuffisante pour « :type » (:treatment) à :time : :party personne(s) demandée(s), :missing place(s) manquante(s).',
     'first_checked' => 'Premier horaire contrôlé : :errors',
     'no_slot_today' => 'Aucun horaire ne permet de terminer cette prestation pendant les heures d’ouverture ce jour-là. Choisissez une autre date, moins de personnes ou une prestation plus courte.',
@@ -19,6 +20,8 @@ return [
     'intent_replayed' => 'Cette demande de réservation a déjà été enregistrée.',
     'price_changed' => 'Le tarif ou la durée de cette prestation a changé, merci de vérifier à nouveau votre sélection.',
     'not_waiting' => 'Cette réservation n’est plus en attente.',
+    'reason_required' => 'Merci de choisir le motif du refus.',
+    'note_required_other' => 'Merci de préciser le motif « Autre » en quelques mots.',
     'invalid_payment_status' => 'Statut de paiement invalide.',
     'not_confirmed' => 'Cette réservation n’est pas confirmée.',
     'already_inactive' => 'Cette réservation est déjà annulée ou terminée.',
@@ -63,4 +66,7 @@ return [
     'message_closed' => 'La messagerie est fermée pour cette réservation.',
     'nr_unavailable' => 'Le tarif Non remboursable n’est pas proposé pour « :name ».',
     'conditions' => 'Conditions',
+
+    'past_date' => 'Impossible d’enregistrer une réservation à une date passée.',
+    'channel' => 'Canal de réception inconnu.',
 ];

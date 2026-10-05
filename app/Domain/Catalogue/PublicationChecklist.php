@@ -22,8 +22,17 @@ class PublicationChecklist
             __('admin.chk_resources') => $spa->resources()->where('status', 'active')->exists()
                 && ! $treatments->clone()->whereDoesntHave('steps')->exists()
                 && ! $treatments->clone()->whereHas('steps.resourceType', fn ($q) => $q->whereDoesntHave('resources', fn ($r) => $r->where('status', 'active')))->exists(),
+            __('admin.chk_staff') => self::staffCovered($spa),
             __('admin.chk_partner') => $spa->partner?->isApproved() ?? false,
         ];
+    }
+
+    /** Toute étape d'un soin actif qui mobilise des praticien(ne)s doit pouvoir s'appuyer sur au moins un(e) praticien(ne) actif(ve). */
+    public static function staffCovered(Spa $spa): bool
+    {
+        $needsStaff = $spa->treatments()->where('status', 'active')->whereHas('steps', fn ($q) => $q->where('staff_per_person', '>', 0))->exists();
+
+        return ! $needsStaff || $spa->resources()->where('status', 'active')->whereHas('type', fn ($q) => $q->where('kind', 'therapist'))->exists();
     }
 
     public static function passes(Spa $spa): bool
