@@ -80,7 +80,8 @@ class BookingDeclineResource extends Resource
                     ->formatStateUsing(fn ($state) => static::engineLabel($state === null ? null : (bool) $state))
                     ->color(fn (BookingDecline $d) => $d->isSuspicious() ? 'danger' : 'gray')
                     ->icon(fn (BookingDecline $d) => $d->isSuspicious() ? 'heroicon-o-exclamation-triangle' : null)
-                    ->tooltip(__('admin.decline_engine_help')),
+                    ->tooltip(__('admin.decline_engine_help'))
+                    ->description(fn (BookingDecline $d) => $d->isSuspicious() ? __('admin.decline_suspicious') : null),
                 Tables\Columns\TextColumn::make('user.name')->label(__('admin.decline_actor'))
                     ->getStateUsing(fn (BookingDecline $d) => $d->user?->name ?? (__('admin.decline_actors')[$d->actor] ?? $d->actor)),
                 Tables\Columns\TextColumn::make('note')->label(__('partner.decline_note'))->limit(40)->placeholder('—')->toggleable(),
