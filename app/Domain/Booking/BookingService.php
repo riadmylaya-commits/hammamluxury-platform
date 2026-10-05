@@ -123,7 +123,7 @@ class BookingService
             throw BookingException::make('too_soon', 'past_date');
         }
 
-        return $this->book($spa, $start, $items, $customer, 'confirmed', ['source' => 'partner', 'channel' => $channel, 'created_by_user_id' => $userId], 'partner');
+        return $this->book($spa, $start, $items, $customer, 'confirmed', meta: ['source' => 'partner', 'channel' => $channel, 'created_by_user_id' => $userId], actor: 'partner');
     }
 
     private function insert(Spa $spa, CarbonImmutable $start, array $quote, array $customer, string $status, ?string $intentId = null, ?string $locale = null, array $meta = [], string $actor = 'client'): Booking
