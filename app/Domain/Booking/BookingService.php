@@ -10,6 +10,7 @@ use App\Events\BookingStatusChanged;
 use App\Models\ActivityLog;
 use App\Models\Allocation;
 use App\Models\Booking;
+use App\Models\BookingDecline;
 use App\Models\LedgerEntry;
 use App\Models\Spa;
 use Carbon\CarbonImmutable;
@@ -213,13 +214,55 @@ class BookingService
         return $booking;
     }
 
-    public function decline(Booking $booking, string $actor = 'partner', ?string $note = null): Booking
+    /**
+     * Refus structuré d'une demande : motif obligatoire, explication interne facultative (jamais montrée au client).
+     * Avant de libérer le créneau, on note si le moteur avait encore de la place pour cette demande (hors ses propres
+     * allocations) : un refus « plus de place » alors que la capacité existait signale un planning non tenu à jour.
+     */
+    public function decline(Booking $booking, string $actor = 'partner', ?string $reason = null, ?string $note = null, ?int $userId = null): Booking
     {
         if (! $booking->isWaiting()) {
             throw BookingException::make('status', 'not_waiting', [], 409);
         }
+        if (! in_array($reason, BookingDecline::REASONS, true)) {
+            throw BookingException::make('decline_reason', 'reason_required', [], 422);
+        }
+        $note = trim((string) $note) !== '' ? trim($note) : null;
+        if ($reason === 'other' && $note === null) {
+            throw BookingException::make('decline_reason', 'note_required_other', [], 422);
+        }
 
-        return $this->transition($booking, 'declined', $actor, ['expires_at' => null, 'partner_note' => $note]);
+        $spa = $booking->spa;
+
+        return $this->engine->withLock($spa, function () use ($booking, $spa, $actor, $reason, $note, $userId) {
+            $booking->refresh();
+            if (! $booking->isWaiting()) {
+                throw BookingException::make('status', 'not_waiting', [], 409);
+            }
+            $items = $booking->quote['items'] ?? [];
+            $engineAvailable = null;
+            if ($items !== []) {
+                $engineAvailable = (bool) ($this->engine->check($spa, $booking->start_at, $items, $booking->id)['ok'] ?? false);
+            }
+
+            $booking = $this->transition($booking, 'declined', $actor, ['expires_at' => null, 'partner_note' => $note]);
+            $decline = $booking->declines()->create([
+                'spa_id' => $spa->id,
+                'declined_by' => $userId,
+                'actor' => $actor,
+                'reason' => $reason,
+                'note' => $note,
+                'start_at' => $booking->start_at,
+                'party' => (int) ($booking->party ?: 1),
+                'engine_available' => $engineAvailable,
+            ]);
+            $booking->log('declined:reason', $actor, ['reason' => $reason, 'engine_available' => $engineAvailable, 'decline_id' => $decline->id]);
+            if (auth()->check()) {
+                ActivityLog::record('booking.declined', $booking, ['reason' => $reason, 'engine_available' => $engineAvailable, 'spa_id' => $spa->id]);
+            }
+
+            return $booking;
+        });
     }
 
     public function cancel(Booking $booking, string $actor = 'client'): Booking

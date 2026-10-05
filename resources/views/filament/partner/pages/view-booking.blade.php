@@ -75,6 +75,17 @@
                 </div>
             </div>
 
+            @if ($b->decline)
+                <div class="hl-panel open" style="border-left:3px solid #991b1b">
+                    <h3>{{ __('partner.declined_block') }}</h3>
+                    <div class="hl-row"><span class="hl-k">{{ __('partner.decline_reason') }}</span><span class="hl-v">{{ __('partner.decline_reasons')[$b->decline->reason] ?? $b->decline->reason }}</span></div>
+                    <div class="hl-row"><span class="hl-k">{{ __('partner.declined_by') }}</span><span class="hl-v">{{ $b->decline->user?->name ?? (__('admin.decline_actors')[$b->decline->actor] ?? $b->decline->actor) }} · {{ $b->decline->created_at->format('d/m/Y H:i') }}</span></div>
+                    @if ($b->decline->note)
+                        <div class="hl-row"><span class="hl-k">{{ __('partner.decline_note') }}</span><span class="hl-v" style="white-space:pre-line">{{ $b->decline->note }}</span></div>
+                    @endif
+                </div>
+            @endif
+
             <div class="hl-actions">
                 <button type="button" class="hl-btn" @click="panel = panel === 'client' ? null : 'client'">
                     <x-heroicon-o-user />{{ __('partner.customer_details') }}

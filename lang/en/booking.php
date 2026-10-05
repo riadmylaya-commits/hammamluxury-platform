@@ -19,6 +19,8 @@ return [
     'intent_invalid' => 'Invalid booking request.',
     'intent_replayed' => 'This booking request has already been recorded.',
     'price_changed' => 'The price or duration of this treatment has changed, please review your selection.',
+    'reason_required' => 'Please choose the reason for declining.',
+    'note_required_other' => 'Please describe the “Other” reason in a few words.',
     'not_waiting' => 'This booking is no longer pending.',
     'invalid_payment_status' => 'Invalid payment status.',
     'not_confirmed' => 'This booking is not confirmed.',

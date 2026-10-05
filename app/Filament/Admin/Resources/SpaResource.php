@@ -126,6 +126,12 @@ class SpaResource extends Resource
                     })
                     ->color(fn ($state, Spa $s) => $state && CancellationService::rateFor($s->id)['rate'] >= 20 ? 'danger' : ($state ? 'warning' : 'gray'))->badge()
                     ->tooltip(__('admin.cancellation_col_help')),
+                Tables\Columns\TextColumn::make('full_declines_count')->label(__('admin.declines_col'))->badge()->sortable()
+                    ->counts(['declines as full_declines_count' => fn (Builder $q) => $q->where('reason', 'full')->where('created_at', '>=', now()->subDays(90))])
+                    ->formatStateUsing(fn ($state, Spa $s) => $state ? $state.' ('.$s->declines()->where('reason', 'full')->where('engine_available', true)->where('created_at', '>=', now()->subDays(90))->count().')' : '0')
+                    ->color(fn ($state, Spa $s) => $state && $s->declines()->where('reason', 'full')->where('engine_available', true)->where('created_at', '>=', now()->subDays(90))->exists() ? 'danger' : ($state ? 'warning' : 'gray'))
+                    ->tooltip(__('admin.declines_col_help'))
+                    ->url(fn (Spa $s) => BookingDeclineResource::getUrl('index', ['tableFilters' => ['spa_id' => ['value' => $s->id], 'reason' => ['value' => 'full']]])),
                 Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->placeholder('—'),
                 Tables\Columns\TextColumn::make('license_number')->label(__('admin.license_col'))->toggleable()->badge()
                     ->getStateUsing(fn (Spa $s) => $s->license_number ?: ($s->licenseExpected() ? __('admin.license_missing') : null))->placeholder('—')
