@@ -8,6 +8,7 @@ return [
     'choose_treatment' => 'Choisissez au moins une prestation.',
     'too_many_participants' => 'Nombre de participants trop élevé.',
     'closed' => 'L’établissement est fermé sur cet horaire (la prestation doit se terminer avant la fermeture).',
+    'not_configured' => 'Cet établissement n’a pas encore renseigné ses horaires : aucune réservation possible pour le moment.',
     'capacity_insufficient' => 'Capacité insuffisante pour « :type » (:treatment) à :time : :party personne(s) demandée(s), :missing place(s) manquante(s).',
     'first_checked' => 'Premier horaire contrôlé : :errors',
     'no_slot_today' => 'Aucun horaire ne permet de terminer cette prestation pendant les heures d’ouverture ce jour-là. Choisissez une autre date, moins de personnes ou une prestation plus courte.',

@@ -8,6 +8,7 @@ return [
     'choose_treatment' => 'Choose at least one treatment.',
     'too_many_participants' => 'Too many participants.',
     'closed' => 'The venue is closed at this time (the treatment must end before closing).',
+    'not_configured' => 'This venue has not set its opening hours yet: no booking is possible for now.',
     'capacity_insufficient' => 'Not enough capacity for “:type” (:treatment) at :time: :party person(s) requested, :missing place(s) missing.',
     'first_checked' => 'First time checked: :errors',
     'no_slot_today' => 'No time allows this treatment to finish within opening hours that day. Choose another date, fewer people or a shorter treatment.',
