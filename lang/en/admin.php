@@ -32,6 +32,7 @@ return [
     'checklist_blocking' => 'Cannot publish: the profile is incomplete.',
     'chk_hours' => 'Opening hours set',
     'chk_resources' => 'Active resources covering every step of active treatments',
+    'chk_staff' => 'At least one active therapist for treatments that need one',
     'chk_treatments' => 'At least one active treatment with a price',
     'chk_address' => 'Address and phone set',
     'chk_partner' => 'Partner approved',

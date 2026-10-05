@@ -29,7 +29,13 @@ class OnboardingService
         'hammam' => ['hammam', 'Hammam', 'Hammam', 'pool'],
         'massage' => ['massage', 'Cabine de massage', 'Massage cabin', 'unit'],
         'soin' => ['soin', 'Salle de soin', 'Treatment room', 'unit'],
+        'praticien' => ['praticien', 'Praticien(ne)', 'Therapist', 'unit', 'therapist'],
     ];
+
+    /** Composantes qui mobilisent un(e) praticien(ne) par personne en plus de la cabine/salle. */
+    public const STAFFED_KINDS = ['massage', 'soin'];
+
+    public const BUFFER_OPTIONS = [0, 5, 10, 15, 20, 30];
 
     /** Brouillon en cours du partenaire (le plus récent), ou celui demandé s'il lui appartient. */
     public function currentDraft(Partner $partner, ?int $spaId = null): ?Spa
@@ -114,7 +120,7 @@ class OnboardingService
             $keep[] = $slug;
 
             $components = ($row['category'] ?? null) === 'ritual' ? $this->cleanComponents($row['components'] ?? []) : [];
-            $duration = $components ? array_sum(array_column($components, 'duration_min')) : (int) ($row['duration_min'] ?? 0);
+            $duration = $components ? self::componentsDuration($components) : (int) ($row['duration_min'] ?? 0);
 
             $treatment = $spa->treatments()->updateOrCreate(['slug' => $slug], [
                 'category' => $row['category'],
@@ -136,7 +142,7 @@ class OnboardingService
             if ($components) {
                 $this->syncComponentSteps($treatment, $components);
             } else {
-                $this->syncDefaultSteps($treatment);
+                $this->syncDefaultSteps($treatment, self::staffFor($row['category'], $row['staff_per_person'] ?? null));
             }
         }
         $spa->treatments()->whereNotIn('slug', $keep)->delete();
@@ -149,9 +155,19 @@ class OnboardingService
         }
     }
 
+    /** Praticien(ne)s par personne : 1 par défaut pour un massage ou un soin, 2 pour un « quatre mains », 0 pour le hammam. */
+    public static function staffFor(?string $kind, mixed $requested = null): int
+    {
+        if (! in_array($kind, self::STAFFED_KINDS, true)) {
+            return 0;
+        }
+
+        return $requested === null || $requested === '' ? 1 : max(0, min(2, (int) $requested));
+    }
+
     /**
      * @param  list<array<string, mixed>>  $rows
-     * @return list<array{kind:string, label:?string, duration_min:int}>
+     * @return list<array{kind:string, label:?string, duration_min:int, staff:int, parallel:bool}>
      */
     private function cleanComponents(array $rows): array
     {
@@ -159,40 +175,76 @@ class OnboardingService
         foreach ($rows as $c) {
             $kind = $c['kind'] ?? null;
             $min = (int) ($c['duration_min'] ?? 0);
-            if (! isset(self::RESOURCE_TYPES[$kind]) || $min <= 0) {
+            if (! isset(self::RESOURCE_TYPES[$kind]) || $kind === 'praticien' || $min <= 0) {
                 continue;
             }
-            $out[] = ['kind' => $kind, 'label' => filled($c['label'] ?? null) ? trim($c['label']) : null, 'duration_min' => $min];
+            $out[] = [
+                'kind' => $kind,
+                'label' => filled($c['label'] ?? null) ? trim($c['label']) : null,
+                'duration_min' => $min,
+                'staff' => self::staffFor($kind, $c['staff'] ?? null),
+                'parallel' => $out !== [] && ! empty($c['parallel']),
+            ];
         }
 
         return $out;
     }
 
     /**
+     * Début de chaque composante : enchaînée après la précédente, ou en même temps qu'elle si « parallèle ».
+     *
+     * @param  list<array{duration_min:int, parallel:bool}>  $components
+     * @return list<int>
+     */
+    public static function componentOffsets(array $components): array
+    {
+        $offsets = [];
+        $end = 0;
+        foreach ($components as $i => $c) {
+            $offsets[$i] = $i > 0 && $c['parallel'] ? $offsets[$i - 1] : $end;
+            $end = max($end, $offsets[$i] + (int) $c['duration_min']);
+        }
+
+        return $offsets;
+    }
+
+    /** @param  list<array{duration_min:int, parallel:bool}>  $components */
+    public static function componentsDuration(array $components): int
+    {
+        $end = 0;
+        foreach (self::componentOffsets($components) as $i => $offset) {
+            $end = max($end, $offset + (int) $components[$i]['duration_min']);
+        }
+
+        return $end;
+    }
+
+    /**
      * Étapes explicites d'une formule : une par composante, enchaînées dans l'ordre. Les types de ressources
      * sont créés si besoin ; les ressources elles-mêmes sont provisionnées à l'étape horaires/capacité.
      *
-     * @param  list<array{kind:string, label:?string, duration_min:int}>  $components
+     * @param  list<array{kind:string, label:?string, duration_min:int, staff:int, parallel:bool}>  $components
      */
     private function syncComponentSteps(Treatment $treatment, array $components): void
     {
         $treatment->steps()->delete();
-        $offset = 0;
+        $offsets = self::componentOffsets($components);
         foreach ($components as $i => $c) {
             $treatment->steps()->create([
                 'resource_type_id' => $this->resourceType($treatment->spa, $c['kind'])->id,
                 'label' => $c['label'],
                 'duration_min' => $c['duration_min'],
-                'offset_min' => $offset,
+                'offset_min' => $offsets[$i],
+                'staff_per_person' => $c['staff'],
+                'parallel_with_previous' => $c['parallel'],
                 'position' => $i,
             ]);
-            $offset += $c['duration_min'];
         }
     }
 
     /**
      * @param  list<array{weekday:int, opens_min:int, closes_min:int}>  $hours
-     * @param  array{hammam_capacity?:int, massage_cabins?:int, treatment_rooms?:int}  $capacity
+     * @param  array{hammam_capacity?:int, massage_cabins?:int, treatment_rooms?:int, therapists?:int, cabin_buffer_min?:int}  $capacity
      */
     public function saveHours(Spa $spa, array $hours, array $capacity): void
     {
@@ -211,17 +263,26 @@ class OnboardingService
         $hammam = max(0, (int) ($capacity['hammam_capacity'] ?? 0));
         $cabins = max(0, (int) ($capacity['massage_cabins'] ?? 0));
         $rooms = max(0, (int) ($capacity['treatment_rooms'] ?? 0));
+        $therapists = max(0, (int) ($capacity['therapists'] ?? 0));
+        $buffer = array_key_exists('cabin_buffer_min', $capacity) ? max(0, (int) $capacity['cabin_buffer_min']) : null;
 
         if ($hammam > 0) {
             $type = $this->resourceType($spa, 'hammam');
             $type->resources()->updateOrCreate(['spa_id' => $spa->id, 'name' => 'Hammam'], ['capacity' => $hammam, 'min_party' => 1, 'max_party' => $hammam, 'status' => 'active']);
         }
-        foreach (['massage' => $cabins, 'soin' => $rooms] as $slug => $count) {
+        foreach (['massage' => $cabins, 'soin' => $rooms, 'praticien' => $therapists] as $slug => $count) {
             if ($count <= 0) {
                 continue;
             }
             $type = $this->resourceType($spa, $slug);
-            $prefix = $slug === 'massage' ? 'Cabine' : 'Salle de soin';
+            if ($buffer !== null && $slug !== 'praticien') {
+                $type->update(['buffer_min' => $buffer]);
+            }
+            $prefix = match ($slug) {
+                'massage' => 'Cabine',
+                'soin' => 'Salle de soin',
+                default => 'Praticien(ne)',
+            };
             for ($i = 1; $i <= $count; $i++) {
                 $type->resources()->updateOrCreate(['spa_id' => $spa->id, 'name' => "$prefix $i"], ['capacity' => 1, 'min_party' => 1, 'max_party' => 1, 'status' => 'active', 'sort_order' => $i]);
             }
@@ -233,16 +294,27 @@ class OnboardingService
         }
     }
 
-    /** @return array{hammam_capacity:int, massage_cabins:int, treatment_rooms:int} */
+    /** @return array{hammam_capacity:int, massage_cabins:int, treatment_rooms:int, therapists:int, cabin_buffer_min:int} */
     public function capacityOf(Spa $spa): array
     {
         $active = $spa->resources()->where('status', 'active')->with('type')->get()->groupBy(fn ($r) => $r->type->slug);
+        $buffers = $spa->resourceTypes()->whereIn('slug', ['massage', 'soin'])->pluck('buffer_min');
 
         return [
             'hammam_capacity' => (int) $active->get('hammam', collect())->sum('capacity'),
             'massage_cabins' => $active->get('massage', collect())->count(),
             'treatment_rooms' => $active->get('soin', collect())->count(),
+            'therapists' => $active->get('praticien', collect())->count()
+                + $spa->resources()->where('status', 'active')->whereHas('type', fn ($q) => $q->where('kind', 'therapist')->where('slug', '!=', 'praticien'))->count(),
+            'cabin_buffer_min' => (int) ($buffers->max() ?? 0),
         ];
+    }
+
+    /** Un établissement proposant massages ou soins doit indiquer au moins un(e) praticien(ne). */
+    public static function therapistsMissing(array $capacity): bool
+    {
+        return ((int) ($capacity['massage_cabins'] ?? 0) + (int) ($capacity['treatment_rooms'] ?? 0)) > 0
+            && (int) ($capacity['therapists'] ?? 0) < 1;
     }
 
     public function markStep(Spa $spa, int $step): void
@@ -278,12 +350,19 @@ class OnboardingService
         }
     }
 
-    private function syncDefaultSteps(Treatment $treatment): void
+    private function syncDefaultSteps(Treatment $treatment, ?int $staff = null): void
     {
         if ($treatment->steps()->exists()) {
+            if ($staff !== null) {
+                $treatment->steps()->whereHas('resourceType', fn ($q) => $q->whereIn('slug', self::STAFFED_KINDS))->update(['staff_per_person' => $staff]);
+            }
+
             return;
         }
         $spa = $treatment->spa;
+        if (in_array($treatment->category, ['hammam', ...self::STAFFED_KINDS], true)) {
+            $this->resourceType($spa, $treatment->category);
+        }
         $types = $spa->resourceTypes()->pluck('id', 'slug');
         $duration = (int) $treatment->duration_min;
 
@@ -303,7 +382,13 @@ class OnboardingService
 
                 return;
             }
-            $treatment->steps()->create(['resource_type_id' => $types[$slug], 'duration_min' => $min, 'offset_min' => $offset, 'position' => $i]);
+            $treatment->steps()->create([
+                'resource_type_id' => $types[$slug],
+                'duration_min' => $min,
+                'offset_min' => $offset,
+                'staff_per_person' => $staff ?? self::staffFor($slug),
+                'position' => $i,
+            ]);
             $offset += $min;
         }
     }
@@ -311,8 +396,9 @@ class OnboardingService
     private function resourceType(Spa $spa, string $slug)
     {
         [$s, $fr, $en, $mode] = self::RESOURCE_TYPES[$slug];
+        $kind = self::RESOURCE_TYPES[$slug][4] ?? 'room';
 
-        return $spa->resourceTypes()->firstOrCreate(['slug' => $s], ['name_fr' => $fr, 'name_en' => $en, 'allocation_mode' => $mode, 'kind' => 'room', 'sort_order' => array_search($slug, array_keys(self::RESOURCE_TYPES), true)]);
+        return $spa->resourceTypes()->firstOrCreate(['slug' => $s], ['name_fr' => $fr, 'name_en' => $en, 'allocation_mode' => $mode, 'kind' => $kind, 'sort_order' => array_search($slug, array_keys(self::RESOURCE_TYPES), true)]);
     }
 
     private function uniqueSlug(string $name, ?int $cityId): string

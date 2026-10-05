@@ -32,6 +32,7 @@ return [
     'checklist_blocking' => 'Publication impossible : la fiche est incomplète.',
     'chk_hours' => 'Horaires renseignés',
     'chk_resources' => 'Ressources actives couvrant chaque étape des soins actifs',
+    'chk_staff' => 'Au moins un(e) praticien(ne) actif(ve) pour les soins qui en mobilisent',
     'chk_treatments' => 'Au moins un soin actif avec un tarif',
     'chk_address' => 'Adresse et téléphone renseignés',
     'chk_partner' => 'Partenaire validé',

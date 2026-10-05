@@ -81,6 +81,11 @@
             @endforeach
         </div>
     </div>
+    @if (! $date && $spa->hours->isEmpty())
+        <div class="notice" style="margin-top:12px"><b>{{ __('ui.no_slots_at_all') }}</b><br>{{ __('booking.not_configured') }}</div>
+    @elseif (! $date && ! collect($calendar)->contains(fn ($c) => $c && $c['open'] && ! $c['past']))
+        <div class="notice" style="margin-top:12px"><b>{{ __('ui.no_slots_month') }}</b><br><span class="muted">{{ __('ui.try_other_month') }}</span></div>
+    @endif
     @if ($date)
         <h3 style="font-size:17px;margin:18px 0 8px">{{ __('ui.pick_time') }} — {{ \Carbon\CarbonImmutable::parse($date)->locale(app()->getLocale())->isoFormat('dddd D MMMM') }}</h3>
         <div wire:loading wire:target="pickDate" class="muted small">{{ __('ui.loading_slots') }}</div>
