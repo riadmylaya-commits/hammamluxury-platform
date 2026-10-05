@@ -465,6 +465,15 @@ return [
     'senders' => ['client' => 'Customer', 'partner' => 'Establishment', 'admin' => 'HammamLuxury'],
     'badge_tooltip' => 'Pending requests + unread customer messages',
 
+    'review' => 'Review',
+    'reviews' => 'Guest reviews',
+    'review_date' => 'Published on',
+    'review_reply' => 'Your reply',
+    'review_no_reply' => 'No reply',
+    'review_reply_action' => 'Reply',
+    'review_reply_hint' => 'At least :min characters. Your reply is checked by HammamLuxury before publication and must follow the same rules as reviews (courtesy, no personal data).',
+    'review_reply_sent' => 'Reply sent: it will be published once checked by HammamLuxury.',
+    'review_reply_status' => ['pending' => 'Awaiting check', 'published' => 'Published', 'rejected' => 'Rejected'],
     // Lot 3 — offline entry, complete configuration, instant booking
     'offline_nav' => 'Record a booking',
     'offline_title' => 'Booking received directly',

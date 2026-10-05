@@ -73,4 +73,12 @@ return [
         'partner' => ['subject' => 'Nouveau message client — :ref', 'title' => 'Nouveau message de :name', 'intro' => 'Le client de la réservation :ref chez :spa vous a écrit :'],
         'client' => ['subject' => 'Nouveau message de :spa — réservation :ref', 'title' => 'Nouveau message de :spa', 'intro' => 'Bonjour :name, l’établissement vous a écrit au sujet de votre réservation :'],
     ],
+
+    'review_invite' => [
+        'subject' => 'Comment s’est passée votre expérience chez :spa ?',
+        'title' => 'Votre avis sur :spa',
+        'intro' => 'Bonjour :name, merci pour votre visite chez :spa le :date. Partagez votre expérience en quelques minutes : votre avis aide les prochains clients et l’établissement.',
+        'button' => 'Donner mon avis',
+        'footer' => 'Ce lien est personnel et lié à votre réservation. Les avis sont vérifiés par HammamLuxury avant publication.',
+    ],
 ];
