@@ -9,7 +9,7 @@ mode=${1:-}
 [ "$mode" = on ] || [ "$mode" = off ] || { echo "usage: $0 on|off" >&2; exit 2; }
 
 # Retire toutes les règles 80/443 existantes (globales et par plage), de la dernière à la première.
-while read -r num; do yes | ufw delete "$num" >/dev/null; done < <(ufw status numbered | grep -E '\b(80|443)/tcp\b' | sed -E 's/^\[ *([0-9]+)\].*/\1/' | sort -rn)
+while read -r num; do ufw --force delete "$num" >/dev/null; done < <(ufw status numbered | grep -E '\b(80|443)/tcp\b' | sed -E 's/^\[ *([0-9]+)\].*/\1/' | sort -rn)
 
 if [ "$mode" = on ]; then
     [ -s "$STATE" ] || { echo "liste Cloudflare absente : lancer cloudflare-ips.sh d'abord" >&2; exit 1; }
