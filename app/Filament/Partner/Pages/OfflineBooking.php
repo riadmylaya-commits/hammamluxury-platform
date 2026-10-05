@@ -123,7 +123,7 @@ class OfflineBooking extends Page implements HasForms
         $customer = [
             'first_name' => $d['first_name'], 'last_name' => $d['last_name'],
             'phone' => PhoneNumber::normalize($d['phone'], $d['phone_country']) ?? $d['phone'],
-            'email' => $d['email'] ?? '', 'note' => $d['note'] ?? null,
+            'email' => $d['email'] ?? '',
         ];
         try {
             $start = app(BookingService::class)->parseStart($d['date'], $d['time']);
@@ -133,6 +133,9 @@ class OfflineBooking extends Page implements HasForms
             $this->data['time'] = null;
 
             return;
+        }
+        if (trim((string) ($d['note'] ?? '')) !== '') {
+            $booking->notes()->create(['spa_id' => $spa->id, 'user_id' => auth()->id(), 'body' => trim($d['note'])]);
         }
         Notification::make()->title(__('partner.offline_saved', ['ref' => $booking->reference]))->success()->send();
         $this->redirect(BookingResource::getUrl('view', ['record' => $booking]));

@@ -490,4 +490,5 @@ return [
     'instant_off' => 'Demande → confirmation',
     'instant_off_help' => 'Chaque demande attend votre confirmation. La réservation instantanée pourra être activée par HammamLuxury une fois la configuration complète.',
     'instant_ask_admin' => 'Votre configuration est complète : HammamLuxury peut activer la réservation instantanée sur demande.',
+    'offline_no_commission' => 'Réservation reçue directement par votre établissement : aucune commission HammamLuxury.',
 ];

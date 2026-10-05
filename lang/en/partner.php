@@ -483,4 +483,5 @@ return [
     'instant_off' => 'Request → confirmation',
     'instant_off_help' => 'Each request awaits your confirmation. HammamLuxury can enable instant booking once the configuration is complete.',
     'instant_ask_admin' => 'Your configuration is complete: HammamLuxury can enable instant booking on request.',
+    'offline_no_commission' => 'Booking received directly by your venue: no HammamLuxury commission.',
 ];

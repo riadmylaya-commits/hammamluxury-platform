@@ -83,6 +83,8 @@ class OfflineBookingTest extends TestCase
         $this->assertSame($this->owner->id, $b->created_by_user_id);
         $this->assertNull($b->expires_at);
         $this->assertSame(2, $b->allocations()->count(), 'cabine + praticienne');
+        $this->assertSame([0.0, 0.0, 0.0], [(float) $b->commission_pct, (float) $b->commission_amount, (float) $b->commissionable_amount], 'aucune commission sur une réservation reçue par le partenaire');
+        $this->assertSame(400.0, (float) $b->total);
         $this->assertTrue($b->events()->where('type', 'created')->where('actor', 'partner')->exists());
         Mail::assertNothingSent();
 
@@ -128,7 +130,7 @@ class OfflineBookingTest extends TestCase
         $this->get('/partenaire/'.$this->spa->slug.'/offline-booking')->assertOk()->assertSee(__('partner.offline_title'));
 
         $t = Livewire::test(OfflineBooking::class)
-            ->fillForm(['treatment_id' => $this->massageId(), 'party' => 1, 'date' => $this->day->toDateString(), 'first_name' => 'Sara', 'last_name' => 'Idrissi', 'phone_country' => 'MA', 'phone' => '0661351989', 'channel' => 'walk_in']);
+            ->fillForm(['treatment_id' => $this->massageId(), 'party' => 1, 'date' => $this->day->toDateString(), 'first_name' => 'Sara', 'last_name' => 'Idrissi', 'phone_country' => 'MA', 'phone' => '0661351989', 'channel' => 'walk_in', 'note' => 'Paiement en espèces à l’arrivée']);
         $t->fillForm(['time' => '10:00'])->call('save');
         $this->assertFalse($this->spa->bookings()->where('first_name', 'Sara')->exists(), 'heure déjà prise : refusée par le moteur');
 
@@ -136,6 +138,9 @@ class OfflineBookingTest extends TestCase
         $b = $this->spa->bookings()->where('first_name', 'Sara')->firstOrFail();
         $this->assertSame(['confirmed', 'partner', 'walk_in', '+212661351989'], [$b->status, $b->source, $b->channel, $b->phone]);
         $this->assertSame('11:00', $b->start_at->format('H:i'));
+        $this->assertNull($b->note, 'la note partenaire ne doit pas être traitée comme une note client');
+        $this->assertSame('Paiement en espèces à l’arrivée', $b->notes()->value('body'));
+        $this->assertSame($this->owner->id, $b->notes()->value('user_id'));
     }
 
     public function test_readiness_requires_enough_therapists_and_hours(): void

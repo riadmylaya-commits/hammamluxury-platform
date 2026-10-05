@@ -132,8 +132,9 @@ class BookingService
         if (! $plan['ok']) {
             throw new BookingException('unavailable', implode(' ', $plan['errors']), 409);
         }
-        $pct = $spa->partner->commissionPct();
-        $commissionable = round((float) ($quote['commissionable'] ?? $quote['total']), 2);
+        $offline = ($meta['source'] ?? 'online') === 'partner';
+        $pct = $offline ? 0.0 : $spa->partner->commissionPct();
+        $commissionable = $offline ? 0.0 : round((float) ($quote['commissionable'] ?? $quote['total']), 2);
 
         $booking = DB::transaction(function () use ($spa, $start, $quote, $customer, $status, $intentId, $locale, $plan, $pct, $commissionable, $meta, $actor) {
             $booking = Booking::create($meta + [
