@@ -17,7 +17,10 @@ class SendBookingNotifications
 {
     public function handleCreated(BookingCreated $e): void
     {
-        $this->send($e->booking, 'created');
+        if ($e->booking->source === 'partner') {
+            return; // saisie par l'établissement lui-même : aucun e-mail automatique
+        }
+        $this->send($e->booking, $e->booking->status === 'confirmed' ? 'confirmed' : 'created');
     }
 
     public function handleStatus(BookingStatusChanged $e): void

@@ -72,6 +72,8 @@ class BookingResource extends Resource
                     ->getStateUsing(fn (Booking $b) => $b->participants->groupBy('treatment_name')->map(fn ($g, $n) => $g->sum('party') > 1 ? "$n ×".$g->sum('party') : $n)->implode(', '))
                     ->wrap(),
                 Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->sortable(),
+                Tables\Columns\TextColumn::make('source')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')
+                    ->formatStateUsing(fn ($state, Booking $b) => $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : __('partner.sources')[$state] ?? $state),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => __('ui.status')[$state] ?? $state)
                     ->color(fn ($state) => BookingActions::statusColor($state)),
@@ -80,8 +82,9 @@ class BookingResource extends Resource
                 Tables\Columns\TextColumn::make('reference')->label(__('partner.reference'))->searchable()->toggleable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('source')->label(__('partner.source'))->options(__('partner.sources')),
                 Tables\Filters\SelectFilter::make('status')->label(__('partner.status'))->options(__('ui.status'))->default('waiting')->multiple(),
-                Tables\Filters\Filter::make('upcoming')->label(__('partner.upcoming'))->query(fn (Builder $q) => $q->where('start_at', '>=', now())),
+                Tables\Filters\Filter::make('upcoming')->label(__('partner.upcoming'))->query(fn (Builder $query) => $query->where('start_at', '>=', now())),
             ])
             ->actions([Tables\Actions\ViewAction::make(), ...BookingActions::all('partner')])
             ->emptyStateHeading(__('partner.no_bookings'));

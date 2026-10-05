@@ -2,6 +2,7 @@
 
 namespace App\Filament\Partner\Resources;
 
+use App\Domain\Partner\OnboardingService;
 use App\Filament\Partner\Resources\ResourceTypeResource\Pages;
 use App\Filament\Partner\Resources\ResourceTypeResource\RelationManagers\ResourcesRelationManager;
 use App\Models\ResourceType;
@@ -51,6 +52,9 @@ class ResourceTypeResource extends Resource
                     return ['pool' => __("partner.mode_pool_ex.$f"), 'unit' => __("partner.mode_unit_ex.$f")];
                 })
                 ->default('unit')->required()->columnSpanFull(),
+            Forms\Components\Select::make('buffer_min')->label(__('partner.buffer_min'))
+                ->options(array_combine(OnboardingService::BUFFER_OPTIONS, array_map(fn (int $m) => $m.' min', OnboardingService::BUFFER_OPTIONS)))
+                ->default(0)->required()->native(false)->helperText(__('partner.buffer_min_help'))->columnSpanFull(),
             Forms\Components\Placeholder::make('units_hint')->label('')->columnSpanFull()
                 ->content(fn (Forms\Get $get) => __('partner.units_hint.'.ResourceType::familyOf($get('slug'), $get('name_fr')))),
         ])->columns(2);
@@ -66,6 +70,7 @@ class ResourceTypeResource extends Resource
                 Tables\Columns\TextColumn::make('kind')->label(__('partner.kind'))->formatStateUsing(fn ($state) => __("partner.kind_$state"))->badge()->color('gray'),
                 Tables\Columns\TextColumn::make('allocation_mode')->label(__('partner.allocation_mode'))->formatStateUsing(fn ($state) => __("partner.mode_$state")),
                 Tables\Columns\TextColumn::make('resources_count')->counts('resources')->label(__('partner.resources')),
+                Tables\Columns\TextColumn::make('buffer_min')->label(__('partner.buffer_min'))->formatStateUsing(fn ($state) => (int) $state ? $state.' min' : '—'),
                 Tables\Columns\TextColumn::make('capacity')->label(__('partner.capacity'))
                     ->getStateUsing(fn (ResourceType $t) => $t->resources()->where('status', 'active')->sum('capacity')),
             ])

@@ -11,6 +11,8 @@ class TreatmentStep extends Model
 
     protected $guarded = [];
 
+    protected $casts = ['parallel_with_previous' => 'bool'];
+
     public function treatment(): BelongsTo
     {
         return $this->belongsTo(Treatment::class);

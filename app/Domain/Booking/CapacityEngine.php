@@ -7,8 +7,10 @@ use App\Models\Block;
 use App\Models\Booking;
 use App\Models\Extra;
 use App\Models\Resource;
+use App\Models\ResourceType;
 use App\Models\Spa;
 use App\Models\Treatment;
+use App\Models\TreatmentStep;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -57,30 +59,76 @@ class CapacityEngine
             if ($steps->isEmpty()) {
                 throw BookingException::make('no_steps', 'treatment_no_resources', ['name' => $treatment->tr('name')]);
             }
+            $offsets = self::stepOffsets($steps);
             $last = 0;
             foreach ($steps as $i => $s) {
-                if ($s->offset_min + $s->duration_min >= $steps[$last]->offset_min + $steps[$last]->duration_min) {
+                if ($offsets[$i] + $s->duration_min >= $offsets[$last] + $steps[$last]->duration_min) {
                     $last = $i;
                 }
             }
+            $staffType = $this->staffType($spa);
             foreach ($steps as $i => $s) {
                 $type = $s->resourceType;
-                $needStart = $start->addMinutes($s->offset_min);
-                $needs[] = [
-                    'type_id' => $type->id,
-                    'type_slug' => $type->slug,
-                    'mode' => $type->allocation_mode,
+                $needStart = $start->addMinutes($offsets[$i]);
+                $needEnd = $needStart->addMinutes($s->duration_min + ($i === $last ? $extraMin : 0));
+                $base = [
                     'start' => $needStart,
-                    'end' => $needStart->addMinutes($s->duration_min + ($i === $last ? $extraMin : 0)),
-                    'party' => $party,
+                    'end' => $needEnd,
                     'treatment_id' => $treatment->id,
                     'label' => $treatment->tr('name'),
                     'participant_no' => (int) ($item['participant_no'] ?? 0),
                 ];
+                $needs[] = $base + [
+                    'type_id' => $type->id,
+                    'type_slug' => $type->slug,
+                    'mode' => $type->allocation_mode,
+                    'party' => $party,
+                ];
+                $staff = (int) $s->staff_per_person;
+                if ($staff > 0) {
+                    // Praticien(s) requis en même temps que la cabine/salle : besoin séparé sur la même fenêtre.
+                    $needs[] = $base + [
+                        'type_id' => $staffType?->id ?? 0,
+                        'type_slug' => $staffType?->slug ?? 'praticien',
+                        'mode' => $staffType?->allocation_mode ?? 'unit',
+                        'party' => $party * $staff,
+                    ];
+                }
             }
         }
 
         return $needs;
+    }
+
+    /**
+     * Décalage effectif (minutes) de chaque étape : une étape « en parallèle » démarre
+     * avec la précédente ; sinon son `offset_min` enregistré.
+     *
+     * @param  Collection<int, TreatmentStep>  $steps
+     * @return array<int, int>
+     */
+    public static function stepOffsets(Collection $steps): array
+    {
+        $offsets = [];
+        foreach ($steps->values() as $i => $s) {
+            $offsets[$i] = $i > 0 && $s->parallel_with_previous ? $offsets[$i - 1] : (int) $s->offset_min;
+        }
+
+        return $offsets;
+    }
+
+    /** Type de ressource « praticien » de l'établissement (kind = therapist), s'il existe. */
+    public function staffType(Spa $spa): ?ResourceType
+    {
+        return $spa->resourceTypes->firstWhere('kind', 'therapist');
+    }
+
+    /** Temps de rotation (minutes) par identifiant de ressource, hérité de son type. */
+    private function bufferByResource(Spa $spa): array
+    {
+        $byType = $spa->resourceTypes->pluck('buffer_min', 'id');
+
+        return $spa->resources->mapWithKeys(fn ($r) => [$r->id => (int) ($byType[$r->resource_type_id] ?? 0)])->all();
     }
 
     public function resolveTreatment(Spa $spa, int|string|Treatment|null $ref): ?Treatment
@@ -129,11 +177,11 @@ class CapacityEngine
 
     /* ------------------------------------------------------------------ Horaires */
 
-    /** L'établissement est-il ouvert sur tout [start, end[ ? Un spa sans horaires est considéré ouvert. */
+    /** L'établissement est-il ouvert sur tout [start, end[ ? Sans horaires renseignés, il est fermé. */
     public function isOpen(Spa $spa, CarbonImmutable $start, CarbonImmutable $end): bool
     {
         if ($spa->hours->isEmpty()) {
-            return true;
+            return false;
         }
         $midnight = $start->startOfDay();
         $sMin = $midnight->diffInMinutes($start);
@@ -159,28 +207,32 @@ class CapacityEngine
     }
 
     /**
-     * Allocations actives chevauchant [start, end[, en ignorant les réservations inactives
-     * même si leurs allocations n'ont pas encore été libérées.
+     * Allocations actives chevauchant [start, end[, prolongées du temps de rotation de leur
+     * ressource, en ignorant les réservations inactives même si leurs allocations n'ont pas
+     * encore été libérées.
      *
      * @return array<int, array{resource_id:int, party:int, s:CarbonImmutable, e:CarbonImmutable}>
      */
     public function activeAllocations(Spa $spa, CarbonImmutable $start, CarbonImmutable $end, int $excludeBooking = 0): array
     {
+        $buffers = $this->bufferByResource($spa);
+        $maxBuffer = $buffers ? max($buffers) : 0;
+
         return Allocation::query()
             ->select('allocations.resource_id', 'allocations.party', 'allocations.start_at', 'allocations.end_at')
             ->join('bookings', 'bookings.id', '=', 'allocations.booking_id')
             ->where('allocations.spa_id', $spa->id)
             ->where('allocations.status', 'active')
             ->where('allocations.booking_id', '<>', $excludeBooking)
-            ->where('allocations.start_at', '<', $end)
-            ->where('allocations.end_at', '>', $start)
+            ->where('allocations.start_at', '<', $end->addMinutes($maxBuffer))
+            ->where('allocations.end_at', '>', $start->subMinutes($maxBuffer))
             ->whereNotIn('bookings.status', Booking::INACTIVE_STATUSES)
             ->get()
             ->map(fn ($a) => [
                 'resource_id' => (int) $a->resource_id,
                 'party' => (int) $a->party,
                 's' => CarbonImmutable::parse($a->start_at),
-                'e' => CarbonImmutable::parse($a->end_at),
+                'e' => CarbonImmutable::parse($a->end_at)->addMinutes($buffers[(int) $a->resource_id] ?? 0),
             ])->all();
     }
 
@@ -236,10 +288,11 @@ class CapacityEngine
         $winE = max(array_column($needs, 'end'));
 
         if (! $this->isOpen($spa, $winS, $winE)) {
-            return ['ok' => false, 'allocations' => [], 'errors' => [__('booking.closed')]];
+            return ['ok' => false, 'allocations' => [], 'errors' => [__($spa->hours->isEmpty() ? 'booking.not_configured' : 'booking.closed')]];
         }
 
         $blocks = $this->blocksBetween($spa, $winS, $winE);
+        $buffers = $this->bufferByResource($spa);
         $allocs = $this->activeAllocations($spa, $winS, $winE, $excludeBooking);
         $resources = $spa->resources->where('status', 'active');
 
@@ -249,7 +302,8 @@ class CapacityEngine
                 if ($r->resource_type_id !== $need['type_id'] || $this->resourceBlocked($r, $need['start'], $need['end'], $blocks)) {
                     continue;
                 }
-                $usage = $this->peakUsage($r->id, $need['start'], $need['end'], $allocs);
+                // La ressource doit être libre sur la prestation ET sur sa rotation (nettoyage) qui suit.
+                $usage = $this->peakUsage($r->id, $need['start'], $need['end']->addMinutes($buffers[$r->id] ?? 0), $allocs);
                 $free = $need['mode'] === 'unit' ? ($usage > 0 ? 0 : $r->max_party) : $r->capacity - $usage;
                 if ($free > 0) {
                     $candidates[] = ['res' => $r, 'free' => min($free, $r->max_party)];
@@ -306,7 +360,7 @@ class CapacityEngine
                     'resource_name' => $c['res']->name,
                 ];
                 $result['allocations'][] = $alloc;
-                $allocs[] = ['resource_id' => $c['res']->id, 'party' => $c['party'], 's' => $need['start'], 'e' => $need['end']];
+                $allocs[] = ['resource_id' => $c['res']->id, 'party' => $c['party'], 's' => $need['start'], 'e' => $need['end']->addMinutes($buffers[$c['res']->id] ?? 0)];
             }
         }
 
@@ -337,6 +391,9 @@ class CapacityEngine
         $step = $step ?: $spa->slotStep();
         $notBefore ??= CarbonImmutable::now()->addMinutes($spa->minLead());
         $d0 = CarbonImmutable::parse($day)->startOfDay();
+        if ($spa->hours->isEmpty()) {
+            return ['times' => [], 'reason' => __('booking.not_configured')];
+        }
         $times = [];
         $reason = '';
         for ($m = 0; $m < 1440; $m += $step) {

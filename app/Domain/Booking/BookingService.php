@@ -10,6 +10,7 @@ use App\Events\BookingStatusChanged;
 use App\Models\ActivityLog;
 use App\Models\Allocation;
 use App\Models\Booking;
+use App\Models\BookingDecline;
 use App\Models\LedgerEntry;
 use App\Models\Spa;
 use Carbon\CarbonImmutable;
@@ -80,7 +81,8 @@ class BookingService
             throw BookingException::make('price_changed', 'price_changed', [], 409);
         }
 
-        $booking = $this->engine->withLock($spa, fn () => $this->insert($spa, $start, $quote, $customer, 'waiting', $payload['id'], $payload['locale'] ?? app()->getLocale()));
+        $status = $spa->instantBookingActive() ? 'confirmed' : 'waiting';
+        $booking = $this->engine->withLock($spa, fn () => $this->insert($spa, $start, $quote, $customer, $status, $payload['id'], $payload['locale'] ?? app()->getLocale()));
         $this->intents->consume($payload['id'], $booking->id);
 
         return $booking;
@@ -91,7 +93,7 @@ class BookingService
      *
      * @param  array  $items  [{treatment, party, extras, participant_no}]
      */
-    public function book(Spa $spa, CarbonImmutable $start, array $items, array $customer, string $status = 'waiting'): Booking
+    public function book(Spa $spa, CarbonImmutable $start, array $items, array $customer, string $status = 'waiting', array $meta = [], string $actor = 'client'): Booking
     {
         $participants = [];
         foreach (array_values($items) as $i => $item) {
@@ -102,20 +104,41 @@ class BookingService
             throw new BookingException('quote', implode(' ', $quote['errors']));
         }
 
-        return $this->engine->withLock($spa, fn () => $this->insert($spa, $start, $quote, $customer, $status));
+        return $this->engine->withLock($spa, fn () => $this->insert($spa, $start, $quote, $customer, $status, meta: $meta, actor: $actor));
     }
 
-    private function insert(Spa $spa, CarbonImmutable $start, array $quote, array $customer, string $status, ?string $intentId = null, ?string $locale = null): Booking
+    /**
+     * Saisie partenaire d'une réservation reçue hors plateforme (téléphone, WhatsApp, réception…) :
+     * confirmée d'emblée, même devis, même plan de capacité et même verrou qu'une réservation en ligne,
+     * donc elle consomme exactement la même capacité. Pas de délai minimum (le client peut être déjà sur place),
+     * mais jamais avant aujourd'hui ni en dehors des horaires d'ouverture.
+     *
+     * @param  array  $items  [{treatment, party, extras}]
+     */
+    public function bookOffline(Spa $spa, CarbonImmutable $start, array $items, array $customer, string $channel, ?int $userId = null): Booking
+    {
+        if (! in_array($channel, Booking::CHANNELS, true)) {
+            throw new BookingException('channel', 'channel');
+        }
+        if ($start < CarbonImmutable::now()->startOfDay()) {
+            throw BookingException::make('too_soon', 'past_date');
+        }
+
+        return $this->book($spa, $start, $items, $customer, 'confirmed', meta: ['source' => 'partner', 'channel' => $channel, 'created_by_user_id' => $userId], actor: 'partner');
+    }
+
+    private function insert(Spa $spa, CarbonImmutable $start, array $quote, array $customer, string $status, ?string $intentId = null, ?string $locale = null, array $meta = [], string $actor = 'client'): Booking
     {
         $plan = $this->engine->plan($spa, $this->engine->expandNeeds($spa, $start, $quote['items']));
         if (! $plan['ok']) {
             throw new BookingException('unavailable', implode(' ', $plan['errors']), 409);
         }
-        $pct = $spa->partner->commissionPct();
-        $commissionable = round((float) ($quote['commissionable'] ?? $quote['total']), 2);
+        $offline = ($meta['source'] ?? 'online') === 'partner';
+        $pct = $offline ? 0.0 : $spa->partner->commissionPct();
+        $commissionable = $offline ? 0.0 : round((float) ($quote['commissionable'] ?? $quote['total']), 2);
 
-        $booking = DB::transaction(function () use ($spa, $start, $quote, $customer, $status, $intentId, $locale, $plan, $pct, $commissionable) {
-            $booking = Booking::create([
+        $booking = DB::transaction(function () use ($spa, $start, $quote, $customer, $status, $intentId, $locale, $plan, $pct, $commissionable, $meta, $actor) {
+            $booking = Booking::create($meta + [
                 'spa_id' => $spa->id,
                 'user_id' => $customer['user_id'] ?? null,
                 'status' => $status,
@@ -167,7 +190,7 @@ class BookingService
                     'status' => 'active',
                 ]);
             }
-            $booking->log('created', 'client', ['status' => $status]);
+            $booking->log('created', $actor, array_filter(['status' => $status, 'channel' => $meta['channel'] ?? null]));
 
             return $booking;
         });
@@ -191,13 +214,55 @@ class BookingService
         return $booking;
     }
 
-    public function decline(Booking $booking, string $actor = 'partner', ?string $note = null): Booking
+    /**
+     * Refus structuré d'une demande : motif obligatoire, explication interne facultative (jamais montrée au client).
+     * Avant de libérer le créneau, on note si le moteur avait encore de la place pour cette demande (hors ses propres
+     * allocations) : un refus « plus de place » alors que la capacité existait signale un planning non tenu à jour.
+     */
+    public function decline(Booking $booking, string $actor = 'partner', ?string $reason = null, ?string $note = null, ?int $userId = null): Booking
     {
         if (! $booking->isWaiting()) {
             throw BookingException::make('status', 'not_waiting', [], 409);
         }
+        if (! in_array($reason, BookingDecline::REASONS, true)) {
+            throw BookingException::make('decline_reason', 'reason_required', [], 422);
+        }
+        $note = trim((string) $note) !== '' ? trim($note) : null;
+        if ($reason === 'other' && $note === null) {
+            throw BookingException::make('decline_reason', 'note_required_other', [], 422);
+        }
 
-        return $this->transition($booking, 'declined', $actor, ['expires_at' => null, 'partner_note' => $note]);
+        $spa = $booking->spa;
+
+        return $this->engine->withLock($spa, function () use ($booking, $spa, $actor, $reason, $note, $userId) {
+            $booking->refresh();
+            if (! $booking->isWaiting()) {
+                throw BookingException::make('status', 'not_waiting', [], 409);
+            }
+            $items = $booking->quote['items'] ?? [];
+            $engineAvailable = null;
+            if ($items !== []) {
+                $engineAvailable = (bool) ($this->engine->check($spa, $booking->start_at, $items, $booking->id)['ok'] ?? false);
+            }
+
+            $booking = $this->transition($booking, 'declined', $actor, ['expires_at' => null, 'partner_note' => $note]);
+            $decline = $booking->declines()->create([
+                'spa_id' => $spa->id,
+                'declined_by' => $userId,
+                'actor' => $actor,
+                'reason' => $reason,
+                'note' => $note,
+                'start_at' => $booking->start_at,
+                'party' => (int) ($booking->party ?: 1),
+                'engine_available' => $engineAvailable,
+            ]);
+            $booking->log('declined:reason', $actor, ['reason' => $reason, 'engine_available' => $engineAvailable, 'decline_id' => $decline->id]);
+            if (auth()->check()) {
+                ActivityLog::record('booking.declined', $booking, ['reason' => $reason, 'engine_available' => $engineAvailable, 'spa_id' => $spa->id]);
+            }
+
+            return $booking;
+        });
     }
 
     public function cancel(Booking $booking, string $actor = 'client'): Booking
