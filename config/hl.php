@@ -32,6 +32,10 @@ return [
     'features' => [
         'promotions' => (bool) env('HL_FEATURE_PROMOTIONS', false),
     ],
+    'security' => [
+        // Double authentification TOTP exigée pour tout compte administrateur.
+        'admin_2fa_required' => (bool) env('HL_ADMIN_2FA_REQUIRED', true),
+    ],
     'default_commission_pct' => (float) env('HL_DEFAULT_COMMISSION_PCT', 15),
     'lock_timeout_seconds' => 5,
 ];
