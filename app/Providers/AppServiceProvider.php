@@ -9,6 +9,7 @@ use App\Http\Middleware\SetLocale;
 use App\Listeners\SendBookingNotifications;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Event;
@@ -26,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Date::use(CarbonImmutable::class);
+        TrustProxies::at(config('hl.trusted_proxies'));
         Livewire::addPersistentMiddleware([SetLocale::class]);
         RateLimiter::for('api', fn (Request $r) => Limit::perMinute(120)->by($r->ip()));
 
