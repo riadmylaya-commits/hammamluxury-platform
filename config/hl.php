@@ -34,4 +34,11 @@ return [
     ],
     'default_commission_pct' => (float) env('HL_DEFAULT_COMMISSION_PCT', 15),
     'lock_timeout_seconds' => 5,
+
+    // Proxys de confiance (Cloudflare). Fichier maintenu par deploy/cloudflare-ips.sh ; HL_TRUSTED_PROXIES
+    // (liste séparée par des virgules) le complète ou le remplace. Vide = aucun proxy, IP source utilisée telle quelle.
+    'trusted_proxies' => array_values(array_filter(array_unique(array_merge(
+        is_file($f = storage_path('app/trusted-proxies.txt')) ? preg_split('/\s+/', trim((string) file_get_contents($f))) : [],
+        array_map('trim', explode(',', (string) env('HL_TRUSTED_PROXIES', ''))),
+    )))),
 ];
