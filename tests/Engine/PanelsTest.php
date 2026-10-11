@@ -226,9 +226,12 @@ class PanelsTest extends BookingFlowTestCase
         Livewire::test(ViewBooking::class, ['record' => $a->getRouteKey()])->assertSee($a->reference)->callAction('accept')->assertHasNoActionErrors();
         $this->assertSame('confirmed', $a->fresh()->status);
 
-        Livewire::test(ViewBooking::class, ['record' => $b->getRouteKey()])->callAction('decline', ['note' => 'Cabine indisponible'])->assertHasNoActionErrors();
+        Livewire::test(ViewBooking::class, ['record' => $b->getRouteKey()])->callAction('decline', ['note' => 'Cabine indisponible'])->assertHasActionErrors(['reason']);
+        $this->assertSame('waiting', $b->fresh()->status, 'sans motif, pas de refus');
+        Livewire::test(ViewBooking::class, ['record' => $b->getRouteKey()])->callAction('decline', ['reason' => 'staff_unavailable', 'note' => 'Cabine indisponible'])->assertHasNoActionErrors();
         $b->refresh();
         $this->assertSame('declined', $b->status);
+        $this->assertSame(['staff_unavailable', 'Cabine indisponible', $this->owner->id], [$b->decline->reason, $b->decline->note, $b->decline->declined_by]);
         $this->assertSame(0, $b->allocations()->where('status', 'active')->count());
         $this->assertTrue($this->submit($this->intent('10:00', ['treatment' => $this->m->id, 'party' => 1]))['ok'], 'la cabine libérée est de nouveau réservable');
 

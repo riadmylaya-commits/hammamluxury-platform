@@ -3,9 +3,9 @@
 @php($cur = config('hl.currency'))
 @php($fmt = fn ($n) => number_format($n, 0, ',', ' ').' '.$cur)
 @php($tone = ['waiting' => 'warn', 'confirmed' => 'ok', 'completed' => 'ok', 'declined' => 'bad', 'cancelled' => 'grey', 'expired' => 'grey', 'no_show' => 'grey', 'partner_no_show' => 'bad'][$b->status])
-@if ($new && $b->isWaiting())
+@if ($new && ($b->isWaiting() || $b->instantConfirmed()))
     <div class="check">✓</div>
-    <h1 style="text-align:center;font-size:26px">{{ __('ui.done_title') }}</h1>
+    <h1 style="text-align:center;font-size:26px">{{ $b->instantConfirmed() ? __('ui.done_title_instant') : __('ui.done_title') }}</h1>
     <p class="muted" style="text-align:center">{{ __('ui.done_sub', ['email' => $b->email]) }}</p>
 @else
     <h1 style="font-size:24px;margin-top:14px">{{ __('ui.booking_ref', ['ref' => $b->reference]) }}</h1>
@@ -20,8 +20,8 @@
         <p class="small" style="margin:10px 0 0">{{ __('ui.status_hint.'.$b->status, ['deadline' => $b->expires_at?->locale(app()->getLocale())->isoFormat('LLL')]) }}</p>
         @if ($b->isWaiting() || $b->isConfirmed())
         <ul class="tl">
-            <li data-on><i></i>{{ __('ui.timeline.sent') }} · {{ $b->created_at->locale(app()->getLocale())->isoFormat('LLL') }}</li>
-            <li @if ($b->isConfirmed()) data-on @endif><i></i>{{ __('ui.timeline.confirm') }}@if ($b->confirmed_at) · {{ $b->confirmed_at->locale(app()->getLocale())->isoFormat('LLL') }}@endif</li>
+            <li data-on><i></i>{{ $b->instantConfirmed() ? __('ui.timeline_instant.sent') : __('ui.timeline.sent') }} · {{ $b->created_at->locale(app()->getLocale())->isoFormat('LLL') }}</li>
+            <li @if ($b->isConfirmed()) data-on @endif><i></i>{{ $b->instantConfirmed() ? __('ui.timeline_instant.confirm') : __('ui.timeline.confirm') }}@if ($b->confirmed_at) · {{ $b->confirmed_at->locale(app()->getLocale())->isoFormat('LLL') }}@endif</li>
             <li><i></i>{{ __('ui.timeline.visit') }} · {{ $b->start_at->locale(app()->getLocale())->isoFormat('LLLL') }}</li>
         </ul>
         @endif

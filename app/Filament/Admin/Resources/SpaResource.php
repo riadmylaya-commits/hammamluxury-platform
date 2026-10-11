@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Domain\Booking\CancellationService;
+use App\Domain\Catalogue\CapacityReadiness;
 use App\Domain\Catalogue\PublicationChecklist;
 use App\Domain\Partner\OnboardingService;
 use App\Filament\Admin\Resources\SpaResource\Pages;
@@ -68,7 +69,25 @@ class SpaResource extends Resource
             Forms\Components\Section::make(__('admin.checklist'))->schema([
                 Forms\Components\Placeholder::make('checks')->label('')->content(fn (Spa $s) => self::checklist($s)),
             ]),
+            Forms\Components\Section::make(__('admin.readiness'))->description(__('admin.readiness_help'))->schema([
+                Forms\Components\Placeholder::make('readiness')->label('')->content(fn (Spa $s) => self::readiness($s)),
+                Forms\Components\Toggle::make('instant_booking')->label(__('admin.instant_booking'))->helperText(__('admin.instant_booking_help'))
+                    ->disabled(fn (Spa $s) => ! CapacityReadiness::passes($s) && ! $s->instant_booking),
+                Forms\Components\Placeholder::make('instant_booking_at')->label(__('admin.instant_booking_at'))->visible(fn (Spa $s) => $s->instant_booking)
+                    ->content(fn (Spa $s) => $s->instant_booking_at?->format('d/m/Y H:i') ?? '—'),
+            ]),
         ]);
+    }
+
+    public static function readiness(Spa $spa): HtmlString
+    {
+        $html = '<ul class="space-y-1 text-sm">';
+        foreach (CapacityReadiness::checks($spa) as $label => $ok) {
+            $html .= '<li>'.($ok ? '✅' : '❌').' '.e($label).'</li>';
+        }
+        $html .= '<li class="font-semibold '.(CapacityReadiness::passes($spa) ? 'text-success-600' : 'text-danger-600').'">'.e(CapacityReadiness::passes($spa) ? __('admin.readiness_ok') : __('admin.readiness_ko')).'</li></ul>';
+
+        return new HtmlString($html);
     }
 
     public static function checklist(Spa $spa): HtmlString
@@ -107,6 +126,12 @@ class SpaResource extends Resource
                     })
                     ->color(fn ($state, Spa $s) => $state && CancellationService::rateFor($s->id)['rate'] >= 20 ? 'danger' : ($state ? 'warning' : 'gray'))->badge()
                     ->tooltip(__('admin.cancellation_col_help')),
+                Tables\Columns\TextColumn::make('full_declines_count')->label(__('admin.declines_col'))->badge()->sortable()
+                    ->counts(['declines as full_declines_count' => fn (Builder $q) => $q->where('reason', 'full')->where('created_at', '>=', now()->subDays(90))])
+                    ->formatStateUsing(fn ($state, Spa $s) => $state ? $state.' ('.$s->declines()->where('reason', 'full')->where('engine_available', true)->where('created_at', '>=', now()->subDays(90))->count().')' : '0')
+                    ->color(fn ($state, Spa $s) => $state && $s->declines()->where('reason', 'full')->where('engine_available', true)->where('created_at', '>=', now()->subDays(90))->exists() ? 'danger' : ($state ? 'warning' : 'gray'))
+                    ->tooltip(__('admin.declines_col_help'))
+                    ->url(fn (Spa $s) => BookingDeclineResource::getUrl('index', ['tableFilters' => ['spa_id' => ['value' => $s->id], 'reason' => ['value' => 'full']]])),
                 Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->placeholder('—'),
                 Tables\Columns\TextColumn::make('license_number')->label(__('admin.license_col'))->toggleable()->badge()
                     ->getStateUsing(fn (Spa $s) => $s->license_number ?: ($s->licenseExpected() ? __('admin.license_missing') : null))->placeholder('—')

@@ -35,3 +35,15 @@ Nginx 1.24 · PHP 8.3-FPM (`php8.3-{cli,fpm,mysql,mbstring,xml,curl,zip,intl,gd,
 - Fait en production : `PasswordAuthentication no`, `PermitRootLogin prohibit-password` (`/etc/ssh/sshd_config.d/99-hl.conf`).
 
 Bascule du domaine principal (`www`/`@` → 2.28.232.115) uniquement après validation sur `prod.hammamluxury.com` ; l'ancien site WordPress reste en place jusque-là.
+
+## Cloudflare (compatibilité serveur et protection de l'origine)
+
+Scripts dans `deploy/` ; installation idempotente : `bash deploy/cloudflare-install.sh` (en root).
+
+- `cloudflare-ips.sh` (cron hebdomadaire `/etc/cron.d/hl-cloudflare`) : télécharge les plages IP Cloudflare, écrit `/etc/nginx/conf.d/cloudflare-realip.conf` (`set_real_ip_from` + `real_ip_header CF-Connecting-IP`) et `storage/app/trusted-proxies.txt` (lu par `config('hl.trusted_proxies')`, déclaré via `TrustProxies::at()`), puis `config:cache`. Alerte `hl-alert.sh` si la liste est indisponible (listes précédentes conservées). Sans Cloudflare devant le serveur, aucun effet.
+- `cf-ufw.sh on|off` : `on` limite 80/443 aux plages Cloudflare (protection de l'IP d'origine, à activer seulement une fois le site proxifié) ; `off` = retour arrière immédiat (80/443 ouverts à tous). Le port 22 n'est jamais touché.
+- `nginx/00-default-444.conf` : vhost par défaut qui ferme (444) toute requête sans `Host` connu (accès par IP, scans). Retirer l'IP du `server_name` du vhost applicatif.
+- `nginx/cloudflare-origin-pull.conf` : Authenticated Origin Pulls (certificat client Cloudflare obligatoire) — à inclure dans le vhost uniquement après proxification.
+- `fail2ban/` : prisons `hl-nginx-abuse` (rafales 403/404/429/444) et `hl-nginx-login` (POST répétés sur les connexions) avec l'action `hl-nginx-deny` (`deny <ip>;` dans `/etc/nginx/conf.d/hl-banned.conf` + reload), efficace derrière Cloudflare contrairement à un bannissement pare-feu.
+
+Retour arrière Cloudflare : (1) enregistrement DNS repassé en « DNS only » ; (2) `cf-ufw.sh off` ; (3) retirer l'include origin-pull si activé ; (4) en dernier recours, serveurs de noms du registrar rétablis.

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Booking\CapacityEngine;
 use App\Domain\Booking\QuoteBuilder;
 use App\Domain\Catalogue\Presentation;
 use App\Models\Concerns\Translatable;
@@ -66,8 +67,9 @@ class Treatment extends Model
     public function computedDuration(): int
     {
         $end = 0;
-        foreach ($this->steps as $s) {
-            $end = max($end, $s->offset_min + $s->duration_min);
+        $offsets = CapacityEngine::stepOffsets($this->steps);
+        foreach ($this->steps->values() as $i => $s) {
+            $end = max($end, $offsets[$i] + $s->duration_min);
         }
 
         return $end ?: (int) $this->duration_min;

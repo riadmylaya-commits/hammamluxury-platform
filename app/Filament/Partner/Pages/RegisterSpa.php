@@ -187,17 +187,24 @@ class RegisterSpa extends RegisterTenant
                         ->hidden(fn (Get $get) => $get('category') === 'ritual'),
                     Placeholder::make('total_duration')->label(__('partner.total_duration'))
                         ->visible(fn (Get $get) => $get('category') === 'ritual')
-                        ->content(fn (Get $get) => Presentation::duration((int) collect($get('components') ?? [])->sum(fn ($c) => (int) ($c['duration_min'] ?? 0)))),
+                        ->content(fn (Get $get) => Presentation::duration(OnboardingService::componentsDuration(collect($get('components') ?? [])->values()
+                            ->map(fn ($c, $i) => ['duration_min' => (int) ($c['duration_min'] ?? 0), 'parallel' => $i > 0 && ! empty($c['parallel'])])->all()))),
                     TextInput::make('price_solo')->label(__('partner.price_solo'))->numeric()->minValue(1)->suffix(config('hl.currency'))->required(),
                     TextInput::make('price_couple')->label(__('partner.price_couple'))->numeric()->minValue(1)->suffix(config('hl.currency'))->helperText(__('partner.price_couple_help')),
+                    Select::make('staff_per_person')->label(__('partner.staff_per_person'))->options(__('partner.staff_options'))->default(1)->native(false)
+                        ->helperText(__('partner.staff_per_person_help'))
+                        ->visible(fn (Get $get) => in_array($get('category'), OnboardingService::STAFFED_KINDS, true)),
                     Repeater::make('components')->label(__('partner.components'))->helperText(__('partner.components_help'))
                         ->visible(fn (Get $get) => $get('category') === 'ritual')
                         ->minItems(fn (Get $get) => $get('category') === 'ritual' ? 2 : 0)->defaultItems(2)->reorderable()->live()
                         ->addActionLabel(__('partner.add_component'))->columnSpanFull()
                         ->schema([
-                            Select::make('kind')->label(__('partner.component_kind'))->options(__('partner.component_kinds'))->required()->native(false)->default('hammam'),
+                            Select::make('kind')->label(__('partner.component_kind'))->options(__('partner.component_kinds'))->required()->native(false)->default('hammam')->live(),
                             TextInput::make('duration_min')->label(__('partner.duration'))->numeric()->minValue(5)->maxValue(480)->step(5)->suffix('min')->required()->default(45),
                             TextInput::make('label')->label(__('partner.component_label'))->maxLength(120)->helperText(__('partner.component_label_help')),
+                            Select::make('staff')->label(__('partner.component_staff'))->options(__('partner.staff_options'))->default(1)->native(false)
+                                ->visible(fn (Get $get) => in_array($get('kind'), OnboardingService::STAFFED_KINDS, true)),
+                            Toggle::make('parallel')->label(__('partner.component_parallel'))->helperText(__('partner.component_parallel_help'))->inline(false)->live(),
                         ])->columns(3),
                     Select::make('included')->label(__('partner.included'))->options(Presentation::includedOptions())->multiple()->native(false)->helperText(__('partner.included_help'))->columnSpan(['default' => 1, 'lg' => 2]),
                     Toggle::make('featured')->label(__('partner.featured'))->helperText(__('partner.featured_help'))->live()->inline(false),
@@ -241,12 +248,18 @@ class RegisterSpa extends RegisterTenant
                 TextInput::make('hammam_capacity')->label(__('partner.hammam_capacity'))->numeric()->minValue(0)->maxValue(100)->default(0)->required()->helperText(__('partner.hammam_capacity_help')),
                 TextInput::make('massage_cabins')->label(__('partner.massage_cabins'))->numeric()->minValue(0)->maxValue(50)->default(0)->required()->helperText(__('partner.massage_cabins_help')),
                 TextInput::make('treatment_rooms')->label(__('partner.treatment_rooms'))->numeric()->minValue(0)->maxValue(50)->default(0)->required()->helperText(__('partner.treatment_rooms_help')),
+                TextInput::make('therapists')->label(__('partner.therapists'))->numeric()->minValue(0)->maxValue(100)->default(0)->required()->helperText(__('partner.therapists_help')),
+                Select::make('cabin_buffer_min')->label(__('partner.cabin_buffer_min'))->options(array_combine(OnboardingService::BUFFER_OPTIONS, array_map(fn (int $m) => $m.' min', OnboardingService::BUFFER_OPTIONS)))
+                    ->default(10)->required()->native(false)->helperText(__('partner.cabin_buffer_help')),
             ]),
             Placeholder::make('hours_tip')->label('')->content(__('partner.hours_tip')),
         ])->afterValidation(function (Step $component) {
             $state = $component->getChildComponentContainer()->getState();
             if (((int) $state['hammam_capacity'] + (int) $state['massage_cabins'] + (int) $state['treatment_rooms']) < 1) {
                 throw ValidationException::withMessages(['data.hammam_capacity' => __('partner.capacity_required')]);
+            }
+            if (OnboardingService::therapistsMissing($state)) {
+                throw ValidationException::withMessages(['data.therapists' => __('partner.therapists_required')]);
             }
             if ($state['hours_every_day'] ?? false) {
                 if ((int) $state['every_closes'] <= (int) $state['every_opens']) {
@@ -305,6 +318,7 @@ class RegisterSpa extends RegisterTenant
             __('partner.miss_resources') => $spa->resources()->where('status', 'active')->exists(),
             __('partner.miss_step_resources') => ! TreatmentStep::whereIn('treatment_id', $spa->treatments()->where('status', 'active')->select('id'))
                 ->whereDoesntHave('resourceType.resources', fn ($q) => $q->where('status', 'active'))->exists(),
+            __('partner.miss_staff') => PublicationChecklist::staffCovered($spa),
         ];
 
         return array_keys(array_filter($checks, fn ($ok) => ! $ok));
@@ -350,6 +364,8 @@ class RegisterSpa extends RegisterTenant
             'hammam_capacity' => 0,
             'massage_cabins' => 0,
             'treatment_rooms' => 0,
+            'therapists' => 0,
+            'cabin_buffer_min' => 10,
         ];
         if (! $spa) {
             return $state;
@@ -368,8 +384,10 @@ class RegisterSpa extends RegisterTenant
                 'name_fr' => $t->name_fr, 'name_en' => $t->name_en, 'category' => $t->category, 'duration_min' => $t->duration_min,
                 'price_solo' => $t->price_solo, 'price_couple' => $t->price_couple, 'description_fr' => $t->description_fr,
                 'included' => $t->included ?? [], 'featured' => $t->featured_badge !== null, 'featured_badge' => $t->featured_badge ?? 'signature',
+                'staff_per_person' => (int) ($t->steps->sortBy('position')->first(fn ($s) => $s->staff_per_person > 0)?->staff_per_person ?? 1) ?: 1,
                 'components' => $t->category === 'ritual' ? $t->steps->sortBy('position')->map(fn ($s) => [
                     'kind' => $s->resourceType?->slug ?? 'hammam', 'duration_min' => $s->duration_min, 'label' => $s->label,
+                    'staff' => (int) $s->staff_per_person, 'parallel' => (bool) $s->parallel_with_previous,
                 ])->values()->all() : [],
             ])->values()->all() ?: [],
             'practical_info' => $spa->practical_info ?? [],

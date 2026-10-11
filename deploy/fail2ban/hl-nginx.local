@@ -1,0 +1,26 @@
+# Prisons Nginx HammamLuxury. Derrière Cloudflare les paquets arrivent des IP Cloudflare : un bannissement
+# pare-feu de l'IP réelle serait sans effet, d'où l'action hl-nginx-deny (deny dans Nginx, qui voit l'IP réelle via real_ip).
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1
+
+[hl-nginx-abuse]
+enabled  = true
+port     = http,https
+filter   = hl-nginx-abuse
+logpath  = /var/log/nginx/access.log
+backend  = auto
+maxretry = 30
+findtime = 10m
+bantime  = 1h
+action   = hl-nginx-deny
+
+[hl-nginx-login]
+enabled  = true
+port     = http,https
+filter   = hl-nginx-login
+logpath  = /var/log/nginx/access.log
+backend  = auto
+maxretry = 15
+findtime = 10m
+bantime  = 1h
+action   = hl-nginx-deny

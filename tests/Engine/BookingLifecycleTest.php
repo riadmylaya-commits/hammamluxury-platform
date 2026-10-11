@@ -68,7 +68,7 @@ class BookingLifecycleTest extends BookingFlowTestCase
         $b = $this->submit($this->intent('16:00', $sel))['booking'];
         $this->assertNotContains('16:00', $this->availability($sel)['times'], 'Salle de soin occupée par la demande en attente');
         Mail::fake();
-        $this->bookings->decline($b, 'partner', 'Fermeture exceptionnelle');
+        $this->bookings->decline($b, 'partner', 'closed', 'Fermeture exceptionnelle');
         $this->assertTrue($b->fresh()->status === 'declined' && $this->activeAllocations($b) === [] && Allocation::where('booking_id', $b->id)->where('status', 'released')->count() === 2, 'Refus : allocations libérées (historique conservé)');
         $this->assertContains('16:00', $this->availability($sel)['times'], 'Après refus : 16:00 redevenu disponible');
         Mail::assertQueued(BookingMail::class, fn ($m) => $m->event === 'declined' && $m->audience === 'client');

@@ -67,9 +67,14 @@ class BookingActions
                 ->action(fn (Booking $b) => $run($b, 'accept')),
             $class::make('decline')->label(__('partner.decline'))->icon('heroicon-o-x-mark')->color('danger')
                 ->visible(fn (Booking $b) => $b->isWaiting())
-                ->form([Textarea::make('note')->label(__('partner.decline_note'))->rows(2)->maxLength(500)])
+                ->form([
+                    Select::make('reason')->label(__('partner.decline_reason'))->options(__('partner.decline_reasons'))->required()->native(false)->live()
+                        ->helperText(fn (Get $get) => $get('reason') === 'full' ? __('partner.decline_full_help') : null),
+                    Textarea::make('note')->label(__('partner.decline_note'))->rows(3)->maxLength(500)
+                        ->required(fn (Get $get) => $get('reason') === 'other'),
+                ])
                 ->requiresConfirmation()->modalDescription(__('partner.decline_help'))
-                ->action(fn (Booking $b, array $data) => $run($b, 'decline', [$data['note'] ?? null])),
+                ->action(fn (Booking $b, array $data) => $run($b, 'decline', [$data['reason'] ?? null, $data['note'] ?? null, auth()->id()])),
             $class::make('complete')->label(__('partner.complete'))->icon('heroicon-o-flag')->color('info')
                 ->visible(fn (Booking $b) => $actor === 'admin' && $b->isConfirmed() && $b->end_at->isPast())
                 ->action(fn (Booking $b) => $run($b, 'complete')),
@@ -197,6 +202,8 @@ class BookingActions
                 TextEntry::make('duration_min')->label(__('partner.duration'))->suffix(' min'),
                 TextEntry::make('total')->label(__('partner.total'))->formatStateUsing($money)->weight('bold'),
                 TextEntry::make('expires_at')->label(__('partner.expires_at'))->since()->visible(fn (Booking $b) => $b->isWaiting()),
+                TextEntry::make('source')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')
+                    ->formatStateUsing(fn ($state, Booking $b) => (__('partner.sources')[$state] ?? $state).($b->channel ? ' · '.(__('partner.channels')[$b->channel] ?? $b->channel) : '')),
                 TextEntry::make('payment_status')->label(__('partner.payment_status'))->badge()
                     ->formatStateUsing(fn ($state, Booking $b) => $b->nothingDue() ? __('partner.nothing_due_short') : (__('partner.payment_statuses')[$state] ?? $state))
                     ->color(fn ($state, Booking $b) => $b->nothingDue() ? 'gray' : self::paymentColor((string) $state)),
@@ -227,7 +234,18 @@ class BookingActions
                     ->formatStateUsing(fn (?string $state, Booking $b) => $withCommission || $b->contactVisibleToPartner() ? PhoneNumber::format($state) : __('partner.contact_hidden_until_confirmed')),
                 TextEntry::make('hotel')->label(__('partner.hotel'))->placeholder('—'),
                 TextEntry::make('note')->label(__('partner.customer_note'))->placeholder('—')->columnSpanFull(),
-                TextEntry::make('partner_note')->label(__('partner.partner_note'))->placeholder('—')->columnSpanFull(),
+            ])->columns(4),
+
+            Section::make(__('partner.declined_block'))->visible(fn (Booking $b) => $b->decline !== null)->schema([
+                TextEntry::make('decline.reason')->label(__('partner.decline_reason'))->badge()->color('danger')
+                    ->formatStateUsing(fn ($state) => __('partner.decline_reasons')[$state] ?? $state),
+                TextEntry::make('decline.user.name')->label(__('partner.declined_by'))->placeholder('—')
+                    ->formatStateUsing(fn ($state, Booking $b) => $state ?: __('admin.decline_actors')[$b->decline->actor] ?? $b->decline->actor),
+                TextEntry::make('decline.created_at')->label(__('partner.decided_at'))->dateTime('d/m/Y H:i'),
+                TextEntry::make('decline.engine_available')->label(__('admin.decline_engine'))->badge()->visible($withCommission)
+                    ->formatStateUsing(fn ($state) => $state === null ? __('admin.decline_engine_unknown') : ($state ? __('admin.decline_engine_yes') : __('admin.decline_engine_no')))
+                    ->color(fn ($state, Booking $b) => $b->decline->isSuspicious() ? 'danger' : 'gray')->helperText(__('admin.decline_engine_help')),
+                TextEntry::make('decline.note')->label(__('partner.decline_note'))->placeholder('—')->columnSpanFull(),
             ])->columns(4),
 
             Section::make(__('partner.internal_notes'))->description(__('partner.internal_notes_help'))->collapsed()->schema([
