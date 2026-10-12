@@ -40,6 +40,19 @@
         @endif
     </div>
 
+    @if ($b->status === 'completed' && ($rv = $b->review) && $rv->token)
+        <div class="card" style="padding:16px;margin-top:14px;border-left:4px solid var(--brand)" id="review">
+            @if ($rv->isInvited())
+                <b class="small">{{ __('ui.review.cta_title') }}</b>
+                <p class="small" style="margin:6px 0 10px">{{ __('ui.review.cta_body', ['spa' => $b->spa->name]) }}</p>
+                <a class="btn sm" href="{{ route('review.form', $rv->token) }}">{{ __('ui.review.cta_button') }}</a>
+            @else
+                <b class="small">{{ __('ui.review.thanks_title') }}</b>
+                <p class="small" style="margin:6px 0 0">{{ __('ui.review.status.'.$rv->status) }}</p>
+            @endif
+        </div>
+    @endif
+
     @php($cr = $b->cancellationRequests->first())
     @if ($cr && ($cr->isPending() || $cr->decided_at?->gt(now()->subDays(30))))
         <div class="card" style="padding:16px;margin-top:14px;border-left:4px solid {{ $cr->isPending() ? '#d98e04' : ($cr->status === 'accepted' ? '#b42318' : '#1a7f4b') }}" id="cancellation">

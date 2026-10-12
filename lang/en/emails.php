@@ -73,4 +73,12 @@ return [
         'partner' => ['subject' => 'New customer message — :ref', 'title' => 'New message from :name', 'intro' => 'The customer of booking :ref at :spa wrote to you:'],
         'client' => ['subject' => 'New message from :spa — booking :ref', 'title' => 'New message from :spa', 'intro' => 'Hello :name, the establishment wrote to you about your booking:'],
     ],
+
+    'review_invite' => [
+        'subject' => 'How was your experience at :spa?',
+        'title' => 'Your review of :spa',
+        'intro' => 'Hello :name, thank you for visiting :spa on :date. Share your experience in a few minutes: your review helps future guests and the venue.',
+        'button' => 'Write my review',
+        'footer' => 'This link is personal and tied to your booking. Reviews are checked by HammamLuxury before publication.',
+    ],
 ];

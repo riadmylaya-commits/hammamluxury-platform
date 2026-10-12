@@ -44,7 +44,7 @@ footer{padding:26px 0 40px;color:var(--muted);font-size:13px;border-top:1px soli
 .hero{background:linear-gradient(180deg,#1f4d3f,#2e6b57);color:#fff;padding:0 0 34px;border-radius:0 0 28px 28px}
 .hero h1{font-size:27px;overflow-wrap:anywhere;line-height:1.15;margin:16px 0 6px}.hero p{margin:0 0 18px;opacity:.9}
 .search{background:#fff;border-radius:16px;padding:10px;display:grid;gap:8px;box-shadow:0 10px 30px rgba(0,0,0,.2);color:var(--ink)}
-.search .fld{padding:6px 8px}.search .inp{border:0;padding:8px 4px;font-size:16px;font-weight:600}.search .btn{height:52px}
+.search .fld{padding:6px 8px}.search .inp{border:1px solid var(--ink);border-radius:10px;padding:10px 12px;font-size:16px;font-weight:600;transition:box-shadow .15s}.search .inp:hover{box-shadow:0 0 0 1px var(--ink)}.search .inp:focus{outline:0;box-shadow:0 0 0 1.5px var(--ink)}.search .btn{height:52px}
 .trust{display:grid;gap:12px;margin-top:18px}
 .trust>div{display:flex;gap:10px;align-items:flex-start;font-size:14px}.trust b{display:block}.trust i{width:34px;height:34px;flex:none;border-radius:10px;background:var(--soft);display:grid;place-items:center;color:var(--brand);font-style:normal;font-weight:700}
 .hscroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory}.hscroll>*{scroll-snap-align:start;flex:none}
@@ -141,3 +141,17 @@ body.lb-open{overflow:hidden}
 .prose summary::after{content:"+";color:var(--muted);font-weight:400}.prose details[open] summary::after{content:"–"}.prose details p{margin:8px 0 0}
 .frm{display:grid;gap:14px}.frm textarea.inp{resize:vertical;min-height:120px}.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 @media (max-width:599px){.grid2{grid-template-columns:1fr}}
+/* Session 2 : avis vérifiés */
+.rv-steps{display:flex;gap:6px;margin:10px 0 0}.rv-steps span{flex:1;font-size:12px;font-weight:600;color:var(--muted);padding:8px 0;border-bottom:3px solid var(--line)}.rv-steps span.on{color:var(--brand);border-color:var(--brand)}
+.rv-stars{display:flex;align-items:center;gap:2px}.rv-stars button{background:none;border:0;font-size:38px;line-height:1;color:#d9d2c7;cursor:pointer;padding:2px}.rv-stars button.on{color:var(--accent,#b8743a)}
+.rv-crit{display:grid;gap:4px}.rv-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.rv-smileys button,.rv-yesno button{background:#fff;border:1.5px solid var(--line);border-radius:999px;cursor:pointer;font:inherit}
+.rv-smileys button{font-size:22px;width:42px;height:42px;line-height:1;filter:grayscale(1);opacity:.55}.rv-smileys button.on{filter:none;opacity:1;border-color:var(--brand);background:var(--soft)}
+.rv-yesno button{padding:7px 14px;font-size:13px;font-weight:600;color:var(--muted)}.rv-yesno button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.rv-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.rv-thumbs span{position:relative;width:84px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}.rv-thumbs img{width:100%;height:100%;object-fit:cover}
+.rv-thumbs button{position:absolute;top:2px;right:2px;width:22px;height:22px;border:0;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;line-height:1}
+.rv-list{display:grid;gap:12px}.rv-item{padding:16px}.rv-item .rv-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rv-item .stars{color:var(--accent,#b8743a);letter-spacing:1px}
+.rv-item h4{font-size:16px;margin:8px 0 4px}.rv-item p{font-size:14px;line-height:1.55;margin:4px 0}.rv-item .rv-ph{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.rv-item .rv-ph img{width:96px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.rv-reply{margin-top:10px;padding:10px 12px;background:var(--soft);border-radius:10px;font-size:14px}.rv-reply b{display:block;font-size:12px;color:var(--brand);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.rv-sum{display:flex;align-items:center;gap:14px;margin-bottom:12px}.rv-sum .big{font-size:40px;font-weight:700;line-height:1}.rv-crit-sum{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:13px}.rv-crit-sum span b{float:right}
+@media (max-width:599px){.rv-crit-sum{grid-template-columns:1fr}}

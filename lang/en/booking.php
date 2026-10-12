@@ -65,6 +65,14 @@ return [
     'message_invalid' => 'The message is empty or longer than :max characters.',
     'message_closed' => 'Messaging is closed for this booking.',
 
+    'review_not_eligible' => 'Only a treatment actually carried out through HammamLuxury can be reviewed, and only once.',
+    'review_already_submitted' => 'A review has already been submitted for this booking.',
+    'review_rating_required' => 'Please choose a rating from 1 to 5 stars.',
+    'review_body_required' => 'Please write a comment of at least :min characters.',
+    'review_too_many_photos' => 'You can attach at most :max photos.',
+    'review_rejection_reason_required' => 'A content-related rejection reason is required; the rating alone is not a reason.',
+    'review_rejection_note_required' => 'Please specify the “Other” reason (at least 10 characters).',
+    'review_reply_not_allowed' => 'You can only reply to a published review, and a reply is already recorded.',
     'past_date' => 'A booking cannot be recorded on a past date.',
     'channel' => 'Unknown reception channel.',
 ];

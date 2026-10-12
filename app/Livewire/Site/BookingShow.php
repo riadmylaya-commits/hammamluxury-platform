@@ -93,7 +93,7 @@ class BookingShow extends Component
 
     public function render(): View
     {
-        $this->booking->loadMissing(['messages', 'cancellationRequests']);
+        $this->booking->loadMissing(['messages', 'cancellationRequests', 'review']);
 
         return view('livewire.site.booking-show')->title(__('ui.booking_ref', ['ref' => $this->booking->reference]));
     }
