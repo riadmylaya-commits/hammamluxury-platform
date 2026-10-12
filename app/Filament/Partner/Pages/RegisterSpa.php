@@ -274,7 +274,14 @@ class RegisterSpa extends RegisterTenant
                 }
                 $hours = array_values($state['hours'] ?? []);
             }
-            $this->service()->saveHours($this->requireSpa(), $hours, $state);
+            try {
+                $this->service()->saveHours($this->requireSpa(), $hours, $state);
+            } catch (ValidationException $e) {
+                // Resource guards apply to the entire atomic operation; show their booking references even
+                // when the model-level field does not exist in this simplified capacity wizard.
+                Notification::make()->danger()->title(collect($e->errors())->flatten()->first())->persistent()->send();
+                throw ValidationException::withMessages(['data.hours' => collect($e->errors())->flatten()->all()]);
+            }
             $this->service()->markStep($this->requireSpa(), 6);
             $this->savedNotice();
         });

@@ -2,7 +2,10 @@
 
 namespace App\Domain\Partner;
 
+use App\Domain\Booking\BookingMutation;
+use App\Domain\Booking\ResourceProtection;
 use App\Domain\Catalogue\Presentation;
+use App\Domain\Media\PhotoPathPolicy;
 use App\Mail\SpaStatusMail;
 use App\Models\ActivityLog;
 use App\Models\City;
@@ -81,15 +84,23 @@ class OnboardingService
     /** @param  list<string>  $paths chemins déjà traités (PhotoProcessor), dans l'ordre choisi */
     public function savePhotos(Spa $spa, array $paths): void
     {
-        $paths = array_values(array_unique(array_filter($paths)));
         $max = (int) config('hl.max_photos');
         if (count($paths) > $max) {
             throw ValidationException::withMessages(['data.photos' => __('partner.photos_max_error', ['max' => $max])]);
         }
-        $spa->photos()->whereNotIn('path', $paths)->delete();
-        foreach ($paths as $i => $path) {
-            $spa->photos()->updateOrCreate(['path' => $path], ['sort_order' => $i, 'is_cover' => $i === 0]);
-        }
+        PhotoPathPolicy::assertCanManage($spa);
+        DB::transaction(function () use ($spa, $paths) {
+            $spa = Spa::query()->whereKey($spa->id)->lockForUpdate()->firstOrFail();
+            // Validate every path before removing anything: one forged path must not wipe the gallery.
+            foreach ($paths as $path) {
+                PhotoPathPolicy::assertCanAttach($spa, $path, 'data.photos');
+            }
+            $paths = array_values(array_unique($paths));
+            $spa->photos()->whereNotIn('path', $paths)->delete();
+            foreach ($paths as $i => $path) {
+                $spa->photos()->updateOrCreate(['path' => $path], ['sort_order' => $i, 'is_cover' => $i === 0]);
+            }
+        });
     }
 
     /**
@@ -108,51 +119,53 @@ class OnboardingService
      */
     public function saveTreatments(Spa $spa, array $rows): void
     {
-        $keep = [];
-        $featured = null;
-        foreach (array_values($rows) as $i => $row) {
-            $slug = Str::slug($row['name_fr']) ?: 'soin-'.($i + 1);
-            $n = 1;
-            $base = $slug;
-            while (in_array($slug, $keep, true)) {
-                $slug = $base.'-'.++$n;
-            }
-            $keep[] = $slug;
+        app(BookingMutation::class)->forSpa($spa, function (Spa $spa) use ($rows): void {
+            $keep = [];
+            $featured = null;
+            foreach (array_values($rows) as $i => $row) {
+                $slug = Str::slug($row['name_fr']) ?: 'soin-'.($i + 1);
+                $n = 1;
+                $base = $slug;
+                while (in_array($slug, $keep, true)) {
+                    $slug = $base.'-'.++$n;
+                }
+                $keep[] = $slug;
 
-            $components = ($row['category'] ?? null) === 'ritual' ? $this->cleanComponents($row['components'] ?? []) : [];
-            $duration = $components ? self::componentsDuration($components) : (int) ($row['duration_min'] ?? 0);
+                $components = ($row['category'] ?? null) === 'ritual' ? $this->cleanComponents($row['components'] ?? []) : [];
+                $duration = $components ? self::componentsDuration($components) : (int) ($row['duration_min'] ?? 0);
 
-            $treatment = $spa->treatments()->updateOrCreate(['slug' => $slug], [
-                'category' => $row['category'],
-                'name_fr' => $row['name_fr'],
-                'name_en' => $row['name_en'] ?? null,
-                'description_fr' => $row['description_fr'] ?? null,
-                'duration_min' => $duration,
-                'price_solo' => $row['price_solo'],
-                'price_couple' => $row['price_couple'] ?? null,
-                'party_min' => 1,
-                'party_max' => (int) ($row['party_max'] ?? 6),
-                'included' => Presentation::cleanIncluded($row['included'] ?? null) ?: null,
-                'sort_order' => $i,
-                'status' => 'active',
-            ]);
-            if (! empty($row['featured']) && $featured === null) {
-                $featured = [$treatment, $row['featured_badge'] ?? null];
+                $treatment = $spa->treatments()->updateOrCreate(['slug' => $slug], [
+                    'category' => $row['category'],
+                    'name_fr' => $row['name_fr'],
+                    'name_en' => $row['name_en'] ?? null,
+                    'description_fr' => $row['description_fr'] ?? null,
+                    'duration_min' => $duration,
+                    'price_solo' => $row['price_solo'],
+                    'price_couple' => $row['price_couple'] ?? null,
+                    'party_min' => 1,
+                    'party_max' => (int) ($row['party_max'] ?? 6),
+                    'included' => Presentation::cleanIncluded($row['included'] ?? null) ?: null,
+                    'sort_order' => $i,
+                    'status' => 'active',
+                ]);
+                if (! empty($row['featured']) && $featured === null) {
+                    $featured = [$treatment, $row['featured_badge'] ?? null];
+                }
+                if ($components) {
+                    $this->syncComponentSteps($treatment, $components);
+                } else {
+                    $this->syncDefaultSteps($treatment, self::staffFor($row['category'], $row['staff_per_person'] ?? null));
+                }
             }
-            if ($components) {
-                $this->syncComponentSteps($treatment, $components);
+            $spa->treatments()->whereNotIn('slug', $keep)->delete();
+
+            if ($featured) {
+                [$t, $badge] = $featured;
+                $t->update(['featured_badge' => in_array($badge, Presentation::BADGES, true) ? $badge : ($t->featured_badge ?? 'signature')]);
             } else {
-                $this->syncDefaultSteps($treatment, self::staffFor($row['category'], $row['staff_per_person'] ?? null));
+                $spa->treatments()->whereNotNull('featured_badge')->update(['featured_badge' => null]);
             }
-        }
-        $spa->treatments()->whereNotIn('slug', $keep)->delete();
-
-        if ($featured) {
-            [$t, $badge] = $featured;
-            $t->update(['featured_badge' => in_array($badge, Presentation::BADGES, true) ? $badge : ($t->featured_badge ?? 'signature')]);
-        } else {
-            $spa->treatments()->whereNotNull('featured_badge')->update(['featured_badge' => null]);
-        }
+        });
     }
 
     /** Praticien(ne)s par personne : 1 par défaut pour un massage ou un soin, 2 pour un « quatre mains », 0 pour le hammam. */
@@ -248,17 +261,23 @@ class OnboardingService
      */
     public function saveHours(Spa $spa, array $hours, array $capacity): void
     {
-        $spa->hours()->delete();
-        foreach ($hours as $h) {
-            if ((int) $h['closes_min'] > (int) $h['opens_min']) {
-                $spa->hours()->create(['weekday' => (int) $h['weekday'], 'opens_min' => (int) $h['opens_min'], 'closes_min' => (int) $h['closes_min']]);
+        app(BookingMutation::class)->forSpa($spa, function (Spa $current) use ($hours, $capacity): void {
+            app(ResourceProtection::class)->assertOpeningHours($current, $hours);
+            $current->hours()->delete();
+            foreach ($hours as $h) {
+                $current->hours()->create(['weekday' => (int) $h['weekday'], 'opens_min' => (int) $h['opens_min'], 'closes_min' => (int) $h['closes_min']]);
             }
-        }
-        $this->provisionResources($spa, $capacity);
+            $this->provisionResources($current, $capacity);
+        });
     }
 
     /** Crée/ajuste les ressources par défaut sans toucher à celles déjà personnalisées par le partenaire. */
     public function provisionResources(Spa $spa, array $capacity): void
+    {
+        app(BookingMutation::class)->forSpa($spa, fn (Spa $current) => $this->provisionResourcesLocked($current, $capacity));
+    }
+
+    private function provisionResourcesLocked(Spa $spa, array $capacity): void
     {
         $hammam = max(0, (int) ($capacity['hammam_capacity'] ?? 0));
         $cabins = max(0, (int) ($capacity['massage_cabins'] ?? 0));
@@ -268,10 +287,17 @@ class OnboardingService
 
         if ($hammam > 0) {
             $type = $this->resourceType($spa, 'hammam');
-            $type->resources()->updateOrCreate(['spa_id' => $spa->id, 'name' => 'Hammam'], ['capacity' => $hammam, 'min_party' => 1, 'max_party' => $hammam, 'status' => 'active']);
+            $type->resources()->whereNull('archived_at')->updateOrCreate(['spa_id' => $spa->id, 'name' => 'Hammam'], ['capacity' => $hammam, 'min_party' => 1, 'max_party' => $hammam, 'status' => 'active']);
+        } elseif (array_key_exists('hammam_capacity', $capacity)) {
+            $spa->resources()->whereNull('archived_at')->where('name', 'Hammam')
+                ->whereHas('type', fn ($query) => $query->where('slug', 'hammam'))->get()->each->update(['status' => 'inactive']);
         }
         foreach (['massage' => $cabins, 'soin' => $rooms, 'praticien' => $therapists] as $slug => $count) {
-            if ($count <= 0) {
+            $key = match ($slug) { 'massage' => 'massage_cabins', 'soin' => 'treatment_rooms', default => 'therapists' };
+            if (! array_key_exists($key, $capacity)) {
+                continue;
+            }
+            if ($count <= 0 && ! $spa->resourceTypes()->where('slug', $slug)->exists()) {
                 continue;
             }
             $type = $this->resourceType($spa, $slug);
@@ -284,9 +310,9 @@ class OnboardingService
                 default => 'Praticien(ne)',
             };
             for ($i = 1; $i <= $count; $i++) {
-                $type->resources()->updateOrCreate(['spa_id' => $spa->id, 'name' => "$prefix $i"], ['capacity' => 1, 'min_party' => 1, 'max_party' => 1, 'status' => 'active', 'sort_order' => $i]);
+                $type->resources()->whereNull('archived_at')->updateOrCreate(['spa_id' => $spa->id, 'name' => "$prefix $i"], ['capacity' => 1, 'min_party' => 1, 'max_party' => 1, 'status' => 'active', 'sort_order' => $i]);
             }
-            $type->resources()->where('name', 'like', "$prefix %")->get()
+            $type->resources()->whereNull('archived_at')->where('name', 'like', "$prefix %")->get()
                 ->filter(fn ($r) => (int) Str::afterLast($r->name, ' ') > $count)->each->update(['status' => 'inactive']);
         }
         foreach ($spa->treatments as $treatment) {

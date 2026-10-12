@@ -100,10 +100,10 @@
         <style>.hl-thread{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow:auto}.hl-msg{background:#f6f1ea;border-radius:12px;padding:8px 12px;max-width:85%;font-size:14px}.hl-msg-me{align-self:flex-end;background:#e8f3ec}</style>
     @endif
 
-    @if ($b->isActive())
+    @if ($b->canCancel('client'))
         <div style="margin-top:14px" x-data="{ ask: false }">
             <button class="btn bad sm" type="button" x-show="!ask" x-on:click="ask = true">{{ __('ui.cancel_booking') }}</button>
-            <div class="row" x-show="ask" x-cloak><span class="small">{{ __('ui.cancel_confirm') }}</span><button class="btn bad sm" type="button" wire:click="cancel">{{ __('ui.cancel_booking') }}</button><button class="btn ghost sm" type="button" x-on:click="ask = false">{{ __('ui.back') }}</button></div>
+            <div class="row" x-show="ask" x-cloak><span class="small">{{ __('ui.cancel_confirm') }}</span><button class="btn bad sm" type="button" wire:click="cancel" wire:loading.attr="disabled">{{ __('ui.cancel_booking') }}</button><button class="btn ghost sm" type="button" x-on:click="ask = false">{{ __('ui.back') }}</button></div>
         </div>
     @else
         <a class="btn sec sm" style="margin-top:14px" href="{{ route('spa.show', ['spa' => $b->spa->slug]) }}">{{ __('ui.book_again') }}</a>

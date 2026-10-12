@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\LocksCatalogue;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TreatmentStep extends Model
 {
+    use LocksCatalogue;
+
     public $timestamps = false;
 
     protected $guarded = [];

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Booking\ResourceProtection;
 use App\Models\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,16 @@ class ResourceType extends Model
     public const KINDS = ['room', 'therapist', 'equipment'];
 
     protected $guarded = [];
+
+    public function save(array $options = [])
+    {
+        return app(ResourceProtection::class)->saveType($this, fn () => parent::save($options));
+    }
+
+    public function delete()
+    {
+        return app(ResourceProtection::class)->deleteType($this, fn () => parent::delete());
+    }
 
     public function spa(): BelongsTo
     {

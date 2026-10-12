@@ -15,6 +15,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class TreatmentResource extends Resource
 {
@@ -79,6 +80,7 @@ class TreatmentResource extends Resource
                         ->schema([
                             Forms\Components\Select::make('resource_type_id')->label(__('partner.resource_type'))
                                 ->options(fn () => ResourceType::where('spa_id', Filament::getTenant()->id)->orderBy('sort_order')->pluck('name_fr', 'id'))
+                                ->rule(fn () => Rule::exists('resource_types', 'id')->where('spa_id', Filament::getTenant()->id))
                                 ->required(),
                             Forms\Components\TextInput::make('duration_min')->label(__('partner.duration'))->numeric()->minValue(5)->step(5)->suffix('min')->required()->default(60),
                             Forms\Components\TextInput::make('label')->label(__('partner.step_label'))->maxLength(120)->placeholder(__('partner.component_label_help')),

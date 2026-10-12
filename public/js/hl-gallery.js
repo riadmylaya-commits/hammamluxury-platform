@@ -1,11 +1,32 @@
 /* Galerie plein écran de la fiche établissement : clavier, boutons, balayage tactile, URL #photo-N. */
 (function () {
+    function safePhotoUrl(value) {
+        if (typeof value !== 'string' || !value || /[\x00-\x20\x7f"'<>\\]/.test(value)) return null;
+        if (/^https?:\/\//i.test(value)) {
+            try {
+                var url = new URL(value);
+                return /^(https?:)$/.test(url.protocol) && url.hostname && !url.username && !url.password ? value : null;
+            } catch (e) { return null; }
+        }
+        // Relative paths only: no scheme, network-path reference or traversal.
+        return /^(?!\/\/)[A-Za-z0-9_./-]+$/.test(value) && !/(^|\/)\.\.?($|\/)/.test(value) ? value : null;
+    }
+
     function init() {
         var root = document.getElementById('hl-gallery');
         if (!root || root.dataset.ready) return;
         root.dataset.ready = '1';
-        var photos = JSON.parse(root.dataset.photos || '[]');
-        var t = JSON.parse(root.dataset.i18n || '{}');
+        var photos, t;
+        try {
+            photos = JSON.parse(root.dataset.photos || '[]');
+            t = JSON.parse(root.dataset.i18n || '{}');
+        } catch (e) { return; }
+        if (!Array.isArray(photos)) return;
+        t = t && typeof t === 'object' ? t : {};
+        // Keep original indices so the visible gallery and #photo-N agree.
+        photos = photos.map(function (p) {
+            return { url: safePhotoUrl(p && p.url), caption: p && typeof p.caption === 'string' ? p.caption : '' };
+        });
         if (!photos.length) return;
 
         var box = document.createElement('div');
@@ -13,38 +34,49 @@
         box.setAttribute('role', 'dialog');
         box.setAttribute('aria-modal', 'true');
         box.hidden = true;
-        box.innerHTML =
-            '<button type="button" class="lb-close" aria-label="' + (t.close || 'Close') + '">&times;</button>' +
-            '<button type="button" class="lb-prev" aria-label="' + (t.prev || 'Previous') + '">&#8249;</button>' +
-            '<div class="lb-stage"><img alt=""><div class="lb-cap"></div></div>' +
-            '<button type="button" class="lb-next" aria-label="' + (t.next || 'Next') + '">&#8250;</button>' +
-            '<div class="lb-count" aria-live="polite"></div>' +
-            '<div class="lb-thumbs"></div>';
+        function button(className, label, text) {
+            var node = document.createElement('button');
+            node.type = 'button'; node.className = className;
+            node.setAttribute('aria-label', String(label)); node.textContent = text;
+            box.appendChild(node);
+            return node;
+        }
+        button('lb-close', t.close || 'Close', '\u00d7');
+        button('lb-prev', t.prev || 'Previous', '\u2039');
+        var stage = document.createElement('div'); stage.className = 'lb-stage';
+        var img = document.createElement('img'); img.alt = '';
+        var cap = document.createElement('div'); cap.className = 'lb-cap';
+        stage.appendChild(img); stage.appendChild(cap); box.appendChild(stage);
+        button('lb-next', t.next || 'Next', '\u203a');
+        var count = document.createElement('div'); count.className = 'lb-count'; count.setAttribute('aria-live', 'polite'); box.appendChild(count);
+        var thumbs = document.createElement('div'); thumbs.className = 'lb-thumbs'; box.appendChild(thumbs);
         document.body.appendChild(box);
 
-        var img = box.querySelector('img'), cap = box.querySelector('.lb-cap'), count = box.querySelector('.lb-count'), thumbs = box.querySelector('.lb-thumbs');
         var idx = 0, lastFocus = null;
 
         photos.forEach(function (p, i) {
             var b = document.createElement('button');
             b.type = 'button';
-            b.innerHTML = '<img src="' + p.url + '" alt="" loading="lazy">';
+            var thumb = document.createElement('img');
+            thumb.alt = ''; thumb.loading = 'lazy';
+            if (p.url) thumb.src = p.url;
+            b.appendChild(thumb);
             b.addEventListener('click', function () { show(i); });
             thumbs.appendChild(b);
         });
 
         function show(i) {
             idx = (i + photos.length) % photos.length;
-            img.src = photos[idx].url;
+            if (photos[idx].url) img.src = photos[idx].url; else img.removeAttribute('src');
             img.alt = photos[idx].caption || '';
             cap.textContent = photos[idx].caption || '';
             cap.hidden = !photos[idx].caption;
-            count.textContent = (t.of || 'Photo :n / :total').replace(':n', idx + 1).replace(':total', photos.length);
+            count.textContent = String(t.of || 'Photo :n / :total').replace(':n', idx + 1).replace(':total', photos.length);
             Array.prototype.forEach.call(thumbs.children, function (b, j) {
                 b.classList.toggle('on', j === idx);
                 if (j === idx && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'center' });
             });
-            var n = photos[(idx + 1) % photos.length]; if (n) { var pre = new Image(); pre.src = n.url; }
+            var n = photos[(idx + 1) % photos.length]; if (n && n.url) { var pre = new Image(); pre.src = n.url; }
             if (history.replaceState) history.replaceState(null, '', '#photo-' + (idx + 1));
         }
 

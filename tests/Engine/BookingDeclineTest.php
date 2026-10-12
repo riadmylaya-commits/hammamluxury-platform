@@ -21,6 +21,7 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\ReferenceSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
@@ -141,9 +142,10 @@ class BookingDeclineTest extends TestCase
         $this->assertTrue($d1->engine_available);
         $this->assertTrue($d1->isSuspicious());
 
-        // Demande à 15 h, puis le partenaire ferme l'après-midi (blocage) : le moteur n'a réellement plus de place → refus justifié.
+        // Anciennes données incohérentes/importées : le blocage coexistait avec une demande.
+        // Les nouveaux blocages chevauchant une réservation sont désormais refusés par le modèle.
         $second = $this->request(15);
-        Block::create(['spa_id' => $this->spa->id, 'scope' => 'spa', 'start_at' => $this->day->setTime(14, 0), 'end_at' => $this->day->setTime(18, 0), 'kind' => 'closed']);
+        DB::table('blocks')->insert(['spa_id' => $this->spa->id, 'scope' => 'spa', 'start_at' => $this->day->setTime(14, 0), 'end_at' => $this->day->setTime(18, 0), 'kind' => 'closed']);
         $this->assertFalse(app(CapacityEngine::class)->check($this->spa, $this->day->setTime(15, 0), $second->quote['items'], $second->id)['ok']);
 
         $this->bookings->decline($second, 'partner', 'full', null, $this->owner->id);
@@ -175,7 +177,8 @@ class BookingDeclineTest extends TestCase
         $this->actingAs($admin)->get('/admin/spas')->assertOk()->assertSee('1 (1)');
 
         $second = $this->request(15);
-        Block::create(['spa_id' => $this->spa->id, 'scope' => 'spa', 'start_at' => $this->day->setTime(14, 0), 'end_at' => $this->day->setTime(18, 0), 'kind' => 'closed']);
+        // Historique importé : contourne intentionnellement la nouvelle garde du modèle.
+        DB::table('blocks')->insert(['spa_id' => $this->spa->id, 'scope' => 'spa', 'start_at' => $this->day->setTime(14, 0), 'end_at' => $this->day->setTime(18, 0), 'kind' => 'closed']);
         $this->bookings->decline($second, 'partner', 'full', null, $this->owner->id);
         $justified = BookingDecline::where('booking_id', $second->id)->firstOrFail();
         Livewire::test(ListBookingDeclines::class)

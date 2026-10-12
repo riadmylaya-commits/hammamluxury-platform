@@ -26,9 +26,12 @@ class Booking extends Model
 
     protected $guarded = [];
 
+    protected $hidden = ['intent_token_hash'];
+
     protected $casts = [
+        'intent_expires_at' => 'immutable_datetime',
         'quote' => 'array',
-        'start_at' => 'datetime', 'end_at' => 'datetime', 'expires_at' => 'datetime',
+        'start_at' => 'immutable_datetime', 'end_at' => 'immutable_datetime', 'expires_at' => 'immutable_datetime',
         'expiration_notified_at' => 'datetime', 'confirmed_at' => 'datetime', 'cancelled_at' => 'datetime',
         'no_show_at' => 'datetime', 'contact_revealed_at' => 'datetime',
         'total' => 'float', 'commissionable_amount' => 'float', 'commission_pct' => 'float', 'commission_amount' => 'float',
@@ -123,13 +126,22 @@ class Booking extends Model
         return $this->isConfirmed() && $this->start_at->isFuture() && ! $this->pendingCancellationRequest()->exists();
     }
 
+    /** Règle commune à l'API, Livewire et aux services ; une prestation clôturée n'est jamais annulable. */
+    public function canCancel(string $actor = 'client'): bool
+    {
+        return in_array($actor, ['client', 'admin'], true)
+            && in_array($this->status, ['waiting', 'confirmed'], true)
+            && $this->start_at !== null
+            && $this->start_at->gt(now());
+    }
+
     /**
      * Le partenaire peut déclarer un no-show entre l'heure du rendez-vous et NO_SHOW_WINDOW_HOURS après la fin prévue ;
      * au-delà, seule l'administration peut corriger.
      */
     public function partnerNoShowWindowOpen(): bool
     {
-        return $this->isConfirmed() && $this->start_at->lte(now()) && now()->lte($this->end_at->addHours(self::NO_SHOW_WINDOW_HOURS));
+        return $this->isConfirmed() && $this->start_at->lte(now()) && now()->lte($this->end_at->copy()->addHours(self::NO_SHOW_WINDOW_HOURS));
     }
 
     /** Le partenaire peut signaler un comportement du client dans la même fenêtre que le no-show : du rendez-vous à la fin + 4 h. */
@@ -163,7 +175,7 @@ class Booking extends Model
         return (float) ($this->commissionable_amount ?? $this->total);
     }
 
-    /** Ce qui revient au partenaire une fois la commission HammamLuxury déduite. */
+    /** Estimation au devis : elle ne constitue ni une dette acquise ni un encaissement. */
     public function netForPartner(): float
     {
         return round((float) $this->total - (float) $this->commission_amount, 2);
@@ -173,20 +185,47 @@ class Booking extends Model
     public function nothingDue(): bool
     {
         return $this->status === 'partner_no_show'
-            || ($this->status === 'no_show' && $this->no_show_fee_waived)
-            || in_array($this->status, ['declined', 'cancelled', 'expired'], true);
+            || ($this->status === 'no_show' && ($this->no_show_fee_waived || (float) $this->no_show_fee <= 0))
+            || in_array($this->status, ['declined', 'cancelled', 'expired'], true)
+            || $this->payment_status === 'refunded';
     }
 
-    /** Commission effectivement due (0 lorsque rien n'est facturé). */
+    /** Montant acquis par réalisation ou frais d'absence ; distinct d'un paiement déclaré sur place. */
+    public function amountDue(): float
+    {
+        if ($this->nothingDue()) {
+            return 0.0;
+        }
+
+        return match ($this->status) {
+            'completed' => round((float) $this->total, 2),
+            'no_show' => round(max(0.0, min((float) $this->total, (float) $this->no_show_fee)), 2),
+            default => 0.0,
+        };
+    }
+
+    /** Confirmation = prévision ; clôture/frais = dette ; paid/partial = déclaration, pas preuve d'encaissement. */
+    public function hasAccruedAmount(): bool
+    {
+        return $this->amountDue() > 0;
+    }
+
+    /** Commission acquise, au taux figé du devis ; un remboursement intégral l'annule. */
     public function commissionDue(): float
     {
-        return $this->nothingDue() ? 0.0 : (float) $this->commission_amount;
+        $due = $this->amountDue();
+        if ($due <= 0 || (float) $this->total <= 0 || $this->source === 'partner') {
+            return 0.0;
+        }
+
+        // Une éventuelle réduction des frais d'absence réduit la commission dans la même proportion.
+        return round((float) $this->commission_amount * $due / (float) $this->total, 2);
     }
 
     /** Net partenaire effectivement dû. */
     public function netDue(): float
     {
-        return $this->nothingDue() ? 0.0 : $this->netForPartner();
+        return round($this->amountDue() - $this->commissionDue(), 2);
     }
 
     public function isActive(): bool

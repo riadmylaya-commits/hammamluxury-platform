@@ -113,7 +113,9 @@ class IntegrityCircuitTest extends BookingFlowTestCase
         $b->refresh();
         $this->assertSame('no_show', $b->status);
         $this->assertTrue($b->no_show_fee_waived);
-        $this->assertSame(0, LedgerEntry::where('booking_id', $b->id)->count(), 'Frais abandonnés : commission retirée');
+        $this->assertSame(2, LedgerEntry::where('booking_id', $b->id)->count(), 'Frais abandonnés : commission conservée et contre-écriture liée');
+        $this->assertSame(0.0, (float) LedgerEntry::where('booking_id', $b->id)->sum('amount'));
+        $this->assertSame(-60.0, (float) LedgerEntry::where('booking_id', $b->id)->where('type', 'commission_reversal')->value('amount'));
         $this->assertSame('admin', $b->events()->where('type', 'no_show:fee_waived')->value('actor'));
     }
 
@@ -185,7 +187,8 @@ class IntegrityCircuitTest extends BookingFlowTestCase
 
         $b->refresh();
         $this->assertSame('partner_no_show', $b->status);
-        $this->assertSame(0, LedgerEntry::where('booking_id', $b->id)->count(), 'Aucune commission sur une réservation non honorée');
+        $this->assertSame(2, LedgerEntry::where('booking_id', $b->id)->count(), 'La correction conserve la commission historique et sa contre-écriture');
+        $this->assertSame(0.0, (float) LedgerEntry::where('booking_id', $b->id)->sum('amount'), 'Aucune commission nette sur une réservation non honorée');
         $this->assertSame(1, ActivityLog::where('action', 'booking.partner_no_show')->count());
         $this->assertSame(1, $b->events()->where('type', 'partner_no_show')->count());
 

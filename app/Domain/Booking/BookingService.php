@@ -11,7 +11,6 @@ use App\Models\ActivityLog;
 use App\Models\Allocation;
 use App\Models\Booking;
 use App\Models\BookingDecline;
-use App\Models\LedgerEntry;
 use App\Models\Spa;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +25,8 @@ class BookingService
         private CapacityEngine $engine,
         private QuoteBuilder $quotes,
         private IntentService $intents,
+        private BookingMutation $mutations,
+        private CommissionLedger $ledger,
     ) {}
 
     /**
@@ -69,23 +70,61 @@ class BookingService
      */
     public function confirmIntent(Spa $spa, string $token, array $customer): Booking
     {
-        $this->assertBookable($spa);
-        $payload = $this->intents->resolve($token, $spa);
-        $start = CarbonImmutable::parse($payload['start_at']);
-        $participants = array_map(fn ($i) => ['participant_no' => $i['participant_no'], 'treatment_id' => $i['treatment'], 'party' => $i['party'], 'extras' => $i['extras']], $payload['items']);
-        $quote = $this->quotes->build($spa, $participants);
-        if (! $quote['ok']) {
-            throw new BookingException('quote', implode(' ', $quote['errors']));
-        }
-        if ($quote['fingerprint'] !== $payload['fingerprint'] || (float) $quote['total'] !== (float) $payload['total']) {
-            throw BookingException::make('price_changed', 'price_changed', [], 409);
-        }
+        return $this->mutations->forSpa($spa, function (Spa $current) use ($token, $customer): Booking {
+            $intentId = explode('.', $token, 2)[0];
+            $existing = Booking::query()->where('intent_id', $intentId)->lockForUpdate()->first();
+            if ($existing && $existing->intent_token_hash !== null) {
+                if (! hash_equals($existing->intent_token_hash, hash('sha256', $token))) {
+                    throw BookingException::make('intent_tampered', 'intent_invalid', [], 403);
+                }
+                if ((int) $existing->spa_id !== (int) $current->id) {
+                    throw BookingException::make('intent_spa', 'intent_invalid', [], 403);
+                }
+                if (! $existing->intent_expires_at || $existing->intent_expires_at->lte(now())) {
+                    throw BookingException::make('intent_expired', 'intent_expired', [], 410);
+                }
+                if (! $this->sameCustomer($existing, $customer)) {
+                    throw BookingException::make('intent_replayed', 'intent_replayed', [], 409);
+                }
 
-        $status = $spa->instantBookingActive() ? 'confirmed' : 'waiting';
-        $booking = $this->engine->withLock($spa, fn () => $this->insert($spa, $start, $quote, $customer, $status, $payload['id'], $payload['locale'] ?? app()->getLocale()));
-        $this->intents->consume($payload['id'], $booking->id);
+                return $existing;
+            }
+            $payload = $this->intents->resolve($token, $current, allowConsumed: true);
+            $existing = Booking::query()->where('intent_id', $payload['id'])->lockForUpdate()->first();
+            if ($existing) {
+                if ((int) $existing->spa_id !== (int) $current->id || ! $this->sameCustomer($existing, $customer)) {
+                    throw BookingException::make('intent_replayed', 'intent_replayed', [], 409);
+                }
+                // La base est la source de vérité, même si la consommation du cache avait échoué.
+                DB::afterCommit(fn () => $this->intents->consume($payload['id'], $existing->id));
 
-        return $booking;
+                return $existing;
+            }
+            if (! empty($payload['consumed_booking_id'])) {
+                throw BookingException::make('intent_replayed', 'intent_replayed', [], 409);
+            }
+
+            $this->assertBookable($current);
+            $start = CarbonImmutable::parse($payload['start_at']);
+            $this->assertFutureStart($current, $start, enforceLead: true);
+            $participants = array_map(fn ($i) => ['participant_no' => $i['participant_no'], 'treatment_id' => $i['treatment'], 'party' => $i['party'], 'extras' => $i['extras']], $payload['items']);
+            $quote = $this->quotes->build($current, $participants);
+            if (! $quote['ok']) {
+                throw BookingException::make('catalogue_changed', 'catalogue_changed', [], 409);
+            }
+            if ($quote['fingerprint'] !== $payload['fingerprint'] || (float) $quote['total'] !== (float) $payload['total']) {
+                throw BookingException::make('price_changed', 'price_changed', [], 409);
+            }
+
+            $status = $current->instantBookingActive() ? 'confirmed' : 'waiting';
+            $booking = $this->insert($current, $start, $quote, $customer, $status, $payload['id'], $payload['locale'] ?? app()->getLocale(), meta: [
+                'intent_token_hash' => hash('sha256', $token),
+                'intent_expires_at' => CarbonImmutable::createFromTimestamp($payload['expires_at'], config('app.timezone')),
+            ]);
+            DB::afterCommit(fn () => $this->intents->consume($payload['id'], $booking->id));
+
+            return $booking;
+        });
     }
 
     /**
@@ -95,16 +134,21 @@ class BookingService
      */
     public function book(Spa $spa, CarbonImmutable $start, array $items, array $customer, string $status = 'waiting', array $meta = [], string $actor = 'client'): Booking
     {
-        $participants = [];
-        foreach (array_values($items) as $i => $item) {
-            $participants[] = ['participant_no' => $item['participant_no'] ?? $i + 1, 'treatment' => $item['treatment'], 'party' => $item['party'] ?? 1, 'extras' => $item['extras'] ?? []];
-        }
-        $quote = $this->quotes->fromRequest($spa, ['participants' => $participants]);
-        if (! $quote['ok']) {
-            throw new BookingException('quote', implode(' ', $quote['errors']));
-        }
+        return $this->mutations->forSpa($spa, function (Spa $current) use ($start, $items, $customer, $status, $meta, $actor): Booking {
+            if (! in_array($status, ['waiting', 'confirmed'], true)) {
+                throw BookingException::make('status', 'invalid', [], 422);
+            }
+            $participants = [];
+            foreach (array_values($items) as $i => $item) {
+                $participants[] = ['participant_no' => $item['participant_no'] ?? $i + 1, 'treatment' => $item['treatment'], 'party' => $item['party'] ?? 1, 'extras' => $item['extras'] ?? []];
+            }
+            $quote = $this->quotes->fromRequest($current, ['participants' => $participants]);
+            if (! $quote['ok']) {
+                throw new BookingException('quote', implode(' ', $quote['errors']));
+            }
 
-        return $this->engine->withLock($spa, fn () => $this->insert($spa, $start, $quote, $customer, $status, meta: $meta, actor: $actor));
+            return $this->insert($current, $start, $quote, $customer, $status, meta: $meta, actor: $actor);
+        });
     }
 
     /**
@@ -129,7 +173,7 @@ class BookingService
 
     private function insert(Spa $spa, CarbonImmutable $start, array $quote, array $customer, string $status, ?string $intentId = null, ?string $locale = null, array $meta = [], string $actor = 'client'): Booking
     {
-        $plan = $this->engine->plan($spa, $this->engine->expandNeeds($spa, $start, $quote['items']));
+        $plan = $this->engine->plan($spa, $this->needsForQuote($spa, $start, $quote));
         if (! $plan['ok']) {
             throw new BookingException('unavailable', implode(' ', $plan['errors']), 409);
         }
@@ -161,7 +205,7 @@ class BookingService
                 'locale' => $locale ?? app()->getLocale(),
                 'quote' => $quote,
                 'intent_id' => $intentId,
-                'expires_at' => $status === 'waiting' ? $this->waitingDeadline() : null,
+                'expires_at' => $status === 'waiting' ? min($this->waitingDeadline(), $start) : null,
                 'confirmed_at' => $status === 'confirmed' ? now() : null,
             ]);
             $participantIds = [];
@@ -195,7 +239,7 @@ class BookingService
             return $booking;
         });
 
-        event(new BookingCreated($booking));
+        DB::afterCommit(fn () => event(new BookingCreated($booking)));
 
         return $booking;
     }
@@ -204,14 +248,20 @@ class BookingService
 
     public function accept(Booking $booking, string $actor = 'partner', ?string $note = null): Booking
     {
-        if (! $booking->isWaiting()) {
-            throw BookingException::make('status', 'not_waiting', [], 409);
-        }
+        return $this->mutations->forBooking($booking, function (Booking $current) use ($actor, $note): Booking {
+            if (! $current->isWaiting()) {
+                throw BookingException::make('status', 'not_waiting', [], 409);
+            }
+            if ($current->expires_at && $current->expires_at->lte(now())) {
+                throw BookingException::make('waiting_expired', 'waiting_expired', [], 409);
+            }
+            $this->assertFutureStart($current->spa, CarbonImmutable::instance($current->start_at));
+            $this->assertAllocationsIntact($current);
+            $this->transition($current, 'confirmed', $actor, ['confirmed_at' => now(), 'expires_at' => null, 'partner_note' => $note, 'contact_revealed_at' => now()]);
+            $current->log('contact:revealed', 'system', ['fields' => ['phone', 'whatsapp']]);
 
-        $booking = $this->transition($booking, 'confirmed', $actor, ['confirmed_at' => now(), 'expires_at' => null, 'partner_note' => $note, 'contact_revealed_at' => now()]);
-        $booking->log('contact:revealed', 'system', ['fields' => ['phone', 'whatsapp']]);
-
-        return $booking;
+            return $current;
+        });
     }
 
     /**
@@ -221,9 +271,6 @@ class BookingService
      */
     public function decline(Booking $booking, string $actor = 'partner', ?string $reason = null, ?string $note = null, ?int $userId = null): Booking
     {
-        if (! $booking->isWaiting()) {
-            throw BookingException::make('status', 'not_waiting', [], 409);
-        }
         if (! in_array($reason, BookingDecline::REASONS, true)) {
             throw BookingException::make('decline_reason', 'reason_required', [], 422);
         }
@@ -232,17 +279,15 @@ class BookingService
             throw BookingException::make('decline_reason', 'note_required_other', [], 422);
         }
 
-        $spa = $booking->spa;
-
-        return $this->engine->withLock($spa, function () use ($booking, $spa, $actor, $reason, $note, $userId) {
-            $booking->refresh();
+        return $this->mutations->forBooking($booking, function (Booking $booking) use ($actor, $reason, $note, $userId): Booking {
+            $spa = $booking->spa;
             if (! $booking->isWaiting()) {
                 throw BookingException::make('status', 'not_waiting', [], 409);
             }
             $items = $booking->quote['items'] ?? [];
             $engineAvailable = null;
             if ($items !== []) {
-                $engineAvailable = (bool) ($this->engine->check($spa, $booking->start_at, $items, $booking->id)['ok'] ?? false);
+                $engineAvailable = (bool) ($this->engine->plan($spa, $this->needsForQuote($spa, CarbonImmutable::instance($booking->start_at), $booking->quote), $booking->id)['ok'] ?? false);
             }
 
             $booking = $this->transition($booking, 'declined', $actor, ['expires_at' => null, 'partner_note' => $note]);
@@ -267,26 +312,30 @@ class BookingService
 
     public function cancel(Booking $booking, string $actor = 'client'): Booking
     {
-        if (! $booking->isActive()) {
-            throw BookingException::make('status', 'already_inactive', [], 409);
-        }
+        return $this->mutations->forBooking($booking, function (Booking $current) use ($actor): Booking {
+            if (! $current->canCancel($actor)) {
+                throw BookingException::make('status', 'already_inactive', [], 409);
+            }
+            $this->transition($current, 'cancelled', $actor, ['cancelled_at' => now(), 'cancelled_by' => $actor, 'expires_at' => null]);
+            $current->cancellationRequests()->where('status', 'pending')
+                ->update(['status' => 'closed', 'decided_at' => now(), 'decision_note' => 'booking_cancelled:'.$actor]);
 
-        $booking = $this->transition($booking, 'cancelled', $actor, ['cancelled_at' => now(), 'cancelled_by' => $actor, 'expires_at' => null]);
-
-        // Une demande d'annulation encore ouverte n'a plus d'objet une fois la réservation annulée.
-        $booking->cancellationRequests()->where('status', 'pending')
-            ->update(['status' => 'closed', 'decided_at' => now(), 'decision_note' => 'booking_cancelled:'.$actor]);
-
-        return $booking;
+            return $current;
+        });
     }
 
     public function complete(Booking $booking, string $actor = 'partner'): Booking
     {
-        if (! $booking->isConfirmed()) {
-            throw BookingException::make('status', 'not_confirmed', [], 409);
-        }
+        return $this->mutations->forBooking($booking, function (Booking $current) use ($actor): Booking {
+            if (! $current->isConfirmed()) {
+                throw BookingException::make('status', 'not_confirmed', [], 409);
+            }
+            if ($current->end_at->gt(now())) {
+                throw BookingException::make('too_soon', 'not_finished', [], 409);
+            }
 
-        return $this->transition($booking, 'completed', $actor);
+            return $this->transition($current, 'completed', $actor);
+        });
     }
 
     /**
@@ -296,42 +345,46 @@ class BookingService
      */
     public function noShow(Booking $booking, string $actor = 'partner', bool $applyFee = true, ?string $note = null): Booking
     {
-        if ($actor === 'admin') {
-            if (! in_array($booking->status, ['confirmed', 'completed'], true) || $booking->start_at->gt(now())) {
-                throw BookingException::make('status', 'no_show_not_allowed', [], 409);
+        return $this->mutations->forBooking($booking, function (Booking $booking) use ($actor, $applyFee, $note): Booking {
+            if ($actor === 'admin') {
+                if (! in_array($booking->status, ['confirmed', 'completed'], true) || $booking->start_at->gt(now())) {
+                    throw BookingException::make('status', 'no_show_not_allowed', [], 409);
+                }
+            } elseif (! $booking->partnerNoShowWindowOpen()) {
+                throw BookingException::make('status', $booking->isConfirmed() && $booking->start_at->isPast() ? 'no_show_window_closed' : 'no_show_not_allowed', [], 409);
             }
-        } elseif (! $booking->partnerNoShowWindowOpen()) {
-            throw BookingException::make('status', $booking->isConfirmed() && $booking->start_at->isPast() ? 'no_show_window_closed' : 'no_show_not_allowed', [], 409);
-        }
 
-        $fee = $applyFee ? round((float) $booking->total, 2) : 0.0;
-        $booking = $this->transition($booking, 'no_show', $actor, [
-            'no_show_fee' => $fee,
-            'no_show_fee_waived' => ! $applyFee,
-            'no_show_at' => now(),
-        ]);
-        $booking->log($applyFee ? 'no_show:fee_applied' : 'no_show:fee_waived', $actor, array_filter(['fee' => $fee, 'commission' => $applyFee ? $booking->commission_amount : 0, 'note' => $note]));
-        ActivityLog::record($applyFee ? 'booking.no_show_fee_applied' : 'booking.no_show_fee_waived', $booking, array_filter(['ref' => $booking->reference, 'fee' => $fee, 'note' => $note]), $actor);
+            $fee = $applyFee ? round((float) $booking->total, 2) : 0.0;
+            $booking = $this->transition($booking, 'no_show', $actor, [
+                'no_show_fee' => $fee,
+                'no_show_fee_waived' => ! $applyFee,
+                'no_show_at' => now(),
+            ]);
+            $booking->log($applyFee ? 'no_show:fee_applied' : 'no_show:fee_waived', $actor, array_filter(['fee' => $fee, 'commission' => $applyFee ? $booking->commission_amount : 0, 'note' => $note]));
+            ActivityLog::record($applyFee ? 'booking.no_show_fee_applied' : 'booking.no_show_fee_waived', $booking, array_filter(['ref' => $booking->reference, 'fee' => $fee, 'note' => $note]), $actor);
 
-        return $booking;
+            return $booking;
+        });
     }
 
     /** Réservation non honorée par l'établissement : incident sérieux, aucune commission, enregistré par l'administration seulement. */
     public function partnerNoShow(Booking $booking, string $actor = 'admin', ?string $note = null): Booking
     {
-        if ($actor !== 'admin') {
-            throw BookingException::make('actor', 'admin_only', [], 403);
-        }
-        if (! in_array($booking->status, ['confirmed', 'completed'], true) || $booking->start_at->gt(now())) {
-            throw BookingException::make('status', 'no_show_not_allowed', [], 409);
-        }
+        return $this->mutations->forBooking($booking, function (Booking $booking) use ($actor, $note): Booking {
+            if ($actor !== 'admin') {
+                throw BookingException::make('actor', 'admin_only', [], 403);
+            }
+            if (! in_array($booking->status, ['confirmed', 'completed'], true) || $booking->start_at->gt(now())) {
+                throw BookingException::make('status', 'no_show_not_allowed', [], 409);
+            }
 
-        $booking = $this->transition($booking, 'partner_no_show', $actor, ['no_show_at' => now()]);
-        $booking->cancellationRequests()->where('status', 'pending')
-            ->update(['status' => 'closed', 'decided_at' => now(), 'decision_note' => 'partner_no_show']);
-        ActivityLog::record('booking.partner_no_show', $booking, array_filter(['ref' => $booking->reference, 'note' => $note]), $actor);
+            $booking = $this->transition($booking, 'partner_no_show', $actor, ['no_show_at' => now()]);
+            $booking->cancellationRequests()->where('status', 'pending')
+                ->update(['status' => 'closed', 'decided_at' => now(), 'decision_note' => 'partner_no_show']);
+            ActivityLog::record('booking.partner_no_show', $booking, array_filter(['ref' => $booking->reference, 'note' => $note]), $actor);
 
-        return $booking;
+            return $booking;
+        });
     }
 
     /**
@@ -340,42 +393,44 @@ class BookingService
      */
     public function reschedule(Booking $booking, CarbonImmutable $start, string $actor = 'admin'): Booking
     {
-        if (! $booking->isConfirmed()) {
-            throw BookingException::make('status', 'not_confirmed', [], 409);
-        }
-        $spa = $booking->spa;
-        $quote = $booking->quote ?? [];
-        if (empty($quote['items'])) {
-            throw BookingException::make('quote', 'quote_missing', [], 409);
-        }
-
-        return $this->engine->withLock($spa, function () use ($booking, $spa, $start, $quote, $actor) {
-            $plan = $this->engine->plan($spa, $this->engine->expandNeeds($spa, $start, $quote['items']), $booking->id);
+        return $this->mutations->forBooking($booking, function (Booking $booking) use ($start, $actor): Booking {
+            if (! $booking->isConfirmed()) {
+                throw BookingException::make('status', 'not_confirmed', [], 409);
+            }
+            $spa = $booking->spa;
+            $this->assertFutureStart($spa, $start, enforceLead: true);
+            $quote = $booking->quote ?? [];
+            if (empty($quote['items'])) {
+                throw BookingException::make('quote', 'quote_missing', [], 409);
+            }
+            $this->assertAllocationsIntact($booking);
+            if ($booking->start_at->equalTo($start)) {
+                return $booking;
+            }
+            $plan = $this->engine->plan($spa, $this->needsForQuote($spa, $start, $quote), $booking->id);
             if (! $plan['ok']) {
                 throw new BookingException('unavailable', implode(' ', $plan['errors']), 409);
             }
             $old = $booking->start_at;
 
-            DB::transaction(function () use ($booking, $spa, $start, $plan, $actor, $old) {
-                $this->release($booking);
-                $participantIds = $booking->participants()->pluck('id', 'participant_no')->all();
-                foreach ($plan['allocations'] as $a) {
-                    $booking->allocations()->create([
-                        'spa_id' => $spa->id,
-                        'resource_id' => $a['resource_id'],
-                        'resource_type_id' => $a['resource_type_id'],
-                        'treatment_id' => $a['treatment_id'],
-                        'booking_participant_id' => $participantIds[$a['participant_no']] ?? null,
-                        'start_at' => $a['start_at'],
-                        'end_at' => $a['end_at'],
-                        'party' => $a['party'],
-                        'status' => 'active',
-                    ]);
-                }
-                $booking->update(['start_at' => $start, 'end_at' => $start->addMinutes($booking->duration_min)]);
-                $booking->log('rescheduled', $actor, ['from' => $old->toDateTimeString(), 'to' => $start->toDateTimeString()]);
-                ActivityLog::record('booking.rescheduled', $booking, ['ref' => $booking->reference, 'from' => $old->toDateTimeString(), 'to' => $start->toDateTimeString()], $actor);
-            });
+            $this->release($booking);
+            $participantIds = $booking->participants()->pluck('id', 'participant_no')->all();
+            foreach ($plan['allocations'] as $a) {
+                $booking->allocations()->create([
+                    'spa_id' => $spa->id,
+                    'resource_id' => $a['resource_id'],
+                    'resource_type_id' => $a['resource_type_id'],
+                    'treatment_id' => $a['treatment_id'],
+                    'booking_participant_id' => $participantIds[$a['participant_no']] ?? null,
+                    'start_at' => $a['start_at'],
+                    'end_at' => $a['end_at'],
+                    'party' => $a['party'],
+                    'status' => 'active',
+                ]);
+            }
+            $booking->update(['start_at' => $start, 'end_at' => $start->addMinutes($booking->duration_min)]);
+            $booking->log('rescheduled', $actor, ['from' => $old->toDateTimeString(), 'to' => $start->toDateTimeString()]);
+            ActivityLog::record('booking.rescheduled', $booking, ['ref' => $booking->reference, 'from' => $old->toDateTimeString(), 'to' => $start->toDateTimeString()], $actor);
 
             return $booking->refresh();
         });
@@ -386,10 +441,20 @@ class BookingService
     {
         $now ??= CarbonImmutable::now();
         $done = [];
-        $due = Booking::where('status', 'confirmed')->where('end_at', '<', $now->subMinutes((int) config('hl.auto_complete_after_min', 60)))->get();
+        $cutoff = $now->subMinutes((int) config('hl.auto_complete_after_min', 240));
+        $due = Booking::where('status', 'confirmed')->where('end_at', '<', $cutoff)->get();
         foreach ($due as $booking) {
-            $this->transition($booking, 'completed', 'system');
-            $done[] = $booking->id;
+            $changed = $this->mutations->forBooking($booking, function (Booking $current) use ($cutoff): bool {
+                if (! $current->isConfirmed() || ! $current->end_at->lt($cutoff)) {
+                    return false;
+                }
+                $this->transition($current, 'completed', 'system');
+
+                return true;
+            });
+            if ($changed) {
+                $done[] = $booking->id;
+            }
         }
 
         return $done;
@@ -400,40 +465,52 @@ class BookingService
         if (! in_array($status, Booking::PAYMENT_STATUSES, true)) {
             throw BookingException::make('payment', 'invalid_payment_status');
         }
-        $old = $booking->payment_status;
-        $booking->update(['payment_status' => $status]);
-        $booking->log('payment:'.$status, $actor, ['from' => $old]);
+        return $this->mutations->forBooking($booking, function (Booking $current) use ($actor, $status): Booking {
+            if (! in_array($actor, ['partner', 'admin'], true)) {
+                throw BookingException::make('actor', 'invalid', [], 403);
+            }
+            if ($current->payment_status === $status) {
+                return $current;
+            }
+            $old = $current->payment_status;
+            $current->update(['payment_status' => $status]);
+            $current->log('payment:'.$status, $actor, ['from' => $old]);
+            $this->ledger->sync($current, $actor);
 
-        return $booking;
+            return $current;
+        });
     }
 
     private function transition(Booking $booking, string $status, string $actor, array $extra = []): Booking
     {
         $old = $booking->status;
-        DB::transaction(function () use ($booking, $status, $actor, $extra, $old) {
-            $booking->fill(['status' => $status] + $extra)->save();
-            if (in_array($status, Booking::INACTIVE_STATUSES, true)) {
-                $this->release($booking);
-            }
-            // Commission due : prestation réalisée, ou client absent avec frais facturés. Retirée si la prestation est requalifiée sans frais.
-            $commissionDue = $status === 'completed' || ($status === 'no_show' && ! ($extra['no_show_fee_waived'] ?? false));
-            if ($commissionDue) {
-                LedgerEntry::firstOrCreate(
-                    ['booking_id' => $booking->id, 'type' => 'commission'],
-                    ['partner_id' => $booking->spa->partner_id, 'amount' => $booking->commission_amount, 'currency' => $booking->currency],
-                );
-            } elseif ($old === 'completed') {
-                LedgerEntry::where('booking_id', $booking->id)->where('type', 'commission')->delete();
-            }
-            $booking->log($status, $actor, ['from' => $old]);
-        });
-        event(new BookingStatusChanged($booking, $old));
+        if (DB::transactionLevel() === 0) {
+            throw new \LogicException('Booking transitions require BookingMutation.');
+        }
+        $allowed = match ($status) {
+            'confirmed', 'declined', 'expired' => ['waiting'],
+            'cancelled' => ['waiting', 'confirmed'],
+            'completed' => ['confirmed'],
+            'no_show', 'partner_no_show' => ['confirmed', 'completed'],
+            default => [],
+        };
+        if (! in_array($old, $allowed, true)) {
+            throw BookingException::make('status', 'invalid_transition', [], 409);
+        }
+        $booking->fill(['status' => $status] + $extra)->save();
+        if (in_array($status, Booking::INACTIVE_STATUSES, true)) {
+            $this->release($booking);
+        }
+        $this->ledger->sync($booking, $actor);
+        $booking->log($status, $actor, ['from' => $old]);
+        $eventBooking = clone $booking;
+        DB::afterCommit(fn () => event(new BookingStatusChanged($eventBooking, $old)));
 
         return $booking;
     }
 
     /** Libère les allocations d'une réservation (idempotent). */
-    public function release(Booking $booking): int
+    private function release(Booking $booking): int
     {
         return Allocation::where('booking_id', $booking->id)->where('status', 'active')->update(['status' => 'released', 'updated_at' => now()]);
     }
@@ -455,23 +532,109 @@ class BookingService
     {
         $now ??= CarbonImmutable::now();
         $expired = [];
-        $due = Booking::where('status', 'waiting')->whereNotNull('expires_at')->where('expires_at', '<=', $now)->get();
+        $due = Booking::where('status', 'waiting')->where(function ($query) use ($now) {
+            $query->where('expires_at', '<=', $now)->orWhere('start_at', '<=', $now);
+        })->get();
         foreach ($due as $booking) {
-            $updated = Booking::where('id', $booking->id)->where('status', 'waiting')->update(['status' => 'expired', 'expiration_notified_at' => $now, 'updated_at' => $now]);
-            if (! $updated) {
-                continue;
+            $changed = $this->mutations->forBooking($booking, function (Booking $current) use ($now): bool {
+                if (! $current->isWaiting() || ((! $current->expires_at || $current->expires_at->gt($now)) && $current->start_at->gt($now))) {
+                    return false;
+                }
+                $this->transition($current, 'expired', 'system', ['expiration_notified_at' => $now]);
+                $eventBooking = clone $current;
+                DB::afterCommit(fn () => event(new BookingExpired($eventBooking)));
+
+                return true;
+            });
+            if ($changed) {
+                $expired[] = $booking->id;
             }
-            $booking->refresh();
-            $this->release($booking);
-            $booking->log('expired', 'system');
-            $expired[] = $booking->id;
-            event(new BookingExpired($booking));
         }
 
         return $expired;
     }
 
     /* ------------------------------------------------------------------ Divers */
+
+    private function assertFutureStart(Spa $spa, CarbonImmutable $start, bool $enforceLead = false): void
+    {
+        $now = CarbonImmutable::now();
+        if ($start <= $now) {
+            throw BookingException::make('too_soon', 'start_passed', [], 409);
+        }
+        if ($enforceLead && $start < $now->addMinutes($spa->minLead())) {
+            throw BookingException::make('too_soon', 'too_soon', ['minutes' => $spa->minLead()], 409);
+        }
+    }
+
+    /** Les besoins figés évitent qu'un changement de catalogue raccourcisse une prestation vendue. */
+    private function needsForQuote(Spa $spa, CarbonImmutable $start, array $quote): array
+    {
+        if (! empty($quote['capacity_needs'])) {
+            return array_map(function (array $need) use ($start): array {
+                $need['start'] = $start->addMinutes((int) $need['start_offset_min']);
+                $need['end'] = $start->addMinutes((int) $need['end_offset_min']);
+
+                return $need;
+            }, $quote['capacity_needs']);
+        }
+
+        // Anciennes réservations : refus explicite si leur détail n'est plus reconstructible.
+        if (empty($quote['items'])) {
+            throw BookingException::make('quote', 'quote_missing', [], 409);
+        }
+        try {
+            $needs = $this->engine->expandNeeds($spa, $start, $quote['items']);
+        } catch (BookingException) {
+            throw BookingException::make('quote', 'quote_missing', [], 409);
+        }
+        $end = $needs ? max(array_column($needs, 'end')) : $start;
+        if ((int) $start->diffInMinutes($end) !== (int) $quote['duration_min']) {
+            throw BookingException::make('quote', 'quote_missing', [], 409);
+        }
+
+        return $needs;
+    }
+
+    /** Une réservation en attente doit conserver l'ensemble de ses allocations, pas seulement une ligne. */
+    private function assertAllocationsIntact(Booking $booking): void
+    {
+        $expected = [];
+        $actual = [];
+        $needs = $this->needsForQuote($booking->spa, CarbonImmutable::instance($booking->start_at), $booking->quote ?? []);
+        $key = fn ($type, $participant, $treatment, $start, $end) => implode('|', [(int) $type, (int) $participant, (int) $treatment, $start->format('Y-m-d H:i:s'), $end->format('Y-m-d H:i:s')]);
+        foreach ($needs as $need) {
+            $k = $key($need['type_id'], $need['participant_no'], $need['treatment_id'], $need['start'], $need['end']);
+            $expected[$k] = ($expected[$k] ?? 0) + (int) $need['party'];
+        }
+        $participants = $booking->participants()->pluck('participant_no', 'id');
+        $resources = $booking->spa->resources->keyBy('id');
+        foreach ($booking->allocations()->where('status', 'active')->get() as $allocation) {
+            $resource = $resources->get($allocation->resource_id);
+            if (! $resource || $resource->status !== 'active' || (int) $resource->resource_type_id !== (int) $allocation->resource_type_id) {
+                throw BookingException::make('allocations_missing', 'allocations_missing', [], 409);
+            }
+            $k = $key($allocation->resource_type_id, $participants->get($allocation->booking_participant_id, 0), $allocation->treatment_id, $allocation->start_at, $allocation->end_at);
+            $actual[$k] = ($actual[$k] ?? 0) + (int) $allocation->party;
+        }
+        ksort($expected);
+        ksort($actual);
+        if (! $expected || $actual !== $expected) {
+            throw BookingException::make('allocations_missing', 'allocations_missing', [], 409);
+        }
+    }
+
+    private function sameCustomer(Booking $booking, array $customer): bool
+    {
+        $text = fn ($value) => mb_strtolower(trim((string) $value));
+        $phone = PhoneNumber::normalize($customer['phone'] ?? null) ?? ($customer['phone'] ?? '');
+
+        return $text($booking->first_name) === $text($customer['first_name'] ?? '')
+            && $text($booking->last_name) === $text($customer['last_name'] ?? '')
+            && $text($booking->email) === $text($customer['email'] ?? '')
+            && $booking->phone === $phone
+            && (int) ($booking->user_id ?? 0) === (int) ($customer['user_id'] ?? 0);
+    }
 
     public function assertBookable(Spa $spa): void
     {

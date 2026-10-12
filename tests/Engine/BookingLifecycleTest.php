@@ -58,6 +58,7 @@ class BookingLifecycleTest extends BookingFlowTestCase
         } catch (BookingException $e) {
             $this->assertSame(409, $e->status, 'Accepter une réservation déjà confirmée → 409');
         }
+        $this->travelTo($b->end_at->addMinute()->toMutable());
         $this->bookings->complete($b->fresh());
         $this->assertTrue($b->fresh()->status === 'completed' && LedgerEntry::where('booking_id', $b->id)->count() === 1 && (float) LedgerEntry::where('booking_id', $b->id)->value('amount') === 60.0, 'Prestation terminée : écriture de commission 15 % de 400 = 60');
     }

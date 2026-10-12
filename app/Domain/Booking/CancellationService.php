@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Mail;
  */
 class CancellationService
 {
-    public function __construct(private BookingService $bookings) {}
+    public function __construct(private BookingService $bookings, private BookingMutation $mutations) {}
 
     /**
      * Étape 1 — le partenaire dépose une demande motivée : motif structuré + explication (+ justificatif).
@@ -32,14 +32,19 @@ class CancellationService
         if ($reasonCode !== null && ! in_array($reasonCode, CancellationRequest::REASON_CODES, true)) {
             throw BookingException::make('reason_code', 'cancellation_reason_code_required', [], 422);
         }
-        if (! $booking->canRequestCancellation()) {
-            throw BookingException::make('status', 'cancellation_not_allowed', [], 409);
-        }
-        if ($reasonCode !== null && $booking->cancellationRequests()->where('status', 'refused')->where('reason_code', $reasonCode)->exists()) {
-            throw BookingException::make('reason_code', 'cancellation_same_reason_refused', [], 409);
-        }
-
-        $request = DB::transaction(function () use ($booking, $requester, $reason, $reasonCode, $evidencePath) {
+        return $this->mutations->forBooking($booking, function (Booking $booking) use ($requester, $reason, $reasonCode, $evidencePath) {
+            $pending = $booking->pendingCancellationRequest()->lockForUpdate()->first();
+            if ($pending && $booking->isConfirmed() && $booking->start_at->isFuture()
+                && $pending->requested_by === $requester?->id && $pending->reason === $reason
+                && $pending->reason_code === $reasonCode && $pending->evidence_path === $evidencePath) {
+                return $pending; // Rejeu exact : une demande et une seule série de notifications.
+            }
+            if (! $booking->canRequestCancellation()) {
+                throw BookingException::make('status', 'cancellation_not_allowed', [], 409);
+            }
+            if ($reasonCode !== null && $booking->cancellationRequests()->where('status', 'refused')->where('reason_code', $reasonCode)->exists()) {
+                throw BookingException::make('reason_code', 'cancellation_same_reason_refused', [], 409);
+            }
             $request = $booking->cancellationRequests()->create([
                 'spa_id' => $booking->spa_id,
                 'requested_by' => $requester?->id,
@@ -50,14 +55,13 @@ class CancellationService
             ]);
             $booking->log('cancellation:requested', 'partner', array_filter(['request' => $request->id, 'reason_code' => $reasonCode, 'evidence' => (bool) $evidencePath]));
             ActivityLog::record('booking.cancellation_requested', $booking, array_filter(['ref' => $booking->reference, 'reason_code' => $reasonCode, 'reason' => $reason]), 'partner');
-
+            $request->setRelation('booking', $booking);
+            DB::afterCommit(function () use ($request) {
+                $this->notifyClient($request);
+                $this->notifyAdmins($request, 'requested');
+            });
             return $request;
         });
-
-        $this->notifyClient($request);
-        $this->notifyAdmins($request, 'requested');
-
-        return $request;
     }
 
     /** Étape 2 — le client répond depuis son lien de suivi sécurisé (accord ou refus). */
@@ -66,17 +70,22 @@ class CancellationService
         if (! in_array($response, ['accepted', 'refused'], true)) {
             throw BookingException::make('response', 'invalid', [], 422);
         }
-        if (! $request->isPending() || $request->client_response !== null) {
-            throw BookingException::make('status', 'cancellation_already_answered', [], 409);
-        }
+        return $this->mutateRequest($request, function (CancellationRequest $request, Booking $booking) use ($response) {
+            if ($request->isPending() && $request->client_response === $response) {
+                return $request;
+            }
+            if (! $request->isPending() || $request->client_response !== null || ! $booking->canCancel('client')) {
+                throw BookingException::make('status', 'cancellation_already_answered', [], 409);
+            }
+            $request->update(['client_response' => $response, 'client_responded_at' => now()]);
+            $booking->log('cancellation:client_'.$response, 'client', ['request' => $request->id]);
+            DB::afterCommit(function () use ($request) {
+                $this->notifyAdmins($request, 'client_response');
+                $this->notifyPartner($request, 'client_response');
+            });
 
-        $request->update(['client_response' => $response, 'client_responded_at' => now()]);
-        $request->booking->log('cancellation:client_'.$response, 'client', ['request' => $request->id]);
-
-        $this->notifyAdmins($request, 'client_response');
-        $this->notifyPartner($request, 'client_response');
-
-        return $request;
+            return $request;
+        });
     }
 
     /**
@@ -85,32 +94,36 @@ class CancellationService
      */
     public function propose(CancellationRequest $request, User $admin, CarbonImmutable $start, ?string $note = null): CancellationRequest
     {
-        if (! $request->isPending()) {
-            throw BookingException::make('status', 'cancellation_already_decided', [], 409);
-        }
-        if ($request->hasOpenProposal()) {
-            throw BookingException::make('status', 'cancellation_proposal_pending', [], 409);
-        }
-        if ($start->isPast()) {
-            throw BookingException::make('proposed_start_at', 'proposal_in_past', [], 422);
-        }
+        $this->assertAdmin($admin);
 
-        $request->update([
-            'proposed_start_at' => $start,
-            'proposal_note' => $note ? trim($note) : null,
-            'proposed_at' => now(),
-            'proposal_response' => null,
-            'proposal_responded_at' => null,
-        ]);
-        $booking = $request->booking;
-        $booking->log('cancellation:proposed', 'admin', ['request' => $request->id, 'start_at' => $start->toDateTimeString()]);
-        ActivityLog::record('booking.reschedule_proposed', $booking, array_filter(['ref' => $booking->reference, 'start_at' => $start->toDateTimeString(), 'note' => $note]), 'admin');
+        return $this->mutateRequest($request, function (CancellationRequest $request, Booking $booking) use ($start, $note) {
+            if (! $request->isPending() || ! $booking->canCancel('admin')) {
+                throw BookingException::make('status', 'cancellation_already_decided', [], 409);
+            }
+            if ($start->lte(now())) {
+                throw BookingException::make('proposed_start_at', 'proposal_in_past', [], 422);
+            }
+            if ($request->hasOpenProposal()) {
+                if ($request->proposed_start_at->equalTo($start) && $request->proposal_note === ($note ? trim($note) : null)) {
+                    return $request;
+                }
+                throw BookingException::make('status', 'cancellation_proposal_pending', [], 409);
+            }
+            $request->update([
+                'proposed_start_at' => $start,
+                'proposal_note' => $note ? trim($note) : null,
+                'proposed_at' => now(),
+                'proposal_response' => null,
+                'proposal_responded_at' => null,
+            ]);
+            $booking->log('cancellation:proposed', 'admin', ['request' => $request->id, 'start_at' => $start->toDateTimeString()]);
+            ActivityLog::record('booking.reschedule_proposed', $booking, array_filter(['ref' => $booking->reference, 'start_at' => $start->toDateTimeString(), 'note' => $note]), 'admin');
+            if ($booking->email) {
+                DB::afterCommit(fn () => $this->mail($booking->email, $request, 'proposed', 'client', $booking->locale));
+            }
 
-        if ($booking->email) {
-            $this->mail($booking->email, $request, 'proposed', 'client', $booking->locale);
-        }
-
-        return $request->refresh();
+            return $request;
+        });
     }
 
     /**
@@ -122,27 +135,34 @@ class CancellationService
         if (! in_array($response, ['accepted', 'refused'], true)) {
             throw BookingException::make('response', 'invalid', [], 422);
         }
-        if (! $request->hasOpenProposal()) {
-            throw BookingException::make('status', 'cancellation_no_open_proposal', [], 409);
-        }
-
-        $booking = $request->booking;
-        if ($response === 'accepted') {
-            $this->bookings->reschedule($booking, CarbonImmutable::instance($request->proposed_start_at), 'client');
-            $request->update(['proposal_response' => 'accepted', 'proposal_responded_at' => now(), 'status' => 'rescheduled', 'decided_at' => now()]);
-            $booking->log('cancellation:rescheduled', 'client', ['request' => $request->id]);
-            $this->notifyAdmins($request, 'rescheduled');
-            $this->notifyPartner($request, 'rescheduled');
-            if ($booking->email) {
-                $this->mail($booking->email, $request, 'rescheduled', 'client', $booking->locale);
+        return $this->mutateRequest($request, function (CancellationRequest $request, Booking $booking) use ($response) {
+            if ($request->proposal_response === $response
+                && ($request->status === 'rescheduled' || ($request->isPending() && $response === 'refused'))) {
+                return $request;
             }
-        } else {
-            $request->update(['proposal_response' => 'refused', 'proposal_responded_at' => now()]);
-            $booking->log('cancellation:proposal_refused', 'client', ['request' => $request->id]);
-            $this->notifyAdmins($request, 'proposal_refused');
-        }
+            if (! $request->hasOpenProposal() || ! $booking->canCancel('client')) {
+                throw BookingException::make('status', 'cancellation_no_open_proposal', [], 409);
+            }
+            if ($response === 'accepted') {
+                $booking = $this->bookings->reschedule($booking, CarbonImmutable::instance($request->proposed_start_at), 'client');
+                $request->setRelation('booking', $booking);
+                $request->update(['proposal_response' => 'accepted', 'proposal_responded_at' => now(), 'status' => 'rescheduled', 'decided_at' => now()]);
+                $booking->log('cancellation:rescheduled', 'client', ['request' => $request->id]);
+                DB::afterCommit(function () use ($request, $booking) {
+                    $this->notifyAdmins($request, 'rescheduled');
+                    $this->notifyPartner($request, 'rescheduled');
+                    if ($booking->email) {
+                        $this->mail($booking->email, $request, 'rescheduled', 'client', $booking->locale);
+                    }
+                });
+            } else {
+                $request->update(['proposal_response' => 'refused', 'proposal_responded_at' => now()]);
+                $booking->log('cancellation:proposal_refused', 'client', ['request' => $request->id]);
+                DB::afterCommit(fn () => $this->notifyAdmins($request, 'proposal_refused'));
+            }
 
-        return $request->refresh();
+            return $request;
+        });
     }
 
     /** Étape 3 — décision finale HammamLuxury : seule l'acceptation annule réellement et libère la capacité. */
@@ -151,37 +171,64 @@ class CancellationService
         if (! in_array($decision, ['accepted', 'refused'], true)) {
             throw BookingException::make('decision', 'invalid', [], 422);
         }
-        if (! $request->isPending()) {
-            throw BookingException::make('status', 'cancellation_already_decided', [], 409);
-        }
-        if ($request->hasOpenProposal()) {
-            throw BookingException::make('status', 'cancellation_proposal_pending', [], 409);
-        }
+        $this->assertAdmin($admin);
 
-        DB::transaction(function () use ($request, $admin, $decision, $note) {
+        return $this->mutateRequest($request, function (CancellationRequest $request, Booking $booking) use ($admin, $decision, $note) {
+            if ($request->status === $decision && $request->decided_by === $admin->id
+                && $request->decision_note === ($note ? trim($note) : null)) {
+                return $request;
+            }
+            if (! $request->isPending() || ! $booking->canCancel('admin')) {
+                throw BookingException::make('status', 'cancellation_already_decided', [], 409);
+            }
+            if ($request->hasOpenProposal()) {
+                throw BookingException::make('status', 'cancellation_proposal_pending', [], 409);
+            }
             $request->update([
                 'status' => $decision,
                 'decided_by' => $admin->id,
                 'decided_at' => now(),
                 'decision_note' => $note ? trim($note) : null,
             ]);
-            $booking = $request->booking;
             $booking->log('cancellation:'.$decision, 'admin', ['request' => $request->id]);
             ActivityLog::record('booking.cancellation_'.$decision, $booking, array_filter(['ref' => $booking->reference, 'note' => $note]), 'admin');
 
-            if ($decision === 'accepted' && $booking->isActive()) {
+            if ($decision === 'accepted') {
                 $this->bookings->cancel($booking, 'admin');
             }
-        });
-
-        if ($decision === 'refused') {
-            $this->notifyPartner($request, 'refused');
-            if ($request->booking->email) {
-                $this->mail($request->booking->email, $request, 'refused', 'client', $request->booking->locale);
+            if ($decision === 'refused') {
+                DB::afterCommit(function () use ($request, $booking) {
+                    $this->notifyPartner($request, 'refused');
+                    if ($booking->email) {
+                        $this->mail($booking->email, $request, 'refused', 'client', $booking->locale);
+                    }
+                });
             }
-        }
 
-        return $request->refresh();
+            return $request;
+        });
+    }
+
+    /** Toujours verrouiller dans l'ordre établissement → réservation → demande. */
+    private function mutateRequest(CancellationRequest $request, callable $callback): CancellationRequest
+    {
+        $result = $this->mutations->forBooking($request->booking()->firstOrFail(), function (Booking $booking) use ($request, $callback) {
+            $fresh = CancellationRequest::whereKey($request->id)->where('booking_id', $booking->id)->lockForUpdate()->firstOrFail();
+            $fresh->setRelation('booking', $booking);
+
+            return $callback($fresh, $booking);
+        });
+        $request->setRawAttributes($result->getAttributes(), true);
+        $request->setRelations($result->getRelations());
+
+        return $result;
+    }
+
+    private function assertAdmin(User $admin): void
+    {
+        if ($admin->role !== 'admin') {
+            throw BookingException::make('actor', 'admin_only', [], 403);
+        }
     }
 
     /** Nombre et taux de demandes d'annulation par établissement (sur les réservations confirmées ou terminées). */

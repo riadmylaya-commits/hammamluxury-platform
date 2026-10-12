@@ -99,7 +99,7 @@ class QuoteBuilder
     /** Devis sans les informations de commission (réponse publique / API). */
     public static function publicView(array $quote): array
     {
-        unset($quote['commissionable']);
+        unset($quote['commissionable'], $quote['capacity_needs']);
         foreach ($quote['lines'] as &$l) {
             unset($l['commissionable']);
             foreach ($l['extras'] as &$e) {
@@ -125,7 +125,7 @@ class QuoteBuilder
 
         foreach ($participants as $p) {
             $t = $this->engine->resolveTreatment($spa, (int) $p['treatment_id']);
-            if (! $t) {
+            if (! $t || ! $t->isActive()) {
                 $quote['ok'] = false;
                 $quote['errors'][] = __('booking.treatment_not_found');
 
@@ -146,7 +146,10 @@ class QuoteBuilder
             $exNonCommissionable = 0.0;
             $extraMin = 0;
             foreach ($p['extras'] as $eid => $qty) {
-                $e = $extras[$eid];
+                $e = $extras->get($eid);
+                if (! $e || $e->status !== 'active' || (int) $qty < 1 || (int) $qty > (int) $e->max_qty) {
+                    throw BookingException::make('catalogue_changed', 'catalogue_changed', [], 409);
+                }
                 $mult = $e->per_person ? $party : 1;
                 $sub = round($e->price * $qty * $mult, 2);
                 $exTotal += $sub;
@@ -189,6 +192,17 @@ class QuoteBuilder
 
         $quote['total'] = round($quote['total'], 2);
         $quote['commissionable'] = round($quote['commissionable'], 2);
+        if ($quote['ok']) {
+            $origin = \Carbon\CarbonImmutable::parse('2000-01-01 00:00:00');
+            $quote['capacity_needs'] = array_map(function (array $need) use ($origin, $spa): array {
+                $need['start_offset_min'] = (int) $origin->diffInMinutes($need['start']);
+                $need['end_offset_min'] = (int) $origin->diffInMinutes($need['end']);
+                $need['buffer_min'] = (int) ($spa->resourceTypes->firstWhere('id', $need['type_id'])?->buffer_min ?? 0);
+                unset($need['start'], $need['end']);
+
+                return $need;
+            }, $this->engine->expandNeeds($spa, $origin, $quote['items']));
+        }
         $quote['fingerprint'] = self::fingerprint($quote);
 
         return $quote;
@@ -212,7 +226,13 @@ class QuoteBuilder
             $flat[] = $l['participant_no'].':'.$l['treatment_id'].':'.$l['party'].':'.implode(',', $ex);
         }
 
-        return md5(implode('|', $flat).'|'.$quote['total'].'|'.$quote['duration_min']);
+        $needs = array_map(function (array $need): array {
+            unset($need['label'], $need['type_slug']);
+
+            return $need;
+        }, $quote['capacity_needs'] ?? []);
+
+        return hash('sha256', json_encode([$flat, $quote['total'], $quote['commissionable'] ?? null, $quote['currency'], $quote['duration_min'], $needs], JSON_THROW_ON_ERROR));
     }
 
     /** Libellé court d'un devis (« 2 × Hammam + Massage (+ Massage crânien) »). */

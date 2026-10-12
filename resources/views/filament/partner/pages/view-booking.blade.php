@@ -71,7 +71,7 @@
                 <div style="display:flex;gap:.4rem;flex-wrap:wrap">
                     <span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::statusColor($b->status) }}">{{ $statuses[$b->status] ?? $b->status }}</span>
                     @if ($b->source === 'partner')<span class="hl-badge hl-badge-info">{{ __('partner.sources.partner') }}@if($b->channel) · {{ __('partner.channels.'.$b->channel) }}@endif</span>@endif
-                    @if ($b->nothingDue())<span class="hl-badge hl-badge-gray">{{ __('partner.nothing_due_short') }}</span>@else<span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::paymentColor($b->payment_status) }}">{{ $payments[$b->payment_status] ?? $b->payment_status }}</span>@endif
+                    <span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::paymentColor($b->payment_status) }}">{{ $payments[$b->payment_status] ?? $b->payment_status }}</span>
                 </div>
             </div>
 
@@ -180,6 +180,11 @@
             <div class="hl-row"><span class="hl-k">{{ __('partner.commissionable') }}</span><span class="hl-v">{{ $money($s['commissionable']) }}</span></div>
             <div class="hl-row"><span class="hl-k">{{ __('partner.commission_hl', ['pct' => rtrim(rtrim(number_format($b->commission_pct, 2, ',', ''), '0'), ',')]) }}</span><span class="hl-v hl-minus">− {{ $money($b->commissionDue()) }}</span></div>
             <div class="hl-total"><span>{{ __('partner.net_partner') }}</span><span class="hl-net">{{ $money($b->netDue()) }}</span></div>
+            @if (in_array($b->status, ['waiting', 'confirmed'], true))
+                <div class="hl-row"><span class="hl-k">{{ __('booking.finance_commission_estimate') }}</span><span class="hl-v">{{ $money($b->commission_amount) }}</span></div>
+                <div class="hl-row"><span class="hl-k">{{ __('booking.finance_net_estimate') }}</span><span class="hl-v">{{ $money($b->netForPartner()) }}</span></div>
+                <p class="hl-muted">{{ __('booking.finance_not_accrued') }}</p>
+            @endif
             @endif
             @if ($b->nothingDue())
                 <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.nothing_due') }}</p>
@@ -188,9 +193,10 @@
                 <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.non_commissionable_note') }}</p>
             @endif
             <div class="hl-row" style="margin-top:.6rem;border-top:1px solid #e5e7eb;border-bottom:0">
-                <span class="hl-k">{{ __('partner.payment') }}</span>
-                <span class="hl-v">@if ($b->nothingDue())<span class="hl-badge hl-badge-gray">{{ __('partner.nothing_due_short') }}</span>@else<span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::paymentColor($b->payment_status) }}">{{ $payments[$b->payment_status] ?? $b->payment_status }}</span>@endif</span>
+                <span class="hl-k">{{ __('booking.finance_payment_declared') }}</span>
+                <span class="hl-v"><span class="hl-badge hl-badge-{{ \App\Filament\Shared\BookingActions::paymentColor($b->payment_status) }}">{{ $payments[$b->payment_status] ?? $b->payment_status }}</span></span>
             </div>
+            <p class="hl-muted">{{ __('booking.finance_payment_declaration') }}</p>
         </div>
 
         {{-- Formule(s) réservée(s) --}}

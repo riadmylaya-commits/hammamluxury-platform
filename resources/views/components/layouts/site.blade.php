@@ -45,7 +45,10 @@
         var ll = [parseFloat(el.dataset.lat), parseFloat(el.dataset.lng)];
         var map = L.map(el, { scrollWheelZoom: false }).setView(ll, 15);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
-        L.marker(ll).addTo(map).bindPopup(el.dataset.title);
+        // Leaflet treats strings as HTML. A DOM node keeps partner input as text.
+        var title = document.createElement('span');
+        title.textContent = el.dataset.title || '';
+        L.marker(ll).addTo(map).bindPopup(title);
     };
     document.head.appendChild(js);
 })();

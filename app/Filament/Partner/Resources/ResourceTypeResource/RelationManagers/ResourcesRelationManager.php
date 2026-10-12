@@ -3,6 +3,7 @@
 namespace App\Filament\Partner\Resources\ResourceTypeResource\RelationManagers;
 
 use App\Models\ResourceType;
+use App\Models\Resource;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -10,6 +11,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class ResourcesRelationManager extends RelationManager
 {
@@ -48,7 +50,6 @@ class ResourcesRelationManager extends RelationManager
             Forms\Components\Hidden::make('max_party')->default(1),
             Forms\Components\Select::make('status')->label(__('partner.status'))->options(['active' => __('partner.active'), 'inactive' => __('partner.inactive')])->default('active')->required()
                 ->helperText(__('partner.unit_status_help')),
-            Forms\Components\Hidden::make('spa_id')->default(fn () => Filament::getTenant()->id),
         ])->columns(2);
     }
 
@@ -76,9 +77,50 @@ class ResourcesRelationManager extends RelationManager
                     ->formatStateUsing(fn ($state) => trans_choice('partner.people_count', (int) $state, ['count' => $state])),
                 Tables\Columns\IconColumn::make('status')->label(__('partner.status'))->getStateUsing(fn ($record) => $record->status === 'active')->boolean(),
             ])
-            ->headerActions([Tables\Actions\CreateAction::make()->label(__('partner.add_resource'))->mutateFormDataUsing(fn (array $data) => self::normalize($data))])
-            ->actions([Tables\Actions\EditAction::make()->mutateFormDataUsing(fn (array $data) => self::normalize($data)), Tables\Actions\DeleteAction::make()])
+            ->headerActions([Tables\Actions\CreateAction::make()->label(__('partner.add_resource'))
+                ->using(function (array $data, Tables\Actions\CreateAction $action) use ($type): Resource {
+                    abort_unless((int) $type->spa_id === (int) Filament::getTenant()->id, 403);
+
+                    return $this->protectedMutation($action, fn () => $type->resources()->create(
+                        array_replace(self::normalize($data), ['spa_id' => $type->spa_id, 'resource_type_id' => $type->id])
+                    ));
+                })])
+            ->actions([
+                Tables\Actions\EditAction::make()->using(function (Resource $record, array $data, Tables\Actions\EditAction $action) use ($type): Resource {
+                    abort_unless((int) $type->spa_id === (int) Filament::getTenant()->id
+                        && (int) $record->spa_id === (int) $type->spa_id && (int) $record->resource_type_id === (int) $type->id, 403);
+
+                    return $this->protectedMutation($action, function () use ($record, $data, $type): Resource {
+                        $record->update(array_replace(self::normalize($data), ['spa_id' => $type->spa_id, 'resource_type_id' => $type->id]));
+
+                        return $record;
+                    });
+                })->visible(fn (Resource $record) => ! $record->archived_at),
+                Tables\Actions\Action::make('archive')->label(__('booking.resource_archive'))->icon('heroicon-o-archive-box')
+                    ->color('warning')->requiresConfirmation()->modalDescription(__('booking.resource_archive_help'))
+                    ->visible(fn (Resource $record) => ! $record->archived_at)
+                    ->action(function (Resource $record, Tables\Actions\Action $action) use ($type): void {
+                        abort_unless((int) $type->spa_id === (int) Filament::getTenant()->id
+                            && (int) $record->spa_id === (int) $type->spa_id && (int) $record->resource_type_id === (int) $type->id, 403);
+                        try {
+                            $record->delete();
+                        } catch (ValidationException $e) {
+                            \Filament\Notifications\Notification::make()->danger()->title(collect($e->errors())->flatten()->first())->send();
+                            $action->halt();
+                        }
+                    }),
+            ])
             ->emptyStateHeading(__('partner.no_resources'))
             ->emptyStateDescription(__('partner.no_resources_help.'.$family));
+    }
+
+    private function protectedMutation(Tables\Actions\Action $action, callable $operation): mixed
+    {
+        try {
+            return $operation();
+        } catch (ValidationException $e) {
+            $path = $this->getMountedTableActionForm($action)?->getStatePath() ?? 'mountedTableActionsData.0';
+            throw ValidationException::withMessages(collect($e->errors())->mapWithKeys(fn ($messages, $field) => [$path.'.'.$field => $messages])->all());
+        }
     }
 }

@@ -105,6 +105,8 @@ class BookingController extends Controller
         return [
             'reference' => $b->reference,
             'status' => $b->status,
+            'can_cancel' => $b->canCancel('client'),
+            'payment_status' => $b->payment_status,
             'start_at' => $b->start_at?->toIso8601String(),
             'end_at' => $b->end_at?->toIso8601String(),
             'party' => $b->party,

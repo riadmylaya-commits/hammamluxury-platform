@@ -3,6 +3,7 @@
 namespace App\Domain\Booking;
 
 use App\Models\Spa;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -22,15 +23,16 @@ class IntentService
     public function create(array $payload): array
     {
         $id = Str::random(24);
-        $expires = time() + $this->ttlSeconds();
-        $payload += ['id' => $id, 'created_at' => time(), 'expires_at' => $expires];
+        $created = CarbonImmutable::now()->getTimestamp();
+        $expires = $created + $this->ttlSeconds();
+        $payload += ['id' => $id, 'created_at' => $created, 'expires_at' => $expires];
         Cache::put($this->key($id), $payload, $this->ttlSeconds());
 
         return ['token' => $id.'.'.$this->sign($id, $payload), 'id' => $id, 'expires_at' => $expires];
     }
 
     /** Résout un jeton ; lève une BookingException si invalide, altéré, expiré ou déjà consommé. */
-    public function resolve(string $token, ?Spa $spa = null): array
+    public function resolve(string $token, ?Spa $spa = null, bool $allowConsumed = false): array
     {
         [$id, $sig] = array_pad(explode('.', $token, 2), 2, '');
         $payload = $id !== '' ? Cache::get($this->key($id)) : null;
@@ -40,14 +42,14 @@ class IntentService
         if (! hash_equals($this->sign($id, $payload), $sig)) {
             throw BookingException::make('intent_tampered', 'intent_invalid', [], 403);
         }
-        if ((int) $payload['expires_at'] < time()) {
+        if ((int) $payload['expires_at'] <= CarbonImmutable::now()->getTimestamp()) {
             throw BookingException::make('intent_expired', 'intent_expired', [], 410);
-        }
-        if (! empty($payload['consumed_booking_id'])) {
-            throw BookingException::make('intent_replayed', 'intent_replayed', [], 409);
         }
         if ($spa && (int) $payload['spa_id'] !== $spa->id) {
             throw BookingException::make('intent_spa', 'intent_invalid', [], 403);
+        }
+        if (! $allowConsumed && ! empty($payload['consumed_booking_id'])) {
+            throw BookingException::make('intent_replayed', 'intent_replayed', [], 409);
         }
 
         return $payload;
