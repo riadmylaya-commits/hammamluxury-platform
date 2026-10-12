@@ -58,6 +58,7 @@ class BookingService
             'duration_min' => $quote['duration_min'],
             'start_at' => $start->format('Y-m-d H:i:s'),
             'locale' => app()->getLocale(),
+            'rate' => $quote['rate'],
         ]);
 
         return ['intent' => $intent, 'quote' => $quote, 'start_at' => $start->toDateTimeString(), 'end_at' => $start->addMinutes($quote['duration_min'])->toDateTimeString()];
@@ -108,7 +109,7 @@ class BookingService
             $start = CarbonImmutable::parse($payload['start_at']);
             $this->assertFutureStart($current, $start, enforceLead: true);
             $participants = array_map(fn ($i) => ['participant_no' => $i['participant_no'], 'treatment_id' => $i['treatment'], 'party' => $i['party'], 'extras' => $i['extras']], $payload['items']);
-            $quote = $this->quotes->build($current, $participants);
+            $quote = $this->quotes->build($current, $participants, $payload['rate'] ?? 'standard');
             if (! $quote['ok']) {
                 throw BookingException::make('catalogue_changed', 'catalogue_changed', [], 409);
             }
@@ -132,9 +133,9 @@ class BookingService
      *
      * @param  array  $items  [{treatment, party, extras, participant_no}]
      */
-    public function book(Spa $spa, CarbonImmutable $start, array $items, array $customer, string $status = 'waiting', array $meta = [], string $actor = 'client'): Booking
+    public function book(Spa $spa, CarbonImmutable $start, array $items, array $customer, string $status = 'waiting', string $rate = 'standard', array $meta = [], string $actor = 'client'): Booking
     {
-        return $this->mutations->forSpa($spa, function (Spa $current) use ($start, $items, $customer, $status, $meta, $actor): Booking {
+        return $this->mutations->forSpa($spa, function (Spa $current) use ($start, $items, $customer, $status, $rate, $meta, $actor): Booking {
             if (! in_array($status, ['waiting', 'confirmed'], true)) {
                 throw BookingException::make('status', 'invalid', [], 422);
             }
@@ -142,7 +143,7 @@ class BookingService
             foreach (array_values($items) as $i => $item) {
                 $participants[] = ['participant_no' => $item['participant_no'] ?? $i + 1, 'treatment' => $item['treatment'], 'party' => $item['party'] ?? 1, 'extras' => $item['extras'] ?? []];
             }
-            $quote = $this->quotes->fromRequest($current, ['participants' => $participants]);
+            $quote = $this->quotes->fromRequest($current, ['participants' => $participants, 'rate' => $rate]);
             if (! $quote['ok']) {
                 throw new BookingException('quote', implode(' ', $quote['errors']));
             }
@@ -191,6 +192,10 @@ class BookingService
                 'party' => $quote['party'],
                 'duration_min' => $quote['duration_min'],
                 'total' => $quote['total'],
+                'rate_type' => $quote['rate'] ?? 'standard',
+                'cancellation_hours' => $quote['cancellation_hours'] ?? $spa->cancellation_hours,
+                'standard_total' => $quote['standard_total'] ?? $quote['total'],
+                'nr_discount_pct' => $quote['nr_discount_pct'] ?? null,
                 'commissionable_amount' => $commissionable,
                 'commission_pct' => $pct,
                 'commission_amount' => round($commissionable * $pct / 100, 2),
@@ -310,13 +315,21 @@ class BookingService
         });
     }
 
+    /**
+     * Annulation. Par le client : gratuite avant la limite figée sur la réservation (tarif standard) ; au-delà, ou en tarif
+     * non remboursable, 100 % du montant reste dû et la commission est conservée (même mécanique que le no-show avec frais).
+     * Par le partenaire (demande acceptée) ou l'administration : jamais de frais pour le client. Le créneau est toujours libéré.
+     */
     public function cancel(Booking $booking, string $actor = 'client'): Booking
     {
         return $this->mutations->forBooking($booking, function (Booking $current) use ($actor): Booking {
             if (! $current->canCancel($actor)) {
                 throw BookingException::make('status', 'already_inactive', [], 409);
             }
-            $this->transition($current, 'cancelled', $actor, ['cancelled_at' => now(), 'cancelled_by' => $actor, 'expires_at' => null]);
+            $fee = $actor === 'client' ? $current->cancelFeeNow() : 0.0;
+            $this->transition($current, 'cancelled', $actor, ['cancelled_at' => now(), 'cancelled_by' => $actor, 'expires_at' => null, 'cancel_fee' => $fee > 0 ? $fee : null]);
+            $kind = $fee > 0 ? ($current->isNonRefundable() ? 'cancel:non_refundable' : 'cancel:late_fee') : 'cancel:free';
+            $current->log($kind, $actor, array_filter(['fee' => $fee, 'commission' => $fee > 0 ? $current->commissionDue() : 0, 'until' => $current->freeCancellationUntil()?->toDateTimeString()]));
             $current->cancellationRequests()->where('status', 'pending')
                 ->update(['status' => 'closed', 'decided_at' => now(), 'decision_note' => 'booking_cancelled:'.$actor]);
 
