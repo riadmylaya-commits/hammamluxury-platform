@@ -24,6 +24,11 @@ return [
     'geocoder_url' => env('HL_GEOCODER_URL', 'https://nominatim.openstreetmap.org/search'),
 
     // Formulaire Contact public : adresse de réception.
+    // Sécurité HTTP : csp_mode = report | enforce | off ; csp_extra = directives supplémentaires
+    'csp_mode' => env('HL_CSP_MODE', 'report'),
+    'csp_extra' => env('HL_CSP_EXTRA', ''),
+    'hsts' => env('HL_HSTS', true),
+
     'contact_email' => env('HL_CONTACT_EMAIL', 'admin@hammamluxury.com'),
     // Alertes techniques (sauvegardes, surveillance).
     'alert_email' => env('HL_ALERT_EMAIL', env('HL_CONTACT_EMAIL', 'admin@hammamluxury.com')),

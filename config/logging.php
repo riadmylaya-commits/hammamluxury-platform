@@ -51,6 +51,13 @@ return [
     */
 
     'channels' => [
+        'csp' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/csp.log'),
+            'level' => 'warning',
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
 
         'stack' => [
             'driver' => 'stack',

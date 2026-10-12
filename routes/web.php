@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CspReportController;
 use App\Http\Middleware\SetLocale;
 use App\Livewire\Site\BookingFlow;
 use App\Livewire\Site\BookingShow;
@@ -13,6 +14,8 @@ use App\Models\ReviewPhoto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+
+Route::post('/csp-report', CspReportController::class)->middleware('throttle:60,1')->name('csp.report');
 
 Route::get('/', function (Request $request) {
     $locale = $request->getPreferredLanguage(config('hl.locales')) ?: config('app.locale');
