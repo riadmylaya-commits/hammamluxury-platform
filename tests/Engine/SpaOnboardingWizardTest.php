@@ -4,6 +4,7 @@ namespace Tests\Engine;
 
 use App\Domain\Geo\Geocoder;
 use App\Domain\Geo\WebsiteUrl;
+use App\Domain\Media\PhotoProcessor;
 use App\Domain\Partner\OnboardingService;
 use App\Filament\Partner\Pages\RegisterSpa;
 use App\Mail\SpaStatusMail;
@@ -16,6 +17,7 @@ use App\Models\User;
 use Database\Seeders\ReferenceSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -42,6 +44,13 @@ class SpaOnboardingWizardTest extends TestCase
         $this->partner = Partner::create(['user_id' => $this->user->id, 'company_name' => 'Nadia SARL', 'status' => 'pending']);
         User::create(['name' => 'Admin', 'email' => 'admin@example.test', 'password' => 'secret-test', 'role' => 'admin', 'email_verified_at' => now()]);
         $this->actingAs($this->user);
+        Storage::fake('public');
+    }
+
+    /** Exercise server-generated ownership instead of accepting arbitrary Livewire path strings. */
+    private function uploadedPhotos(Spa $spa, int $count = 10): array
+    {
+        return array_map(fn ($i) => PhotoProcessor::storeForSpa(UploadedFile::fake()->image("photo-$i.jpg", 800, 600), $spa), range(1, $count));
     }
 
     private function next($test, int $step)
@@ -84,11 +93,11 @@ class SpaOnboardingWizardTest extends TestCase
         $t->fillForm(['photos' => array_map(fn ($i) => "spas/x$i.jpg", range(1, 41))]);
         $this->next($t, 2)->assertHasFormErrors(['photos']);
         $this->assertSame(0, $spa->photos()->count());
-        $paths = array_map(fn ($i) => "spas/p$i.jpg", range(1, 10));
+        $paths = $this->uploadedPhotos($spa);
         $t->fillForm(['photos' => $paths]);
         $this->next($t, 2)->assertHasNoFormErrors();
         $this->assertSame(10, $spa->photos()->count());
-        $this->assertTrue($spa->photos()->where('path', 'spas/p1.jpg')->value('is_cover'));
+        $this->assertTrue($spa->photos()->where('path', $paths[0])->value('is_cover'));
 
         // 4. services
         $t->fillForm(['categories' => $cats, 'amenities' => $amen]);
@@ -183,11 +192,8 @@ class SpaOnboardingWizardTest extends TestCase
         $this->next($t, 0);
         $t->fillForm(['name' => 'Spa Anfa', 'category' => 'spa', 'city_id' => $city->id, 'address' => '1 bd Anfa', 'description_fr' => str_repeat('Spa urbain moderne avec hammam et sauna. ', 2), 'spa_phone' => '522000000']);
         $this->next($t, 1)->assertHasNoFormErrors();
-        Storage::fake('public');
-        $photos = array_map(fn ($i) => "spas/c$i.jpg", range(1, 10));
-        foreach ($photos as $p) {
-            Storage::disk('public')->put($p, 'jpg');
-        }
+        $spa = Spa::where('name', 'Spa Anfa')->firstOrFail();
+        $photos = $this->uploadedPhotos($spa);
         $t->fillForm(['photos' => $photos]);
         $this->next($t, 2)->assertHasNoFormErrors();
         $t->fillForm(['categories' => $cats]);

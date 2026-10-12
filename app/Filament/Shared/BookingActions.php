@@ -83,7 +83,7 @@ class BookingActions
                     ? in_array($b->status, ['confirmed', 'completed'], true) && $b->start_at->isPast()
                     : $b->partnerNoShowWindowOpen())
                 ->modalHeading(__('partner.no_show'))
-                ->modalDescription(fn (Booking $b) => __('partner.no_show_help', ['until' => $b->end_at->addHours(Booking::NO_SHOW_WINDOW_HOURS)->format('d/m H:i')]))
+                ->modalDescription(fn (Booking $b) => __('partner.no_show_help', ['until' => $b->end_at->copy()->addHours(Booking::NO_SHOW_WINDOW_HOURS)->format('d/m H:i')]))
                 ->form(fn (Booking $b) => [
                     Radio::make('fee')->label(__('partner.no_show_fee_question'))->required()->options([
                         'apply' => __('partner.no_show_fee_apply', ['amount' => number_format((float) $b->total, 0, ',', ' ').' '.config('hl.currency')]),
@@ -121,7 +121,7 @@ class BookingActions
                     }
                 }),
             $class::make('cancel')->label(__('partner.cancel'))->icon('heroicon-o-trash')->color('danger')
-                ->visible(fn (Booking $b) => $actor === 'admin' && $b->isConfirmed())
+                ->visible(fn (Booking $b) => $actor === 'admin' && $b->canCancel('admin'))
                 ->requiresConfirmation()->modalDescription(__('partner.cancel_help'))
                 ->action(fn (Booking $b) => $run($b, 'cancel')),
             $class::make('requestCancellation')->label(__('partner.request_cancellation'))->icon('heroicon-o-hand-raised')->color('danger')
@@ -146,10 +146,11 @@ class BookingActions
                     }
                 }),
             $class::make('payment')->label(__('partner.payment'))->icon('heroicon-o-banknotes')->color('gray')
-                ->visible(fn (Booking $b) => $b->isConfirmed() || $b->status === 'completed')
+                ->visible(fn (Booking $b) => in_array($b->status, ['confirmed', 'completed', 'no_show'], true)
+                    || ($actor === 'admin' && in_array($b->status, ['cancelled', 'partner_no_show'], true)))
                 ->fillForm(fn (Booking $b) => ['payment_status' => $b->payment_status])
                 ->form([Select::make('payment_status')->label(__('partner.payment_status'))->options(__('partner.payment_statuses'))->required()->native(false)])
-                ->modalDescription(__('partner.payment_help'))
+                ->modalDescription(__('booking.finance_payment_declaration'))
                 ->action(fn (Booking $b, array $data) => $run($b, 'setPaymentStatus', [$data['payment_status']])),
         ];
     }
@@ -204,13 +205,18 @@ class BookingActions
                 TextEntry::make('expires_at')->label(__('partner.expires_at'))->since()->visible(fn (Booking $b) => $b->isWaiting()),
                 TextEntry::make('source')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')
                     ->formatStateUsing(fn ($state, Booking $b) => (__('partner.sources')[$state] ?? $state).($b->channel ? ' · '.(__('partner.channels')[$b->channel] ?? $b->channel) : '')),
-                TextEntry::make('payment_status')->label(__('partner.payment_status'))->badge()
-                    ->formatStateUsing(fn ($state, Booking $b) => $b->nothingDue() ? __('partner.nothing_due_short') : (__('partner.payment_statuses')[$state] ?? $state))
-                    ->color(fn ($state, Booking $b) => $b->nothingDue() ? 'gray' : self::paymentColor((string) $state)),
+                TextEntry::make('payment_status')->label(__('booking.finance_payment_declared'))->badge()
+                    ->formatStateUsing(fn ($state) => __('partner.payment_statuses')[$state] ?? $state)
+                    ->color(fn ($state) => self::paymentColor((string) $state))
+                    ->helperText(__('booking.finance_payment_declaration')),
                 TextEntry::make('commissionable_amount')->label(__('partner.commissionable'))->getStateUsing(fn (Booking $b) => $b->commissionableAmount())->formatStateUsing($money)->visible($withCommission),
                 TextEntry::make('commission_amount')->label(__('partner.commission'))->getStateUsing(fn (Booking $b) => $b->commissionDue())->formatStateUsing($money)
                     ->helperText(fn (Booking $b) => $b->nothingDue() ? __('partner.nothing_due') : $b->commission_pct.' %')->visible($withCommission),
                 TextEntry::make('net')->label(__('partner.net_partner'))->getStateUsing(fn (Booking $b) => $b->netDue())->formatStateUsing($money)->weight('bold')->visible($withCommission),
+                TextEntry::make('commission_estimate')->label(__('booking.finance_commission_estimate'))->getStateUsing(fn (Booking $b) => $b->commission_amount)->formatStateUsing($money)
+                    ->visible(fn (Booking $b) => $withCommission && in_array($b->status, ['waiting', 'confirmed'], true)),
+                TextEntry::make('net_estimate')->label(__('booking.finance_net_estimate'))->getStateUsing(fn (Booking $b) => $b->netForPartner())->formatStateUsing($money)
+                    ->visible(fn (Booking $b) => $withCommission && in_array($b->status, ['waiting', 'confirmed'], true)),
                 TextEntry::make('no_show_fee')->label(__('partner.no_show_fee'))->badge()->visible(fn (Booking $b) => $b->status === 'no_show')
                     ->getStateUsing(fn (Booking $b) => $b->no_show_fee_waived ? __('partner.no_show_fee_waived') : $money($b->no_show_fee))
                     ->color(fn (Booking $b) => $b->no_show_fee_waived ? 'gray' : 'warning'),

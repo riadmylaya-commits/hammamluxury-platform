@@ -4,15 +4,18 @@ namespace App\Filament\Partner\Forms;
 
 use App\Domain\Catalogue\Presentation;
 use App\Domain\Geo\WebsiteUrl;
+use App\Domain\Media\PhotoPathPolicy;
 use App\Domain\Media\PhotoProcessor;
 use App\Domain\Policy\CancellationPolicy;
 use App\Filament\Forms\Components\MapPicker;
 use App\Filament\Forms\Components\PhoneField;
+use App\Filament\Partner\Pages\RegisterSpa;
 use App\Models\Amenity;
 use App\Models\Category;
 use App\Models\City;
 use App\Models\Spa;
 use App\Models\SpaHour;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
@@ -30,6 +33,7 @@ use Filament\Forms\Set;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class SpaForm
@@ -47,10 +51,15 @@ class SpaForm
             ->acceptedFileTypes(PhotoProcessor::MIMES)->maxSize((int) (PhotoProcessor::MAX_BYTES / 1024))
             ->rules(PhotoProcessor::rules())
             ->helperText(__('partner.photo_rules', ['w' => PhotoProcessor::MIN_WIDTH, 'h' => PhotoProcessor::MIN_HEIGHT, 'mb' => (int) (PhotoProcessor::MAX_BYTES / 1024 / 1024)]))
-            ->saveUploadedFileUsing(fn (TemporaryUploadedFile $file) => PhotoProcessor::store($file))
+            ->saveUploadedFileUsing(fn (FileUpload $component, TemporaryUploadedFile $file) => PhotoProcessor::storeForSpa($file, self::photoSpa($component)))
             ->fetchFileInformation(false)
             ->getUploadedFileUsing(function (FileUpload $component, string $file): ?array {
-                if (Str::startsWith($file, ['http://', 'https://'])) {
+                try {
+                    PhotoPathPolicy::assertCanAttach(self::photoSpa($component), $file);
+                } catch (ValidationException $exception) {
+                    return null;
+                }
+                if (PhotoPathPolicy::isExternal($file)) {
                     return ['name' => basename(parse_url($file, PHP_URL_PATH) ?: $file), 'size' => 0, 'type' => 'image/jpeg', 'url' => $file];
                 }
                 $disk = $component->getDisk();
@@ -62,6 +71,22 @@ class SpaForm
             });
 
         return $multiple ? $upload->multiple()->reorderable()->appendFiles()->panelLayout('grid') : $upload;
+    }
+
+    /** Resolve server-owned context, never a hidden spa_id submitted with the photo. */
+    private static function photoSpa(FileUpload $component): Spa
+    {
+        $livewire = $component->getLivewire();
+        $spa = $livewire instanceof RegisterSpa ? $livewire->spa() : Filament::getTenant();
+        if (! $spa instanceof Spa && method_exists($livewire, 'getRecord')) {
+            $spa = $livewire->getRecord();
+        }
+        if (! $spa instanceof Spa) {
+            throw ValidationException::withMessages([$component->getStatePath() => __('partner.photo_owner_error')]);
+        }
+        PhotoPathPolicy::assertCanManage($spa);
+
+        return $spa;
     }
 
     public static function citySelect(): Select

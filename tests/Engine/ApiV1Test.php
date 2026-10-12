@@ -57,7 +57,9 @@ class ApiV1Test extends BookingFlowTestCase
         $this->assertArrayNotHasKey('phone', $res['spa'], 'coordonnées masquées tant que non confirmé');
         $this->assertNotNull($res['expires_at']);
 
-        $this->postJson("/api/v1/spas/{$this->spa->slug}/bookings", ['intent' => $intent['intent']['token']] + $this->customer)->assertStatus(409)->assertJsonPath('reason', 'intent_replayed');
+        $replay = $this->postJson("/api/v1/spas/{$this->spa->slug}/bookings", ['intent' => $intent['intent']['token']] + $this->customer)->assertCreated()->json('data');
+        $this->assertSame($res['reference'], $replay['reference'], 'même client + même jeton : réservation idempotente, aucun doublon');
+        $this->postJson("/api/v1/spas/{$this->spa->slug}/bookings", ['intent' => $intent['intent']['token']] + ['email' => 'autre@example.com'] + $this->customer)->assertStatus(409)->assertJsonPath('reason', 'intent_replayed');
         $this->postJson("/api/v1/spas/{$this->spa->slug}/bookings", ['intent' => 'x.'.str_repeat('a', 64)] + $this->customer)->assertStatus(410);
 
         $booking = Booking::where('reference', $res['reference'])->firstOrFail();

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Booking\ResourceProtection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -14,6 +15,11 @@ class Block extends Model
     protected $guarded = [];
 
     protected $casts = ['start_at' => 'datetime', 'end_at' => 'datetime'];
+
+    public function save(array $options = [])
+    {
+        return app(ResourceProtection::class)->saveBlock($this, fn () => parent::save($options));
+    }
 
     public function spa(): BelongsTo
     {

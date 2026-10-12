@@ -6,6 +6,7 @@ use App\Domain\Booking\CapacityEngine;
 use App\Domain\Booking\QuoteBuilder;
 use App\Domain\Catalogue\Presentation;
 use App\Domain\Policy\CancellationPolicy;
+use App\Models\Concerns\LocksCatalogue;
 use App\Models\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Treatment extends Model
 {
+    use LocksCatalogue;
     use Translatable;
 
     public const CATEGORIES = ['hammam', 'massage', 'face', 'ritual', 'other'];

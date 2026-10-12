@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 
 /** Fermetures et indisponibilités : tout l'établissement, un type de ressource ou une ressource précise. */
 class BlockResource extends Resource
@@ -41,9 +42,11 @@ class BlockResource extends Resource
             ])->default('spa')->live()->required()->columnSpanFull(),
             Forms\Components\Select::make('resource_type_id')->label(__('partner.resource_type'))
                 ->options(fn () => ResourceType::where('spa_id', Filament::getTenant()->id)->pluck('name_fr', 'id'))
+                ->rule(fn () => Rule::exists('resource_types', 'id')->where('spa_id', Filament::getTenant()->id))
                 ->visible(fn (Forms\Get $get) => $get('scope') === 'type')->required(fn (Forms\Get $get) => $get('scope') === 'type'),
             Forms\Components\Select::make('resource_id')->label(__('partner.resource_name'))
                 ->options(fn () => SpaResource::where('spa_id', Filament::getTenant()->id)->pluck('name', 'id'))
+                ->rule(fn () => Rule::exists('resources', 'id')->where('spa_id', Filament::getTenant()->id))
                 ->visible(fn (Forms\Get $get) => $get('scope') === 'resource')->required(fn (Forms\Get $get) => $get('scope') === 'resource'),
             Forms\Components\DateTimePicker::make('start_at')->label(__('partner.block_start'))->seconds(false)->required()->native(true),
             Forms\Components\DateTimePicker::make('end_at')->label(__('partner.block_end'))->seconds(false)->required()->native(true)
@@ -56,7 +59,6 @@ class BlockResource extends Resource
                 collect(Block::KINDS)->mapWithKeys(fn ($k) => [$k => __("partner.kind_block_$k")])->all()
             )->default('closed')->required(),
             Forms\Components\TextInput::make('note')->label(__('partner.note'))->maxLength(255),
-            Forms\Components\Hidden::make('created_by')->default(fn () => Filament::auth()->id()),
         ])->columns(2);
     }
 

@@ -2,7 +2,9 @@
 
 namespace App\Domain\Media;
 
+use App\Models\Spa;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -23,12 +25,17 @@ final class PhotoProcessor
 
     public const MAX_EDGE = 1600;
 
+    // Compressed bytes alone do not bound the memory required by GD to decode an image.
+    public const MAX_INPUT_EDGE = 8000;
+
+    public const MAX_INPUT_PIXELS = 16_000_000;
+
     public const QUALITY = 82;
 
     /** @return list<string> règles Laravel côté formulaire */
     public static function rules(): array
     {
-        return ['image', 'mimes:jpg,jpeg,png,webp', 'max:'.(self::MAX_BYTES / 1024), 'dimensions:min_width='.self::MIN_WIDTH.',min_height='.self::MIN_HEIGHT];
+        return ['image', 'mimes:jpg,jpeg,png,webp', 'max:'.(self::MAX_BYTES / 1024), 'dimensions:min_width='.self::MIN_WIDTH.',min_height='.self::MIN_HEIGHT.',max_width='.self::MAX_INPUT_EDGE.',max_height='.self::MAX_INPUT_EDGE];
     }
 
     /** Enregistre la version traitée sur le disque public et retourne son chemin relatif. */
@@ -37,6 +44,28 @@ final class PhotoProcessor
         $image = self::process($file->getRealPath());
         $path = trim($directory, '/').'/'.Str::uuid().'.jpg';
         Storage::disk($disk)->put($path, $image, 'public');
+
+        return $path;
+    }
+
+    /** Public form uploads are bound to a verified spa before their paths reach Livewire state. */
+    public static function storeForSpa(UploadedFile $file, Spa $spa): string
+    {
+        PhotoPathPolicy::assertCanManage($spa);
+        $path = self::store($file, 'spas/'.$spa->id);
+
+        try {
+            DB::table('spa_photo_uploads')->insert([
+                'spa_id' => $spa->id,
+                'uploader_id' => auth()->id(),
+                'path' => $path,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Throwable $exception) {
+            Storage::disk('public')->delete($path);
+            throw $exception;
+        }
 
         return $path;
     }
@@ -54,6 +83,9 @@ final class PhotoProcessor
         [$w, $h] = $info;
         if ($w < self::MIN_WIDTH || $h < self::MIN_HEIGHT) {
             throw new InvalidArgumentException(__('partner.photo_too_small', ['w' => self::MIN_WIDTH, 'h' => self::MIN_HEIGHT]));
+        }
+        if ($w > self::MAX_INPUT_EDGE || $h > self::MAX_INPUT_EDGE || $w * $h > self::MAX_INPUT_PIXELS) {
+            throw new InvalidArgumentException(__('partner.photo_dimensions_too_large', ['edge' => self::MAX_INPUT_EDGE, 'pixels' => (int) (self::MAX_INPUT_PIXELS / 1_000_000)]));
         }
 
         $src = match ($info['mime']) {

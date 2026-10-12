@@ -19,6 +19,9 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
+        if (! app()->environment(['local', 'testing', 'staging'])) {
+            throw new \RuntimeException('DemoSeeder is forbidden outside local, testing or staging.');
+        }
         $password = env('HL_DEMO_PASSWORD', 'ChangeMe-Demo-2026!');
 
         User::updateOrCreate(['email' => 'admin@hammamluxury.test'], ['name' => 'Admin HL', 'role' => 'admin', 'password' => Hash::make($password), 'email_verified_at' => now()]);
@@ -88,7 +91,8 @@ class DemoSeeder extends Seeder
         }
         $spa->photos()->delete();
         foreach (range(1, 10) as $i) {
-            $spa->photos()->create(['path' => "https://picsum.photos/seed/{$spa->slug}-$i/1200/800", 'sort_order' => $i, 'is_cover' => $i === 1, 'caption_fr' => $spa->name, 'caption_en' => $spa->name]);
+            $spa->photos()->create(['path' => 'https://picsum.photos/seed/'.rawurlencode($spa->slug)."-$i/1200/800", 'sort_order' => $i, 'is_cover' => $i === 1,
+                'caption_fr' => $spa->name, 'caption_en' => $spa->name]);
         }
         $typeIds = [];
         foreach ($types as $i => [$slug, $fr, $en, $mode, $kind, $resources]) {
