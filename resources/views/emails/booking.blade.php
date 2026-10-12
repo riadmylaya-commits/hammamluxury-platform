@@ -8,6 +8,7 @@
 **{{ __('booking.date') }} :** {{ $booking->start_at->translatedFormat('l j F Y') }} · {{ $booking->start_at->format('H:i') }} → {{ $booking->end_at->format('H:i') }}
 **{{ __('booking.people') }} :** {{ $booking->party }}
 **{{ __('booking.total') }} :** {{ number_format($booking->total, 0, ',', ' ') }} {{ $booking->currency }}
+**{{ __('booking.conditions') }} :** @if($booking->isNonRefundable()){{ __('ui.policy.nr_booking', ['pct' => $booking->nr_discount_pct, 'amount' => number_format($booking->total, 0, ',', ' ').' '.$booking->currency]) }}@else{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($booking->cancellationHours())]) }} {{ __('ui.policy.free_until', ['date' => $booking->freeCancellationUntil()->translatedFormat('l j F Y H\hi')]) }}@endif
 
 @foreach($booking->quote['lines'] as $line)
 - {{ $line['party'] }} × {{ $line['treatment_name'] }}@if($line['extras']) (+ {{ implode(', ', array_map(fn($e) => $e['name'], $line['extras'])) }})@endif

@@ -64,6 +64,8 @@ return [
     'invalid' => 'Valeur invalide.',
     'message_invalid' => 'Le message est vide ou dépasse :max caractères.',
     'message_closed' => 'La messagerie est fermée pour cette réservation.',
+    'nr_unavailable' => 'Le tarif Non remboursable n’est pas proposé pour « :name ».',
+    'conditions' => 'Conditions',
 
     'review_not_eligible' => 'Seule une prestation réellement effectuée via HammamLuxury peut faire l’objet d’un avis, et une seule fois.',
     'review_already_submitted' => 'Un avis a déjà été déposé pour cette réservation.',

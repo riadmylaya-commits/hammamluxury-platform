@@ -57,6 +57,7 @@ class BookingService
             'duration_min' => $quote['duration_min'],
             'start_at' => $start->format('Y-m-d H:i:s'),
             'locale' => app()->getLocale(),
+            'rate' => $quote['rate'],
         ]);
 
         return ['intent' => $intent, 'quote' => $quote, 'start_at' => $start->toDateTimeString(), 'end_at' => $start->addMinutes($quote['duration_min'])->toDateTimeString()];
@@ -73,7 +74,7 @@ class BookingService
         $payload = $this->intents->resolve($token, $spa);
         $start = CarbonImmutable::parse($payload['start_at']);
         $participants = array_map(fn ($i) => ['participant_no' => $i['participant_no'], 'treatment_id' => $i['treatment'], 'party' => $i['party'], 'extras' => $i['extras']], $payload['items']);
-        $quote = $this->quotes->build($spa, $participants);
+        $quote = $this->quotes->build($spa, $participants, $payload['rate'] ?? 'standard');
         if (! $quote['ok']) {
             throw new BookingException('quote', implode(' ', $quote['errors']));
         }
@@ -93,13 +94,13 @@ class BookingService
      *
      * @param  array  $items  [{treatment, party, extras, participant_no}]
      */
-    public function book(Spa $spa, CarbonImmutable $start, array $items, array $customer, string $status = 'waiting', array $meta = [], string $actor = 'client'): Booking
+    public function book(Spa $spa, CarbonImmutable $start, array $items, array $customer, string $status = 'waiting', string $rate = 'standard', array $meta = [], string $actor = 'client'): Booking
     {
         $participants = [];
         foreach (array_values($items) as $i => $item) {
             $participants[] = ['participant_no' => $item['participant_no'] ?? $i + 1, 'treatment' => $item['treatment'], 'party' => $item['party'] ?? 1, 'extras' => $item['extras'] ?? []];
         }
-        $quote = $this->quotes->fromRequest($spa, ['participants' => $participants]);
+        $quote = $this->quotes->fromRequest($spa, ['participants' => $participants, 'rate' => $rate]);
         if (! $quote['ok']) {
             throw new BookingException('quote', implode(' ', $quote['errors']));
         }
@@ -147,6 +148,10 @@ class BookingService
                 'party' => $quote['party'],
                 'duration_min' => $quote['duration_min'],
                 'total' => $quote['total'],
+                'rate_type' => $quote['rate'] ?? 'standard',
+                'cancellation_hours' => $quote['cancellation_hours'] ?? $spa->cancellation_hours,
+                'standard_total' => $quote['standard_total'] ?? $quote['total'],
+                'nr_discount_pct' => $quote['nr_discount_pct'] ?? null,
                 'commissionable_amount' => $commissionable,
                 'commission_pct' => $pct,
                 'commission_amount' => round($commissionable * $pct / 100, 2),
@@ -265,13 +270,21 @@ class BookingService
         });
     }
 
+    /**
+     * Annulation. Par le client : gratuite avant la limite figée sur la réservation (tarif standard) ; au-delà, ou en tarif
+     * non remboursable, 100 % du montant reste dû et la commission est conservée (même mécanique que le no-show avec frais).
+     * Par le partenaire (demande acceptée) ou l'administration : jamais de frais pour le client. Le créneau est toujours libéré.
+     */
     public function cancel(Booking $booking, string $actor = 'client'): Booking
     {
         if (! $booking->isActive()) {
             throw BookingException::make('status', 'already_inactive', [], 409);
         }
 
-        $booking = $this->transition($booking, 'cancelled', $actor, ['cancelled_at' => now(), 'cancelled_by' => $actor, 'expires_at' => null]);
+        $fee = $actor === 'client' ? $booking->cancelFeeNow() : 0.0;
+        $booking = $this->transition($booking, 'cancelled', $actor, ['cancelled_at' => now(), 'cancelled_by' => $actor, 'expires_at' => null, 'cancel_fee' => $fee > 0 ? $fee : null]);
+        $kind = $fee > 0 ? ($booking->isNonRefundable() ? 'cancel:non_refundable' : 'cancel:late_fee') : 'cancel:free';
+        $booking->log($kind, $actor, array_filter(['fee' => $fee, 'commission' => $fee > 0 ? $booking->commission_amount : 0, 'until' => $booking->freeCancellationUntil()?->toDateTimeString()]));
 
         // Une demande d'annulation encore ouverte n'a plus d'objet une fois la réservation annulée.
         $booking->cancellationRequests()->where('status', 'pending')
@@ -416,7 +429,9 @@ class BookingService
                 $this->release($booking);
             }
             // Commission due : prestation réalisée, ou client absent avec frais facturés. Retirée si la prestation est requalifiée sans frais.
-            $commissionDue = $status === 'completed' || ($status === 'no_show' && ! ($extra['no_show_fee_waived'] ?? false));
+            $commissionDue = $status === 'completed'
+                || ($status === 'no_show' && ! ($extra['no_show_fee_waived'] ?? false))
+                || ($status === 'cancelled' && ($extra['cancel_fee'] ?? 0) > 0);
             if ($commissionDue) {
                 LedgerEntry::firstOrCreate(
                     ['booking_id' => $booking->id, 'type' => 'commission'],

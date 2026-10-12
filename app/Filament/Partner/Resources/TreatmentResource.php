@@ -3,6 +3,7 @@
 namespace App\Filament\Partner\Resources;
 
 use App\Domain\Catalogue\Presentation;
+use App\Domain\Policy\CancellationPolicy;
 use App\Filament\Partner\Resources\TreatmentResource\Pages;
 use App\Filament\Partner\Resources\TreatmentResource\RelationManagers\ExtrasRelationManager;
 use App\Models\ResourceType;
@@ -67,6 +68,15 @@ class TreatmentResource extends Resource
                     Forms\Components\TextInput::make('party_max')->label(__('partner.party_max'))->numeric()->minValue(1)->maxValue(config('hl.max_participants'))->default(10)->required(),
                 ])->columns(3),
 
+            Forms\Components\Section::make(__('ui.policy.title'))
+                ->description(__('partner.cancellation_policy_help'))
+                ->schema([
+                    Forms\Components\Select::make('cancellation_hours')->label(__('partner.treatment_cancellation_hours'))->options(CancellationPolicy::options())
+                        ->placeholder(__('partner.spa_default'))->native(false)->helperText(__('partner.treatment_cancellation_help')),
+                    Forms\Components\TextInput::make('nr_discount_pct')->label(__('partner.nr_discount_pct'))->numeric()->minValue(CancellationPolicy::MIN_NR_DISCOUNT)->maxValue(CancellationPolicy::MAX_NR_DISCOUNT)->suffix('%')->live(onBlur: true)->visible(fn () => CancellationPolicy::nrEnabled())
+                        ->helperText(fn (Forms\Get $get) => self::nrPreview($get) ?? __('partner.nr_discount_help')),
+                ])->columns(2),
+
             Forms\Components\Section::make(__('partner.section_steps'))
                 ->description(__('partner.steps_help'))
                 ->schema([
@@ -93,6 +103,24 @@ class TreatmentResource extends Resource
         ]);
     }
 
+    private static function nrPreview(Forms\Get $get): ?string
+    {
+        $pct = (int) $get('nr_discount_pct');
+        $solo = $get('price_solo');
+        if (! CancellationPolicy::isValidDiscount($pct) || $solo === null || $solo === '') {
+            return null;
+        }
+        $f = function ($v) use ($pct) {
+            $nr = CancellationPolicy::discounted((float) $v, $pct);
+
+            return number_format($nr, fmod($nr, 1) ? 2 : 0, ',', ' ').' '.config('hl.currency');
+        };
+        $couple = $get('price_couple');
+        $group = $get('price_group');
+
+        return __('partner.nr_preview', ['solo' => $f($solo), 'couple' => $couple !== null && $couple !== '' ? ' · couple '.$f($couple) : '', 'group' => $group !== null && $group !== '' ? ' · groupe '.$f($group) : '']);
+    }
+
     private static function featuredHelp(?Model $record): string
     {
         $other = Treatment::where('spa_id', Filament::getTenant()->id)->whereNotNull('featured_badge')
@@ -114,6 +142,8 @@ class TreatmentResource extends Resource
                 Tables\Columns\TextColumn::make('duration_min')->label(__('partner.duration'))->suffix(' min'),
                 Tables\Columns\TextColumn::make('price_solo')->label(__('partner.price_solo'))->money(config('hl.currency'), locale: 'fr'),
                 Tables\Columns\TextColumn::make('price_couple')->label(__('partner.price_couple'))->money(config('hl.currency'), locale: 'fr')->placeholder('—'),
+                Tables\Columns\TextColumn::make('nr_discount_pct')->label(__('ui.policy.non_refundable'))->formatStateUsing(fn ($state) => '−'.$state.' %')->placeholder('—')->badge()->color('success')->visible(fn () => CancellationPolicy::nrEnabled()),
+                Tables\Columns\TextColumn::make('cancellation_hours')->label(__('partner.cancellation_hours'))->formatStateUsing(fn ($state) => CancellationPolicy::label((int) $state))->placeholder(__('partner.spa_default'))->toggleable(),
                 Tables\Columns\TextColumn::make('extras_count')->counts('extras')->label(__('partner.extras')),
                 Tables\Columns\IconColumn::make('status')->label(__('partner.status'))->boolean(fn ($state) => $state === 'active')->getStateUsing(fn (Treatment $t) => $t->status === 'active'),
             ])

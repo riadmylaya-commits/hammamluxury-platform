@@ -33,6 +33,9 @@ class BookingFlow extends Component
 
     public int $party = 1;
 
+    #[Url(as: 'tarif')]
+    public string $rate = 'standard';
+
     public bool $advanced = false;
 
     /** @var array<int, array{treatment:int|null, extras:array<int,int>}> mode avancé : un soin par personne */
@@ -94,6 +97,35 @@ class BookingFlow extends Component
         $this->treatment = $id;
         $this->extras = [];
         $this->clampParty();
+        $this->syncRate();
+    }
+
+    public function setRate(string $rate): void
+    {
+        $this->rate = $rate === 'non_refundable' && $this->nrAvailable() ? 'non_refundable' : 'standard';
+    }
+
+    /** Le tarif non remboursable n'est proposé que si toutes les prestations choisies le prévoient. */
+    public function nrAvailable(): bool
+    {
+        $ids = $this->advanced ? array_filter(array_column($this->participants, 'treatment')) : array_filter([$this->treatment]);
+        if (! $ids) {
+            return false;
+        }
+        foreach ($ids as $id) {
+            if (! ($this->catalogue()->firstWhere('id', (int) $id)['nr_discount_pct'] ?? null)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function syncRate(): void
+    {
+        if ($this->rate === 'non_refundable' && ! $this->nrAvailable()) {
+            $this->rate = 'standard';
+        }
     }
 
     public function changeParty(int $delta): void
@@ -263,7 +295,8 @@ class BookingFlow extends Component
     /** Requête au format QuoteBuilder::fromRequest / BookingService::prepare */
     public function request(): array
     {
-        $req = ['date' => $this->date, 'time' => $this->time];
+        $this->syncRate();
+        $req = ['date' => $this->date, 'time' => $this->time, 'rate' => $this->rate];
         if ($this->advanced) {
             $req['participants'] = array_values(array_map(fn ($p) => ['treatment' => $p['treatment'], 'extras' => $p['extras']], $this->participants));
         } else {

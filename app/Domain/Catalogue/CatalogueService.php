@@ -3,6 +3,7 @@
 namespace App\Domain\Catalogue;
 
 use App\Domain\Booking\QuoteBuilder;
+use App\Domain\Policy\CancellationPolicy;
 use App\Models\Category;
 use App\Models\Spa;
 use App\Models\SpaHour;
@@ -100,6 +101,10 @@ class CatalogueService
             'price_couple' => $t->price_couple !== null ? (float) $t->price_couple : null,
             'price_group' => $t->price_group !== null ? (float) $t->price_group : null,
             'price_from' => (float) QuoteBuilder::treatmentPrice($t, 1)['unit'],
+            'cancellation_hours' => $t->cancellationHours(),
+            'nr_discount_pct' => $t->hasNonRefundable() ? (int) $t->nr_discount_pct : null,
+            'nr_price_from' => $t->hasNonRefundable() ? CancellationPolicy::discounted((float) QuoteBuilder::treatmentPrice($t, 1)['unit'], (int) $t->nr_discount_pct) : null,
+            'nr_price_couple' => $t->hasNonRefundable() && $t->price_couple !== null ? CancellationPolicy::discounted((float) $t->price_couple, (int) $t->nr_discount_pct) : null,
             'extras' => $t->extras->map(fn ($e) => [
                 'id' => $e->id, 'name' => $e->tr('name'), 'description' => $e->tr('description'),
                 'price' => (float) $e->price, 'extra_min' => $e->extra_min, 'per_person' => (bool) $e->per_person, 'max_qty' => $e->max_qty,

@@ -64,6 +64,8 @@ return [
     'invalid' => 'Invalid value.',
     'message_invalid' => 'The message is empty or longer than :max characters.',
     'message_closed' => 'Messaging is closed for this booking.',
+    'nr_unavailable' => 'The Non-refundable rate is not offered for “:name”.',
+    'conditions' => 'Conditions',
 
     'review_not_eligible' => 'Only a treatment actually carried out through HammamLuxury can be reviewed, and only once.',
     'review_already_submitted' => 'A review has already been submitted for this booking.',
