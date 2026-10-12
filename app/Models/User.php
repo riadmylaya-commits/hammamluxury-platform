@@ -37,11 +37,17 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         return $this->whatsapp ?: $this->phone;
     }
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
 
     protected function casts(): array
     {
-        return ['email_verified_at' => 'datetime', 'password' => 'hashed'];
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
+        ];
     }
 
     public function partner(): HasOne
@@ -62,6 +68,17 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     public function isPartner(): bool
     {
         return $this->role === 'partner';
+    }
+
+    public function hasTwoFactor(): bool
+    {
+        return $this->two_factor_confirmed_at !== null && $this->two_factor_secret !== null;
+    }
+
+    /** La 2FA est obligatoire pour les administrateurs, facultative pour les partenaires. */
+    public function mustEnableTwoFactor(): bool
+    {
+        return $this->isAdmin() && config('hl.security.admin_2fa_required', true);
     }
 
     public function canAccessPanel(Panel $panel): bool

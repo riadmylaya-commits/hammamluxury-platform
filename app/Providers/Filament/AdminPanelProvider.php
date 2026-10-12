@@ -2,10 +2,14 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Shared\Pages\TwoFactorChallenge;
+use App\Filament\Shared\Pages\TwoFactorSetup;
+use App\Http\Middleware\RequireTwoFactor;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -15,6 +19,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -45,6 +50,15 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->authMiddleware([Authenticate::class]);
+            ->authenticatedRoutes(function () {
+                Route::get('/securite', TwoFactorSetup::class)->name('two-factor.setup');
+                Route::get('/securite/verification', TwoFactorChallenge::class)->name('two-factor.challenge');
+            })
+            ->userMenuItems([
+                MenuItem::make()->label(fn () => __('security.menu'))->icon('heroicon-o-shield-check')
+                    ->url(fn () => route('filament.'.filament()->getId().'.two-factor.setup')),
+            ])
+            ->livewireComponents([TwoFactorSetup::class, TwoFactorChallenge::class])
+            ->authMiddleware([Authenticate::class, RequireTwoFactor::class]);
     }
 }
