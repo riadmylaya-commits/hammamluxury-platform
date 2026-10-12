@@ -14,6 +14,9 @@ class ConcurrencyTest extends EngineTestCase
 {
     use DatabaseTruncation;
 
+    /** Référentiels remplis par les migrations : jamais tronqués. */
+    protected array $exceptTables = ['cities', 'categories', 'amenities'];
+
     /** Les données doivent être visibles des autres connexions : pas de transaction englobante. */
     public function refreshDatabase(): void {}
 

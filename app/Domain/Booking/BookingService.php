@@ -465,6 +465,7 @@ class BookingService
         if (! in_array($status, Booking::PAYMENT_STATUSES, true)) {
             throw BookingException::make('payment', 'invalid_payment_status');
         }
+
         return $this->mutations->forBooking($booking, function (Booking $current) use ($actor, $status): Booking {
             if (! in_array($actor, ['partner', 'admin'], true)) {
                 throw BookingException::make('actor', 'invalid', [], 403);

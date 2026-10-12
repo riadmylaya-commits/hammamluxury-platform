@@ -14,6 +14,9 @@ class BookingStateConcurrencyTest extends BookingFlowTestCase
 {
     use DatabaseTruncation;
 
+    /** Référentiels remplis par les migrations : jamais tronqués. */
+    protected array $exceptTables = ['cities', 'categories', 'amenities'];
+
     public function refreshDatabase(): void {}
 
     protected function tearDown(): void

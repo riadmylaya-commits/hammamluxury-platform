@@ -32,6 +32,7 @@ class CancellationService
         if ($reasonCode !== null && ! in_array($reasonCode, CancellationRequest::REASON_CODES, true)) {
             throw BookingException::make('reason_code', 'cancellation_reason_code_required', [], 422);
         }
+
         return $this->mutations->forBooking($booking, function (Booking $booking) use ($requester, $reason, $reasonCode, $evidencePath) {
             $pending = $booking->pendingCancellationRequest()->lockForUpdate()->first();
             if ($pending && $booking->isConfirmed() && $booking->start_at->isFuture()
@@ -60,6 +61,7 @@ class CancellationService
                 $this->notifyClient($request);
                 $this->notifyAdmins($request, 'requested');
             });
+
             return $request;
         });
     }
@@ -70,6 +72,7 @@ class CancellationService
         if (! in_array($response, ['accepted', 'refused'], true)) {
             throw BookingException::make('response', 'invalid', [], 422);
         }
+
         return $this->mutateRequest($request, function (CancellationRequest $request, Booking $booking) use ($response) {
             if ($request->isPending() && $request->client_response === $response) {
                 return $request;
@@ -135,6 +138,7 @@ class CancellationService
         if (! in_array($response, ['accepted', 'refused'], true)) {
             throw BookingException::make('response', 'invalid', [], 422);
         }
+
         return $this->mutateRequest($request, function (CancellationRequest $request, Booking $booking) use ($response) {
             if ($request->proposal_response === $response
                 && ($request->status === 'rescheduled' || ($request->isPending() && $response === 'refused'))) {

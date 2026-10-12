@@ -4,6 +4,7 @@ namespace Tests\Engine;
 
 use App\Domain\Booking\BookingException;
 use App\Domain\Booking\CancellationService;
+use App\Livewire\Site\BookingShow;
 use App\Models\Booking;
 use App\Models\LedgerEntry;
 use App\Models\User;
@@ -71,7 +72,7 @@ class FinanceIntegrityTest extends BookingFlowTestCase
         $this->assertFalse($booking->canCancel('client'));
         $events = $booking->events()->count();
         $this->postJson('/api/v1/bookings/'.$booking->manage_token.'/cancel')->assertStatus(409);
-        Livewire::test(\App\Livewire\Site\BookingShow::class, ['token' => $booking->manage_token])
+        Livewire::test(BookingShow::class, ['token' => $booking->manage_token])
             ->call('cancel')->assertSet('error', fn (string $message) => $message !== '');
 
         $this->assertSame('completed', $booking->fresh()->status);
@@ -85,7 +86,7 @@ class FinanceIntegrityTest extends BookingFlowTestCase
         $this->travelTo($booking->start_at->toMutable());
         $this->assertFalse($booking->fresh()->canCancel('client'));
         $this->postJson('/api/v1/bookings/'.$booking->manage_token.'/cancel')->assertStatus(409);
-        Livewire::test(\App\Livewire\Site\BookingShow::class, ['token' => $booking->manage_token])->call('cancel')
+        Livewire::test(BookingShow::class, ['token' => $booking->manage_token])->call('cancel')
             ->assertSet('error', fn (string $message) => $message !== '');
         $this->assertSame('confirmed', $booking->fresh()->status);
         $this->assertGreaterThan(0, $booking->allocations()->where('status', 'active')->count());

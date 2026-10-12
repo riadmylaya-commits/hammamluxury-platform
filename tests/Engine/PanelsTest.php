@@ -18,6 +18,8 @@ use App\Models\Spa;
 use App\Models\Treatment;
 use App\Models\User;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 /** Espaces Filament : accès par rôle, cloisonnement par établissement, actions réservation et validation admin. */
@@ -262,14 +264,21 @@ class PanelsTest extends BookingFlowTestCase
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         $spa = $this->spa;
         $spa->update(['status' => 'pending', 'published_at' => null, 'category' => 'hammam', 'description_fr' => 'Description démo', 'address' => '1 rue Test', 'phone' => '+212600000000']);
+        Storage::fake('public');
+        $fixturePhoto = function (int $i) use ($spa): void {
+            $path = "spas/test/p-$i.jpg";
+            Storage::disk('public')->put($path, 'fixture');
+            DB::table('spa_photo_uploads')->insert(['spa_id' => $spa->id, 'uploader_id' => $this->admin->id, 'path' => $path, 'created_at' => now(), 'updated_at' => now()]);
+            $spa->photos()->create(['path' => $path, 'sort_order' => $i, 'is_cover' => $i === 1]);
+        };
         foreach (range(1, 9) as $i) {
-            $spa->photos()->create(['path' => "/p/$i.jpg", 'sort_order' => $i, 'is_cover' => $i === 1]);
+            $fixturePhoto($i);
         }
         $this->assertSame([__('admin.chk_photos', ['min' => 10, 'n' => 9])], PublicationChecklist::failures($spa));
         Livewire::test(ListSpas::class)->callTableAction('publish', $spa);
         $this->assertSame('pending', $spa->refresh()->status);
 
-        $spa->photos()->create(['path' => '/p/10.jpg', 'sort_order' => 10]);
+        $fixturePhoto(10);
         $this->assertTrue(PublicationChecklist::passes($spa));
         Livewire::test(ListSpas::class)->assertCanSeeTableRecords([$spa, $this->otherSpa])
             ->callTableAction('publish', $spa)->assertHasNoTableActionErrors();

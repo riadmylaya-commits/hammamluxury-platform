@@ -5,6 +5,7 @@ namespace App\Domain\Booking;
 use App\Domain\Catalogue\Presentation;
 use App\Models\Spa;
 use App\Models\Treatment;
+use Carbon\CarbonImmutable;
 
 /**
  * Devis serveur : prix par formule (solo / couple / groupe), extras (par personne ou non),
@@ -193,7 +194,7 @@ class QuoteBuilder
         $quote['total'] = round($quote['total'], 2);
         $quote['commissionable'] = round($quote['commissionable'], 2);
         if ($quote['ok']) {
-            $origin = \Carbon\CarbonImmutable::parse('2000-01-01 00:00:00');
+            $origin = CarbonImmutable::parse('2000-01-01 00:00:00');
             $quote['capacity_needs'] = array_map(function (array $need) use ($origin, $spa): array {
                 $need['start_offset_min'] = (int) $origin->diffInMinutes($need['start']);
                 $need['end_offset_min'] = (int) $origin->diffInMinutes($need['end']);

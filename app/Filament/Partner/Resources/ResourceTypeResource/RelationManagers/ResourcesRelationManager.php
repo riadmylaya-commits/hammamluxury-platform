@@ -2,11 +2,12 @@
 
 namespace App\Filament\Partner\Resources\ResourceTypeResource\RelationManagers;
 
-use App\Models\ResourceType;
 use App\Models\Resource;
+use App\Models\ResourceType;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -105,7 +106,7 @@ class ResourcesRelationManager extends RelationManager
                         try {
                             $record->delete();
                         } catch (ValidationException $e) {
-                            \Filament\Notifications\Notification::make()->danger()->title(collect($e->errors())->flatten()->first())->send();
+                            Notification::make()->danger()->title(collect($e->errors())->flatten()->first())->send();
                             $action->halt();
                         }
                     }),

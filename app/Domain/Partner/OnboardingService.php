@@ -293,7 +293,9 @@ class OnboardingService
                 ->whereHas('type', fn ($query) => $query->where('slug', 'hammam'))->get()->each->update(['status' => 'inactive']);
         }
         foreach (['massage' => $cabins, 'soin' => $rooms, 'praticien' => $therapists] as $slug => $count) {
-            $key = match ($slug) { 'massage' => 'massage_cabins', 'soin' => 'treatment_rooms', default => 'therapists' };
+            $key = match ($slug) {
+                'massage' => 'massage_cabins', 'soin' => 'treatment_rooms', default => 'therapists'
+            };
             if (! array_key_exists($key, $capacity)) {
                 continue;
             }

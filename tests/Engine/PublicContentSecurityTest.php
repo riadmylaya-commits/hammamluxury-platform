@@ -36,6 +36,7 @@ class PublicContentSecurityTest extends EngineTestCase
 
     public function test_filename_prefix_and_existing_file_do_not_prove_ownership(): void
     {
+        $this->actingAs($this->spa->partner->user);
         $path = 'spas/'.$this->spa->id.'/forged.jpg';
         Storage::disk('public')->put($path, 'not a server-processed upload');
         $this->expectException(ValidationException::class);

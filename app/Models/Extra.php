@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\Translatable;
 use App\Models\Concerns\LocksCatalogue;
+use App\Models\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Extra extends Model
 {
-    use Translatable;
     use LocksCatalogue;
+    use Translatable;
 
     protected $guarded = [];
 

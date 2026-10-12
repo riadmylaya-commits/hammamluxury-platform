@@ -5,6 +5,7 @@ namespace App\Filament\Partner\Resources\ResourceTypeResource\Pages;
 use App\Filament\Partner\Resources\ResourceTypeResource;
 use Filament\Actions;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
@@ -20,7 +21,7 @@ class EditResourceType extends EditRecord
             try {
                 return $record->delete();
             } catch (ValidationException $e) {
-                \Filament\Notifications\Notification::make()->danger()->title(collect($e->errors())->flatten()->first())->send();
+                Notification::make()->danger()->title(collect($e->errors())->flatten()->first())->send();
                 $action->halt();
             }
         })];

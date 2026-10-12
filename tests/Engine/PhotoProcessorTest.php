@@ -33,7 +33,8 @@ class PhotoProcessorTest extends TestCase
 
     public function test_oversized_dimensions_are_rejected_before_gd_decodes_pixels(): void
     {
-        $smallPng = file_get_contents(UploadedFile::fake()->image('small.png', 1, 1)->getRealPath());
+        $small = UploadedFile::fake()->image('small.png', 1, 1);
+        $smallPng = file_get_contents($small->getRealPath());
         foreach ([[5000, 4000], [PhotoProcessor::MAX_INPUT_EDGE + 1, 600]] as [$width, $height]) {
             // Only patch IHDR and its CRC: no huge image is allocated by this test.
             $header = substr($smallPng, 0, 16).pack('NN', $width, $height).substr($smallPng, 24, 5);

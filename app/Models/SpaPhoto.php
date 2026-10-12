@@ -6,6 +6,7 @@ use App\Domain\Media\PhotoPathPolicy;
 use App\Models\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\ValidationException;
 
 class SpaPhoto extends Model
 {
@@ -17,10 +18,17 @@ class SpaPhoto extends Model
 
     protected static function booted(): void
     {
+        // Signed-in context (forms, Livewire): full ownership policy. Trusted context without a
+        // user (seeders, console, fixtures): the path must still be safe.
         static::saving(function (self $photo) {
-            $spa = Spa::findOrFail($photo->spa_id);
-            PhotoPathPolicy::assertCanManage($spa);
-            PhotoPathPolicy::assertCanAttach($spa, $photo->path);
+            if (! is_string($photo->path) || ! PhotoPathPolicy::isSafe($photo->path)) {
+                throw ValidationException::withMessages(['path' => __('partner.photo_path_error')]);
+            }
+            if (auth()->check()) {
+                $spa = Spa::findOrFail($photo->spa_id);
+                PhotoPathPolicy::assertCanManage($spa);
+                PhotoPathPolicy::assertCanAttach($spa, $photo->path);
+            }
         });
     }
 

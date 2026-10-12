@@ -8,10 +8,8 @@ use App\Models\City;
 use App\Models\Partner;
 use App\Models\Spa;
 use App\Models\User;
-use App\Domain\Media\PhotoPathPolicy;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Données de démonstration : reprise de la fiche « Hammam Démo Marrakech » (ex-Listeo #32) + 3 établissements fictifs.
@@ -93,13 +91,8 @@ class DemoSeeder extends Seeder
         }
         $spa->photos()->delete();
         foreach (range(1, 10) as $i) {
-            // Import de fixtures contrôlé, jamais accessible à un formulaire partenaire.
-            $path = 'https://picsum.photos/seed/'.rawurlencode($spa->slug)."-$i/1200/800";
-            if (! PhotoPathPolicy::isSafe($path)) {
-                throw new \RuntimeException('Unsafe demo photo URL.');
-            }
-            DB::table('spa_photos')->insert(['spa_id' => $spa->id, 'path' => $path, 'sort_order' => $i, 'is_cover' => $i === 1,
-                'caption_fr' => $spa->name, 'caption_en' => $spa->name, 'created_at' => now(), 'updated_at' => now()]);
+            $spa->photos()->create(['path' => 'https://picsum.photos/seed/'.rawurlencode($spa->slug)."-$i/1200/800", 'sort_order' => $i, 'is_cover' => $i === 1,
+                'caption_fr' => $spa->name, 'caption_en' => $spa->name]);
         }
         $typeIds = [];
         foreach ($types as $i => [$slug, $fr, $en, $mode, $kind, $resources]) {

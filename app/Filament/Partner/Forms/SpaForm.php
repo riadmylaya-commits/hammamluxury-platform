@@ -32,6 +32,7 @@ use Filament\Forms\Set;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class SpaForm
@@ -54,7 +55,7 @@ class SpaForm
             ->getUploadedFileUsing(function (FileUpload $component, string $file): ?array {
                 try {
                     PhotoPathPolicy::assertCanAttach(self::photoSpa($component), $file);
-                } catch (\Illuminate\Validation\ValidationException $exception) {
+                } catch (ValidationException $exception) {
                     return null;
                 }
                 if (PhotoPathPolicy::isExternal($file)) {
@@ -80,7 +81,7 @@ class SpaForm
             $spa = $livewire->getRecord();
         }
         if (! $spa instanceof Spa) {
-            throw \Illuminate\Validation\ValidationException::withMessages([$component->getStatePath() => __('partner.photo_owner_error')]);
+            throw ValidationException::withMessages([$component->getStatePath() => __('partner.photo_owner_error')]);
         }
         PhotoPathPolicy::assertCanManage($spa);
 
