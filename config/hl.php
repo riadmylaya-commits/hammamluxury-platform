@@ -25,6 +25,8 @@ return [
 
     // Formulaire Contact public : adresse de réception.
     'contact_email' => env('HL_CONTACT_EMAIL', 'admin@hammamluxury.com'),
+    // Alertes techniques (sauvegardes, surveillance).
+    'alert_email' => env('HL_ALERT_EMAIL', env('HL_CONTACT_EMAIL', 'admin@hammamluxury.com')),
     // Date de dernière mise à jour affichée sur CGU / confidentialité / FAQ.
     'legal_updated_at' => env('HL_LEGAL_UPDATED_AT', '2026-09-24'),
 
