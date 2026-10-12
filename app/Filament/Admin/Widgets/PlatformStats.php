@@ -15,8 +15,8 @@ class PlatformStats extends BaseWidget
     {
         $range = [now()->startOfMonth(), now()->endOfMonth()];
         $month = Booking::whereBetween('start_at', $range);
-        $realized = (clone $month)->whereIn('status', ['completed', 'no_show'])->where('payment_status', '!=', 'refunded')
-            ->selectRaw("COALESCE(SUM(CASE WHEN status = 'completed' THEN total WHEN no_show_fee_waived = 0 AND no_show_fee > 0 THEN CASE WHEN no_show_fee < total THEN no_show_fee ELSE total END ELSE 0 END), 0) AS accrued")->value('accrued');
+        $realized = (clone $month)->whereIn('status', ['completed', 'no_show', 'cancelled'])->where('payment_status', '!=', 'refunded')
+            ->selectRaw("COALESCE(SUM(CASE WHEN status = 'completed' THEN total WHEN status = 'cancelled' THEN CASE WHEN cancel_fee IS NULL THEN 0 WHEN cancel_fee < total THEN cancel_fee ELSE total END WHEN no_show_fee_waived = 0 AND no_show_fee > 0 THEN CASE WHEN no_show_fee < total THEN no_show_fee ELSE total END ELSE 0 END), 0) AS accrued")->value('accrued');
         $commission = LedgerEntry::whereIn('type', LedgerEntry::COMMISSION_TYPES)
             ->whereIn('booking_id', (clone $month)->select('id'))->sum('amount');
         $fmt = fn ($v) => number_format((float) $v, 0, ',', ' ').' '.config('hl.currency');

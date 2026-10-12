@@ -16,8 +16,8 @@ class StatsOverview extends BaseWidget
         $spa = Filament::getTenant();
         $q = fn () => Booking::where('spa_id', $spa->id);
         $month = $q()->whereBetween('start_at', [now()->startOfMonth(), now()->endOfMonth()]);
-        $realized = (clone $month)->whereIn('status', ['completed', 'no_show'])->where('payment_status', '!=', 'refunded')
-            ->selectRaw("COALESCE(SUM(CASE WHEN status = 'completed' THEN total WHEN no_show_fee_waived = 0 AND no_show_fee > 0 THEN CASE WHEN no_show_fee < total THEN no_show_fee ELSE total END ELSE 0 END), 0) AS accrued")->value('accrued');
+        $realized = (clone $month)->whereIn('status', ['completed', 'no_show', 'cancelled'])->where('payment_status', '!=', 'refunded')
+            ->selectRaw("COALESCE(SUM(CASE WHEN status = 'completed' THEN total WHEN status = 'cancelled' THEN CASE WHEN cancel_fee IS NULL THEN 0 WHEN cancel_fee < total THEN cancel_fee ELSE total END WHEN no_show_fee_waived = 0 AND no_show_fee > 0 THEN CASE WHEN no_show_fee < total THEN no_show_fee ELSE total END ELSE 0 END), 0) AS accrued")->value('accrued');
 
         return [
             Stat::make(__('partner.stat_waiting'), $q()->where('status', 'waiting')->count())->color('warning')->description(__('partner.stat_waiting_help')),
