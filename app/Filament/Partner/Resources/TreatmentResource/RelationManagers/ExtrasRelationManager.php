@@ -28,7 +28,6 @@ class ExtrasRelationManager extends RelationManager
             Forms\Components\TextInput::make('extra_min')->label(__('partner.extra_min'))->numeric()->minValue(0)->step(5)->suffix('min')->default(0)->helperText(__('partner.extra_min_help')),
             Forms\Components\Toggle::make('per_person')->label(__('partner.per_person'))->default(true)->helperText(__('partner.per_person_help')),
             Forms\Components\TextInput::make('max_qty')->label(__('partner.max_qty'))->numeric()->minValue(1)->default(1),
-            Forms\Components\Hidden::make('spa_id')->default(fn () => Filament::getTenant()->id),
         ])->columns(2);
     }
 
@@ -42,9 +41,18 @@ class ExtrasRelationManager extends RelationManager
                 Tables\Columns\IconColumn::make('per_person')->label(__('partner.per_person'))->boolean(),
                 Tables\Columns\TextColumn::make('max_qty')->label(__('partner.max_qty')),
             ])
-            ->headerActions([Tables\Actions\CreateAction::make()->label(__('partner.add_extra'))])
-            ->actions([Tables\Actions\EditAction::make(), Tables\Actions\DeleteAction::make()])
+            ->headerActions([Tables\Actions\CreateAction::make()->label(__('partner.add_extra'))->mutateFormDataUsing(fn (array $data) => $this->own($data))])
+            ->actions([Tables\Actions\EditAction::make()->mutateFormDataUsing(fn (array $data) => $this->own($data)), Tables\Actions\DeleteAction::make()])
             ->description(__('partner.extras_intro'))
             ->emptyStateHeading(__('partner.no_extras'));
+    }
+
+    /** L'établissement et la prestation sont imposés côté serveur (jamais lus depuis le formulaire). */
+    private function own(array $data): array
+    {
+        $treatment = $this->getOwnerRecord();
+        abort_unless($treatment->spa_id === Filament::getTenant()->id, 403);
+
+        return array_replace($data, ['spa_id' => $treatment->spa_id, 'treatment_id' => $treatment->id]);
     }
 }

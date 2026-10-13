@@ -5,13 +5,15 @@ namespace App\Listeners;
 use App\Events\BookingCreated;
 use App\Events\BookingExpired;
 use App\Events\BookingStatusChanged;
-use App\Mail\BookingMail;
+use App\Jobs\SendBookingNotification;
 use App\Models\Booking;
-use Illuminate\Support\Facades\Mail;
+use App\Models\BookingNotification;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 
 /**
- * E-mails client + partenaire à chaque étape, envoyés via la file (un échec SMTP ne bloque jamais la réservation). Idempotent : la trace `notified:<event>` dans
- * booking_events empêche tout second envoi pour le même événement.
+ * E-mails client + partenaire à chaque étape. Une ligne booking_notifications par destinataire (unique par réservation/événement/destinataire) :
+ * « prévue » à la création, « en file » après mise en file, « envoyée »/« échouée » écrites par le job. Aucun doublon en cas de rejeu.
  */
 class SendBookingNotifications
 {
@@ -20,34 +22,66 @@ class SendBookingNotifications
         if ($e->booking->source === 'partner') {
             return; // saisie par l'établissement lui-même : aucun e-mail automatique
         }
-        $this->send($e->booking, $e->booking->status === 'confirmed' ? 'confirmed' : 'created');
+        $this->plan($e->booking, $e->booking->status === 'confirmed' ? 'confirmed' : 'created');
     }
 
     public function handleStatus(BookingStatusChanged $e): void
     {
         if (in_array($e->booking->status, ['confirmed', 'declined', 'cancelled'], true)) {
-            $this->send($e->booking, $e->booking->status);
+            $this->plan($e->booking, $e->booking->status);
         }
     }
 
     public function handleExpired(BookingExpired $e): void
     {
-        $this->send($e->booking, 'expired');
+        $this->plan($e->booking, 'expired');
     }
 
-    private function send(Booking $booking, string $event): void
+    private function plan(Booking $booking, string $event): void
     {
-        if ($booking->events()->where('type', 'notified:'.$event)->exists()) {
-            return;
-        }
-        $booking->log('notified:'.$event, 'system');
-        $partnerEmail = $booking->spa->partner?->user?->email;
+        $recipients = array_filter([
+            'client' => $booking->email,
+            'partner' => $booking->spa->partner?->user?->email,
+        ]);
 
-        if ($booking->email) {
-            Mail::to($booking->email)->send((new BookingMail($booking, $event, 'client'))->locale($booking->locale ?: 'fr'));
+        foreach ($recipients as $audience => $recipient) {
+            self::dispatch($booking, $event, $audience, $recipient);
         }
-        if ($partnerEmail) {
-            Mail::to($partnerEmail)->send((new BookingMail($booking, $event, 'partner'))->locale($booking->spa->partner->user->locale ?: 'fr'));
+    }
+
+    /** Crée la trace si elle n'existe pas encore et met le job en file ; idempotent par (réservation, événement, destinataire). */
+    public static function dispatch(Booking $booking, string $event, string $audience, string $recipient): ?BookingNotification
+    {
+        try {
+            $n = BookingNotification::create(['booking_id' => $booking->id, 'event' => $event, 'audience' => $audience, 'recipient' => $recipient]);
+        } catch (UniqueConstraintViolationException) {
+            return null;
         }
+
+        DB::afterCommit(function () use ($booking, $n, $event) {
+            $n->update(['status' => 'queued', 'queued_at' => now()]);
+            SendBookingNotification::dispatch($n->id);
+            if (! $booking->events()->where('type', 'notified:'.$event)->exists()) {
+                $booking->log('notified:'.$event, 'system');
+            }
+        });
+
+        return $n;
+    }
+
+    /** Remet en file les notifications échouées ou restées « prévues » (perte de file) ; retourne le nombre relancé. */
+    public static function retry(int $maxAttempts = 5): int
+    {
+        $stuck = BookingNotification::where(fn ($q) => $q->where('status', 'failed')
+            ->orWhere(fn ($q) => $q->where('status', 'planned')->where('created_at', '<', now()->subMinutes(10)))
+            ->orWhere(fn ($q) => $q->where('status', 'queued')->where('queued_at', '<', now()->subHours(1))))
+            ->where('attempts', '<', $maxAttempts)->get();
+
+        foreach ($stuck as $n) {
+            $n->update(['status' => 'queued', 'queued_at' => now()]);
+            SendBookingNotification::dispatch($n->id);
+        }
+
+        return $stuck->count();
     }
 }

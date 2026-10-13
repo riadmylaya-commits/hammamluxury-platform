@@ -1,2 +1,7 @@
 User-agent: *
-Disallow:
+Disallow: /reservation/
+Disallow: /fr/reservation/
+Disallow: /en/reservation/
+Disallow: /*/reservation/
+Disallow: /admin
+Disallow: /partner

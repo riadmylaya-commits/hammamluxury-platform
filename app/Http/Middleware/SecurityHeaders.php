@@ -24,6 +24,12 @@ class SecurityHeaders
         $h->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()');
         $h->set('Cross-Origin-Opener-Policy', 'same-origin');
 
+        if (self::isPrivatePage($request)) {
+            $h->set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+            $h->set('Cache-Control', 'no-store, private');
+            $h->set('Pragma', 'no-cache');
+        }
+
         if ($request->isSecure() && config('hl.hsts', true)) {
             $h->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
@@ -35,6 +41,12 @@ class SecurityHeaders
         }
 
         return $response;
+    }
+
+    /** Pages personnelles (lien de suivi, espaces connectés) : jamais indexées, jamais mises en cache. */
+    public static function isPrivatePage(Request $request): bool
+    {
+        return $request->is('reservation/*', '*/reservation/*', 'admin', 'admin/*', 'partner', 'partner/*');
     }
 
     public static function policy(): string

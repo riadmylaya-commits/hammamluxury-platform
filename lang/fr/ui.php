@@ -260,4 +260,6 @@ return [
     'instant_title' => 'Confirmation immédiate.',
     'instant_help' => 'Aucun paiement en ligne : vous réglez sur place. Votre réservation est confirmée dès l’envoi, sans attendre de réponse de l’établissement.',
     'submit_instant' => 'Confirmer ma réservation',
+    'too_many_attempts' => 'Trop de tentatives. Merci de patienter quelques minutes avant de réessayer.',
+    'link_expired' => 'Ce lien de suivi n’est plus valable. Contactez-nous en indiquant votre référence.',
 ];

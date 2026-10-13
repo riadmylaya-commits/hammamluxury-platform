@@ -36,6 +36,7 @@ class Booking extends Model
         'start_at' => 'immutable_datetime', 'end_at' => 'immutable_datetime', 'expires_at' => 'immutable_datetime',
         'expiration_notified_at' => 'datetime',
         'arbitration_required_at' => 'datetime',
+        'manage_token_revoked_at' => 'datetime',
         'confirmed_at' => 'datetime', 'cancelled_at' => 'datetime',
         'no_show_at' => 'datetime', 'contact_revealed_at' => 'datetime',
         'total' => 'float', 'commissionable_amount' => 'float', 'commission_pct' => 'float', 'commission_amount' => 'float',
@@ -49,6 +50,33 @@ class Booking extends Model
             $b->reference ??= self::newReference();
             $b->manage_token ??= Str::random(48);
         });
+    }
+
+    /** Le lien de suivi reste valable jusqu'à hl.manage_link_days après la fin de la prestation, sauf révocation. */
+    public function manageLinkIsValid(): bool
+    {
+        if ($this->manage_token_revoked_at !== null) {
+            return false;
+        }
+        $limit = ($this->end_at ?? $this->start_at)?->addDays((int) config('hl.manage_link_days', 30));
+
+        return $limit === null || $limit->isFuture();
+    }
+
+    /** Nouveau lien de suivi : l'ancien cesse immédiatement de fonctionner (rotation traçable dans le journal). */
+    public function rotateManageToken(?string $actor = 'admin'): string
+    {
+        $token = Str::random(48);
+        $this->update(['manage_token' => $token, 'manage_token_revoked_at' => null]);
+        $this->log('manage_link:rotated', $actor);
+
+        return $token;
+    }
+
+    public function revokeManageToken(?string $actor = 'admin'): void
+    {
+        $this->update(['manage_token_revoked_at' => now()]);
+        $this->log('manage_link:revoked', $actor);
     }
 
     public static function newReference(): string
