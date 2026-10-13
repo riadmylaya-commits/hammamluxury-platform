@@ -30,7 +30,7 @@ class SendBookingNotification implements ShouldQueue
         $locale = $n->audience === 'partner' ? ($booking->spa->partner?->user?->locale ?: 'fr') : ($booking->locale ?: 'fr');
 
         try {
-            Mail::to($n->recipient)->send((new BookingMail($booking, $n->event, $n->audience))->locale($locale));
+            Mail::to($n->recipient)->sendNow((new BookingMail($booking, $n->event, $n->audience))->locale($locale));
         } catch (Throwable $e) {
             $n->update(['status' => 'failed', 'attempts' => $n->attempts + 1, 'failed_at' => now(), 'error' => mb_substr($e->getMessage(), 0, 500)]);
             throw $e;
