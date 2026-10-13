@@ -48,6 +48,32 @@ return [
         'admin_2fa_required' => (bool) env('HL_ADMIN_2FA_REQUIRED', true),
     ],
     'default_commission_pct' => (float) env('HL_DEFAULT_COMMISSION_PCT', 15),
+
+    // Facturation mensuelle des commissions (lot F0). Valeurs par défaut : tout est verrouillé.
+    // Les paramètres saisis dans l'Admin (table billing_settings) priment sur ces valeurs ; voir App\Domain\Billing\BillingSettings.
+    'billing' => [
+        // Aucune émission réelle tant que ce drapeau n'est pas activé explicitement (accord propriétaire + comptable + recette staging).
+        'enabled' => false,
+        // Premier mois civil facturable (AAAA-MM). Vide = aucun brouillon, aucune émission ; les écritures antérieures sont « legacy ».
+        'start_period' => env('HL_BILLING_START_PERIOD'),
+        // pending_validation | none | ht_plus_vat | ttc_included — fixé après avis du comptable.
+        'vat_mode' => 'pending_validation',
+        'vat_rate' => null,
+        'due_days' => 15,
+        'issue_day' => 5,
+        'dispute_until_day' => 4,
+        'accountant_validated_at' => null,
+        // Identité de l'émetteur (HammamLuxury), à compléter dans l'Admin après validation comptable.
+        'issuer' => [
+            'company_name' => env('HL_BILLING_ISSUER_NAME'),
+            'legal_form' => null,
+            'ice' => null,
+            'tax_id' => null,
+            'registry_number' => null,
+            'address' => null,
+            'bank_account' => null,
+        ],
+    ],
     'lock_timeout_seconds' => 5,
 
     // Proxys de confiance (Cloudflare). Fichier maintenu par deploy/cloudflare-ips.sh ; HL_TRUSTED_PROXIES
