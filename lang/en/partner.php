@@ -531,4 +531,9 @@ return [
     'instant_off_help' => 'Each request awaits your confirmation. HammamLuxury can enable instant booking once the configuration is complete.',
     'instant_ask_admin' => 'Your configuration is complete: HammamLuxury can enable instant booking on request.',
     'offline_no_commission' => 'Booking received directly by your venue: no HammamLuxury commission.',
+    'rotate_link' => 'Customer tracking link',
+    'rotate_link_help' => 'The current link stops working immediately. A new link is generated (to send to the customer) or access is simply cut off.',
+    'rotate_link_mode' => 'What would you like to do?',
+    'rotate_link_rotate' => 'Generate a new link (the old one is invalidated)',
+    'rotate_link_revoke' => 'Revoke access without a new link',
 ];

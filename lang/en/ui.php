@@ -257,4 +257,6 @@ return [
     'instant_title' => 'Instant confirmation.',
     'instant_help' => 'No online payment: you pay on site. Your booking is confirmed as soon as you submit it, with no wait for the venue’s reply.',
     'submit_instant' => 'Confirm my booking',
+    'too_many_attempts' => 'Too many attempts. Please wait a few minutes before trying again.',
+    'link_expired' => 'This tracking link is no longer valid. Contact us with your booking reference.',
 ];

@@ -120,6 +120,16 @@ class BookingActions
                         Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
                     }
                 }),
+            $class::make('rotateLink')->label(__('partner.rotate_link'))->icon('heroicon-o-link-slash')->color('gray')
+                ->visible(fn (Booking $b) => $actor === 'admin')
+                ->requiresConfirmation()->modalDescription(__('partner.rotate_link_help'))
+                ->form([Radio::make('mode')->label(__('partner.rotate_link_mode'))->required()->default('rotate')->options([
+                    'rotate' => __('partner.rotate_link_rotate'), 'revoke' => __('partner.rotate_link_revoke'),
+                ])])
+                ->action(function (Booking $b, array $data) {
+                    ($data['mode'] ?? 'rotate') === 'revoke' ? $b->revokeManageToken('admin') : $b->rotateManageToken('admin');
+                    Notification::make()->title(__('partner.action_done'))->success()->send();
+                }),
             $class::make('cancel')->label(__('partner.cancel'))->icon('heroicon-o-trash')->color('danger')
                 ->visible(fn (Booking $b) => $actor === 'admin' && $b->canCancel('admin'))
                 ->requiresConfirmation()->modalDescription(__('partner.cancel_help'))

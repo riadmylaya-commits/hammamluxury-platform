@@ -11,6 +11,8 @@ return [
     // Délai avant expiration automatique d'une demande en attente non traitée par le partenaire.
     'waiting_ttl_hours' => (float) env('HL_WAITING_TTL_HOURS', 2),
     // Délai (minutes) après l'heure de fin avant passage automatique en « terminée ».
+    // Durée de validité du lien de suivi client après la fin de la prestation (jours).
+    'manage_link_days' => (int) env('HL_MANAGE_LINK_DAYS', 30),
     'auto_complete_after_min' => (int) env('HL_AUTO_COMPLETE_AFTER_MIN', 240),
 
     // Pas de la grille de créneaux et délai minimum avant le début d'une prestation.

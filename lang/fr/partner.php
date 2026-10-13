@@ -538,4 +538,9 @@ return [
     'instant_off_help' => 'Chaque demande attend votre confirmation. La réservation instantanée pourra être activée par HammamLuxury une fois la configuration complète.',
     'instant_ask_admin' => 'Votre configuration est complète : HammamLuxury peut activer la réservation instantanée sur demande.',
     'offline_no_commission' => 'Réservation reçue directement par votre établissement : aucune commission HammamLuxury.',
+    'rotate_link' => 'Lien de suivi client',
+    'rotate_link_help' => 'Le lien actuel cessera de fonctionner immédiatement. Un nouveau lien est généré (à transmettre au client) ou l’accès est simplement coupé.',
+    'rotate_link_mode' => 'Que souhaitez-vous faire ?',
+    'rotate_link_rotate' => 'Générer un nouveau lien (l’ancien est invalidé)',
+    'rotate_link_revoke' => 'Révoquer l’accès sans nouveau lien',
 ];

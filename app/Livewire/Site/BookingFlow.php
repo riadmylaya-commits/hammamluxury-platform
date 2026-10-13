@@ -13,6 +13,7 @@ use App\Models\Spa;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -267,6 +268,13 @@ class BookingFlow extends Component
             'note' => 'nullable|string|max:1000',
             'terms' => 'accepted',
         ]);
+        $key = 'booking-submit:'.request()->ip();
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->error = __('ui.too_many_attempts');
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
         $customer = [
             'first_name' => $this->first_name, 'last_name' => $this->last_name, 'email' => $this->email,
             'phone' => PhoneNumber::normalize($this->phone, $this->phoneCountry), 'hotel' => $this->hotel ?: null, 'note' => $this->note ?: null,
