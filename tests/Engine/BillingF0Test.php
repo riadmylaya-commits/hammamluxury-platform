@@ -201,7 +201,11 @@ class BillingF0Test extends BookingFlowTestCase
         $this->assertDatabaseHas('activity_logs', ['action' => 'partner.billing_profile_updated', 'subject_id' => $this->spa->partner_id]);
 
         Livewire::actingAs($owner)->test(BillingProfile::class)
-            ->fillForm(['ice_not_applicable' => true, 'ice_not_applicable_reason' => 'Personne physique'])
+            ->fillForm(['ice' => '123'])->call('save')->assertHasFormErrors(['ice']);
+        $this->assertSame('001234567000089', $this->spa->partner->fresh()->ice);
+        // Un ICE invalide laissé dans le champ ne bloque plus dès que « Pas d'ICE » est coché avec un motif.
+        Livewire::actingAs($owner)->test(BillingProfile::class)
+            ->fillForm(['ice' => '123', 'ice_not_applicable' => true, 'ice_not_applicable_reason' => 'Personne physique'])
             ->call('save')->assertHasNoFormErrors();
         $this->assertNull($this->spa->partner->fresh()->ice);
         $this->assertTrue($this->spa->partner->fresh()->ice_not_applicable);

@@ -80,9 +80,11 @@ class BillingProfile extends Page implements HasForms
             Forms\Components\TextInput::make('legal_form')->label(__('admin.legal_form'))->maxLength(60),
             Forms\Components\TextInput::make('tax_id')->label(__('admin.tax_id'))->maxLength(60),
             Forms\Components\TextInput::make('registry_number')->label(__('admin.registry_number'))->maxLength(60),
-            Forms\Components\TextInput::make('ice')->label(__('billing.ice'))->regex('/^\d{15}$/')->maxLength(15)
+            Forms\Components\TextInput::make('ice')->label(__('billing.ice'))->maxLength(15)
+                ->rules(fn (Forms\Get $get) => $get('ice_not_applicable') ? [] : ['regex:/^\d{15}$/'])
                 ->disabled(fn (Forms\Get $get) => (bool) $get('ice_not_applicable'))->dehydrated(),
-            Forms\Components\Toggle::make('ice_not_applicable')->label(__('billing.ice_not_applicable'))->live(),
+            Forms\Components\Toggle::make('ice_not_applicable')->label(__('billing.ice_not_applicable'))->live()
+                ->afterStateUpdated(fn (Forms\Set $set, $state) => $state ? $set('ice', null) : null),
             Forms\Components\TextInput::make('ice_not_applicable_reason')->label(__('billing.ice_not_applicable_reason'))->maxLength(190)
                 ->visible(fn (Forms\Get $get) => (bool) $get('ice_not_applicable'))->required(fn (Forms\Get $get) => (bool) $get('ice_not_applicable')),
             Forms\Components\TextInput::make('billing_address')->label(__('billing.billing_address'))->maxLength(255)->columnSpanFull(),
