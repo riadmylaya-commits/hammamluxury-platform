@@ -58,6 +58,12 @@ return [
             'admin' => ['subject' => 'Nouvelle date refusée — demande d’annulation :ref', 'title' => 'Le client a refusé la nouvelle date', 'intro' => 'Le client :name a refusé la nouvelle date proposée pour la réservation chez :spa. La réservation d’origine reste confirmée ; la décision finale vous appartient.'],
         ],
         'proposed_date' => 'Nouvelle date proposée',
+        'reminder' => [
+            'admin' => ['subject' => 'Rappel — demande d’annulation :ref sans décision (rendez-vous demain)', 'title' => 'Demande d’annulation à traiter avant le rendez-vous', 'intro' => 'La demande d’annulation de l’établissement :spa pour la réservation :ref n’a pas encore reçu de décision et le rendez-vous a lieu dans moins de 24 heures. Merci de trancher avant la prestation.'],
+        ],
+        'arbitration' => [
+            'admin' => ['subject' => 'À arbitrer — réservation :ref passée avec demande d’annulation ouverte', 'title' => 'Décision requise : prestation réalisée ou annulée ?', 'intro' => 'Le rendez-vous de la réservation :ref (:spa) est passé alors qu’une demande d’annulation de l’établissement était encore sans réponse. La clôture automatique et la commission sont suspendues jusqu’à votre décision.'],
+        ],
         'proposal_note' => 'Précisions HammamLuxury',
     ],
     'guest_report' => [

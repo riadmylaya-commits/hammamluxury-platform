@@ -58,6 +58,12 @@ return [
             'admin' => ['subject' => 'New date refused — cancellation request :ref', 'title' => 'The customer refused the new date', 'intro' => 'Customer :name refused the new date proposed for the booking at :spa. The original booking stays confirmed; the final decision is yours.'],
         ],
         'proposed_date' => 'Proposed new date',
+        'reminder' => [
+            'admin' => ['subject' => 'Reminder — cancellation request :ref still undecided (appointment tomorrow)', 'title' => 'Cancellation request to handle before the appointment', 'intro' => 'The cancellation request from :spa for booking :ref has not been decided yet and the appointment takes place in less than 24 hours. Please decide before the service.'],
+        ],
+        'arbitration' => [
+            'admin' => ['subject' => 'Decision needed — booking :ref is past with an open cancellation request', 'title' => 'Decision required: service delivered or cancelled?', 'intro' => 'The appointment of booking :ref (:spa) is past while a cancellation request from the venue was still unanswered. Automatic completion and commission are on hold until your decision.'],
+        ],
         'proposal_note' => 'HammamLuxury details',
     ],
     'guest_report' => [

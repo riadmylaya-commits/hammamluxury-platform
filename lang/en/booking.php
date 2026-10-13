@@ -56,6 +56,7 @@ return [
     'cancellation_not_allowed' => 'A cancellation request is only possible for an upcoming confirmed booking without a pending request.',
     'cancellation_already_answered' => 'You have already answered this request.',
     'cancellation_already_decided' => 'This request has already been processed.',
+    'arbitration_not_needed' => 'This booking is not awaiting arbitration.',
     'cancellation_reason_code_required' => 'Please pick a reason from the list.',
     'cancellation_same_reason_refused' => 'HammamLuxury has already refused a request for this same reason. A new request is only possible for a new event, with a different reason and a new explanation.',
     'cancellation_no_open_proposal' => 'No new-date proposal is awaiting an answer.',

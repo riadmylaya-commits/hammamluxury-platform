@@ -2,7 +2,6 @@
 
 namespace Tests\Engine;
 
-use App\Domain\Booking\BookingException;
 use App\Domain\Booking\CancellationService;
 use App\Livewire\Site\BookingShow;
 use App\Models\Booking;
@@ -236,7 +235,7 @@ class FinanceIntegrityTest extends BookingFlowTestCase
         $this->assertSame(0.0, $this->balance($booking));
     }
 
-    public function test_pending_request_cannot_cancel_a_booking_completed_in_the_meantime(): void
+    public function test_pending_request_on_a_completed_booking_is_an_admin_arbitration_with_traceable_reversal(): void
     {
         $booking = $this->confirmed();
         $admin = User::create(['name' => 'Admin', 'email' => 'late-admin@example.test', 'password' => 'test-secret', 'role' => 'admin']);
@@ -244,14 +243,16 @@ class FinanceIntegrityTest extends BookingFlowTestCase
         $request = $service->request($booking, $this->spa->partner->user, 'Fermeture pour travaux urgents, proposition en attente.');
         $this->travelTo($booking->end_at->addHours(5)->toMutable());
         $this->bookings->complete($booking, 'admin');
-        try {
-            $service->decide($request, $admin, 'accepted');
-            $this->fail('Une ancienne demande ne doit pas annuler une prestation clôturée.');
-        } catch (BookingException $e) {
-            $this->assertSame(409, $e->status);
-        }
         $this->assertSame('completed', $booking->fresh()->status);
         $this->assertSame(60.0, $this->balance($booking));
+
+        // Aucun automatisme ne tranche ; seule la décision explicite de HammamLuxury annule, avec contre-écriture (jamais de suppression).
+        $this->assertSame([], $this->bookings->completePast());
+        $this->assertSame('completed', $booking->fresh()->status);
+        $service->decide($request, $admin, 'accepted');
+        $this->assertSame('cancelled', $booking->fresh()->status);
+        $this->assertSame(0.0, $this->balance($booking));
+        $this->assertSame(2, LedgerEntry::where('booking_id', $booking->id)->count());
     }
 
     public function test_historical_reconciliation_is_read_only_by_default_and_apply_is_idempotent(): void

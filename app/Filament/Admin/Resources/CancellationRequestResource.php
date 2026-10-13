@@ -73,14 +73,14 @@ class CancellationRequestResource extends Resource
         return [
             $class::make('acceptRequest')->label(__('admin.accept_cancellation'))->icon('heroicon-o-check')->color('danger')
                 ->visible(fn (CancellationRequest $r) => $r->isPending())
-                ->form([$note])->requiresConfirmation()->modalDescription(__('admin.accept_cancellation_help'))
+                ->form([$note])->requiresConfirmation()->modalDescription(fn (?CancellationRequest $r) => $r?->booking?->needsArbitration() ? __('admin.arbitration_help') : __('admin.accept_cancellation_help'))
                 ->action(fn (CancellationRequest $r, array $data) => $decide($r, 'accepted', $data['note'] ?? null)),
             $class::make('refuseRequest')->label(__('admin.refuse_cancellation'))->icon('heroicon-o-shield-check')->color('success')
                 ->visible(fn (CancellationRequest $r) => $r->isPending())
-                ->form([$note])->requiresConfirmation()->modalDescription(__('admin.refuse_cancellation_help'))
+                ->form([$note])->requiresConfirmation()->modalDescription(fn (?CancellationRequest $r) => $r?->booking?->needsArbitration() ? __('admin.arbitration_help') : __('admin.refuse_cancellation_help'))
                 ->action(fn (CancellationRequest $r, array $data) => $decide($r, 'refused', $data['note'] ?? null)),
             $class::make('proposeDate')->label(__('admin.propose_date'))->icon('heroicon-o-calendar-days')->color('info')
-                ->visible(fn (CancellationRequest $r) => $r->isPending() && ! $r->hasOpenProposal())
+                ->visible(fn (CancellationRequest $r) => $r->isPending() && ! $r->hasOpenProposal() && ! $r->booking->needsArbitration())
                 ->form([
                     DateTimePicker::make('start_at')->label(__('partner.proposed_start_at'))->required()->seconds(false)->minutesStep(15)->native(false)->displayFormat('d/m/Y H:i')->minDate(now()),
                     Textarea::make('note')->label(__('admin.proposal_note'))->rows(3)->maxLength(1000)->placeholder(__('admin.proposal_note_placeholder')),
@@ -123,6 +123,8 @@ class CancellationRequestResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->label(__('partner.status'))->options(__('partner.cancellation_statuses'))->default('pending')->multiple(),
+                Tables\Filters\Filter::make('arbitration')->label(__('admin.arbitration_filter'))->toggle()
+                    ->query(fn (Builder $query) => $query->where('status', 'pending')->whereHas('booking', fn (Builder $booking) => $booking->whereIn('status', ['confirmed', 'completed'])->where('start_at', '<=', now()))),
                 Tables\Filters\SelectFilter::make('spa_id')->label(__('admin.spa'))->relationship('spa', 'name'),
             ])
             ->actions([Tables\Actions\ViewAction::make(), ...static::decisionActions()])

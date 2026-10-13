@@ -118,6 +118,8 @@ return [
     // Étape B — demandes d'annulation
     'cancellation_request' => 'Demande d’annulation',
     'cancellation_requests' => 'Demandes d’annulation',
+    'arbitration_filter' => 'À arbitrer',
+    'arbitration_help' => 'Rendez-vous passé sans décision : indiquez si la prestation a été réalisée (commission due) ou annulée (aucune commission).',
     'no_cancellation_requests' => 'Aucune demande d’annulation.',
     'accept_cancellation' => 'Accepter → annuler la réservation',
     'accept_cancellation_help' => 'La réservation sera annulée définitivement, le créneau libéré et le client prévenu par e-mail.',

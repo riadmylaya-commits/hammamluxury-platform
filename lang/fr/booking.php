@@ -56,6 +56,7 @@ return [
     'cancellation_not_allowed' => 'Une demande d’annulation n’est possible que pour une réservation confirmée à venir, sans demande déjà en cours.',
     'cancellation_already_answered' => 'Vous avez déjà répondu à cette demande.',
     'cancellation_already_decided' => 'Cette demande a déjà été traitée.',
+    'arbitration_not_needed' => 'Cette réservation n’est pas en attente d’arbitrage.',
     'cancellation_reason_code_required' => 'Merci de choisir un motif dans la liste.',
     'cancellation_same_reason_refused' => 'HammamLuxury a déjà refusé une demande pour ce même motif. Une nouvelle demande n’est possible que pour un nouvel événement, avec un autre motif et une nouvelle explication.',
     'cancellation_no_open_proposal' => 'Aucune proposition de nouvelle date n’est en attente.',
