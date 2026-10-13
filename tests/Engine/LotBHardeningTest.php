@@ -53,7 +53,8 @@ class LotBHardeningTest extends BookingFlowTestCase
         // Rejeu de la planification (même événement) : aucune nouvelle ligne, aucun nouvel e-mail.
         $this->assertNull(SendBookingNotifications::dispatch($b, 'created', 'client', $b->email));
         $this->assertSame(2, BookingNotification::where('booking_id', $b->id)->count());
-        Mail::assertQueuedCount(2);
+        Mail::assertSentCount(2);
+        Mail::assertNothingQueued();
     }
 
     public function test_failed_delivery_is_recorded_per_recipient_and_retried_without_duplicates(): void
@@ -86,8 +87,9 @@ class LotBHardeningTest extends BookingFlowTestCase
         $n->refresh();
         $this->assertSame('sent', $n->status);
         $this->assertNull($n->error);
-        Mail::assertQueued(BookingMail::class, fn ($m) => $m->audience === 'client' && $m->hasTo($b->email));
-        Mail::assertQueuedCount(1);
+        Mail::assertSent(BookingMail::class, fn ($m) => $m->audience === 'client' && $m->hasTo($b->email));
+        Mail::assertSentCount(1);
+        Mail::assertNothingQueued();
         $this->assertSame(0, SendBookingNotifications::retry(), 'plus rien à relancer');
         $this->artisan('hl:notifications-retry')->assertSuccessful();
     }
