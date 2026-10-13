@@ -182,12 +182,19 @@ class CancellationService
                 && $request->decision_note === ($note ? trim($note) : null)) {
                 return $request;
             }
-            if (! $request->isPending() || ! $booking->canCancel('admin')) {
+            $arbitration = $booking->needsArbitration();
+            if (! $request->isPending() || (! $arbitration && ! $booking->canCancel('admin'))) {
                 throw BookingException::make('status', 'cancellation_already_decided', [], 409);
             }
-            if ($request->hasOpenProposal()) {
+            if ($request->hasOpenProposal() && ! $arbitration) {
                 throw BookingException::make('status', 'cancellation_proposal_pending', [], 409);
             }
+            if ($arbitration) {
+                $this->bookings->arbitrate($booking, $decision === 'accepted' ? 'cancelled' : 'completed');
+            } elseif ($decision === 'accepted') {
+                $this->bookings->cancel($booking, 'admin');
+            }
+            $request->refresh()->setRelation('booking', $booking);
             $request->update([
                 'status' => $decision,
                 'decided_by' => $admin->id,
@@ -196,11 +203,7 @@ class CancellationService
             ]);
             $booking->log('cancellation:'.$decision, 'admin', ['request' => $request->id]);
             ActivityLog::record('booking.cancellation_'.$decision, $booking, array_filter(['ref' => $booking->reference, 'note' => $note]), 'admin');
-
-            if ($decision === 'accepted') {
-                $this->bookings->cancel($booking, 'admin');
-            }
-            if ($decision === 'refused') {
+            if ($decision === 'refused' && ! $arbitration) {
                 DB::afterCommit(function () use ($request, $booking) {
                     $this->notifyPartner($request, 'refused');
                     if ($booking->email) {
@@ -252,6 +255,36 @@ class CancellationService
         }
         $request->update(['client_notified_at' => now()]);
         $booking->log('cancellation:client_notified', 'system', ['request' => $request->id]);
+    }
+
+    /** Alerte HammamLuxury quand un rendez-vous est passé avec une demande encore ouverte (une seule fois par demande). */
+    public function notifyArbitration(CancellationRequest $request): void
+    {
+        $this->notifyAdmins($request, 'arbitration');
+    }
+
+    /**
+     * Rappel J-1 aux administrateurs : demandes encore sans décision dont le rendez-vous a lieu dans moins de 24 h.
+     *
+     * @return array<int> identifiants des demandes rappelées
+     */
+    public function remindAdmins(?CarbonImmutable $now = null): array
+    {
+        $now ??= CarbonImmutable::now();
+        $sent = [];
+        $due = CancellationRequest::where('status', 'pending')->whereNull('reminder_sent_at')
+            ->whereHas('booking', fn ($q) => $q->where('status', 'confirmed')->whereBetween('start_at', [$now, $now->addDay()]))
+            ->with('booking')->get();
+        foreach ($due as $request) {
+            $updated = CancellationRequest::whereKey($request->id)->whereNull('reminder_sent_at')->update(['reminder_sent_at' => $now]);
+            if ($updated) {
+                $request->booking->log('cancellation:reminder', 'system', ['request' => $request->id]);
+                $this->notifyAdmins($request, 'reminder');
+                $sent[] = $request->id;
+            }
+        }
+
+        return $sent;
     }
 
     private function notifyAdmins(CancellationRequest $request, string $event): void

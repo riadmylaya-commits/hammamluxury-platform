@@ -118,6 +118,8 @@ return [
     // Step B — cancellation requests
     'cancellation_request' => 'Cancellation request',
     'cancellation_requests' => 'Cancellation requests',
+    'arbitration_filter' => 'To arbitrate',
+    'arbitration_help' => 'Appointment past without decision: state whether the service was delivered (commission due) or cancelled (no commission).',
     'no_cancellation_requests' => 'No cancellation requests.',
     'accept_cancellation' => 'Accept → cancel the booking',
     'accept_cancellation_help' => 'The booking will be cancelled for good, the slot released and the customer notified by e-mail.',

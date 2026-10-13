@@ -17,6 +17,8 @@ class CancellationRequest extends Model
 
     protected $casts = [
         'client_notified_at' => 'datetime',
+        'reminder_sent_at' => 'datetime',
+        'escalated_at' => 'datetime',
         'client_responded_at' => 'datetime',
         'decided_at' => 'datetime',
         'proposed_start_at' => 'datetime',
@@ -60,6 +62,7 @@ class CancellationRequest extends Model
     {
         return match (true) {
             $this->status !== 'pending' => $this->status,
+            $this->escalated_at !== null || $this->booking?->needsArbitration() => 'arbitration',
             $this->hasOpenProposal() => 'proposed',
             $this->proposal_response === 'refused' => 'proposal_refused',
             $this->client_response !== null => 'client_'.$this->client_response,

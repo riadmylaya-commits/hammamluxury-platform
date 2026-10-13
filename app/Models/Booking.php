@@ -34,7 +34,9 @@ class Booking extends Model
         'intent_expires_at' => 'immutable_datetime',
         'quote' => 'array',
         'start_at' => 'immutable_datetime', 'end_at' => 'immutable_datetime', 'expires_at' => 'immutable_datetime',
-        'expiration_notified_at' => 'datetime', 'confirmed_at' => 'datetime', 'cancelled_at' => 'datetime',
+        'expiration_notified_at' => 'datetime',
+        'arbitration_required_at' => 'datetime',
+        'confirmed_at' => 'datetime', 'cancelled_at' => 'datetime',
         'no_show_at' => 'datetime', 'contact_revealed_at' => 'datetime',
         'total' => 'float', 'commissionable_amount' => 'float', 'commission_pct' => 'float', 'commission_amount' => 'float',
         'no_show_fee' => 'float', 'no_show_fee_waived' => 'bool',
@@ -141,6 +143,18 @@ class Booking extends Model
             && in_array($this->status, ['waiting', 'confirmed'], true)
             && $this->start_at !== null
             && $this->start_at->gt(now());
+    }
+
+    /**
+     * Demande d'annulation partenaire encore ouverte alors que le rendez-vous est passé : la clôture automatique
+     * et la commission sont suspendues jusqu'à la décision de HammamLuxury (prestation réalisée ou annulée).
+     */
+    public function needsArbitration(): bool
+    {
+        return in_array($this->status, ['confirmed', 'completed'], true)
+            && $this->start_at !== null
+            && $this->start_at->lte(now())
+            && $this->pendingCancellationRequest()->exists();
     }
 
     /**

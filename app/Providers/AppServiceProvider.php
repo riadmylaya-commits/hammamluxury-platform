@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Domain\Booking\CancellationService;
 use App\Events\BookingCreated;
 use App\Events\BookingExpired;
 use App\Events\BookingStatusChanged;
+use App\Events\CancellationArbitrationRequired;
 use App\Http\Middleware\SetLocale;
 use App\Listeners\SendBookingNotifications;
 use Carbon\CarbonImmutable;
@@ -34,5 +36,6 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(BookingCreated::class, [SendBookingNotifications::class, 'handleCreated']);
         Event::listen(BookingStatusChanged::class, [SendBookingNotifications::class, 'handleStatus']);
         Event::listen(BookingExpired::class, [SendBookingNotifications::class, 'handleExpired']);
+        Event::listen(CancellationArbitrationRequired::class, fn (CancellationArbitrationRequired $e) => app(CancellationService::class)->notifyArbitration($e->request));
     }
 }

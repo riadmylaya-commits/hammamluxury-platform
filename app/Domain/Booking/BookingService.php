@@ -7,10 +7,12 @@ use App\Domain\Privacy\ContactMasker;
 use App\Events\BookingCreated;
 use App\Events\BookingExpired;
 use App\Events\BookingStatusChanged;
+use App\Events\CancellationArbitrationRequired;
 use App\Models\ActivityLog;
 use App\Models\Allocation;
 use App\Models\Booking;
 use App\Models\BookingDecline;
+use App\Models\CancellationRequest;
 use App\Models\Spa;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -461,6 +463,12 @@ class BookingService
                 if (! $current->isConfirmed() || ! $current->end_at->lt($cutoff)) {
                     return false;
                 }
+                $pending = $current->pendingCancellationRequest()->lockForUpdate()->first();
+                if ($pending) {
+                    $this->escalateToArbitration($current, $pending);
+
+                    return false;
+                }
                 $this->transition($current, 'completed', 'system');
 
                 return true;
@@ -471,6 +479,50 @@ class BookingService
         }
 
         return $done;
+    }
+
+    /**
+     * Rendez-vous passé avec une demande d'annulation partenaire ouverte : ni clôture ni commission automatiques ;
+     * la réservation est signalée « à arbitrer » et HammamLuxury est alerté une seule fois.
+     */
+    private function escalateToArbitration(Booking $booking, CancellationRequest $request): void
+    {
+        if ($booking->arbitration_required_at !== null) {
+            return;
+        }
+        $booking->update(['arbitration_required_at' => now()]);
+        $request->update(['escalated_at' => now()]);
+        $booking->log('arbitration:required', 'system', ['request' => $request->id]);
+        $request->setRelation('booking', $booking);
+        DB::afterCommit(fn () => event(new CancellationArbitrationRequired($request)));
+    }
+
+    /**
+     * Décision HammamLuxury après la date du rendez-vous (arbitrage) : `cancelled` = la prestation n'a pas eu lieu,
+     * aucune commission (contre-écriture si une commission avait déjà été enregistrée) ; `completed` = prestation réalisée.
+     */
+    public function arbitrate(Booking $booking, string $outcome): Booking
+    {
+        if (! in_array($outcome, ['cancelled', 'completed'], true)) {
+            throw BookingException::make('outcome', 'invalid', [], 422);
+        }
+
+        return $this->mutations->forBooking($booking, function (Booking $current) use ($outcome): Booking {
+            if (! $current->needsArbitration()) {
+                throw BookingException::make('status', 'arbitration_not_needed', [], 409);
+            }
+            if ($outcome === 'cancelled') {
+                $this->transition($current, 'cancelled', 'admin', ['cancelled_at' => now(), 'cancelled_by' => 'admin', 'cancel_fee' => null, 'arbitration_required_at' => null]);
+                $current->log('cancel:arbitration', 'admin');
+            } elseif ($current->isConfirmed()) {
+                $this->transition($current, 'completed', 'admin', ['arbitration_required_at' => null]);
+            } else {
+                $current->update(['arbitration_required_at' => null]);
+                $this->ledger->sync($current, 'admin');
+            }
+
+            return $current;
+        });
     }
 
     public function setPaymentStatus(Booking $booking, string $actor, string $status): Booking
@@ -503,7 +555,7 @@ class BookingService
         }
         $allowed = match ($status) {
             'confirmed', 'declined', 'expired' => ['waiting'],
-            'cancelled' => ['waiting', 'confirmed'],
+            'cancelled' => $actor === 'admin' && $booking->needsArbitration() ? ['waiting', 'confirmed', 'completed'] : ['waiting', 'confirmed'],
             'completed' => ['confirmed'],
             'no_show', 'partner_no_show' => ['confirmed', 'completed'],
             default => [],
