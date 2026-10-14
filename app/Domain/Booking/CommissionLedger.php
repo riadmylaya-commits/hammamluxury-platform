@@ -37,6 +37,7 @@ class CommissionLedger
             'booking_id' => $booking->id,
             'booking_reference' => $booking->reference,
             'partner_id' => $booking->spa->partner_id,
+            'spa_id' => $booking->spa_id,
             'type' => $type,
             'amount' => $deltaCents / 100,
             'currency' => $booking->currency,

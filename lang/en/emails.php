@@ -87,4 +87,24 @@ return [
         'button' => 'Write my review',
         'footer' => 'This link is personal and tied to your booking. Reviews are checked by HammamLuxury before publication.',
     ],
+
+    'billing' => [
+        'statement_available' => [
+            'subject' => 'Provisional commission statement — :period',
+            'title' => 'Your provisional statement :period is available',
+            'intro' => 'The provisional HammamLuxury commission statement of :partner for :period is available in your partner area, Finance section. This document is not an invoice.',
+            'window' => 'You can review each line and dispute a commission until the :day of the month inclusive. An open dispute removes only the booking concerned from the statement.',
+        ],
+        'dispute_opened' => [
+            'subject' => '[Billing] Dispute received — :booking',
+            'title' => 'New commission dispute',
+            'intro' => 'Partner :partner disputes the commission of booking :booking. The line is removed from the billable statement until your decision in the Admin (Finance › Disputes).',
+        ],
+        'dispute_decided' => [
+            'subject' => 'Decision on your dispute — :booking',
+            'title' => 'Your dispute has been reviewed',
+            'intro' => 'HammamLuxury has decided on the dispute for booking :booking: :decision. Details are available in your partner area, Finance section.',
+        ],
+        'footer' => 'Automatic message from the HammamLuxury platform; real invoicing is not active until its activation has been validated.',
+    ],
 ];

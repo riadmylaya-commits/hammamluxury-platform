@@ -87,4 +87,24 @@ return [
         'button' => 'Donner mon avis',
         'footer' => 'Ce lien est personnel et lié à votre réservation. Les avis sont vérifiés par HammamLuxury avant publication.',
     ],
+
+    'billing' => [
+        'statement_available' => [
+            'subject' => 'Relevé provisoire de commissions — :period',
+            'title' => 'Votre relevé provisoire :period est disponible',
+            'intro' => 'Le relevé provisoire des commissions HammamLuxury de :partner pour :period est consultable dans votre espace partenaire, rubrique Finances. Ce document n’est pas une facture.',
+            'window' => 'Vous pouvez vérifier chaque ligne et contester une commission jusqu’au :day du mois inclus. Une contestation ouverte retire uniquement la réservation concernée du relevé.',
+        ],
+        'dispute_opened' => [
+            'subject' => '[Facturation] Contestation reçue — :booking',
+            'title' => 'Nouvelle contestation de commission',
+            'intro' => 'Le partenaire :partner conteste la commission de la réservation :booking. La ligne est retirée du relevé facturable jusqu’à votre décision dans l’Admin (Finances › Contestations).',
+        ],
+        'dispute_decided' => [
+            'subject' => 'Décision sur votre contestation — :booking',
+            'title' => 'Votre contestation a été examinée',
+            'intro' => 'HammamLuxury a pris une décision sur la contestation de la réservation :booking : :decision. Le détail est consultable dans votre espace partenaire, rubrique Finances.',
+        ],
+        'footer' => 'Message automatique de la plateforme HammamLuxury ; la facturation réelle n’est pas active tant que son activation n’a pas été validée.',
+    ],
 ];
