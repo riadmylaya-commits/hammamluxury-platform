@@ -63,6 +63,10 @@ return [
         'issue_day' => 5,
         'dispute_until_day' => 4,
         'accountant_validated_at' => null,
+        // Verrous hors interface, jamais lus depuis billing_settings : références écrites de la recette complète et de
+        // l'autorisation explicite de la propriétaire, posées uniquement dans le .env du serveur concerné.
+        'acceptance_ref' => env('HL_BILLING_ACCEPTANCE_REF'),
+        'owner_authorization_ref' => env('HL_BILLING_OWNER_AUTHORIZATION_REF'),
         // Identité de l'émetteur (HammamLuxury), à compléter dans l'Admin après validation comptable.
         'issuer' => [
             'company_name' => env('HL_BILLING_ISSUER_NAME'),

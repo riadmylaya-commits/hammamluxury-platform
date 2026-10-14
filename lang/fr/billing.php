@@ -51,6 +51,11 @@ return [
     'profile_saved' => 'Informations de facturation enregistrées.',
 
     'blocker' => [
+        'lots_not_delivered' => 'Lots de facturation nécessaires non livrés (verrou de code)',
+        'acceptance_not_recorded' => 'Recette complète non enregistrée sur le serveur',
+        'owner_authorization_missing' => 'Autorisation explicite de la propriétaire non enregistrée sur le serveur',
+        'ledger_unqualified_entries' => 'Écritures du grand livre non qualifiées (lancer hl:billing-mark-legacy)',
+        'start_period_frozen' => 'Premier mois facturable figé : des écritures sont déjà qualifiées',
         'billing_disabled' => 'Facturation non activée',
         'start_period_missing' => 'Premier mois facturable non renseigné',
         'vat_mode_pending' => 'Régime de TVA en attente de validation comptable',

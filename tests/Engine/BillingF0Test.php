@@ -28,6 +28,33 @@ class BillingF0Test extends BookingFlowTestCase
         $this->admin = User::create(['name' => 'Admin', 'email' => 'admin@example.test', 'password' => 'secret-test', 'role' => 'admin', 'email_verified_at' => now()]);
     }
 
+    protected function tearDown(): void
+    {
+        $this->travelBack();
+        parent::tearDown();
+    }
+
+    /** Simule la livraison future des lots d'émission (constante de code), sans toucher au code de production. */
+    private function bindDeliveredLotsGate(): void
+    {
+        $this->app->bind(BillingGate::class, fn ($app, array $params) => new class($params['settings'] ?? $app->make(BillingSettings::class)) extends BillingGate
+        {
+            protected function issuanceLotsDelivered(): bool
+            {
+                return true;
+            }
+        });
+    }
+
+    private function fiscalComplete(BillingSettings $s): void
+    {
+        $s->set('start_period', '2027-01');
+        $s->set('vat_mode', 'ht_plus_vat');
+        $s->set('vat_rate', 20);
+        $s->set('accountant_validated_at', '2026-12-15');
+        $this->issuerComplete($s);
+    }
+
     private function issuerComplete(BillingSettings $s): void
     {
         foreach (BillingSettings::ISSUER_REQUIRED as $f) {
@@ -76,12 +103,30 @@ class BillingF0Test extends BookingFlowTestCase
         $this->assertFalse($s->enabled());
         $this->assertDatabaseMissing('billing_settings', ['key' => 'enabled']);
 
-        $s->set('start_period', '2027-01');
-        $s->set('vat_mode', 'ht_plus_vat');
-        $s->set('vat_rate', 20);
-        $s->set('accountant_validated_at', '2026-12-15');
-        $this->issuerComplete($s);
-        $this->assertSame([], array_diff(app(BillingGate::class)->globalBlockers(), ['billing_disabled']));
+        $this->fiscalComplete($s);
+        $release = ['lots_not_delivered', 'acceptance_not_recorded', 'owner_authorization_missing'];
+        $this->assertSame($release, array_values(array_diff(app(BillingGate::class)->globalBlockers(), ['billing_disabled'])));
+
+        // Informations fiscales et date de démarrage complètes : l'activation reste refusée côté serveur.
+        try {
+            $s->set('enabled', true);
+            $this->fail('enabled must be refused while release locks remain');
+        } catch (BillingLockedException $e) {
+            $this->assertSame($release, $e->blockers);
+        }
+        $this->assertDatabaseMissing('billing_settings', ['key' => 'enabled']);
+
+        // Recette et autorisation enregistrées sur le serveur : le verrou de code des lots reste actif.
+        config(['hl.billing.acceptance_ref' => 'Recette staging 2027-01-05', 'hl.billing.owner_authorization_ref' => 'Accord écrit 2027-01-06']);
+        try {
+            $s->set('enabled', true);
+            $this->fail('enabled must be refused while issuance lots are not delivered');
+        } catch (BillingLockedException $e) {
+            $this->assertSame(['lots_not_delivered'], $e->blockers);
+        }
+        $this->assertFalse($s->enabled());
+
+        $this->bindDeliveredLotsGate();
         $s->set('enabled', true);
         $this->assertTrue($s->enabled());
         $this->assertTrue(app(BillingGate::class)->canIssue());
@@ -90,6 +135,71 @@ class BillingF0Test extends BookingFlowTestCase
         $this->assertSame($this->admin->id, $log->user_id);
         $this->assertFalse($log->properties['old']);
         $this->assertTrue($log->properties['new']);
+    }
+
+    public function test_release_locks_cannot_be_lifted_by_settings_table_or_admin_form(): void
+    {
+        $this->actingAs($this->admin);
+        $s = app(BillingSettings::class);
+        $this->fiscalComplete($s);
+        // Écriture directe en base (contournement de l'interface) : l'émission reste refusée.
+        DB::table('billing_settings')->insert(['key' => 'enabled', 'value' => '1', 'created_at' => now(), 'updated_at' => now()]);
+        $gate = app(BillingGate::class);
+        $this->assertTrue(app(BillingSettings::class)->enabled());
+        $this->assertFalse($gate->canIssue());
+        try {
+            $gate->assertCanIssue();
+            $this->fail('issuance must stay locked');
+        } catch (BillingLockedException $e) {
+            $this->assertSame(['lots_not_delivered', 'acceptance_not_recorded', 'owner_authorization_missing'], $e->blockers);
+        }
+        // Les références de recette et d'autorisation ne sont pas des réglages : la table et le formulaire les ignorent.
+        $this->assertNotContains('acceptance_ref', BillingSettings::KEYS);
+        $this->assertNotContains('owner_authorization_ref', BillingSettings::KEYS);
+        $this->expectException(\InvalidArgumentException::class);
+        $s->set('owner_authorization_ref', 'contournement');
+    }
+
+    public function test_late_corrections_follow_their_original_commission_and_late_commissions_stay_billable(): void
+    {
+        $gate = fn () => app(BillingGate::class);
+        $old = $this->book('massage', '10:00', [['massage', 1]], true);
+        $late = $this->book('massage', '12:00', [['massage', 1]], true);
+
+        // Prestation réalisée et commission acquise avant le démarrage : legacy.
+        $this->travelTo($old->end_at->addHours(5)->toMutable());
+        $this->bookings->complete($old, 'admin');
+        $start = now()->addMonthNoOverflow()->format('Y-m');
+        app(BillingSettings::class)->set('start_period', $start);
+
+        // Après le démarrage : remboursement de l'ancienne prestation, et prestation ancienne clôturée tardivement.
+        $this->travelTo(app(BillingSettings::class)->startPeriod()->addDays(2)->setTime(10, 0)->toMutable());
+        $this->bookings->setPaymentStatus($old->fresh(), 'admin', 'refunded');
+        $this->bookings->complete($late->fresh(), 'admin');
+
+        $this->artisan('hl:billing-mark-legacy')->expectsOutputToContain('Corrections postérieures au démarrage rattachées à une commission legacy : 1')->assertSuccessful();
+        $this->artisan('hl:billing-mark-legacy', ['--apply' => true])->assertSuccessful();
+        $oldEntries = LedgerEntry::where('booking_id', $old->id)->orderBy('id')->get();
+        $this->assertSame(['commission', 'commission_reversal'], $oldEntries->pluck('type')->all());
+        $this->assertSame(['legacy', 'legacy'], $oldEntries->pluck('billing_scope')->all(), 'La contre-écriture tardive ne doit pas réduire une facture.');
+        $lateEntry = LedgerEntry::where('booking_id', $late->id)->sole();
+        $this->assertSame('billable', $lateEntry->billing_scope, 'Commission acquise après le démarrage pour une prestation ancienne : facturable.');
+        $this->assertSame(60.0, $lateEntry->amount);
+
+        // Nouvelles écritures après qualification : l'émission est bloquée tant qu'elles ne sont pas qualifiées.
+        $this->bookings->setPaymentStatus($old->fresh(), 'admin', 'paid');
+        $this->bookings->setPaymentStatus($late->fresh(), 'admin', 'refunded');
+        $this->assertContains('ledger_unqualified_entries', $gate()->globalBlockers());
+        $this->artisan('hl:billing-mark-legacy', ['--apply' => true])->assertSuccessful();
+        $this->assertNotContains('ledger_unqualified_entries', $gate()->globalBlockers());
+        $this->assertSame(0, LedgerEntry::whereNull('billing_scope')->count());
+        $this->assertSame('legacy', LedgerEntry::where('booking_id', $old->id)->orderByDesc('id')->first()->billing_scope);
+        $this->assertSame('billable', LedgerEntry::where('booking_id', $late->id)->orderByDesc('id')->first()->billing_scope);
+
+        // Rien n'est perdu ni compté deux fois : chaque chaîne garde son solde dans un seul périmètre.
+        $this->assertSame(60.0, (float) LedgerEntry::where('booking_id', $old->id)->where('billing_scope', 'legacy')->sum('amount'));
+        $this->assertSame(0.0, (float) LedgerEntry::where('booking_id', $late->id)->where('billing_scope', 'billable')->sum('amount'));
+        $this->assertSame(0, LedgerEntry::where('booking_id', $old->id)->where('billing_scope', 'billable')->count());
     }
 
     public function test_invalid_values_are_rejected(): void
@@ -153,8 +263,14 @@ class BillingF0Test extends BookingFlowTestCase
         $this->assertTrue(app(BillingGate::class)->isBillable($new->fresh()));
         $this->assertDatabaseHas('activity_logs', ['action' => 'billing.scope_marked']);
 
-        // Reculer la date de démarrage ne requalifie jamais une écriture déjà qualifiée.
-        app(BillingSettings::class)->set('start_period', '2028-01');
+        // Une fois des écritures qualifiées, la date de démarrage est figée : aucune écriture ne change de périmètre.
+        try {
+            app(BillingSettings::class)->set('start_period', '2028-01');
+            $this->fail('start_period must be frozen once entries are qualified');
+        } catch (BillingLockedException $e) {
+            $this->assertSame(['start_period_frozen'], $e->blockers);
+        }
+        $this->assertSame('2027-01', app(BillingSettings::class)->get('start_period'));
         $this->artisan('hl:billing-mark-legacy', ['--apply' => true])->assertSuccessful();
         $this->assertSame('billable', $new->fresh()->billing_scope);
     }

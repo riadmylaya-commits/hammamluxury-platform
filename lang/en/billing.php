@@ -51,6 +51,11 @@ return [
     'profile_saved' => 'Billing information saved.',
 
     'blocker' => [
+        'lots_not_delivered' => 'Required invoicing lots not delivered (code lock)',
+        'acceptance_not_recorded' => 'Full acceptance testing not recorded on the server',
+        'owner_authorization_missing' => 'Owner’s explicit authorisation not recorded on the server',
+        'ledger_unqualified_entries' => 'Unqualified ledger entries (run hl:billing-mark-legacy)',
+        'start_period_frozen' => 'First billable month is frozen: entries are already qualified',
         'billing_disabled' => 'Invoicing not enabled',
         'start_period_missing' => 'First billable month not set',
         'vat_mode_pending' => 'VAT regime pending accountant validation',

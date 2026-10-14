@@ -12,7 +12,35 @@ use Carbon\CarbonInterface;
  */
 class BillingGate
 {
+    /**
+     * Verrou de code : l'émission réelle dépend des lots suivants (brouillons, factures, envoi, paiements).
+     * Ne passe à true que par une PR revue, dans le dernier lot nécessaire ; aucun réglage ni variable d'environnement ne le lève.
+     */
+    public const ISSUANCE_LOTS_DELIVERED = false;
+
     public function __construct(private readonly BillingSettings $settings) {}
+
+    /** Blocages que l'interface ne peut pas lever : lots livrés, recette complète, autorisation explicite de la propriétaire. */
+    public function releaseBlockers(): array
+    {
+        $out = [];
+        if (! $this->issuanceLotsDelivered()) {
+            $out[] = 'lots_not_delivered';
+        }
+        if (trim((string) config('hl.billing.acceptance_ref')) === '') {
+            $out[] = 'acceptance_not_recorded';
+        }
+        if (trim((string) config('hl.billing.owner_authorization_ref')) === '') {
+            $out[] = 'owner_authorization_missing';
+        }
+
+        return $out;
+    }
+
+    protected function issuanceLotsDelivered(): bool
+    {
+        return self::ISSUANCE_LOTS_DELIVERED;
+    }
 
     /** @return list<string> codes de blocage globaux (vide = émission possible côté plateforme) */
     public function globalBlockers(): array
@@ -38,8 +66,11 @@ class BillingGate
                 $out[] = 'issuer_'.$field.'_missing';
             }
         }
+        if ($this->settings->startPeriod() !== null && LedgerEntry::whereNull('billing_scope')->exists()) {
+            $out[] = 'ledger_unqualified_entries';
+        }
 
-        return $out;
+        return [...$out, ...$this->releaseBlockers()];
     }
 
     /** @return list<string> codes de blocage propres au partenaire (données légales de facturation) */
@@ -94,6 +125,33 @@ class BillingGate
         $start = $this->settings->startPeriod();
 
         return $start !== null && $createdAt->lt($start);
+    }
+
+    /**
+     * Périmètre d'une écriture. Une correction de commission (contre-écriture, ajustement) suit toujours la commission initiale
+     * de sa chaîne : une correction tardive d'une commission legacy reste legacy, celle d'une commission facturable reste
+     * facturable. Les autres écritures suivent leur date d'enregistrement (date d'acquisition de la commission).
+     */
+    public function scopeFor(LedgerEntry $entry): ?string
+    {
+        if ($this->settings->startPeriod() === null) {
+            return null;
+        }
+        $root = $entry;
+        $seen = [];
+        while ($root->corrects_entry_id !== null && ! isset($seen[$root->id])) {
+            $seen[$root->id] = true;
+            $parent = LedgerEntry::find($root->corrects_entry_id);
+            if ($parent === null) {
+                break;
+            }
+            if ($parent->billing_scope !== null) {
+                return $parent->billing_scope;
+            }
+            $root = $parent;
+        }
+
+        return $this->isBeforeStart($root->created_at) ? LedgerEntry::SCOPE_LEGACY : LedgerEntry::SCOPE_BILLABLE;
     }
 
     /** Écriture facturable : qualifiée « billable » explicitement, jamais « legacy ». Null = non qualifiée = non facturable. */

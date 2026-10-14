@@ -4,6 +4,7 @@ namespace App\Domain\Billing;
 
 use App\Models\ActivityLog;
 use App\Models\BillingSetting;
+use App\Models\LedgerEntry;
 use Carbon\CarbonImmutable;
 use InvalidArgumentException;
 
@@ -64,7 +65,10 @@ class BillingSettings
         return $out;
     }
 
-    /** Enregistre une valeur ; `enabled` ne peut passer à vrai que si BillingGate ne signale plus aucun blocage. */
+    /**
+     * Enregistre une valeur ; `enabled` ne peut passer à vrai que si BillingGate ne signale plus aucun blocage, y compris les
+     * verrous hors interface (lots, recette, autorisation). `start_period` est figée dès qu'une écriture est qualifiée.
+     */
     public function set(string $key, mixed $value, ?string $panel = null): void
     {
         if (! in_array($key, self::KEYS, true)) {
@@ -75,8 +79,12 @@ class BillingSettings
         if ($old === $this->cast($key, $value)) {
             return;
         }
+        if ($key === 'start_period' && LedgerEntry::whereNotNull('billing_scope')->exists()) {
+            // Déplacer la date après qualification laisserait des écritures dans le mauvais périmètre (perte ou double facturation).
+            throw new BillingLockedException(['start_period_frozen']);
+        }
         if ($key === 'enabled' && $value === '1') {
-            $blockers = array_diff((new BillingGate($this))->globalBlockers(), ['billing_disabled']);
+            $blockers = array_values(array_diff(app()->make(BillingGate::class, ['settings' => $this])->globalBlockers(), ['billing_disabled', 'ledger_unqualified_entries']));
             if ($blockers !== []) {
                 throw new BillingLockedException($blockers);
             }
