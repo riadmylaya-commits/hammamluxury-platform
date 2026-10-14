@@ -10,7 +10,7 @@ class Partner extends Model
 {
     protected $guarded = [];
 
-    protected $casts = ['commission_pct' => 'float'];
+    protected $casts = ['commission_pct' => 'float', 'ice_not_applicable' => 'bool'];
 
     public function user(): BelongsTo
     {

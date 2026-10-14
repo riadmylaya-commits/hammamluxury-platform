@@ -10,6 +10,10 @@ class LedgerEntry extends Model
 {
     public const COMMISSION_TYPES = ['commission', 'commission_reversal', 'commission_adjust'];
 
+    public const SCOPE_LEGACY = 'legacy';
+
+    public const SCOPE_BILLABLE = 'billable';
+
     protected $guarded = [];
 
     protected $casts = ['amount' => 'float'];

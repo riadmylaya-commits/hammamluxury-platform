@@ -2,9 +2,11 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Domain\Billing\BillingGate;
 use App\Domain\Phone\PhoneNumber;
 use App\Filament\Admin\Resources\PartnerResource\Pages;
 use App\Filament\Forms\Components\PhoneField;
+use App\Filament\Partner\Pages\BillingProfile;
 use App\Models\ActivityLog;
 use App\Models\Partner;
 use Filament\Forms;
@@ -44,11 +46,10 @@ class PartnerResource extends Resource
         return $form->schema([
             Forms\Components\Section::make(__('admin.company'))->schema([
                 Forms\Components\TextInput::make('company_name')->label(__('partner.company_name'))->required()->maxLength(190),
-                Forms\Components\TextInput::make('legal_form')->label(__('admin.legal_form'))->maxLength(60),
-                Forms\Components\TextInput::make('tax_id')->label(__('admin.tax_id'))->maxLength(60),
-                Forms\Components\TextInput::make('registry_number')->label(__('admin.registry_number'))->maxLength(60),
-                PhoneField::make('contact_phone', __('partner.phone'))->columnSpanFull(),
+                PhoneField::make('contact_phone', __('partner.phone')),
             ])->columns(2),
+            Forms\Components\Section::make(__('billing.partner_section'))->description(__('billing.partner_section_help'))
+                ->schema(BillingProfile::schema(withCompany: false))->columns(2),
             Forms\Components\Section::make(__('admin.validation'))->schema([
                 Forms\Components\Select::make('status')->label(__('partner.status'))->options(self::statuses())->required(),
                 Forms\Components\TextInput::make('commission_pct')->label(__('admin.commission_pct'))->numeric()->minValue(0)->maxValue(100)->suffix('%')
@@ -74,6 +75,9 @@ class PartnerResource extends Resource
                 Tables\Columns\TextColumn::make('contact_phone')->label(__('partner.phone'))->formatStateUsing(fn (?string $state) => PhoneNumber::format($state)),
                 Tables\Columns\TextColumn::make('spas_count')->counts('spas')->label(__('admin.spas')),
                 Tables\Columns\TextColumn::make('commission_pct')->label(__('admin.commission_pct'))->formatStateUsing(fn (Partner $p) => $p->commissionPct().' %'),
+                Tables\Columns\IconColumn::make('billing_ready')->label(__('billing.billing_ready'))->boolean()
+                    ->state(fn (Partner $p) => app(BillingGate::class)->partnerReady($p))
+                    ->tooltip(fn (Partner $p) => app(BillingGate::class)->partnerReady($p) ? __('billing.billing_ready_yes') : __('billing.billing_ready_no')),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => self::statuses()[$state] ?? $state)
                     ->color(fn ($state) => match ($state) {
