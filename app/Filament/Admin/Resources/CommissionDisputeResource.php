@@ -7,9 +7,11 @@ use App\Domain\Billing\DisputeService;
 use App\Filament\Admin\Resources\CommissionDisputeResource\Pages;
 use App\Filament\Shared\DisputeDisplay;
 use App\Models\CommissionDispute;
+use App\Models\LedgerEntry;
 use App\Models\Partner;
 use App\Models\Spa;
 use Filament\Actions;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
@@ -45,14 +47,14 @@ class CommissionDisputeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $n = CommissionDispute::open()->count();
+        $n = CommissionDispute::open()->count() + CommissionDispute::pendingCorrection()->count();
 
         return $n ? (string) $n : null;
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'warning';
+        return CommissionDispute::pendingCorrection()->exists() ? 'danger' : 'warning';
     }
 
     public static function canCreate(): bool
@@ -91,6 +93,27 @@ class CommissionDisputeResource extends Resource
                 ->visible(fn (CommissionDispute $d) => $d->isOpen())
                 ->form([$note])->requiresConfirmation()->modalDescription(__('billing.reject_dispute_help'))
                 ->action(fn (CommissionDispute $d, array $data, mixed $livewire) => $decide($d, 'rejected', $data['decision_note'], $livewire)),
+            $class::make('settle')->label(__('billing.settle_action'))->icon('heroicon-o-banknotes')->color('danger')
+                ->visible(fn (CommissionDispute $d) => $d->needsCorrection())
+                ->form(fn (CommissionDispute $d) => [
+                    Select::make('correction_entry_id')->label(__('billing.settle_entry'))->helperText(__('billing.settle_entry_help'))->required()
+                        ->options(fn () => LedgerEntry::where('booking_id', $d->booking_id)->whereIn('type', ['commission_reversal', 'commission_adjust'])
+                            ->where('created_at', '>=', $d->decided_at)->whereNotIn('id', CommissionDispute::whereNotNull('correction_entry_id')->select('correction_entry_id'))
+                            ->orderByDesc('id')->get()
+                            ->mapWithKeys(fn (LedgerEntry $e) => [$e->id => '#'.$e->id.' · '.$e->type.' · '.number_format($e->amount, 2, ',', ' ').' '.config('hl.currency').' · '.$e->created_at->format('d/m/Y H:i')])->all()),
+                    Textarea::make('settlement_note')->label(__('billing.settle_note'))->rows(2)->maxLength(2000),
+                ])
+                ->action(function (CommissionDispute $d, array $data, mixed $livewire): void {
+                    try {
+                        app(DisputeService::class)->settle($d, auth()->user(), LedgerEntry::findOrFail($data['correction_entry_id']), (string) ($data['settlement_note'] ?? ''));
+                        Notification::make()->title(__('billing.settle_done'))->success()->send();
+                        if ($livewire instanceof ViewRecord) {
+                            $livewire->redirect(static::getUrl('view', ['record' => $d]));
+                        }
+                    } catch (DisputeException $e) {
+                        Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
+                    }
+                }),
             $class::make('booking')->label(__('billing.open_booking'))->icon('heroicon-o-calendar-days')->color('gray')
                 ->url(fn (CommissionDispute $d) => BookingResource::getUrl('view', ['record' => $d->booking_id])),
             DisputeDisplay::evidenceAction($class),
@@ -104,6 +127,8 @@ class CommissionDisputeResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->label(__('partner.status'))->default('open')
                     ->options(array_combine(CommissionDispute::STATUSES, array_map(fn ($s) => __('billing.dispute_status_'.$s), CommissionDispute::STATUSES))),
+                Tables\Filters\SelectFilter::make('correction_status')->label(__('billing.correction_status'))
+                    ->options(['pending' => __('billing.correction_pending'), 'settled' => __('billing.correction_settled')]),
                 Tables\Filters\SelectFilter::make('kind')->label(__('billing.kind'))
                     ->options(array_combine(CommissionDispute::KINDS, array_map(fn ($k) => __('billing.kind_'.$k), CommissionDispute::KINDS))),
                 Tables\Filters\SelectFilter::make('partner_id')->label(__('billing.partner'))->options(fn () => Partner::orderBy('company_name')->pluck('company_name', 'id')->all())->searchable(),

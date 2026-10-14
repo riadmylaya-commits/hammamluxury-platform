@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\BillingNotification;
 use App\Models\CommissionDispute;
+use App\Models\Invoice;
 use App\Models\Partner;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -33,6 +34,7 @@ class BillingMail extends Mailable
             'notification' => $n,
             'vars' => $this->vars(),
             'dispute' => $subject instanceof CommissionDispute ? $subject : null,
+            'invoice' => $subject instanceof Invoice ? $subject : null,
             'partner' => $subject instanceof Partner ? $subject : ($subject instanceof CommissionDispute ? $subject->partner : null),
         ]);
     }
@@ -45,10 +47,13 @@ class BillingMail extends Mailable
 
         return [
             'period' => (string) ($p['period'] ?? ''),
+            'number' => (string) ($p['number'] ?? ''),
+            'due' => (string) ($p['due'] ?? ''),
+            'error' => (string) ($p['error'] ?? ''),
             'total' => number_format((float) ($p['total'] ?? 0), 2, ',', ' ').' '.config('hl.currency'),
             'booking' => (string) ($p['booking'] ?? ($n->notifiable instanceof CommissionDispute ? $n->notifiable->booking?->reference : '')),
             'decision' => isset($p['decision']) ? __('billing.dispute_status_'.$p['decision']) : '',
-            'partner' => (string) ($n->notifiable instanceof CommissionDispute ? $n->notifiable->partner?->company_name : ($n->notifiable instanceof Partner ? $n->notifiable->company_name : '')),
+            'partner' => (string) ($n->notifiable instanceof CommissionDispute ? $n->notifiable->partner?->company_name : ($n->notifiable instanceof Partner ? $n->notifiable->company_name : ($n->notifiable instanceof Invoice ? (string) ($n->notifiable->partner_snapshot['company_name'] ?? $n->notifiable->partner?->company_name) : ''))),
         ];
     }
 }

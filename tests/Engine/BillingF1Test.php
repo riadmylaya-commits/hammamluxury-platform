@@ -20,6 +20,7 @@ use App\Models\BillingSetting;
 use App\Models\Booking;
 use App\Models\CancellationRequest;
 use App\Models\CommissionDispute;
+use App\Models\Invoice;
 use App\Models\LedgerEntry;
 use App\Models\Partner;
 use App\Models\Spa;
@@ -104,7 +105,7 @@ class BillingF1Test extends BookingFlowTestCase
         $this->assertTrue(Schema::hasColumn('ledger_entries', 'spa_id'));
         $this->assertTrue(Schema::hasTable('commission_disputes'));
         $this->assertTrue(Schema::hasTable('billing_notifications'));
-        $this->assertFalse(Schema::hasTable('invoices'));
+        $this->assertSame(0, Invoice::count());
         $this->assertFalse(app(BillingSettings::class)->enabled());
         $this->assertFalse(app(BillingGate::class)->canIssue());
     }

@@ -105,6 +105,16 @@ return [
             'title' => 'Your dispute has been reviewed',
             'intro' => 'HammamLuxury has decided on the dispute for booking :booking: :decision. Details are available in your partner area, Finance section.',
         ],
+        'invoice_issued' => [
+            'subject' => 'Invoice :number — HammamLuxury commissions :period',
+            'title' => 'Your invoice :number is available',
+            'intro' => 'Invoice :number for HammamLuxury commissions of :partner for :period has been issued. The PDF can be downloaded from your partner area, Finance › Invoices. Amount due: :total, payable before :due by bank transfer or in cash against a receipt.',
+        ],
+        'invoice_pdf_failed' => [
+            'subject' => '[Billing] Invoice PDF generation failed — :number',
+            'title' => 'Invoice PDF not generated',
+            'intro' => 'Invoice :number (:partner, :period) is issued but its PDF could not be generated. No second invoice was created; generation is retried automatically (hl:billing-pdf-retry). The partner will only be notified once the PDF is ready.',
+        ],
         'footer' => 'Automatic message from the HammamLuxury platform; real invoicing is not active until its activation has been validated.',
     ],
 ];

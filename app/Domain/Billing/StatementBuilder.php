@@ -4,6 +4,8 @@ namespace App\Domain\Billing;
 
 use App\Models\Booking;
 use App\Models\CommissionDispute;
+use App\Models\Invoice;
+use App\Models\InvoiceLine;
 use App\Models\LedgerEntry;
 use App\Models\Partner;
 use Carbon\CarbonImmutable;
@@ -42,6 +44,29 @@ class StatementBuilder
         return $created->gt($origin) ? $created : $origin;
     }
 
+    /** Mois (AAAA-MM) pour lesquels une facture est déjà émise. @return array<string, true> */
+    public function issuedPeriods(Partner $partner): array
+    {
+        return Invoice::issued()->where('partner_id', $partner->id)->pluck('period')->flip()->map(fn () => true)->all();
+    }
+
+    /**
+     * Mois de relevé effectif : le mois de relevé, ou, si la facture de ce mois (et des suivants) est déjà émise, le premier mois
+     * suivant sans facture émise. Une écriture non facturée (contestation résolue tardivement, arbitrage) est ainsi reportée sans
+     * perte, avec sa période d'origine conservée ; une écriture déjà facturée n'apparaît plus nulle part.
+     *
+     * @param  array<string, true>  $issuedPeriods
+     */
+    public function effectivePeriod(LedgerEntry $entry, array $issuedPeriods): CarbonImmutable
+    {
+        $period = $this->billingPeriod($entry);
+        while (isset($issuedPeriods[$period->format('Y-m')])) {
+            $period = $period->addMonth();
+        }
+
+        return $period;
+    }
+
     public function build(Partner $partner, CarbonImmutable|string $period, ?CarbonImmutable $now = null): Statement
     {
         $tz = config('hl.timezone');
@@ -51,6 +76,8 @@ class StatementBuilder
         $acquiredUntil = $now->lt($closeAt) ? $now : $closeAt;
         $disputeUntil = $period->addMonth()->day(max(1, min(28, (int) $this->settings->get('dispute_until_day'))))->endOfDay();
 
+        $issued = $this->issuedPeriods($partner);
+        $invoiced = InvoiceLine::query()->whereHas('invoice', fn ($q) => $q->issued()->where('partner_id', $partner->id))->pluck('ledger_entry_id')->flip()->all();
         $entries = LedgerEntry::query()
             ->where('partner_id', $partner->id)
             ->whereIn('type', LedgerEntry::COMMISSION_TYPES)
@@ -59,7 +86,8 @@ class StatementBuilder
             ->with(['booking.spa', 'booking.pendingCancellationRequest', 'spa'])
             ->orderBy('id')
             ->get()
-            ->filter(fn (LedgerEntry $e) => $this->billingPeriod($e)->eq($period))
+            ->filter(fn (LedgerEntry $e) => $this->effectivePeriod($e, $issued)->eq($period))
+            ->reject(fn (LedgerEntry $e) => isset($invoiced[$e->id]))
             ->filter(fn (LedgerEntry $e) => $e->booking === null || $e->booking->source !== 'partner');
 
         $blocking = CommissionDispute::blocking()->where('partner_id', $partner->id)

@@ -9,6 +9,16 @@
 
 {{ __('emails.billing.statement_available.window', ['day' => app(\App\Domain\Billing\BillingSettings::class)->get('dispute_until_day')]) }}
 @endif
+@if($invoice)
+**{{ __('billing.invoice_number') }} :** {{ $invoice->number }}
+**{{ __('billing.period') }} :** {{ $vars['period'] ?: $invoice->period }}
+**{{ __('billing.total_ttc') }} :** {{ $vars['total'] }}
+@if($notification->event === 'invoice_issued')
+**{{ __('billing.due_at') }} :** {{ $vars['due'] }}
+@else
+**{{ __('billing.pdf_error') }} :** {{ $vars['error'] }}
+@endif
+@endif
 @if($dispute)
 **{{ __('booking.reference') }} :** {{ $dispute->booking?->reference }}
 **{{ __('billing.spa') }} :** {{ $dispute->spa?->name }}

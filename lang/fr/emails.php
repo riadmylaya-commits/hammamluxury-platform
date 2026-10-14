@@ -105,6 +105,16 @@ return [
             'title' => 'Votre contestation a été examinée',
             'intro' => 'HammamLuxury a pris une décision sur la contestation de la réservation :booking : :decision. Le détail est consultable dans votre espace partenaire, rubrique Finances.',
         ],
+        'invoice_issued' => [
+            'subject' => 'Facture :number — commissions HammamLuxury :period',
+            'title' => 'Votre facture :number est disponible',
+            'intro' => 'La facture :number des commissions HammamLuxury de :partner pour la période :period a été émise. Le PDF est téléchargeable dans votre espace partenaire, rubrique Finances › Factures. Montant TTC : :total, à régler avant le :due par virement bancaire ou en espèces contre reçu.',
+        ],
+        'invoice_pdf_failed' => [
+            'subject' => '[Facturation] Échec de génération du PDF — :number',
+            'title' => 'PDF de facture non généré',
+            'intro' => 'La facture :number (:partner, :period) est bien émise mais son PDF n’a pas pu être généré. Aucune seconde facture n’a été créée ; la génération est relancée automatiquement (hl:billing-pdf-retry). Le partenaire ne sera notifié qu’une fois le PDF prêt.',
+        ],
         'footer' => 'Message automatique de la plateforme HammamLuxury ; la facturation réelle n’est pas active tant que son activation n’a pas été validée.',
     ],
 ];

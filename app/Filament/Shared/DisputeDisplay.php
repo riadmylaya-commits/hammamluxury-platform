@@ -35,6 +35,8 @@ class DisputeDisplay
             Tables\Columns\TextColumn::make('reason_code')->label(__('billing.reason'))->formatStateUsing(fn (string $state) => __('billing.reason_'.$state))->wrap(),
             Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()->formatStateUsing(fn (string $state) => __('billing.dispute_status_'.$state))->color(fn (string $state) => self::statusColor($state)),
             Tables\Columns\TextColumn::make('decided_at')->label(__('billing.decided_at'))->dateTime('d/m/Y H:i')->placeholder('—'),
+            Tables\Columns\TextColumn::make('correction_status')->label(__('billing.correction_status'))->badge()->placeholder('—')
+                ->formatStateUsing(fn (string $state) => __('billing.correction_'.$state))->color(fn (string $state) => $state === 'pending' ? 'danger' : 'success'),
         ]));
     }
 
@@ -59,6 +61,15 @@ class DisputeDisplay
                 TextEntry::make('decidedBy.name')->label(__('billing.decided_by'))->placeholder('—'),
                 TextEntry::make('decided_at')->label(__('billing.decided_at'))->dateTime('d/m/Y H:i'),
                 TextEntry::make('decision_note')->label(__('billing.decision_note'))->columnSpanFull(),
+            ]),
+            Section::make(__('billing.correction_status'))->columns(2)->visible(fn (CommissionDispute $d) => $d->correction_status !== null)->schema([
+                TextEntry::make('correction_status')->label(__('billing.correction_status'))->badge()
+                    ->formatStateUsing(fn (string $state) => __('billing.correction_'.$state))->color(fn (string $state) => $state === 'pending' ? 'danger' : 'success'),
+                TextEntry::make('correctionEntry.id')->label(__('billing.correction_entry'))->placeholder('—')
+                    ->formatStateUsing(fn ($state, CommissionDispute $d) => '#'.$state.' · '.$d->correctionEntry?->type.' · '.number_format((float) $d->correctionEntry?->amount, 2, ',', ' ').' '.config('hl.currency')),
+                TextEntry::make('settledBy.name')->label(__('billing.decided_by'))->placeholder('—'),
+                TextEntry::make('settled_at')->label(__('billing.settled_at'))->dateTime('d/m/Y H:i')->placeholder('—'),
+                TextEntry::make('settlement_note')->label(__('billing.settle_note'))->placeholder('—')->columnSpanFull(),
             ]),
         ];
     }
