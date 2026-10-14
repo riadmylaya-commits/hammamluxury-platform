@@ -87,7 +87,7 @@ class PanelsTest extends BookingFlowTestCase
     public function test_admin_list_pages_render(): void
     {
         $this->actingAs($this->admin);
-        foreach (['activity-logs', 'cities', 'categories', 'amenities', 'spas', 'partners', 'bookings'] as $slug) {
+        foreach (['activity-logs', 'cities', 'categories', 'amenities', 'spas', 'partners', 'bookings', 'invoices', 'commission-disputes'] as $slug) {
             $this->get("/admin/$slug")->assertOk();
         }
     }

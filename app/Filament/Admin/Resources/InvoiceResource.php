@@ -66,7 +66,7 @@ class InvoiceResource extends Resource
 
         return $table->defaultSort('period', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('number')->label(__('billing.invoice_number'))->formatStateUsing(fn (?string $state, Invoice $i) => $i->label())->default('—')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('number')->label(__('billing.invoice_number'))->formatStateUsing(fn (?string $state, Invoice $record) => $record->label())->default('—')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('partner.company_name')->label(__('billing.partner'))->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('period')->label(__('billing.period'))->sortable(),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()->formatStateUsing(fn (string $state) => __('billing.invoice_status_'.$state))
@@ -99,14 +99,14 @@ class InvoiceResource extends Resource
     {
         return [
             $class::make('refresh')->label(__('billing.refresh_draft'))->icon('heroicon-o-arrow-path')->color('gray')
-                ->visible(fn (Invoice $i) => $i->isDraft())
+                ->visible(fn (Invoice $record) => $record->isDraft())
                 ->action(function (Invoice $i, mixed $livewire) {
-                    $fresh = app(InvoiceDrafter::class)->draft($i->partner, $i->period);
+                    $fresh = app(InvoiceDrafter::class)->draft($record->partner, $record->period);
                     Notification::make()->title($fresh ? __('billing.draft_refreshed') : __('billing.draft_removed'))->success()->send();
                     $livewire->redirect($fresh ? static::getUrl('view', ['record' => $fresh]) : static::getUrl('index'));
                 }),
             $class::make('issue')->label(__('billing.issue_action'))->icon('heroicon-o-check-badge')->color('success')
-                ->visible(fn (Invoice $i) => $i->isDraft())
+                ->visible(fn (Invoice $record) => $record->isDraft())
                 ->requiresConfirmation()->modalDescription(__('billing.issue_confirm'))
                 ->action(function (Invoice $i, mixed $livewire) {
                     try {
@@ -126,15 +126,15 @@ class InvoiceResource extends Resource
     public static function pdfAction(string $class = Tables\Actions\Action::class): mixed
     {
         return $class::make('pdf')->label(__('billing.download_pdf'))->icon('heroicon-o-arrow-down-tray')->color('gray')
-            ->visible(fn (Invoice $i) => $i->isIssued() && $i->pdf_status === Invoice::PDF_READY)
-            ->action(function (Invoice $i) {
+            ->visible(fn (Invoice $record) => $record->isIssued() && $record->pdf_status === Invoice::PDF_READY)
+            ->action(function (Invoice $record) {
                 if (! app(InvoicePdf::class)->verify($i)) {
                     Notification::make()->title(__('billing.pdf_corrupt'))->danger()->send();
 
                     return null;
                 }
 
-                return Storage::disk(InvoicePdf::DISK)->download($i->pdf_path, $i->number.'.pdf', ['Cache-Control' => 'no-store, private']);
+                return Storage::disk(InvoicePdf::DISK)->download($record->pdf_path, $record->number.'.pdf', ['Cache-Control' => 'no-store, private']);
             });
     }
 
