@@ -15,7 +15,7 @@ use Illuminate\Support\Collection;
  * Règles : seules les écritures qualifiées « billable » sont retenues (jamais legacy ni non qualifiées) ; une écriture
  * n'entre dans le relevé d'un mois que si elle est acquise avant la clôture de ce mois (créée au plus tard le dernier jour) ;
  * la période d'origine est le mois de la prestation ; une écriture acquise après la clôture de son mois d'origine est reportée
- * au relevé suivant avec mention de sa période d'origine ; les réservations hors ligne, les arbitrages ouverts et les
+ * au relevé du mois de son enregistrement avec mention de sa période d'origine (chaque écriture n'appartient qu'à un seul relevé) ; les réservations hors ligne, les arbitrages ouverts et les
  * réservations sous contestation ouverte sont retirés du relevé facturable (affichés à part). Aucune facture n'est créée.
  */
 class StatementBuilder
@@ -28,6 +28,18 @@ class StatementBuilder
         $at = $entry->booking?->start_at ?? $entry->created_at;
 
         return CarbonImmutable::parse($at)->setTimezone(config('hl.timezone'))->startOfMonth();
+    }
+
+    /**
+     * Mois de relevé d'une écriture : le premier mois, à partir de son mois d'origine, dont la clôture est postérieure à son
+     * enregistrement (= max(mois d'origine, mois d'enregistrement)). Une écriture n'appartient ainsi qu'à un seul relevé.
+     */
+    public function billingPeriod(LedgerEntry $entry): CarbonImmutable
+    {
+        $created = $entry->created_at->toImmutable()->setTimezone(config('hl.timezone'))->startOfMonth();
+        $origin = $this->originPeriod($entry);
+
+        return $created->gt($origin) ? $created : $origin;
     }
 
     public function build(Partner $partner, CarbonImmutable|string $period, ?CarbonImmutable $now = null): Statement
@@ -47,7 +59,7 @@ class StatementBuilder
             ->with(['booking.spa', 'booking.pendingCancellationRequest', 'spa'])
             ->orderBy('id')
             ->get()
-            ->filter(fn (LedgerEntry $e) => $this->originPeriod($e)->lte($period))
+            ->filter(fn (LedgerEntry $e) => $this->billingPeriod($e)->eq($period))
             ->filter(fn (LedgerEntry $e) => $e->booking === null || $e->booking->source !== 'partner');
 
         $blocking = CommissionDispute::blocking()->where('partner_id', $partner->id)

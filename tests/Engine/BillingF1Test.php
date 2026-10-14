@@ -9,6 +9,7 @@ use App\Domain\Billing\DisputeException;
 use App\Domain\Billing\DisputeService;
 use App\Domain\Billing\StatementBuilder;
 use App\Domain\Booking\CancellationService;
+use App\Filament\Admin\Resources\CommissionDisputeResource\Pages\ViewCommissionDispute;
 use App\Filament\Partner\Pages\CommissionStatement;
 use App\Filament\Partner\Resources\CommissionDisputeResource;
 use App\Jobs\SendBillingNotification;
@@ -29,6 +30,7 @@ use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Mockery;
 use RuntimeException;
@@ -464,5 +466,86 @@ class BillingF1Test extends BookingFlowTestCase
         $this->travelBack();
         $this->actingAs($this->admin)->get('/admin/commission-disputes')->assertOk()->assertSee($a->reference);
         $this->actingAs($this->partnerUser())->get('/admin/commission-disputes')->assertForbidden();
+    }
+
+    public function test_each_ledger_entry_belongs_to_exactly_one_statement_across_periods(): void
+    {
+        $origin = CarbonImmutable::parse($this->day, config('hl.timezone'))->startOfMonth();
+        $onTime = $this->completed('10:00');                                   // acquise dans son mois d’origine
+        $late = $this->confirmed('11:00');                                     // acquise le mois suivant (report)
+        $m1 = $origin->addMonthNoOverflow()->startOfMonth()->addDays(1)->setTime(9, 0);
+        $this->travelTo($m1->toMutable());
+        $this->bookings->complete($late, 'admin');
+        $m2 = $origin->addMonthsNoOverflow(2)->startOfMonth()->addDays(1)->setTime(9, 0);
+        $this->travelTo($m2->toMutable());
+        $this->bookings->setPaymentStatus($onTime->fresh(), 'admin', 'refunded'); // contre-écriture deux mois plus tard
+        $this->qualify();
+        $m3 = $origin->addMonthsNoOverflow(3)->startOfMonth()->addDays(5)->setTime(9, 0);
+
+        $seen = [];
+        foreach ([0, 1, 2, 3] as $i) {
+            $s = $this->statement(null, $origin->addMonthsNoOverflow($i)->format('Y-m'), $m3);
+            foreach (array_merge($s->lines(), $s->excluded) as $line) {
+                foreach ($line['entries'] as $e) {
+                    $this->assertArrayNotHasKey($e['id'], $seen, 'Écriture '.$e['id'].' présente dans deux relevés ('.($seen[$e['id']] ?? '?').' et '.$s->periodKey().')');
+                    $seen[$e['id']] = $s->periodKey();
+                }
+            }
+        }
+        $all = LedgerEntry::where('partner_id', $this->spa->partner_id)->where('billing_scope', 'billable')->pluck('id')->all();
+        $this->assertEqualsCanonicalizing($all, array_keys($seen), 'Chaque écriture facturable apparaît une fois');
+        $this->assertSame(3, count($seen));
+        $byPeriod = array_count_values($seen);
+        $this->assertSame(1, $byPeriod[$origin->format('Y-m')], 'Mois d’origine : la commission acquise à temps seulement');
+        $this->assertSame(1, $byPeriod[$origin->addMonthNoOverflow()->format('Y-m')], 'Mois +1 : la commission tardive reportée');
+        $this->assertSame(1, $byPeriod[$origin->addMonthsNoOverflow(2)->format('Y-m')], 'Mois +2 : la correction tardive, rattachée à sa réservation d’origine');
+        $s2 = $this->statement(null, $origin->addMonthsNoOverflow(2)->format('Y-m'), $m3);
+        $this->assertSame($origin->format('Y-m'), $s2->lines()[0]['origin_period']);
+        $this->assertTrue($s2->lines()[0]['carried']);
+        $this->assertSame(-$this->statement(null, $origin->format('Y-m'), $m3)->total, $s2->total, 'La contre-écriture seule, sans la commission déjà relevée');
+        $this->assertLessThan(0, $s2->total);
+        $this->assertTrue($this->statement(null, $origin->addMonthsNoOverflow(3)->format('Y-m'), $m3)->isEmpty());
+    }
+
+    public function test_dispute_evidence_is_private_and_only_reachable_by_its_partner_and_admins(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('disputes/preuve.pdf', '%PDF-1.4 test');
+        $a = $this->completed('10:00');
+        $this->qualify();
+        $this->viewAfter();
+        $d = app(DisputeService::class)->open($this->spa->partner, $a, $this->partnerUser(), 'other', 'Voir pièce', 'disputes/preuve.pdf');
+        $this->assertTrue(Storage::disk('local')->exists('disputes/preuve.pdf'));
+        $this->assertFileDoesNotExist(public_path('storage/disputes/preuve.pdf'));
+        $this->assertContains($this->get('/storage/disputes/preuve.pdf')->status(), [403, 404]);
+
+        $owner = $this->partnerUser();
+        $otherUser = User::create(['name' => 'Autre', 'email' => 'autre@example.test', 'password' => 'secret-test', 'role' => 'partner', 'email_verified_at' => now()]);
+        $other = Partner::create(['user_id' => $otherUser->id, 'company_name' => 'Autre SARL', 'status' => 'approved']);
+        $otherSpa = Spa::create(['partner_id' => $other->id, 'slug' => 'autre-spa', 'name' => 'Autre Spa', 'city' => 'Marrakech', 'status' => 'published', 'published_at' => now(), 'min_lead_minutes' => 0]);
+
+        $this->get('/partenaire/'.$this->spa->slug.'/commission-disputes/'.$d->id)->assertRedirect();
+        $this->actingAs($otherUser)->get('/partenaire/'.$otherSpa->slug.'/commission-disputes/'.$d->id)->assertNotFound();
+        $this->actingAs($otherUser)->get('/partenaire/'.$this->spa->slug.'/commission-disputes/'.$d->id)->assertNotFound();
+
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+        Livewire::actingAs($owner)->test(CommissionDisputeResource\Pages\ViewCommissionDispute::class, ['record' => $d->id])
+            ->assertActionVisible('evidence')->callAction('evidence')->assertFileDownloaded('preuve.pdf');
+    }
+
+    public function test_admin_can_download_dispute_evidence(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('disputes/preuve.pdf', '%PDF-1.4 test');
+        $a = $this->completed('10:00');
+        $this->qualify();
+        $this->viewAfter();
+        $d = app(DisputeService::class)->open($this->spa->partner, $a, $this->partnerUser(), 'other', 'Voir pièce', 'disputes/preuve.pdf');
+        $this->travelBack();
+        $this->actingAs($this->partnerUser())->get('/admin/commission-disputes/'.$d->id)->assertForbidden();
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        Livewire::actingAs($this->admin)->test(ViewCommissionDispute::class, ['record' => $d->id])
+            ->assertActionVisible('evidence')->callAction('evidence')->assertFileDownloaded('preuve.pdf');
     }
 }
