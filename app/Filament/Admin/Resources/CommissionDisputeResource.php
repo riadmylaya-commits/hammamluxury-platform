@@ -13,6 +13,7 @@ use Filament\Actions;
 use Filament\Forms\Components\Textarea;
 use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\ViewRecord;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -67,10 +68,14 @@ class CommissionDisputeResource extends Resource
     /** @return array<Tables\Actions\Action|Actions\Action> */
     public static function decisionActions(string $class = Tables\Actions\Action::class): array
     {
-        $decide = function (CommissionDispute $d, string $decision, string $note): void {
+        $decide = function (CommissionDispute $d, string $decision, string $note, mixed $livewire): void {
             try {
                 app(DisputeService::class)->decide($d, auth()->user(), $decision, $note);
+                $d->refresh();
                 Notification::make()->title(__('partner.action_done'))->success()->send();
+                if ($livewire instanceof ViewRecord) {
+                    $livewire->redirect(static::getUrl('view', ['record' => $d]));
+                }
             } catch (DisputeException $e) {
                 Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
             }
@@ -81,11 +86,11 @@ class CommissionDisputeResource extends Resource
             $class::make('accept')->label(__('billing.accept_dispute'))->icon('heroicon-o-check')->color('success')
                 ->visible(fn (CommissionDispute $d) => $d->isOpen())
                 ->form([$note])->requiresConfirmation()->modalDescription(__('billing.accept_dispute_help'))
-                ->action(fn (CommissionDispute $d, array $data) => $decide($d, 'accepted', $data['decision_note'])),
+                ->action(fn (CommissionDispute $d, array $data, mixed $livewire) => $decide($d, 'accepted', $data['decision_note'], $livewire)),
             $class::make('reject')->label(__('billing.reject_dispute'))->icon('heroicon-o-x-mark')->color('danger')
                 ->visible(fn (CommissionDispute $d) => $d->isOpen())
                 ->form([$note])->requiresConfirmation()->modalDescription(__('billing.reject_dispute_help'))
-                ->action(fn (CommissionDispute $d, array $data) => $decide($d, 'rejected', $data['decision_note'])),
+                ->action(fn (CommissionDispute $d, array $data, mixed $livewire) => $decide($d, 'rejected', $data['decision_note'], $livewire)),
             $class::make('booking')->label(__('billing.open_booking'))->icon('heroicon-o-calendar-days')->color('gray')
                 ->url(fn (CommissionDispute $d) => BookingResource::getUrl('view', ['record' => $d->booking_id])),
             DisputeDisplay::evidenceAction($class),

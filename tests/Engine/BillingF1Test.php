@@ -15,6 +15,7 @@ use App\Jobs\SendBillingNotification;
 use App\Mail\BillingMail;
 use App\Models\ActivityLog;
 use App\Models\BillingNotification;
+use App\Models\BillingSetting;
 use App\Models\Booking;
 use App\Models\CancellationRequest;
 use App\Models\CommissionDispute;
@@ -445,6 +446,13 @@ class BillingF1Test extends BookingFlowTestCase
         $this->assertSame(0, CommissionDisputeResource::getEloquentQuery()->count(), 'Ressource partenaire filtrée par entité du tenant');
         Filament::setTenant($this->spa, true);
         $this->assertSame(1, CommissionDisputeResource::getEloquentQuery()->count());
+    }
+
+    public function test_dispute_window_falls_back_to_config_when_setting_saved_empty(): void
+    {
+        BillingSetting::updateOrCreate(['key' => 'dispute_until_day'], ['value' => null]);
+        $this->assertSame(4, app(BillingSettings::class)->get('dispute_until_day'));
+        $this->assertSame(CarbonImmutable::parse($this->period.'-01')->addMonth()->day(4)->format('Y-m-d'), $this->statement()->disputeUntil->format('Y-m-d'));
     }
 
     public function test_admin_dispute_list_is_reserved_to_admins(): void

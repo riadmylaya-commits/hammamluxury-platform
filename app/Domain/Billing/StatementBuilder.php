@@ -37,7 +37,7 @@ class StatementBuilder
         $period = ($period instanceof CarbonImmutable ? $period : CarbonImmutable::createFromFormat('Y-m-d', $period.'-01', $tz))->setTimezone($tz)->startOfMonth();
         $closeAt = $period->endOfMonth();
         $acquiredUntil = $now->lt($closeAt) ? $now : $closeAt;
-        $disputeUntil = $period->addMonth()->day((int) $this->settings->get('dispute_until_day'))->endOfDay();
+        $disputeUntil = $period->addMonth()->day(max(1, min(28, (int) $this->settings->get('dispute_until_day'))))->endOfDay();
 
         $entries = LedgerEntry::query()
             ->where('partner_id', $partner->id)
