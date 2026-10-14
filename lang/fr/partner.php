@@ -420,6 +420,10 @@ return [
     'cancellation_reason_codes' => ['administrative_closure' => 'Fermeture administrative', 'technical_failure' => 'Panne ou problème technique important', 'safety_issue' => 'Problème de sécurité', 'staff_unavailable' => 'Indisponibilité exceptionnelle du personnel nécessaire', 'force_majeure' => 'Force majeure', 'other' => 'Autre motif exceptionnel'],
     'cancellation_other_help' => 'Motif « autre » : décrivez précisément la situation (30 caractères minimum).',
     'cancellation_evidence' => 'Justificatif (facultatif)',
+    'upload_type_refused' => 'Type de fichier refusé',
+    'upload_expected_types' => '{allButLastType} ou {lastType}',
+    'upload_too_large' => 'Fichier trop volumineux',
+    'upload_max_size' => 'Maximum {filesize}',
     'evidence_help' => 'Photo ou PDF, 8 Mo maximum. Visible uniquement par HammamLuxury.',
     'proposed_start_at' => 'Nouvelle date proposée',
 

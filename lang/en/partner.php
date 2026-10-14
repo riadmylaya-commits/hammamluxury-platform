@@ -413,6 +413,10 @@ return [
     'cancellation_reason_codes' => ['administrative_closure' => 'Administrative closure', 'technical_failure' => 'Major technical failure', 'safety_issue' => 'Safety issue', 'staff_unavailable' => 'Exceptional unavailability of required staff', 'force_majeure' => 'Force majeure', 'other' => 'Other exceptional reason'],
     'cancellation_other_help' => '“Other” reason: describe the situation precisely (at least 30 characters).',
     'cancellation_evidence' => 'Supporting document (optional)',
+    'upload_type_refused' => 'File type not allowed',
+    'upload_expected_types' => '{allButLastType} or {lastType}',
+    'upload_too_large' => 'File is too large',
+    'upload_max_size' => 'Maximum {filesize}',
     'evidence_help' => 'Photo or PDF, 8 MB max. Visible to HammamLuxury only.',
     'proposed_start_at' => 'Proposed new date',
 
