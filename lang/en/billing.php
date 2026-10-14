@@ -244,5 +244,7 @@ return [
         'blocked' => 'Issuance blocked by active locks.',
         'entry_already_invoiced' => 'An entry of this statement is already invoiced: issuance refused.',
         'not_issued' => 'Invoice not issued: no PDF.',
+        'pdf_render_failed' => 'PDF rendering failed: invalid content.',
+        'pdf_write_failed' => 'The PDF could not be written to private storage.',
     ],
 ];
