@@ -224,6 +224,7 @@ return [
     'partner' => 'Partner',
     'spa' => 'Venue',
     'dispute_error' => [
+        'forbidden' => 'This action is reserved to a HammamLuxury administrator.',
         'not_owner' => 'This booking does not belong to your entity.',
         'invalid_reason' => 'Unknown reason.',
         'comment_required' => 'A comment is required.',
@@ -237,6 +238,7 @@ return [
         'correction_entry_invalid' => 'The selected entry does not correct this booking after the decision, or is already linked to another dispute.',
     ],
     'invoice_error' => [
+        'forbidden' => 'This action is reserved to a HammamLuxury administrator.',
         'not_found' => 'Invoice not found.',
         'already_issued' => 'This invoice is already issued.',
         'blocked' => 'Issuance blocked by active locks.',

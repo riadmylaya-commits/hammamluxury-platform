@@ -224,6 +224,7 @@ return [
     'partner' => 'Partenaire',
     'spa' => 'Établissement',
     'dispute_error' => [
+        'forbidden' => 'Action réservée à un administrateur HammamLuxury.',
         'not_owner' => 'Cette réservation n’appartient pas à votre entité.',
         'invalid_reason' => 'Motif inconnu.',
         'comment_required' => 'Un commentaire est obligatoire.',
@@ -237,6 +238,7 @@ return [
         'correction_entry_invalid' => 'L’écriture choisie ne corrige pas cette réservation après la décision, ou est déjà rattachée à une autre contestation.',
     ],
     'invoice_error' => [
+        'forbidden' => 'Action réservée à un administrateur HammamLuxury.',
         'not_found' => 'Facture introuvable.',
         'already_issued' => 'Cette facture est déjà émise.',
         'blocked' => 'Émission bloquée par des verrous actifs.',

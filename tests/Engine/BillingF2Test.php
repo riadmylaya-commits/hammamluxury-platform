@@ -196,6 +196,13 @@ class BillingF2Test extends BookingFlowTestCase
 
         $this->travelToNextMonth(6);
         $this->assertSame([], app(InvoiceIssuer::class)->blockers($invoice));
+        try {
+            app(InvoiceIssuer::class)->issue($invoice, $this->partner()->user);
+            $this->fail('a partner can never issue an invoice');
+        } catch (InvoiceException $e) {
+            $this->assertSame('forbidden', $e->reason);
+        }
+        $this->assertTrue($invoice->fresh()->isDraft());
 
         // Contestation acceptée sur B : seule B sort du relevé... puis l'acceptation « à régulariser » bloque toute émission.
         $dispute = app(DisputeService::class)->open($this->partner(), $b, $this->partner()->user, 'amount_incorrect', 'Montant erroné');
@@ -250,6 +257,18 @@ class BillingF2Test extends BookingFlowTestCase
         }
         $this->assertTrue($dispute->fresh()->needsCorrection());
         $good = $this->reversal($a, 2);
+        try {
+            $service->settle($dispute, $this->partner()->user, $good);
+            $this->fail('a partner can never settle a dispute');
+        } catch (DisputeException $e) {
+            $this->assertSame('forbidden', $e->reason);
+        }
+        try {
+            $service->decide($dispute, $this->partner()->user, 'rejected', 'x');
+            $this->fail('a partner can never decide a dispute');
+        } catch (DisputeException $e) {
+            $this->assertSame('forbidden', $e->reason);
+        }
         $service->settle($dispute, $this->admin, $good);
         $this->assertFalse($dispute->fresh()->needsCorrection());
         try {

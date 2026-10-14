@@ -91,6 +91,9 @@ class DisputeService
      */
     public function decide(CommissionDispute $dispute, User $admin, string $decision, string $note): CommissionDispute
     {
+        if (! $admin->isAdmin()) {
+            throw new DisputeException('forbidden');
+        }
         if (! in_array($decision, ['accepted', 'rejected'], true)) {
             throw new DisputeException('invalid_decision');
         }
@@ -124,6 +127,10 @@ class DisputeService
      */
     public function settle(CommissionDispute $dispute, User $admin, LedgerEntry $correction, string $note = ''): CommissionDispute
     {
+        if (! $admin->isAdmin()) {
+            throw new DisputeException('forbidden');
+        }
+
         return DB::transaction(function () use ($dispute, $admin, $correction, $note) {
             $locked = CommissionDispute::whereKey($dispute->id)->lockForUpdate()->first();
             if ($locked === null || ! $locked->needsCorrection()) {

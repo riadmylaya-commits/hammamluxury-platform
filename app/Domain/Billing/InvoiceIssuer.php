@@ -57,6 +57,9 @@ class InvoiceIssuer
     /** @throws InvoiceException */
     public function issue(Invoice $invoice, User $admin, ?CarbonImmutable $now = null): Invoice
     {
+        if (! $admin->isAdmin()) {
+            throw new InvoiceException('forbidden');
+        }
         $tz = config('hl.timezone');
         $now ??= CarbonImmutable::now($tz);
 
