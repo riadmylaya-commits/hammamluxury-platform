@@ -78,6 +78,6 @@ class Invoices extends Page implements HasActions, HasForms
     {
         return InvoiceResource::pdfAction(Action::class)
             ->record(fn () => $this->invoice())
-            ->visible(fn () => ($i = $this->invoice()) !== null && $record->pdf_status === Invoice::PDF_READY);
+            ->visible(fn () => ($i = $this->invoice()) !== null && $i->pdf_status === Invoice::PDF_READY);
     }
 }

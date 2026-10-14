@@ -20,7 +20,7 @@ class ViewInvoice extends ViewRecord
         /** @var Invoice $i */
         $i = $this->record;
 
-        return __('billing.invoice').' · '.$record->label().' · '.$record->partner->company_name;
+        return __('billing.invoice').' · '.$i->label().' · '.$i->partner->company_name;
     }
 
     protected function getHeaderActions(): array
@@ -34,7 +34,7 @@ class ViewInvoice extends ViewRecord
         /** @var Invoice $i */
         $i = $this->record;
 
-        return $record->isDraft() ? app(InvoiceIssuer::class)->blockers($i) : [];
+        return $i->isDraft() ? app(InvoiceIssuer::class)->blockers($i) : [];
     }
 
     public function bookingUrl(int $id): string

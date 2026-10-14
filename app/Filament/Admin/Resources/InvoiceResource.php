@@ -100,7 +100,7 @@ class InvoiceResource extends Resource
         return [
             $class::make('refresh')->label(__('billing.refresh_draft'))->icon('heroicon-o-arrow-path')->color('gray')
                 ->visible(fn (Invoice $record) => $record->isDraft())
-                ->action(function (Invoice $i, mixed $livewire) {
+                ->action(function (Invoice $record, mixed $livewire) {
                     $fresh = app(InvoiceDrafter::class)->draft($record->partner, $record->period);
                     Notification::make()->title($fresh ? __('billing.draft_refreshed') : __('billing.draft_removed'))->success()->send();
                     $livewire->redirect($fresh ? static::getUrl('view', ['record' => $fresh]) : static::getUrl('index'));
@@ -108,9 +108,9 @@ class InvoiceResource extends Resource
             $class::make('issue')->label(__('billing.issue_action'))->icon('heroicon-o-check-badge')->color('success')
                 ->visible(fn (Invoice $record) => $record->isDraft())
                 ->requiresConfirmation()->modalDescription(__('billing.issue_confirm'))
-                ->action(function (Invoice $i, mixed $livewire) {
+                ->action(function (Invoice $record, mixed $livewire) {
                     try {
-                        $issued = app(InvoiceIssuer::class)->issue($i, auth()->user());
+                        $issued = app(InvoiceIssuer::class)->issue($record, auth()->user());
                         Notification::make()->title(__('billing.issue_done', ['number' => $issued->number]))->success()->send();
                         $livewire->redirect(static::getUrl('view', ['record' => $issued]));
                     } catch (InvoiceException $e) {
@@ -128,7 +128,7 @@ class InvoiceResource extends Resource
         return $class::make('pdf')->label(__('billing.download_pdf'))->icon('heroicon-o-arrow-down-tray')->color('gray')
             ->visible(fn (Invoice $record) => $record->isIssued() && $record->pdf_status === Invoice::PDF_READY)
             ->action(function (Invoice $record) {
-                if (! app(InvoicePdf::class)->verify($i)) {
+                if (! app(InvoicePdf::class)->verify($record)) {
                     Notification::make()->title(__('billing.pdf_corrupt'))->danger()->send();
 
                     return null;
