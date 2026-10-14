@@ -88,7 +88,7 @@ class InvoiceResource extends Resource
                 Tables\Filters\SelectFilter::make('partner_id')->label(__('billing.partner'))->options(fn () => Partner::orderBy('company_name')->pluck('company_name', 'id')->all())->searchable(),
                 Tables\Filters\SelectFilter::make('period')->label(__('billing.period'))->options(fn () => BillingPeriods::options(24)),
                 Tables\Filters\Filter::make('overdue')->label(__('billing.invoice_status_overdue'))
-                    ->query(fn (Builder $q) => $q->issued()->whereNotIn('status', ['paid', 'cancelled'])->whereDate('due_at', '<', CarbonImmutable::now(config('hl.timezone'))->toDateString())),
+                    ->query(fn (Builder $query) => $query->issued()->whereNotIn('status', ['paid', 'cancelled'])->whereDate('due_at', '<', CarbonImmutable::now(config('hl.timezone'))->toDateString())),
             ])
             ->actions([Tables\Actions\ViewAction::make(), ...self::invoiceActions()])
             ->emptyStateHeading(__('billing.no_invoices'));

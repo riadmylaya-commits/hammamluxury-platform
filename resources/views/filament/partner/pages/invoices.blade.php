@@ -36,7 +36,9 @@
     @endif
 
     @if ($invoice = $this->invoice())
-        <div class="flex justify-end">{{ $this->pdfAction }}</div>
+        @if ($invoice->pdf_status === \App\Models\Invoice::PDF_READY)
+            <div class="flex justify-end">{{ $this->pdfAction }}</div>
+        @endif
         @include('filament.shared.billing.invoice', ['invoice' => $invoice, 'blockers' => [], 'bookingUrl' => null])
     @endif
 

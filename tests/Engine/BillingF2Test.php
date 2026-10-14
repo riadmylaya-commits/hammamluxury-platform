@@ -10,6 +10,7 @@ use App\Domain\Billing\InvoiceDrafter;
 use App\Domain\Billing\InvoiceException;
 use App\Domain\Billing\InvoiceIssuer;
 use App\Domain\Billing\InvoicePdf;
+use App\Filament\Admin\Resources\InvoiceResource\Pages\ListInvoices;
 use App\Filament\Partner\Pages\Invoices;
 use App\Jobs\GenerateInvoicePdf;
 use App\Models\ActivityLog;
@@ -405,6 +406,27 @@ class BillingF2Test extends BookingFlowTestCase
         $this->assertFalse(app(InvoicePdf::class)->verify($issued->fresh()));
     }
 
+    public function test_admin_list_tabs_and_filters_render_for_drafts_and_issued_invoices(): void
+    {
+        $this->completed();
+        $this->qualify();
+        $this->unlock();
+        $this->travelToNextMonth(6);
+        $draft = $this->draft();
+        $this->actingAs($this->admin);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        Livewire::test(ListInvoices::class)->assertOk()->assertCanSeeTableRecords([$draft])
+            ->set('activeTab', 'draft')->assertOk()->assertCanSeeTableRecords([$draft])
+            ->set('activeTab', 'issued')->assertOk()->assertCanNotSeeTableRecords([$draft])
+            ->set('activeTab', 'paid')->assertOk()->assertCanNotSeeTableRecords([$draft]);
+        $issued = $this->issue($draft);
+        Livewire::test(ListInvoices::class)->set('activeTab', 'issued')->assertOk()->assertCanSeeTableRecords([$issued])
+            ->set('activeTab', 'draft')->assertCanNotSeeTableRecords([$issued])
+            ->set('activeTab', 'all')->filterTable('overdue')->assertOk()->assertCanNotSeeTableRecords([$issued])
+            ->filterTable('period', $this->period)->assertOk();
+        $this->get('/admin/invoices/'.$issued->id)->assertOk()->assertSee($issued->number);
+    }
+
     public function test_partner_page_is_tenant_bound_and_hides_drafts(): void
     {
         $this->completed();
@@ -417,7 +439,9 @@ class BillingF2Test extends BookingFlowTestCase
         Filament::setTenant($this->spa);
         Livewire::test(Invoices::class)->assertSee(__('billing.no_invoices'))->assertDontSee($this->period.'</td>', false);
 
+        Queue::fake([GenerateInvoicePdf::class]);
         $issued = $this->issue($draft);
+        Livewire::test(Invoices::class)->assertSee($issued->number)->call('select', $issued->id)->assertSee(__('billing.pdf_pending'))->assertDontSee(__('billing.download_pdf'));
         app()->call([new GenerateInvoicePdf($issued->id), 'handle']);
         Livewire::test(Invoices::class)->assertSee($issued->number)->call('select', $issued->id)->assertSee(__('billing.download_pdf'))
             ->callAction('pdf')->assertFileDownloaded($issued->number.'.pdf');

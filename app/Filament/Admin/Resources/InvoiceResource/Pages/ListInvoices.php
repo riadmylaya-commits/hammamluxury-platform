@@ -16,9 +16,9 @@ class ListInvoices extends ListRecords
     {
         return [
             'all' => Tab::make(__('billing.all')),
-            'draft' => Tab::make(__('billing.drafts'))->modifyQueryUsing(fn (Builder $q) => $q->draft()),
-            'issued' => Tab::make(__('billing.to_pay'))->modifyQueryUsing(fn (Builder $q) => $q->issued()->whereNotIn('status', ['paid', 'cancelled'])),
-            'paid' => Tab::make(__('billing.invoice_status_paid'))->modifyQueryUsing(fn (Builder $q) => $q->where('status', 'paid')),
+            'draft' => Tab::make(__('billing.drafts'))->modifyQueryUsing(fn (Builder $query) => $query->draft()),
+            'issued' => Tab::make(__('billing.to_pay'))->modifyQueryUsing(fn (Builder $query) => $query->issued()->whereNotIn('status', ['paid', 'cancelled'])),
+            'paid' => Tab::make(__('billing.invoice_status_paid'))->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'paid')),
         ];
     }
 

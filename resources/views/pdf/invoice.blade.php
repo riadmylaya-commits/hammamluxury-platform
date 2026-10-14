@@ -104,7 +104,7 @@
 
 <div class="box" style="margin-top:14px">
     <div style="font-weight:bold">{{ __('billing.pdf_payment') }}</div>
-    <div>{{ __('billing.pdf_payment_terms', ['days' => $invoice->issued_at->diffInDays($invoice->due_at), 'date' => $invoice->due_at->format('d/m/Y')]) }}</div>
+    <div>{{ __('billing.pdf_payment_terms', ['days' => (int) $invoice->issued_at->startOfDay()->diffInDays($invoice->due_at->startOfDay()), 'date' => $invoice->due_at->format('d/m/Y')]) }}</div>
     @if (!empty($issuer['bank_account']))<div>{{ __('billing.pdf_bank') }} : {{ $issuer['bank_account'] }}</div>@endif
     <div class="muted">{{ __('billing.pdf_cash_note') }}</div>
 </div>
