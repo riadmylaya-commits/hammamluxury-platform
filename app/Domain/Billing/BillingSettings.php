@@ -32,7 +32,7 @@ class BillingSettings
             throw new InvalidArgumentException("Unknown billing setting [{$key}].");
         }
         $stored = $this->stored();
-        if (array_key_exists($key, $stored)) {
+        if (array_key_exists($key, $stored) && $stored[$key] !== null && $stored[$key] !== '') {
             return $this->cast($key, $stored[$key]);
         }
 

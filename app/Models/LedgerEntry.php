@@ -39,4 +39,9 @@ class LedgerEntry extends Model
     {
         return $this->belongsTo(Booking::class);
     }
+
+    public function spa(): BelongsTo
+    {
+        return $this->belongsTo(Spa::class);
+    }
 }
