@@ -103,13 +103,40 @@ class DisputeService
             if ($locked === null || ! $locked->isOpen()) {
                 throw new DisputeException('not_open');
             }
-            $locked->update(['status' => $decision, 'open_booking_id' => null, 'decided_by' => $admin->id, 'decided_at' => now(), 'decision_note' => trim($note)]);
+            $locked->update(['status' => $decision, 'open_booking_id' => null, 'decided_by' => $admin->id, 'decided_at' => now(), 'decision_note' => trim($note),
+                'correction_status' => $decision === 'accepted' ? CommissionDispute::CORRECTION_PENDING : null]);
             ActivityLog::record('billing.dispute_decided', $locked, ['decision' => $decision, 'booking' => $locked->booking?->reference], 'admin');
             $locked->booking?->log('commission:dispute_'.$decision, 'admin', ['dispute' => $locked->id]);
             $recipient = $locked->partner->billing_email ?: $locked->partner->user?->email;
             if ($recipient) {
                 $this->notifier->dispatch($locked, 'dispute_decided', 'partner', $recipient, ['decision' => $decision]);
             }
+
+            return $locked->fresh();
+        });
+    }
+
+    /**
+     * Régularisation d'une contestation acceptée : l'Admin désigne l'écriture corrective déjà passée au grand livre (contre-écriture
+     * ou ajustement, ajout seul) pour la même réservation. Aucune écriture n'est créée ici.
+     *
+     * @throws DisputeException
+     */
+    public function settle(CommissionDispute $dispute, User $admin, LedgerEntry $correction, string $note = ''): CommissionDispute
+    {
+        return DB::transaction(function () use ($dispute, $admin, $correction, $note) {
+            $locked = CommissionDispute::whereKey($dispute->id)->lockForUpdate()->first();
+            if ($locked === null || ! $locked->needsCorrection()) {
+                throw new DisputeException('not_pending_correction');
+            }
+            if ($correction->booking_id !== $locked->booking_id || ! in_array($correction->type, ['commission_reversal', 'commission_adjust'], true)
+                || $correction->created_at->lt($locked->decided_at) || CommissionDispute::where('correction_entry_id', $correction->id)->exists()) {
+                throw new DisputeException('correction_entry_invalid');
+            }
+            $locked->update(['correction_status' => CommissionDispute::CORRECTION_SETTLED, 'correction_entry_id' => $correction->id,
+                'settled_by' => $admin->id, 'settled_at' => now(), 'settlement_note' => trim($note) ?: null]);
+            ActivityLog::record('billing.dispute_settled', $locked, ['entry' => $correction->id, 'amount' => $correction->amount, 'booking' => $locked->booking?->reference], 'admin');
+            $locked->booking?->log('commission:dispute_settled', 'admin', ['dispute' => $locked->id, 'entry' => $correction->id]);
 
             return $locked->fresh();
         });

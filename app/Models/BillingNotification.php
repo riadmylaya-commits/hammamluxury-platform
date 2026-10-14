@@ -10,7 +10,7 @@ class BillingNotification extends Model
 {
     public const STATUSES = ['planned', 'queued', 'sent', 'failed'];
 
-    public const EVENTS = ['statement_available', 'dispute_opened', 'dispute_decided'];
+    public const EVENTS = ['statement_available', 'dispute_opened', 'dispute_decided', 'invoice_issued', 'invoice_pdf_failed'];
 
     protected $guarded = [];
 

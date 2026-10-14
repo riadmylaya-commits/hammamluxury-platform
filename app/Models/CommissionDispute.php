@@ -17,11 +17,16 @@ class CommissionDispute extends Model
 
     public const STATUSES = ['open', 'accepted', 'rejected'];
 
+    /** Suivi d'une contestation acceptée : correction financière à régulariser (pending) ou régularisée (settled). */
+    public const CORRECTION_PENDING = 'pending';
+
+    public const CORRECTION_SETTLED = 'settled';
+
     public const REASONS = ['service_not_performed', 'amount_incorrect', 'free_cancellation', 'fee_not_charged', 'duplicate', 'other'];
 
     protected $guarded = [];
 
-    protected $casts = ['decided_at' => 'immutable_datetime'];
+    protected $casts = ['decided_at' => 'immutable_datetime', 'settled_at' => 'immutable_datetime'];
 
     public function partner(): BelongsTo
     {
@@ -51,6 +56,26 @@ class CommissionDispute extends Model
     public function decidedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'decided_by');
+    }
+
+    public function correctionEntry(): BelongsTo
+    {
+        return $this->belongsTo(LedgerEntry::class, 'correction_entry_id');
+    }
+
+    public function settledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'settled_by');
+    }
+
+    public function needsCorrection(): bool
+    {
+        return $this->status === 'accepted' && $this->correction_status === self::CORRECTION_PENDING;
+    }
+
+    public function scopePendingCorrection(Builder $q): Builder
+    {
+        return $q->where('status', 'accepted')->where('correction_status', self::CORRECTION_PENDING);
     }
 
     public function notifications(): MorphMany
