@@ -21,7 +21,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead class="text-left text-xs uppercase text-gray-500">
-                        <tr><th class="py-1 pr-3">{{ __('booking.reference') }}</th><th class="py-1 pr-3">{{ __('billing.service_date') }}</th><th class="py-1 pr-3">{{ __('partner.status') }}</th><th class="py-1 pr-3 text-right">{{ __('billing.base') }}</th><th class="py-1 pr-3 text-right">{{ __('billing.rate') }}</th><th class="py-1 pr-3 text-right">{{ __('billing.commission') }}</th><th class="py-1 pr-3">{{ __('billing.origin_period') }}</th>@if ($canDispute)<th class="py-1"></th>@endif</tr>
+                        <tr><th class="py-1 pr-3">{{ __('booking.reference') }}</th><th class="py-1 pr-3">{{ __('billing.service_date') }}</th><th class="py-1 pr-3">{{ __('partner.status') }}</th><th class="py-1 pr-3 text-right">{{ __('billing.base') }}</th><th class="py-1 pr-3 text-right">{{ __('billing.rate') }}</th><th class="py-1 pr-3 text-right">{{ __('billing.commission') }}</th><th class="py-1 pl-4 pr-3">{{ __('billing.origin_period') }}</th>@if ($canDispute)<th class="py-1"></th>@endif</tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-white/10">
                         @foreach ($section['lines'] as $line)
@@ -32,7 +32,7 @@
                                 <td class="py-2 pr-3 text-right">{{ $line['base'] !== null ? $fmt($line['base']) : '—' }}</td>
                                 <td class="py-2 pr-3 text-right">{{ $line['rate'] !== null ? rtrim(rtrim(number_format((float) $line['rate'], 2, '.', ''), '0'), '.').' %' : '—' }}</td>
                                 <td class="py-2 pr-3 text-right font-semibold">{{ $fmt($line['amount']) }}@if (count($line['entries']) > 1)<span class="block text-xs font-normal text-gray-500">{{ __('billing.with_corrections', ['n' => count($line['entries']) - 1]) }}</span>@endif</td>
-                                <td class="py-2 pr-3">{{ $line['origin_period'] }}@if ($line['carried'])<span class="block text-xs text-warning-600">{{ __('billing.carried_over') }}</span>@endif</td>
+                                <td class="py-2 pl-4 pr-3">{{ $line['origin_period'] }}@if ($line['carried'])<span class="block text-xs text-warning-600">{{ __('billing.carried_over') }}</span>@endif</td>
                                 @if ($canDispute)
                                     <td class="py-2 text-right">
                                         @if ($line['booking_id'])
