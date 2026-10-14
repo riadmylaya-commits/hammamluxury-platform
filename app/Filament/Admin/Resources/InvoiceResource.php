@@ -62,7 +62,7 @@ class InvoiceResource extends Resource
 
     public static function table(Table $table): Table
     {
-        $fmt = fn ($v, Invoice $i) => number_format((float) $v, 2, ',', ' ').' '.$i->currency;
+        $fmt = fn ($state, Invoice $record) => number_format((float) $state, 2, ',', ' ').' '.$record->currency;
 
         return $table->defaultSort('period', 'desc')
             ->columns([
