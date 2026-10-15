@@ -270,6 +270,7 @@ return [
     'method' => 'Mode de règlement',
     'method_bank_transfer' => 'Virement bancaire',
     'method_cash' => 'Espèces',
+    'note' => 'Note interne (facultative)',
     'reference' => 'Référence (virement, remise…)',
     'confirmed_by' => 'Enregistré par',
     'confirmed_at' => 'Enregistré le',

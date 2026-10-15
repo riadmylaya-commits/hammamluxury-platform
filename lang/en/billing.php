@@ -270,6 +270,7 @@ return [
     'method' => 'Payment method',
     'method_bank_transfer' => 'Bank transfer',
     'method_cash' => 'Cash',
+    'note' => 'Internal note (optional)',
     'reference' => 'Reference (transfer, deposit…)',
     'confirmed_by' => 'Recorded by',
     'confirmed_at' => 'Recorded on',
