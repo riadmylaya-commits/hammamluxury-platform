@@ -143,9 +143,9 @@ class InvoiceResource extends Resource
                 .' ('.__('billing.cash_limit').' : '.number_format(app(PaymentRecorder::class)->cashLimit(), 2, ',', ' ').' '.$record->currency.')')
             ->form([
                 Forms\Components\Hidden::make('idempotency_key')->default(fn () => (string) Str::uuid()),
-                Forms\Components\TextInput::make('amount')->label(__('billing.amount'))->numeric()->minValue(0.01)->step(0.01)->required()->suffix(fn (Invoice $record) => $record->currency),
+                Forms\Components\TextInput::make('amount')->label(__('billing.amount'))->numeric()->step(0.01)->rules(['required', 'numeric', 'gt:0'])->markAsRequired()->suffix(fn (Invoice $record) => $record->currency),
                 Forms\Components\DatePicker::make('paid_on')->label(__('billing.paid_on'))->native(false)->maxDate(now(config('hl.timezone')))->default(now(config('hl.timezone'))->toDateString())->required(),
-                Forms\Components\Radio::make('method')->label(__('billing.method'))->options(['bank_transfer' => __('billing.method_bank_transfer'), 'cash' => __('billing.method_cash')])->default('bank_transfer')->required()->inline(),
+                Forms\Components\Radio::make('method')->label(__('billing.method'))->options(['bank_transfer' => __('billing.method_bank_transfer'), 'cash' => __('billing.method_cash')])->default('bank_transfer')->rules(['required'])->markAsRequired()->inline(),
                 Forms\Components\TextInput::make('reference')->label(__('billing.reference'))->maxLength(120),
                 Forms\Components\Textarea::make('note')->label(__('billing.note'))->rows(2)->maxLength(1000),
             ])
@@ -170,7 +170,7 @@ class InvoiceResource extends Resource
             ->modalHeading(__('billing.reverse_payment'))->modalDescription(__('billing.reverse_payment_help'))
             ->form([
                 Forms\Components\Hidden::make('idempotency_key')->default(fn () => (string) Str::uuid()),
-                Forms\Components\Textarea::make('reason')->label(__('billing.reversal_reason'))->rows(2)->required()->maxLength(500),
+                Forms\Components\Textarea::make('reason')->label(__('billing.reversal_reason'))->rows(2)->rules(['required'])->markAsRequired()->maxLength(500),
             ])
             ->action(function (array $data, array $arguments, mixed $livewire) {
                 $payment = InvoicePayment::find((int) ($arguments['payment'] ?? 0));
