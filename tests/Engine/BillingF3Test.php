@@ -447,9 +447,26 @@ class BillingF3Test extends BookingFlowTestCase
         $this->assertSame(Invoice::STATUS_ISSUED, $invoice->status);
         app(InvoiceReminders::class)->run($invoice->due_at->addDays(20)->setTime(8, 0));
         $this->assertSame(Invoice::STATUS_OVERDUE, $invoice->fresh()->status);
-        $this->assertSame(4, BillingNotification::where('notifiable_id', $invoice->id)->whereIn('event', array_keys(InvoiceReminders::STEPS))->count());
+        $steps = fn () => BillingNotification::where('notifiable_id', $invoice->id)->whereIn('event', array_keys(InvoiceReminders::STEPS))->pluck('event')->all();
+        $this->assertSame(['reminder_late_2'], $steps(), 'Rattrapage : seule la dernière étape échue est envoyée.');
+        $this->assertSame(1, BillingNotification::where('event', 'invoice_late')->count());
+        $sent = $invoice->fresh()->reminders_sent;
+        $this->assertSame('skipped', $sent['reminder_before_due']);
+        $this->assertSame('skipped', $sent['reminder_due']);
+        $this->assertSame('skipped', $sent['reminder_late_1']);
+        $this->assertNotSame('skipped', $sent['reminder_late_2']);
         app(InvoiceReminders::class)->run($invoice->due_at->addDays(21)->setTime(8, 0));
-        $this->assertSame(4, BillingNotification::where('notifiable_id', $invoice->id)->whereIn('event', array_keys(InvoiceReminders::STEPS))->count());
+        $this->assertSame(['reminder_late_2'], $steps());
+
+        // Facture émise à J−2 : l'étape J−5 (la plus récente échue) part, puis J le jour de l'échéance ; rien n'est doublé.
+        $second = Invoice::create(['partner_id' => $invoice->partner_id, 'period' => '2020-02', 'status' => 'issued', 'currency' => 'MAD', 'number' => 'HL-2020-00002',
+            'issued_at' => now(), 'due_at' => $invoice->due_at->addDays(23)->toDateString(), 'subtotal_ht' => 50, 'vat_mode' => 'none', 'vat_rate' => 0, 'vat_amount' => 0, 'total_ttc' => 50,
+            'balance' => 50, 'partner_snapshot' => ['billing_email' => 'compta@example.test'], 'issuer_snapshot' => [], 'lines_count' => 0]);
+        app(InvoiceReminders::class)->run($invoice->due_at->addDays(21)->setTime(8, 0));
+        $this->assertSame(['reminder_before_due'], BillingNotification::where('notifiable_id', $second->id)->pluck('event')->all());
+        app(InvoiceReminders::class)->run($second->due_at->setTime(8, 0));
+        app(InvoiceReminders::class)->run($second->due_at->setTime(8, 0));
+        $this->assertSame(['reminder_before_due', 'reminder_due'], BillingNotification::where('notifiable_id', $second->id)->orderBy('id')->pluck('event')->all());
 
         $events = collect(app(Schedule::class)->events())->filter(fn ($e) => str_contains($e->command, 'hl:billing-reminders'));
         $this->assertCount(1, $events);

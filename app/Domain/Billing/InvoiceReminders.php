@@ -40,15 +40,23 @@ class InvoiceReminders
                         ActivityLog::record('billing.invoice_overdue', $locked, ['number' => $locked->number, 'balance' => $locked->balance, 'due_at' => $locked->due_at->toDateString()], 'system');
                     }
                 }
+                // Seule l'étape la plus récente échue est envoyée ; les étapes antérieures rattrapées sont consignées « skipped »
+                // (une facture déjà en retard de 15 jours ne reçoit pas J−5, J et J+7 le même matin).
                 $sent = $locked->reminders_sent ?? [];
-                foreach (self::STEPS as $step => $offset) {
-                    if (isset($sent[$step]) || $today->lt($locked->due_at->addDays($offset))) {
+                $due = array_keys(array_filter(self::STEPS, fn (int $offset) => ! $today->lt($locked->due_at->addDays($offset))));
+                $latest = $due === [] ? null : end($due);
+                foreach ($due as $step) {
+                    if (isset($sent[$step])) {
                         continue;
                     }
-                    if ($this->send($locked, $step)) {
-                        $reminders++;
+                    if ($step === $latest) {
+                        if ($this->send($locked, $step)) {
+                            $reminders++;
+                        }
+                        $sent[$step] = $now->toDateTimeString();
+                    } else {
+                        $sent[$step] = 'skipped';
                     }
-                    $sent[$step] = $now->toDateTimeString();
                 }
                 if ($sent !== ($locked->reminders_sent ?? [])) {
                     $locked->update(['reminders_sent' => $sent]);
