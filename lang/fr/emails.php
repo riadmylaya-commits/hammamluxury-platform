@@ -89,6 +89,7 @@ return [
     ],
 
     'billing' => [
+        'receipt_line' => 'Votre reçu :receipt est téléchargeable dans votre espace partenaire.',
         'statement_available' => [
             'subject' => 'Relevé provisoire de commissions — :period',
             'title' => 'Votre relevé provisoire :period est disponible',
@@ -114,6 +115,51 @@ return [
             'subject' => '[Facturation] Échec de génération du PDF — :number',
             'title' => 'PDF de facture non généré',
             'intro' => 'La facture :number (:partner, :period) est bien émise mais son PDF n’a pas pu être généré. Aucune seconde facture n’a été créée ; la génération est relancée automatiquement (hl:billing-pdf-retry). Le partenaire ne sera notifié qu’une fois le PDF prêt.',
+        ],
+        'payment_partial' => [
+            'subject' => 'Paiement enregistré sur la facture :number — solde restant :balance',
+            'title' => 'Paiement de :amount enregistré',
+            'intro' => 'Un paiement de :amount (:method, :paid_on) a été enregistré sur votre facture :number (:period). Le solde restant dû est de :balance. Le détail des règlements est consultable dans votre espace partenaire, rubrique Finances › Factures.',
+        ],
+        'payment_received' => [
+            'subject' => 'Facture :number soldée — merci',
+            'title' => 'Votre facture :number est soldée',
+            'intro' => 'Nous avons bien reçu votre paiement de :amount (:method, :paid_on). La facture :number (:period) est désormais intégralement réglée. :receipt_line',
+        ],
+        'overpayment_detected' => [
+            'subject' => '[Facturation] Trop-perçu de :total sur la facture :number',
+            'title' => 'Trop-perçu constaté',
+            'intro' => 'Le paiement de :amount enregistré sur la facture :number (:partner) dépasse le montant dû de :total. La facture est soldée ; l’excédent est signalé dans Finances › Trop-perçus et doit être régularisé manuellement (aucune imputation automatique).',
+        ],
+        'receipt_pdf_failed' => [
+            'subject' => '[Facturation] Échec de génération du reçu :receipt',
+            'title' => 'Reçu d’espèces non généré',
+            'intro' => 'Le reçu :receipt (facture :number) n’a pas pu être généré : :error. Le paiement et le numéro de reçu sont conservés ; la génération est relancée automatiquement (hl:billing-receipt-retry) et le partenaire ne sera notifié qu’une fois le reçu prêt.',
+        ],
+        'reminder_before_due' => [
+            'subject' => 'Rappel — facture :number à régler avant le :due',
+            'title' => 'Échéance dans 5 jours',
+            'intro' => 'La facture :number (:period) arrive à échéance le :due. Solde restant dû : :balance. Règlement par virement bancaire ou en espèces contre reçu, dans la limite légale.',
+        ],
+        'reminder_due' => [
+            'subject' => 'Rappel — facture :number échue aujourd’hui',
+            'title' => 'Échéance aujourd’hui',
+            'intro' => 'La facture :number (:period) arrive à échéance aujourd’hui (:due). Solde restant dû : :balance. Si votre règlement est déjà en cours, merci de ne pas tenir compte de ce rappel.',
+        ],
+        'reminder_late_1' => [
+            'subject' => 'Relance — facture :number en retard de paiement',
+            'title' => 'Facture en retard (7 jours)',
+            'intro' => 'La facture :number (:period), échue le :due, reste impayée. Solde restant dû : :balance. Merci de procéder au règlement ou de nous contacter si une difficulté est survenue.',
+        ],
+        'reminder_late_2' => [
+            'subject' => 'Dernière relance — facture :number (15 jours de retard)',
+            'title' => 'Facture en retard (15 jours)',
+            'intro' => 'Malgré nos rappels, la facture :number (:period), échue le :due, reste impayée. Solde restant dû : :balance. À défaut de règlement, HammamLuxury pourra suspendre la visibilité de vos établissements conformément aux conditions partenaires.',
+        ],
+        'invoice_late' => [
+            'subject' => '[Facturation] Facture :number impayée depuis 15 jours — :partner',
+            'title' => 'Impayé à 15 jours',
+            'intro' => 'La facture :number (:partner, :period), échue le :due, reste impayée après la dernière relance. Solde dû : :balance.',
         ],
         'footer' => 'Message automatique de la plateforme HammamLuxury ; la facturation réelle n’est pas active tant que son activation n’a pas été validée.',
     ],

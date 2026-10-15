@@ -15,7 +15,7 @@ use InvalidArgumentException;
 class BillingSettings
 {
     public const KEYS = [
-        'enabled', 'start_period', 'vat_mode', 'vat_rate', 'due_days', 'issue_day', 'dispute_until_day', 'accountant_validated_at',
+        'enabled', 'start_period', 'vat_mode', 'vat_rate', 'due_days', 'issue_day', 'dispute_until_day', 'accountant_validated_at', 'cash_limit',
         'issuer.company_name', 'issuer.legal_form', 'issuer.ice', 'issuer.tax_id', 'issuer.registry_number', 'issuer.address', 'issuer.bank_account',
     ];
 
@@ -118,6 +118,9 @@ class BillingSettings
         if ($key === 'vat_rate' && (! is_numeric($value) || (float) $value < 0 || (float) $value > 100)) {
             throw new InvalidArgumentException('vat_rate must be between 0 and 100.');
         }
+        if ($key === 'cash_limit' && (! is_numeric($value) || (float) $value <= 0)) {
+            throw new InvalidArgumentException('cash_limit must be a positive amount.');
+        }
 
         return (string) $value;
     }
@@ -130,7 +133,7 @@ class BillingSettings
 
         return match ($key) {
             'enabled' => in_array($value, [true, 1, '1', 'true'], true),
-            'vat_rate' => (float) $value,
+            'vat_rate', 'cash_limit' => (float) $value,
             'due_days', 'issue_day', 'dispute_until_day' => (int) $value,
             default => (string) $value,
         };

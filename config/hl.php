@@ -63,6 +63,8 @@ return [
         'issue_day' => 5,
         'dispute_until_day' => 4,
         'accountant_validated_at' => null,
+        // Plafond légal des règlements en espèces par facture (art. 193 CGI, MAD) : blocage strict, sans dérogation ; valeur à confirmer par le comptable.
+        'cash_limit' => 20000,
         // Verrous hors interface, jamais lus depuis billing_settings : références écrites de la recette complète et de
         // l'autorisation explicite de la propriétaire, posées uniquement dans le .env du serveur concerné.
         'acceptance_ref' => env('HL_BILLING_ACCEPTANCE_REF'),

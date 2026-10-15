@@ -6,6 +6,7 @@ use App\Domain\Billing\InvoiceIssuer;
 use App\Filament\Admin\Resources\BookingResource;
 use App\Filament\Admin\Resources\InvoiceResource;
 use App\Models\Invoice;
+use App\Models\InvoicePayment;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -35,6 +36,16 @@ class ViewInvoice extends ViewRecord
         $i = $this->record;
 
         return $i->isDraft() ? app(InvoiceIssuer::class)->blockers($i) : [];
+    }
+
+    public function reversePaymentAction(): Actions\Action
+    {
+        return InvoiceResource::reversePaymentAction(Actions\Action::class);
+    }
+
+    public function receiptAction(): Actions\Action
+    {
+        return InvoiceResource::receiptAction(fn (int $id) => InvoicePayment::where('invoice_id', $this->record->id)->find($id), Actions\Action::class);
     }
 
     public function bookingUrl(int $id): string
