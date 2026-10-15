@@ -158,7 +158,7 @@ class InvoiceResource extends Resource
                         ->success()->send();
                     $livewire->redirect(static::getUrl('view', ['record' => $invoice]));
                 } catch (PaymentException $e) {
-                    Notification::make()->title(__('billing.payment_error.forbidden') === $e->getMessage() ? $e->getMessage() : __('billing.payment').' — '.__('billing.locked'))->body($e->getMessage())->danger()->persistent()->send();
+                    Notification::make()->title(__('billing.payment_refused'))->body($e->getMessage())->danger()->persistent()->send();
                 }
             });
     }

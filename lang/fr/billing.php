@@ -283,6 +283,7 @@ return [
     'receipt_status' => 'Reçu PDF',
     'receipt_legal' => 'Reçu délivré par HammamLuxury pour un règlement en espèces, dans la limite légale applicable. Ce reçu ne remplace pas la facture.',
     'cash_received' => 'Espèces déjà reçues sur cette facture',
+    'payment_refused' => 'Paiement refusé',
     'payment_recorded' => 'Paiement enregistré',
     'payment_recorded_body' => ':amount enregistré sur :number — solde dû : :balance.',
     'payment_reversed' => 'Paiement contre-passé',

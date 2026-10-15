@@ -283,6 +283,7 @@ return [
     'receipt_status' => 'Receipt PDF',
     'receipt_legal' => 'Receipt issued by HammamLuxury for a cash payment within the applicable legal limit. This receipt does not replace the invoice.',
     'cash_received' => 'Cash already received on this invoice',
+    'payment_refused' => 'Payment refused',
     'payment_recorded' => 'Payment recorded',
     'payment_recorded_body' => ':amount recorded on :number — balance due: :balance.',
     'payment_reversed' => 'Payment reversed',
