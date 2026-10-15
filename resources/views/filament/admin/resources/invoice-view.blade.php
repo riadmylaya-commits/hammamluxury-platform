@@ -1,3 +1,3 @@
 <x-filament-panels::page>
-    @include('filament.shared.billing.invoice', ['invoice' => $this->record, 'blockers' => $this->blockers(), 'bookingUrl' => fn (int $id) => $this->bookingUrl($id)])
+    @include('filament.shared.billing.invoice', ['invoice' => $this->record, 'blockers' => $this->blockers(), 'bookingUrl' => fn (int $id) => $this->bookingUrl($id), 'receiptAction' => $this->receiptAction, 'reverseAction' => $this->reversePaymentAction])
 </x-filament-panels::page>

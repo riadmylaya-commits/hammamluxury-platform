@@ -89,6 +89,7 @@ return [
     ],
 
     'billing' => [
+        'receipt_line' => 'Your receipt :receipt can be downloaded from your partner area.',
         'statement_available' => [
             'subject' => 'Provisional commission statement — :period',
             'title' => 'Your provisional statement :period is available',
@@ -114,6 +115,51 @@ return [
             'subject' => '[Billing] Invoice PDF generation failed — :number',
             'title' => 'Invoice PDF not generated',
             'intro' => 'Invoice :number (:partner, :period) is issued but its PDF could not be generated. No second invoice was created; generation is retried automatically (hl:billing-pdf-retry). The partner will only be notified once the PDF is ready.',
+        ],
+        'payment_partial' => [
+            'subject' => 'Payment recorded on invoice :number — remaining balance :balance',
+            'title' => 'Payment of :amount recorded',
+            'intro' => 'A payment of :amount (:method, :paid_on) has been recorded on your invoice :number (:period). The remaining balance is :balance. Payment details are available in your partner area, under Finances › Invoices.',
+        ],
+        'payment_received' => [
+            'subject' => 'Invoice :number settled — thank you',
+            'title' => 'Your invoice :number is settled',
+            'intro' => 'We have received your payment of :amount (:method, :paid_on). Invoice :number (:period) is now fully paid. :receipt_line',
+        ],
+        'overpayment_detected' => [
+            'subject' => '[Billing] Overpayment of :total on invoice :number',
+            'title' => 'Overpayment detected',
+            'intro' => 'The payment of :amount recorded on invoice :number (:partner) exceeds the amount due by :total. The invoice is settled; the excess is listed under Finances › Overpayments and must be settled manually (no automatic allocation).',
+        ],
+        'receipt_pdf_failed' => [
+            'subject' => '[Billing] Receipt :receipt could not be generated',
+            'title' => 'Cash receipt not generated',
+            'intro' => 'Receipt :receipt (invoice :number) could not be generated: :error. The payment and receipt number are kept; generation is retried automatically (hl:billing-receipt-retry) and the partner is notified only once the receipt is ready.',
+        ],
+        'reminder_before_due' => [
+            'subject' => 'Reminder — invoice :number due on :due',
+            'title' => 'Due in 5 days',
+            'intro' => 'Invoice :number (:period) is due on :due. Remaining balance: :balance. Payment by bank transfer or in cash against a receipt, within the legal limit.',
+        ],
+        'reminder_due' => [
+            'subject' => 'Reminder — invoice :number due today',
+            'title' => 'Due today',
+            'intro' => 'Invoice :number (:period) is due today (:due). Remaining balance: :balance. If your payment is already on its way, please disregard this reminder.',
+        ],
+        'reminder_late_1' => [
+            'subject' => 'Follow-up — invoice :number is overdue',
+            'title' => 'Overdue invoice (7 days)',
+            'intro' => 'Invoice :number (:period), due on :due, remains unpaid. Remaining balance: :balance. Please proceed with payment or contact us if you are experiencing any difficulty.',
+        ],
+        'reminder_late_2' => [
+            'subject' => 'Final notice — invoice :number (15 days overdue)',
+            'title' => 'Overdue invoice (15 days)',
+            'intro' => 'Despite our reminders, invoice :number (:period), due on :due, remains unpaid. Remaining balance: :balance. Failing payment, HammamLuxury may suspend the visibility of your venues in accordance with the partner terms.',
+        ],
+        'invoice_late' => [
+            'subject' => '[Billing] Invoice :number unpaid for 15 days — :partner',
+            'title' => 'Unpaid at 15 days',
+            'intro' => 'Invoice :number (:partner, :period), due on :due, remains unpaid after the final notice. Balance due: :balance.',
         ],
         'footer' => 'Automatic message from the HammamLuxury platform; real invoicing is not active until its activation has been validated.',
     ],

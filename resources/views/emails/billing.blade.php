@@ -15,8 +15,19 @@
 **{{ __('billing.total_ttc') }} :** {{ $vars['total'] }}
 @if($notification->event === 'invoice_issued')
 **{{ __('billing.due_at') }} :** {{ $vars['due'] }}
-@else
+@elseif($notification->event === 'invoice_pdf_failed')
 **{{ __('billing.pdf_error') }} :** {{ $vars['error'] }}
+@elseif(in_array($notification->event, ['payment_partial', 'payment_received', 'overpayment_detected'], true))
+**{{ __('billing.amount_received') }} :** {{ $vars['amount'] }}
+**{{ __('billing.balance') }} :** {{ $vars['balance'] }}
+@if($vars['receipt'])
+**{{ __('billing.receipt') }} :** {{ $vars['receipt'] }}
+@endif
+@elseif($notification->event === 'receipt_pdf_failed')
+**{{ __('billing.receipt') }} :** {{ $vars['receipt'] }}
+@else
+**{{ __('billing.due_at') }} :** {{ $vars['due'] }}
+**{{ __('billing.balance') }} :** {{ $vars['balance'] }}
 @endif
 @endif
 @if($dispute)

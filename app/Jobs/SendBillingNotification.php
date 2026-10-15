@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Mail\BillingMail;
 use App\Models\BillingNotification;
 use App\Models\CommissionDispute;
+use App\Models\Invoice;
 use App\Models\Partner;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -28,7 +29,7 @@ class SendBillingNotification implements ShouldQueue
         if (! $n || $n->status === 'sent') {
             return;
         }
-        $partner = $n->notifiable instanceof Partner ? $n->notifiable : ($n->notifiable instanceof CommissionDispute ? $n->notifiable->partner : null);
+        $partner = $n->notifiable instanceof Partner ? $n->notifiable : ($n->notifiable instanceof CommissionDispute || $n->notifiable instanceof Invoice ? $n->notifiable->partner : null);
         $locale = $n->audience === 'partner' ? ($partner?->user?->locale ?: 'fr') : 'fr';
         try {
             Mail::to($n->recipient)->sendNow((new BillingMail($n))->locale($locale));

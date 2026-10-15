@@ -28,12 +28,23 @@ class Invoice extends Model
     public const PDF_FAILED = 'failed';
 
     /** Colonnes modifiables après émission (suivi, jamais le contenu facturé). */
-    public const MUTABLE_AFTER_ISSUE = ['status', 'pdf_status', 'pdf_path', 'pdf_sha256', 'pdf_attempts', 'pdf_error', 'notes', 'updated_at'];
+    public const MUTABLE_AFTER_ISSUE = ['status', 'pdf_status', 'pdf_path', 'pdf_sha256', 'pdf_attempts', 'pdf_error', 'notes', 'updated_at',
+        'paid_amount', 'balance', 'paid_at', 'reminders_sent'];
+
+    public const STATUS_PARTIALLY_PAID = 'partially_paid';
+
+    public const STATUS_PAID = 'paid';
+
+    public const STATUS_OVERDUE = 'overdue';
+
+    /** Statuts d'une facture émise encore ouverte au paiement. */
+    public const OPEN_STATUSES = ['issued', 'partially_paid', 'overdue'];
 
     protected $guarded = [];
 
     protected $casts = [
-        'subtotal_ht' => 'float', 'vat_rate' => 'float', 'vat_amount' => 'float', 'total_ttc' => 'float',
+        'subtotal_ht' => 'float', 'vat_rate' => 'float', 'vat_amount' => 'float', 'total_ttc' => 'float', 'paid_amount' => 'float', 'balance' => 'float',
+        'paid_at' => 'immutable_datetime', 'reminders_sent' => 'array',
         'drafted_at' => 'immutable_datetime', 'issued_at' => 'immutable_datetime', 'due_at' => 'immutable_date',
         'issuer_snapshot' => 'array', 'partner_snapshot' => 'array',
     ];
@@ -67,6 +78,16 @@ class Invoice extends Model
         return $this->hasMany(InvoiceLine::class)->orderBy('position');
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(InvoicePayment::class)->orderBy('confirmed_at')->orderBy('id');
+    }
+
+    public function overpayments(): HasMany
+    {
+        return $this->hasMany(InvoiceOverpayment::class);
+    }
+
     public function notifications(): MorphMany
     {
         return $this->morphMany(BillingNotification::class, 'notifiable');
@@ -80,6 +101,22 @@ class Invoice extends Model
     public function isIssued(): bool
     {
         return $this->status !== self::STATUS_DRAFT && $this->issued_at !== null;
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->status === self::STATUS_PAID;
+    }
+
+    /** Facture émise acceptant encore un paiement. */
+    public function isOpenForPayment(): bool
+    {
+        return $this->isIssued() && in_array($this->status, self::OPEN_STATUSES, true);
+    }
+
+    public function scopeOpenForPayment(Builder $q): Builder
+    {
+        return $q->issued()->whereIn('status', self::OPEN_STATUSES);
     }
 
     public function scopeDraft(Builder $q): Builder

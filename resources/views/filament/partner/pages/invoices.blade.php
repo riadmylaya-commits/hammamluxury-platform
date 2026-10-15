@@ -14,6 +14,8 @@
                             <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.issued_at') }}</th>
                             <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.due_at') }}</th>
                             <th class="text-right" style="padding:.25rem .75rem .25rem 0">{{ __('billing.total_ttc') }}</th>
+                            <th class="text-right" style="padding:.25rem .75rem .25rem 0">{{ __('billing.paid_amount') }}</th>
+                            <th class="text-right" style="padding:.25rem .75rem .25rem 0">{{ __('billing.balance') }}</th>
                             <th style="padding:.25rem 0 .25rem 1rem">{{ __('partner.status') }}</th>
                         </tr>
                     </thead>
@@ -25,7 +27,9 @@
                                 <td style="padding:.5rem .75rem .5rem 0">{{ $i->issued_at->setTimezone($tz)->format('d/m/Y') }}</td>
                                 <td style="padding:.5rem .75rem .5rem 0">{{ $i->due_at->format('d/m/Y') }}</td>
                                 <td class="text-right font-semibold" style="padding:.5rem .75rem .5rem 0">{{ number_format($i->total_ttc, 2, ',', ' ') }} {{ $i->currency }}</td>
-                                <td style="padding:.5rem 0 .5rem 1rem"><x-filament::badge color="warning">{{ __('billing.invoice_status_'.$i->status) }}</x-filament::badge>
+                                <td class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($i->paid_amount, 2, ',', ' ') }} {{ $i->currency }}</td>
+                                <td class="text-right font-semibold {{ $i->balance > 0 ? 'text-warning-600' : 'text-success-600' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($i->balance, 2, ',', ' ') }} {{ $i->currency }}</td>
+                                <td style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$i->status === 'paid' ? 'success' : ($i->status === 'overdue' ? 'danger' : 'warning')">{{ __('billing.invoice_status_'.$i->status) }}</x-filament::badge>
                                     @if ($i->pdf_status !== 'ready')<span class="text-xs text-gray-500"> · {{ __('billing.pdf_pending') }}</span>@endif</td>
                             </tr>
                         @endforeach
@@ -39,7 +43,7 @@
         @if ($invoice->pdf_status === \App\Models\Invoice::PDF_READY)
             <div class="flex justify-end">{{ $this->pdfAction }}</div>
         @endif
-        @include('filament.shared.billing.invoice', ['invoice' => $invoice, 'blockers' => [], 'bookingUrl' => null])
+        @include('filament.shared.billing.invoice', ['invoice' => $invoice, 'blockers' => [], 'bookingUrl' => null, 'receiptAction' => $this->receiptAction, 'reverseAction' => null])
     @endif
 
     <x-filament-actions::modals />

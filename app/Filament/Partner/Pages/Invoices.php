@@ -4,6 +4,7 @@ namespace App\Filament\Partner\Pages;
 
 use App\Filament\Admin\Resources\InvoiceResource;
 use App\Models\Invoice;
+use App\Models\InvoicePayment;
 use App\Models\Partner;
 use App\Models\Spa;
 use Filament\Actions\Action;
@@ -72,6 +73,11 @@ class Invoices extends Page implements HasActions, HasForms
     public function select(int $id): void
     {
         $this->selected = $this->selected === $id ? null : $id;
+    }
+
+    public function receiptAction(): Action
+    {
+        return InvoiceResource::receiptAction(fn (int $id) => InvoicePayment::where('partner_id', $this->partner()->id)->find($id), Action::class);
     }
 
     public function pdfAction(): Action

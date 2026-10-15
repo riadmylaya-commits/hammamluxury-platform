@@ -91,6 +91,8 @@ class InvoiceIssuer
                 'pdf_status' => Invoice::PDF_PENDING,
                 'pdf_attempts' => 0,
                 'pdf_error' => null,
+                'paid_amount' => 0,
+                'balance' => round((float) $locked->total_ttc, 2),
             ]);
             ActivityLog::record('billing.invoice_issued', $locked, ['number' => $number, 'period' => $locked->period, 'total' => $locked->total_ttc,
                 'lines' => $locked->lines_count, 'partner' => $locked->partner->company_name], 'admin');
