@@ -40,7 +40,7 @@ class GenerateInvoicePdf implements ShouldQueue
             ActivityLog::record('billing.invoice_pdf_ready', $invoice, ['number' => $invoice->number, 'sha256' => $invoice->pdf_sha256], 'system');
             $this->notifyPartner($invoice->fresh(['partner']), $notifier);
         } catch (Throwable $e) {
-            $invoice->update(['pdf_status' => Invoice::PDF_FAILED, 'pdf_error' => mb_substr($e->getMessage(), 0, 500)]);
+            $invoice->update(['pdf_status' => Invoice::PDF_FAILED, 'pdf_path' => null, 'pdf_sha256' => null, 'pdf_error' => mb_substr($e->getMessage(), 0, 500)]);
             ActivityLog::record('billing.invoice_pdf_failed', $invoice, ['number' => $invoice->number, 'attempt' => $invoice->pdf_attempts, 'error' => mb_substr($e->getMessage(), 0, 200)], 'system');
             $alert = (string) config('hl.alert_email');
             if ($alert !== '') {
