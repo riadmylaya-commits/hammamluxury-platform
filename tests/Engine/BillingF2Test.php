@@ -405,6 +405,44 @@ class BillingF2Test extends BookingFlowTestCase
         $this->assertSame(1, BillingNotification::where('event', 'invoice_issued')->count());
     }
 
+    public function test_pdf_failing_after_ready_clears_the_old_path_and_hash(): void
+    {
+        $this->completed();
+        $this->qualify();
+        $this->unlock();
+        $this->travelToNextMonth(6);
+        Queue::fake([GenerateInvoicePdf::class]);
+        $issued = $this->issue($this->draft());
+        app()->call([new GenerateInvoicePdf($issued->id), 'handle']);
+        $issued->refresh();
+        $this->assertSame(Invoice::PDF_READY, $issued->pdf_status);
+        $oldPath = $issued->pdf_path;
+        $this->assertSame(1, BillingNotification::where('event', 'invoice_issued')->count());
+
+        Storage::disk('local')->delete($oldPath);
+        Storage::disk('local')->makeDirectory($oldPath);
+        $issued->update(['pdf_status' => Invoice::PDF_FAILED]);
+        app()->call([new GenerateInvoicePdf($issued->id), 'handle']);
+        $issued->refresh();
+        $this->assertSame(Invoice::PDF_FAILED, $issued->pdf_status);
+        $this->assertNull($issued->pdf_path);
+        $this->assertNull($issued->pdf_sha256);
+        $this->assertFalse(app(InvoicePdf::class)->verify($issued));
+        $this->assertSame(1, BillingNotification::where('event', 'invoice_issued')->count());
+        $this->assertSame(1, BillingNotification::where('event', 'invoice_pdf_failed')->count());
+        $this->assertSame(1, Invoice::issued()->count());
+
+        Storage::disk('local')->deleteDirectory($oldPath);
+        app()->call([new GenerateInvoicePdf($issued->id), 'handle']);
+        $issued->refresh();
+        $this->assertSame(Invoice::PDF_READY, $issued->pdf_status);
+        $this->assertSame($oldPath, $issued->pdf_path);
+        $this->assertNotNull($issued->pdf_sha256);
+        $this->assertSame(hash('sha256', (string) Storage::disk('local')->get($oldPath)), $issued->pdf_sha256);
+        $this->assertTrue(app(InvoicePdf::class)->verify($issued));
+        $this->assertSame(1, BillingNotification::where('event', 'invoice_issued')->count());
+    }
+
     public function test_pdf_failure_never_duplicates_the_invoice_and_partner_is_notified_once_when_ready(): void
     {
         $this->completed();
