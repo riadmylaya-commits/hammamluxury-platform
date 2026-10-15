@@ -244,5 +244,7 @@ return [
         'blocked' => 'Émission bloquée par des verrous actifs.',
         'entry_already_invoiced' => 'Une écriture de ce relevé est déjà facturée : émission refusée.',
         'not_issued' => 'Facture non émise : aucun PDF.',
+        'pdf_render_failed' => 'Le rendu du PDF a échoué : contenu invalide.',
+        'pdf_write_failed' => 'Le PDF n\'a pas pu être écrit sur le stockage privé.',
     ],
 ];

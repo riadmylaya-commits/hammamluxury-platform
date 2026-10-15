@@ -375,6 +375,36 @@ class BillingF2Test extends BookingFlowTestCase
         $this->assertSame(1, Invoice::issued()->count());
     }
 
+    public function test_pdf_not_written_on_disk_is_a_failure_not_a_ready_pdf_with_empty_hash(): void
+    {
+        $this->completed();
+        $this->qualify();
+        $this->unlock();
+        $this->travelToNextMonth(6);
+        Queue::fake([GenerateInvoicePdf::class]);
+        $issued = $this->issue($this->draft());
+        $path = app(InvoicePdf::class)->path($issued);
+        Storage::disk('local')->makeDirectory($path);
+
+        app()->call([new GenerateInvoicePdf($issued->id), 'handle']);
+        $issued->refresh();
+        $this->assertSame(Invoice::PDF_FAILED, $issued->pdf_status);
+        $this->assertNull($issued->pdf_sha256);
+        $this->assertStringContainsString(__('billing.invoice_error.pdf_write_failed'), (string) $issued->pdf_error);
+        $this->assertFalse(app(InvoicePdf::class)->verify($issued));
+        $this->assertSame(0, BillingNotification::where('event', 'invoice_issued')->count());
+        $this->assertSame(1, BillingNotification::where('event', 'invoice_pdf_failed')->count());
+        $this->assertSame(1, Invoice::issued()->count());
+
+        Storage::disk('local')->deleteDirectory($path);
+        app()->call([new GenerateInvoicePdf($issued->id), 'handle']);
+        $issued->refresh();
+        $this->assertSame(Invoice::PDF_READY, $issued->pdf_status);
+        $this->assertNotSame(hash('sha256', ''), $issued->pdf_sha256);
+        $this->assertTrue(app(InvoicePdf::class)->verify($issued));
+        $this->assertSame(1, BillingNotification::where('event', 'invoice_issued')->count());
+    }
+
     public function test_pdf_failure_never_duplicates_the_invoice_and_partner_is_notified_once_when_ready(): void
     {
         $this->completed();
