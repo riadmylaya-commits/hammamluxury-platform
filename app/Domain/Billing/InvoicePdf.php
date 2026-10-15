@@ -5,6 +5,7 @@ namespace App\Domain\Billing;
 use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 /**
  * PDF d'une facture émise : rendu dompdf, stockage sur le disque privé `local` (hors public), empreinte SHA-256 enregistrée et
@@ -42,7 +43,7 @@ class InvoicePdf
         $path = $this->path($invoice);
         $disk = Storage::disk(self::DISK);
         if ($disk->put($path, $bytes, ['visibility' => 'private']) !== true
-            || ! $disk->exists($path)
+            || ! $disk->fileExists($path)
             || ! hash_equals(hash('sha256', $bytes), $this->sha256($path))) {
             throw new InvoiceException('pdf_write_failed');
         }
@@ -54,11 +55,15 @@ class InvoicePdf
     public function verify(Invoice $invoice): bool
     {
         $disk = Storage::disk(self::DISK);
-        if (! $invoice->pdf_path || ! $invoice->pdf_sha256 || ! $disk->exists($invoice->pdf_path) || $disk->size($invoice->pdf_path) === 0) {
+        try {
+            if (! $invoice->pdf_path || ! $invoice->pdf_sha256 || ! $disk->fileExists($invoice->pdf_path) || $disk->size($invoice->pdf_path) === 0) {
+                return false;
+            }
+
+            return hash_equals($invoice->pdf_sha256, $this->sha256($invoice->pdf_path));
+        } catch (Throwable) {
             return false;
         }
-
-        return hash_equals($invoice->pdf_sha256, $this->sha256($invoice->pdf_path));
     }
 
     public function sha256(string $path): string
