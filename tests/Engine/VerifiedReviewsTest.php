@@ -17,6 +17,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Filament\Facades\Filament;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -114,6 +115,49 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         } catch (BookingException $e) {
             $this->assertSame(__('booking.review_not_eligible'), $e->getMessage());
         }
+    }
+
+    public function test_bookings_without_a_valid_client_email_are_never_invited_and_never_fail(): void
+    {
+        $withEmail = $this->completed('10:00');
+        CarbonImmutable::setTestNow();
+        $noEmail = $this->completed('12:00');
+        Booking::whereKey($noEmail->id)->update(['email' => '']);
+        $blank = $noEmail->replicate()->forceFill(['email' => '   ']);
+        $this->assertTrue($this->reviews->isEligible($noEmail->fresh()));
+        $this->assertFalse($this->reviews->hasInvitableEmail($noEmail->fresh()));
+        $this->assertFalse($this->reviews->hasInvitableEmail($blank));
+        $this->assertFalse($this->reviews->hasInvitableEmail($noEmail->replicate()->forceFill(['email' => 'pas-un-email'])));
+        $this->assertTrue($this->reviews->hasInvitableEmail($withEmail->fresh()));
+
+        Mail::fake();
+        CarbonImmutable::setTestNow($noEmail->end_at->addDay()->setTime(10, 0));
+        $ids = $this->reviews->inviteDue();
+        $this->assertCount(1, $ids, 'Seule la réservation avec e-mail est invitée');
+        $this->assertSame($withEmail->id, Review::find($ids[0])->booking_id);
+        Mail::assertQueued(ReviewInviteMail::class, 1);
+        Mail::assertQueued(ReviewInviteMail::class, fn ($m) => $m->hasTo($withEmail->email));
+        $this->assertSame(0, Review::where('booking_id', $noEmail->id)->count(), 'Aucun avis « invited » créé sans e-mail');
+        $this->assertSame(1, $noEmail->events()->where('type', ReviewService::EVENT_NOT_APPLICABLE)->count());
+        $this->assertSame(0, $noEmail->events()->where('type', 'review:invited')->count());
+        $this->assertSame('no_email', $noEmail->events()->where('type', ReviewService::EVENT_NOT_APPLICABLE)->first()->payload['reason']);
+
+        // Passages suivants : rien n'est renvoyé, rien n'est retracé, la réservation reste intacte.
+        CarbonImmutable::setTestNow($noEmail->end_at->addDays(2)->setTime(10, 0));
+        $this->assertSame([], $this->reviews->inviteDue());
+        $this->artisan('hl:review-invitations')->assertSuccessful();
+        $this->assertSame(1, $noEmail->events()->where('type', ReviewService::EVENT_NOT_APPLICABLE)->count());
+        Mail::assertQueued(ReviewInviteMail::class, 1);
+        $this->assertSame('completed', $noEmail->fresh()->status);
+        $this->assertSame(0, DB::table('failed_jobs')->count());
+
+        try {
+            $this->reviews->invite($noEmail->fresh());
+            $this->fail('Invitation impossible sans e-mail');
+        } catch (BookingException $e) {
+            $this->assertSame(__('booking.review_no_email'), $e->getMessage());
+        }
+        $this->assertSame(0, Review::where('booking_id', $noEmail->id)->count());
     }
 
     public function test_submission_requires_rating_and_twenty_characters_and_keeps_photos_private(): void

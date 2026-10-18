@@ -75,6 +75,7 @@ return [
     'conditions' => 'Conditions',
 
     'review_not_eligible' => 'Only a treatment actually carried out through HammamLuxury can be reviewed, and only once.',
+    'review_no_email' => 'No review invitation: this booking has no valid customer e-mail address.',
     'review_already_submitted' => 'A review has already been submitted for this booking.',
     'review_rating_required' => 'Please choose a rating from 1 to 5 stars.',
     'review_body_required' => 'Please write a comment of at least :min characters.',
