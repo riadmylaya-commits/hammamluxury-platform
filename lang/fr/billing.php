@@ -404,6 +404,7 @@ return [
     'refund_method_other' => 'Autre',
     'refund_reference' => 'Référence du remboursement',
     'no_credits' => 'Aucun crédit partenaire.',
+    'pdf' => 'PDF',
     'credit_note_error' => [
         'forbidden' => 'Action réservée à l’administrateur.',
         'reason_required' => 'Le motif est obligatoire.',

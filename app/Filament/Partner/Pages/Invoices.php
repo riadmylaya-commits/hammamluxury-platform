@@ -3,9 +3,11 @@
 namespace App\Filament\Partner\Pages;
 
 use App\Filament\Admin\Resources\InvoiceResource;
+use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\Partner;
+use App\Models\PartnerCredit;
 use App\Models\Spa;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -78,6 +80,18 @@ class Invoices extends Page implements HasActions, HasForms
     public function receiptAction(): Action
     {
         return InvoiceResource::receiptAction(fn (int $id) => InvoicePayment::where('partner_id', $this->partner()->id)->find($id), Action::class);
+    }
+
+    public function creditNotePdfAction(): Action
+    {
+        return InvoiceResource::creditNotePdfAction(fn (int $id) => CreditNote::issued()->where('partner_id', $this->partner()->id)->find($id), Action::class);
+    }
+
+    /** Crédits du partenaire (lecture seule) : disponibles d'abord, puis historiques. @return Collection<int, PartnerCredit> */
+    public function credits(): Collection
+    {
+        return PartnerCredit::with(['creditNote', 'overpayment.invoice', 'applications.invoice'])->where('partner_id', $this->partner()->id)
+            ->orderByRaw("status = 'open' DESC")->orderByDesc('id')->get();
     }
 
     public function pdfAction(): Action

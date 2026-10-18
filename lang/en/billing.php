@@ -404,6 +404,7 @@ return [
     'refund_method_other' => 'Other',
     'refund_reference' => 'Refund reference',
     'no_credits' => 'No partner credit.',
+    'pdf' => 'PDF',
     'credit_note_error' => [
         'forbidden' => 'Administrators only.',
         'reason_required' => 'A reason is required.',

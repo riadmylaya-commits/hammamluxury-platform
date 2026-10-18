@@ -26,7 +26,12 @@
                                 <td class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($o->payment->amount, 2, ',', ' ') }} {{ $o->currency }}</td>
                                 <td class="text-right font-semibold text-warning-600" style="padding:.5rem .75rem .5rem 0">{{ number_format($o->amount, 2, ',', ' ') }} {{ $o->currency }}</td>
                                 <td style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$o->status === 'open' ? 'warning' : 'gray'">{{ __('billing.overpayment_status_'.$o->status) }}</x-filament::badge>
-                                    @if ($o->decided_at)<div class="text-xs text-gray-500">{{ $o->decidedBy?->name }} · {{ $o->decided_at->setTimezone($tz)->format('d/m/Y H:i') }} · {{ $o->decision_note }}</div>@endif</td>
+                                    @if ($o->decided_at)<div class="text-xs text-gray-500">{{ $o->decidedBy?->name }} · {{ $o->decided_at->setTimezone($tz)->format('d/m/Y H:i') }} · {{ $o->decision_note }}</div>@endif
+                                    @if ($o->status === 'open' && $o->partner_credit_id === null)
+                                        <div class="mt-1">{{ ($this->openCreditAction)(['overpayment' => $o->id]) }}</div>
+                                    @elseif ($o->partner_credit_id !== null)
+                                        <div class="text-xs"><a class="underline" href="{{ $this->creditsUrl() }}">{{ __('billing.credit') }} #{{ $o->partner_credit_id }}</a></div>
+                                    @endif</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -34,4 +39,5 @@
             </div>
         @endif
     </x-filament::section>
+    <x-filament-actions::modals />
 </x-filament-panels::page>
