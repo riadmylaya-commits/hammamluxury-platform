@@ -5,6 +5,7 @@ namespace App\Domain\Billing;
 use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\CommissionDispute;
+use App\Models\InvoiceLine;
 use App\Models\LedgerEntry;
 use App\Models\Partner;
 use App\Models\User;
@@ -62,6 +63,7 @@ class DisputeService
                     'spa_id' => $booking->spa_id,
                     'booking_id' => $booking->id,
                     'ledger_entry_id' => $entry->id,
+                    'invoice_id' => InvoiceLine::where('ledger_entry_id', $entry->id)->whereHas('invoice', fn ($q) => $q->issued())->value('invoice_id'),
                     'period' => $this->statements->originPeriod($entry)->format('Y-m'),
                     'kind' => $kind,
                     'reason_code' => $reasonCode,
