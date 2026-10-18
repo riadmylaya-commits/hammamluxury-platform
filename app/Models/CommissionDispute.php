@@ -26,7 +26,7 @@ class CommissionDispute extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['decided_at' => 'immutable_datetime', 'settled_at' => 'immutable_datetime'];
+    protected $casts = ['decided_at' => 'immutable_datetime', 'settled_at' => 'immutable_datetime', 'correction_reminded_at' => 'immutable_datetime'];
 
     public function partner(): BelongsTo
     {
@@ -66,6 +66,16 @@ class CommissionDispute extends Model
     public function settledBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'settled_by');
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
+    public function creditNote(): BelongsTo
+    {
+        return $this->belongsTo(CreditNote::class);
     }
 
     public function needsCorrection(): bool

@@ -29,7 +29,7 @@ class Invoice extends Model
 
     /** Colonnes modifiables après émission (suivi, jamais le contenu facturé). */
     public const MUTABLE_AFTER_ISSUE = ['status', 'pdf_status', 'pdf_path', 'pdf_sha256', 'pdf_attempts', 'pdf_error', 'notes', 'updated_at',
-        'paid_amount', 'balance', 'paid_at', 'reminders_sent'];
+        'paid_amount', 'balance', 'paid_at', 'reminders_sent', 'credited_amount', 'cancelled_at'];
 
     public const STATUS_PARTIALLY_PAID = 'partially_paid';
 
@@ -37,13 +37,16 @@ class Invoice extends Model
 
     public const STATUS_OVERDUE = 'overdue';
 
+    /** Annulation totale par avoir d'une facture sans aucun paiement : statut terminal, facture et PDF d'origine conservés. */
+    public const STATUS_CANCELLED = 'cancelled';
+
     /** Statuts d'une facture émise encore ouverte au paiement. */
     public const OPEN_STATUSES = ['issued', 'partially_paid', 'overdue'];
 
     protected $guarded = [];
 
     protected $casts = [
-        'subtotal_ht' => 'float', 'vat_rate' => 'float', 'vat_amount' => 'float', 'total_ttc' => 'float', 'paid_amount' => 'float', 'balance' => 'float',
+        'subtotal_ht' => 'float', 'vat_rate' => 'float', 'vat_amount' => 'float', 'total_ttc' => 'float', 'paid_amount' => 'float', 'balance' => 'float', 'credited_amount' => 'float', 'cancelled_at' => 'immutable_datetime',
         'paid_at' => 'immutable_datetime', 'reminders_sent' => 'array',
         'drafted_at' => 'immutable_datetime', 'issued_at' => 'immutable_datetime', 'due_at' => 'immutable_date',
         'issuer_snapshot' => 'array', 'partner_snapshot' => 'array',
@@ -88,6 +91,11 @@ class Invoice extends Model
         return $this->hasMany(InvoiceOverpayment::class);
     }
 
+    public function creditNotes(): HasMany
+    {
+        return $this->hasMany(CreditNote::class)->orderBy('id');
+    }
+
     public function notifications(): MorphMany
     {
         return $this->morphMany(BillingNotification::class, 'notifiable');
@@ -106,6 +114,11 @@ class Invoice extends Model
     public function isPaid(): bool
     {
         return $this->status === self::STATUS_PAID;
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === self::STATUS_CANCELLED;
     }
 
     /** Facture émise acceptant encore un paiement. */

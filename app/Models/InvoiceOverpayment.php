@@ -21,7 +21,7 @@ class InvoiceOverpayment extends Model
     protected static function booted(): void
     {
         static::updating(function (self $o) {
-            $illegal = array_diff(array_keys($o->getDirty()), ['status', 'decided_by', 'decided_at', 'decision_note', 'updated_at']);
+            $illegal = array_diff(array_keys($o->getDirty()), ['status', 'decided_by', 'decided_at', 'decision_note', 'partner_credit_id', 'updated_at']);
             if ($illegal !== []) {
                 throw new LogicException('Overpayments are append-only: '.implode(', ', $illegal));
             }
@@ -47,6 +47,11 @@ class InvoiceOverpayment extends Model
     public function decidedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'decided_by');
+    }
+
+    public function partnerCredit(): BelongsTo
+    {
+        return $this->belongsTo(PartnerCredit::class);
     }
 
     public function scopeOpen(Builder $q): Builder
