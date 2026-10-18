@@ -89,6 +89,31 @@ return [
     ],
 
     'billing' => [
+        'credit_note_issued' => [
+            'subject' => '[Facturation] Avoir :number sur la facture :invoice',
+            'title' => 'Avoir émis',
+            'intro' => 'HammamLuxury a émis l’avoir :number d’un montant de :total sur votre facture :invoice. Le PDF est disponible dans votre espace partenaire (Finances › Factures). Le solde restant dû sur la facture est de :balance.',
+        ],
+        'credit_note_pdf_failed' => [
+            'subject' => '[Facturation] Échec de génération du PDF de l’avoir :number',
+            'title' => 'PDF d’avoir en échec',
+            'intro' => 'Le PDF de l’avoir :number (facture :invoice) n’a pas pu être généré ; l’avoir reste émis. Une relance automatique est programmée (hl:billing-credit-note-retry). Erreur : :error',
+        ],
+        'credit_applied' => [
+            'subject' => '[Facturation] Crédit de :amount imputé sur la facture :number',
+            'title' => 'Crédit imputé',
+            'intro' => 'Un crédit de :amount (origine : :source) a été imputé sur votre facture :number. Solde restant dû : :balance. Reste disponible sur ce crédit : :remaining.',
+        ],
+        'credit_refunded' => [
+            'subject' => '[Facturation] Remboursement de :amount enregistré',
+            'title' => 'Remboursement enregistré',
+            'intro' => 'HammamLuxury a enregistré un remboursement de :amount (origine : :source) effectué le :refund_on par :method, référence :reference. Reste disponible sur ce crédit : :remaining.',
+        ],
+        'corrections_overdue' => [
+            'subject' => '[Facturation] Correction post-émission en attente depuis :age jours (facture :number)',
+            'title' => 'Correction post-émission à traiter',
+            'intro' => 'Une correction négative de :amount sur la réservation :reference (facture :number, :partner) attend un avoir depuis :age jours, au-delà du délai cible de :due_days jours. Aucune action automatique n’a été effectuée : créez l’avoir depuis Finances › Corrections post-émission.',
+        ],
         'receipt_line' => 'Votre reçu :receipt est téléchargeable dans votre espace partenaire.',
         'statement_available' => [
             'subject' => 'Relevé provisoire de commissions — :period',

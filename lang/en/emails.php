@@ -89,6 +89,31 @@ return [
     ],
 
     'billing' => [
+        'credit_note_issued' => [
+            'subject' => '[Billing] Credit note :number on invoice :invoice',
+            'title' => 'Credit note issued',
+            'intro' => 'HammamLuxury issued credit note :number for :total on your invoice :invoice. The PDF is available in your partner area (Finance › Invoices). Remaining balance on the invoice: :balance.',
+        ],
+        'credit_note_pdf_failed' => [
+            'subject' => '[Billing] Credit note :number PDF generation failed',
+            'title' => 'Credit note PDF failed',
+            'intro' => 'The PDF of credit note :number (invoice :invoice) could not be generated; the credit note remains issued. An automatic retry is scheduled (hl:billing-credit-note-retry). Error: :error',
+        ],
+        'credit_applied' => [
+            'subject' => '[Billing] Credit of :amount applied to invoice :number',
+            'title' => 'Credit applied',
+            'intro' => 'A credit of :amount (source: :source) was applied to your invoice :number. Remaining balance: :balance. Remaining on this credit: :remaining.',
+        ],
+        'credit_refunded' => [
+            'subject' => '[Billing] Refund of :amount recorded',
+            'title' => 'Refund recorded',
+            'intro' => 'HammamLuxury recorded a refund of :amount (source: :source) made on :refund_on by :method, reference :reference. Remaining on this credit: :remaining.',
+        ],
+        'corrections_overdue' => [
+            'subject' => '[Billing] Post-issue correction pending for :age days (invoice :number)',
+            'title' => 'Post-issue correction to handle',
+            'intro' => 'A negative correction of :amount on booking :reference (invoice :number, :partner) has been waiting for a credit note for :age days, beyond the :due_days-day target. No automatic action was taken: create the credit note from Finance › Post-issue corrections.',
+        ],
         'receipt_line' => 'Your receipt :receipt can be downloaded from your partner area.',
         'statement_available' => [
             'subject' => 'Provisional commission statement — :period',
