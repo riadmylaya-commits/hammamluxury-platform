@@ -75,6 +75,7 @@ return [
     'conditions' => 'Conditions',
 
     'review_not_eligible' => 'Seule une prestation réellement effectuée via HammamLuxury peut faire l’objet d’un avis, et une seule fois.',
+    'review_no_email' => 'Aucune invitation à laisser un avis : cette réservation ne comporte pas d’adresse e-mail client valide.',
     'review_already_submitted' => 'Un avis a déjà été déposé pour cette réservation.',
     'review_rating_required' => 'Merci de choisir une note de 1 à 5 étoiles.',
     'review_body_required' => 'Merci de rédiger un commentaire d’au moins :min caractères.',

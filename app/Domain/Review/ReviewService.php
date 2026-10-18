@@ -28,9 +28,18 @@ class ReviewService
     /** Au-delà de ce délai après la prestation, on n'invite plus (évite d'inviter d'anciennes réservations lors d'un premier lancement). */
     public const INVITE_MAX_DAYS = 14;
 
+    /** Événement de réservation tracé une seule fois quand l'invitation est impossible (pas d'e-mail client). */
+    public const EVENT_NOT_APPLICABLE = 'review:not_applicable';
+
     public function isEligible(Booking $booking): bool
     {
         return $booking->status === 'completed' && ! Review::where('booking_id', $booking->id)->exists();
+    }
+
+    /** Une invitation suppose une adresse e-mail client valide ; sans elle, l'invitation est « non applicable », jamais un échec technique. */
+    public function hasInvitableEmail(Booking $booking): bool
+    {
+        return filter_var(trim((string) $booking->email), FILTER_VALIDATE_EMAIL) !== false;
     }
 
     /** Crée l'invitation (statut « invited ») et envoie l'e-mail au client. */
@@ -38,6 +47,9 @@ class ReviewService
     {
         if (! $this->isEligible($booking)) {
             throw BookingException::make('review', 'review_not_eligible', [], 409);
+        }
+        if (! $this->hasInvitableEmail($booking)) {
+            throw BookingException::make('review', 'review_no_email', [], 409);
         }
         $review = Review::create([
             'spa_id' => $booking->spa_id,
@@ -66,6 +78,13 @@ class ReviewService
             ->get();
         $ids = [];
         foreach ($due as $booking) {
+            if (! $this->hasInvitableEmail($booking)) {
+                if (! $booking->events()->where('type', self::EVENT_NOT_APPLICABLE)->exists()) {
+                    $booking->log(self::EVENT_NOT_APPLICABLE, 'system', ['reason' => 'no_email']);
+                }
+
+                continue;
+            }
             $ids[] = $this->invite($booking)->id;
         }
 
