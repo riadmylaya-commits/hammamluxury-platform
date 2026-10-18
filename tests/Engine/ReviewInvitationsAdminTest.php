@@ -67,6 +67,7 @@ class ReviewInvitationsAdminTest extends BookingFlowTestCase
         $b = $this->completed('10:00');
         Mail::fake();
         CarbonImmutable::setTestNow($b->end_at->addDay()->setTime(10, 0));
+        $this->assertSame('not_due', $this->statusOf($b), 'Terminée hier, commande quotidienne pas encore passée : due, pas « hors délai »');
 
         $ids = $this->reviews->inviteDue();
 

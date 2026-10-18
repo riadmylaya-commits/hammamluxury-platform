@@ -189,6 +189,7 @@ return [
     'ri_has_email' => 'Avec adresse e-mail',
     'ri_reason_no_email' => 'Pas d’adresse e-mail client : invitation impossible',
     'ri_reason_not_due' => 'Invitation prévue le lendemain de la prestation',
+    'ri_reason_due_next_run' => 'Invitation prévue au prochain passage quotidien',
     'ri_reason_expired' => 'Jamais invitée : prestation terminée depuis plus de :days jours',
     'ri_reason_untracked' => 'Envoyée avant le suivi de livraison : remise non vérifiable',
     'ri_status' => [

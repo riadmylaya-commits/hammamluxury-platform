@@ -14,6 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\HtmlString;
 
 /**
  * Suivi des invitations à laisser un avis, en lecture seule. La ligne de base est la réservation terminée :
@@ -97,7 +98,7 @@ class ReviewInvitationResource extends Resource
                 WHEN r.status = 'invited' AND n.id IS NOT NULL THEN 'queued'
                 WHEN r.status = 'invited' THEN 'invited_untracked'
                 WHEN b.end_at >= ? THEN 'not_due'
-                ELSE 'expired' END as invitation_status", [...$notApplicable->getBindings(), $today->utc()->toDateTimeString()]);
+                ELSE 'expired' END as invitation_status", [...$notApplicable->getBindings(), $today->subDays(ReviewService::INVITE_MAX_DAYS)->utc()->toDateTimeString()]);
 
         return Booking::query()->fromSub($inner, 'bookings')->with(['spa', 'review']);
     }
@@ -123,7 +124,9 @@ class ReviewInvitationResource extends Resource
                 Tables\Columns\TextColumn::make('spa.name')->label(__('admin.spa'))->sortable(),
                 Tables\Columns\TextColumn::make('first_name')->label(__('admin.ri_client'))
                     ->getStateUsing(fn (Booking $b) => trim($b->first_name.' '.$b->last_name))
-                    ->description(fn (Booking $b) => filter_var(trim((string) $b->email), FILTER_VALIDATE_EMAIL) ? $b->email : '— '.__('admin.ri_no_email'))
+                    ->description(fn (Booking $b) => filter_var(trim((string) $b->email), FILTER_VALIDATE_EMAIL)
+                        ? $b->email
+                        : new HtmlString('<span class="font-medium text-danger-600 dark:text-danger-400">— '.e(__('admin.ri_no_email')).'</span>'))
                     ->color(fn (Booking $b) => filter_var(trim((string) $b->email), FILTER_VALIDATE_EMAIL) ? null : 'danger'),
                 Tables\Columns\TextColumn::make('end_at')->label(__('admin.ri_end_at'))->dateTime('d/m/Y H:i')->sortable(),
                 Tables\Columns\TextColumn::make('invited_at')->label(__('admin.ri_invited_at'))->dateTime('d/m/Y H:i')->sortable()->placeholder('—'),
@@ -135,7 +138,7 @@ class ReviewInvitationResource extends Resource
                     ->description(fn (Booking $b) => match ($b->invitation_status) {
                         'not_applicable' => __('admin.ri_reason_no_email'),
                         'send_failed' => $b->notif_error ? mb_substr($b->notif_error, 0, 80) : null,
-                        'not_due' => __('admin.ri_reason_not_due'),
+                        'not_due' => $b->end_at->gte(CarbonImmutable::now(config('hl.timezone'))->startOfDay()) ? __('admin.ri_reason_not_due') : __('admin.ri_reason_due_next_run'),
                         'expired' => __('admin.ri_reason_expired', ['days' => ReviewService::INVITE_MAX_DAYS]),
                         'invited_untracked' => __('admin.ri_reason_untracked'),
                         default => null,

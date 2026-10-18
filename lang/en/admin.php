@@ -189,6 +189,7 @@ return [
     'ri_has_email' => 'With e-mail address',
     'ri_reason_no_email' => 'No client e-mail address: invitation impossible',
     'ri_reason_not_due' => 'Invitation scheduled the day after the treatment',
+    'ri_reason_due_next_run' => 'Invitation scheduled for the next daily run',
     'ri_reason_expired' => 'Never invited: treatment ended more than :days days ago',
     'ri_reason_untracked' => 'Sent before delivery tracking: delivery cannot be verified',
     'ri_status' => [
