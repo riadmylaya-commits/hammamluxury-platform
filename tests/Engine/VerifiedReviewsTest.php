@@ -105,7 +105,7 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         $this->assertSame($done->id, $review->booking_id);
         $this->assertSame('invited', $review->status);
         $this->assertNotNull($review->token);
-        Mail::assertQueued(ReviewInviteMail::class, fn ($m) => $m->hasTo($done->email) && $m->review->is($review));
+        Mail::assertSent(ReviewInviteMail::class, fn ($m) => $m->hasTo($done->email) && $m->review->is($review));
 
         $this->assertSame([], $this->reviews->inviteDue(), 'Relance idempotente');
         $this->assertSame(1, $done->events()->where('type', 'review:invited')->count());
@@ -135,8 +135,8 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         $ids = $this->reviews->inviteDue();
         $this->assertCount(1, $ids, 'Seule la réservation avec e-mail est invitée');
         $this->assertSame($withEmail->id, Review::find($ids[0])->booking_id);
-        Mail::assertQueued(ReviewInviteMail::class, 1);
-        Mail::assertQueued(ReviewInviteMail::class, fn ($m) => $m->hasTo($withEmail->email));
+        Mail::assertSent(ReviewInviteMail::class, 1);
+        Mail::assertSent(ReviewInviteMail::class, fn ($m) => $m->hasTo($withEmail->email));
         $this->assertSame(0, Review::where('booking_id', $noEmail->id)->count(), 'Aucun avis « invited » créé sans e-mail');
         $this->assertSame(1, $noEmail->events()->where('type', ReviewService::EVENT_NOT_APPLICABLE)->count());
         $this->assertSame(0, $noEmail->events()->where('type', 'review:invited')->count());
@@ -147,7 +147,7 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         $this->assertSame([], $this->reviews->inviteDue());
         $this->artisan('hl:review-invitations')->assertSuccessful();
         $this->assertSame(1, $noEmail->events()->where('type', ReviewService::EVENT_NOT_APPLICABLE)->count());
-        Mail::assertQueued(ReviewInviteMail::class, 1);
+        Mail::assertSent(ReviewInviteMail::class, 1);
         $this->assertSame('completed', $noEmail->fresh()->status);
         $this->assertSame(0, DB::table('failed_jobs')->count());
 

@@ -4,7 +4,8 @@ namespace App\Domain\Review;
 
 use App\Domain\Booking\BookingException;
 use App\Domain\Media\PhotoProcessor;
-use App\Mail\ReviewInviteMail;
+use App\Jobs\SendBookingNotification;
+use App\Listeners\SendBookingNotifications;
 use App\Models\ActivityLog;
 use App\Models\Booking;
 use App\Models\Review;
@@ -14,7 +15,6 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -42,7 +42,7 @@ class ReviewService
         return filter_var(trim((string) $booking->email), FILTER_VALIDATE_EMAIL) !== false;
     }
 
-    /** Crée l'invitation (statut « invited ») et envoie l'e-mail au client. */
+    /** Crée l'invitation (statut « invited ») et envoie l'e-mail au client via une notification tracée (envoyée / échouée, reprise). */
     public function invite(Booking $booking): Review
     {
         if (! $this->isEligible($booking)) {
@@ -62,7 +62,7 @@ class ReviewService
             'invited_at' => now(),
         ]);
         $booking->log('review:invited', 'system', ['review' => $review->id]);
-        Mail::to($booking->email)->queue((new ReviewInviteMail($review))->locale($review->locale));
+        SendBookingNotifications::dispatch($booking, SendBookingNotification::REVIEW_INVITE, 'client', trim((string) $booking->email));
 
         return $review;
     }

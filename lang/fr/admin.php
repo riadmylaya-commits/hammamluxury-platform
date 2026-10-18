@@ -174,6 +174,33 @@ return [
     'incident_admin_note' => 'Note interne HammamLuxury',
     'incident_reviewed_by' => 'Examiné par',
 
+    // Invitations aux avis (lecture seule)
+    'ri_invitation' => 'Invitation à laisser un avis',
+    'ri_invitations' => 'Invitations aux avis',
+    'ri_subheading' => 'Lecture seule. « Envoyée » = e-mail réellement remis au serveur de messagerie ; une simple mise en file n’est jamais présentée comme un envoi.',
+    'ri_client' => 'Client',
+    'ri_no_email' => 'aucune adresse e-mail',
+    'ri_end_at' => 'Fin de la prestation',
+    'ri_invited_at' => 'Invitée le',
+    'ri_sent_at' => 'E-mail remis le',
+    'ri_open_review' => 'Voir l’avis',
+    'ri_from' => 'Du',
+    'ri_until' => 'Au',
+    'ri_has_email' => 'Avec adresse e-mail',
+    'ri_reason_no_email' => 'Pas d’adresse e-mail client : invitation impossible',
+    'ri_reason_not_due' => 'Invitation prévue le lendemain de la prestation',
+    'ri_reason_expired' => 'Jamais invitée : prestation terminée depuis plus de :days jours',
+    'ri_reason_untracked' => 'Envoyée avant le suivi de livraison : remise non vérifiable',
+    'ri_status' => [
+        'not_due' => 'Pas encore due', 'queued' => 'En file d’envoi', 'sent' => 'Envoyée', 'send_failed' => 'Échec d’envoi',
+        'invited_untracked' => 'Envoyée (non tracée)', 'pending' => 'Avis à modérer', 'published' => 'Avis publié', 'rejected' => 'Avis refusé',
+        'not_applicable' => 'Non applicable', 'expired' => 'Hors délai',
+    ],
+    'ri_tab' => [
+        'all' => 'Toutes', 'sent' => 'Envoyées', 'send_failed' => 'Échecs d’envoi', 'pending' => 'Soumis à modérer', 'published' => 'Publiés',
+        'rejected' => 'Refusés', 'not_applicable' => 'Non applicables', 'not_due' => 'Pas encore dues', 'expired' => 'Hors délai',
+    ],
+
     'r_invited' => 'Invité',
     'review_photos' => 'Photos',
     'review_reply' => 'Réponse de l’établissement',
