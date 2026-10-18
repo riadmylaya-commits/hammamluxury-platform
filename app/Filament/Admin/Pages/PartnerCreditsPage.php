@@ -62,7 +62,7 @@ class PartnerCreditsPage extends Page
         return InvoiceResource::getUrl('view', ['record' => $id]);
     }
 
-    public function applyAction(): Action
+    public function applyCreditAction(): Action
     {
         return Action::make('applyCredit')->label(__('billing.credit_apply'))->icon('heroicon-o-arrow-right-circle')->color('primary')->size('xs')
             ->modalHeading(__('billing.credit_apply'))->modalDescription(__('billing.credit_apply_help'))
@@ -96,7 +96,7 @@ class PartnerCreditsPage extends Page
             });
     }
 
-    public function refundAction(): Action
+    public function refundCreditAction(): Action
     {
         return Action::make('refundCredit')->label(__('billing.credit_refund'))->icon('heroicon-o-banknotes')->color('gray')->size('xs')->outlined()
             ->modalHeading(__('billing.credit_refund'))->modalDescription(__('billing.credit_refund_help'))

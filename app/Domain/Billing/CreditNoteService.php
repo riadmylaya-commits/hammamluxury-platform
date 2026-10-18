@@ -114,7 +114,7 @@ class CreditNoteService
                     throw new CreditNoteException('amount_not_positive');
                 }
                 $this->assertWithinInvoice($locked, $subtotal);
-                $note = CreditNote::create(['invoice_id' => $locked->id, 'partner_id' => $locked->partner_id, 'currency' => $locked->currency,
+                $note = CreditNote::create(['invoice_id' => $locked->id, 'partner_id' => $locked->partner_id, 'status' => CreditNote::STATUS_DRAFT, 'currency' => $locked->currency,
                     'reason' => mb_substr($reason, 0, 500), 'dispute_id' => $dispute?->id, 'created_by' => $admin->id] + $this->totals($locked, $subtotal));
                 $position = 0;
                 foreach ($entryIds as $id) {

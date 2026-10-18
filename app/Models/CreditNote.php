@@ -39,7 +39,7 @@ class CreditNote extends Model
     protected static function booted(): void
     {
         static::updating(function (self $note) {
-            if ($note->getOriginal('status') === self::STATUS_DRAFT) {
+            if (($note->getOriginal('status') ?? self::STATUS_DRAFT) === self::STATUS_DRAFT) {
                 return;
             }
             $illegal = array_diff(array_keys($note->getDirty()), self::MUTABLE_AFTER_ISSUE);
