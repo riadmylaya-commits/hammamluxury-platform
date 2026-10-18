@@ -395,7 +395,7 @@ return [
         'guest:reported' => 'Comportement du client signalé à HammamLuxury', 'guest:report_reviewed' => 'Signalement examiné par HammamLuxury', 'guest:report_dismissed' => 'Signalement classé sans suite',
         'rescheduled' => 'Réservation déplacée à une nouvelle date', 'cancellation:proposed' => 'Nouvelle date proposée au client par HammamLuxury', 'cancellation:proposal_refused' => 'Nouvelle date refusée par le client', 'cancellation:rescheduled' => 'Nouvelle date acceptée par le client — demande close',
         'notified:created' => 'E-mails envoyés (demande)', 'notified:confirmed' => 'E-mails envoyés (confirmation)', 'notified:declined' => 'E-mails envoyés (refus)',
-        'notified:cancelled' => 'E-mails envoyés (annulation)', 'notified:expired' => 'E-mails envoyés (expiration)',
+        'notified:cancelled' => 'E-mails envoyés (annulation)', 'notified:expired' => 'E-mails envoyés (expiration)', 'notified:review_invite' => 'Invitation à laisser un avis envoyée au client',
         'cancellation:requested' => 'Demande d’annulation envoyée par l’établissement', 'cancellation:client_notified' => 'Client informé de la demande d’annulation', 'cancellation:client_accepted' => 'Client d’accord pour l’annulation', 'cancellation:client_refused' => 'Client opposé à l’annulation', 'cancellation:accepted' => 'Demande d’annulation acceptée par HammamLuxury', 'cancellation:refused' => 'Demande d’annulation refusée par HammamLuxury',
         'payment:on_site' => 'Paiement : à payer sur place', 'payment:paid' => 'Paiement : payé', 'payment:partial' => 'Paiement : partiel', 'payment:refunded' => 'Paiement : remboursé',
     ],

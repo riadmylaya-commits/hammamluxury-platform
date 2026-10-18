@@ -388,7 +388,7 @@ return [
         'guest:reported' => 'Guest behaviour reported to HammamLuxury', 'guest:report_reviewed' => 'Report reviewed by HammamLuxury', 'guest:report_dismissed' => 'Report dismissed',
         'rescheduled' => 'Booking moved to a new date', 'cancellation:proposed' => 'New date proposed to the guest by HammamLuxury', 'cancellation:proposal_refused' => 'New date refused by the guest', 'cancellation:rescheduled' => 'New date accepted by the guest — request closed',
         'notified:created' => 'E-mails sent (request)', 'notified:confirmed' => 'E-mails sent (confirmation)', 'notified:declined' => 'E-mails sent (decline)',
-        'notified:cancelled' => 'E-mails sent (cancellation)', 'notified:expired' => 'E-mails sent (expiry)',
+        'notified:cancelled' => 'E-mails sent (cancellation)', 'notified:expired' => 'E-mails sent (expiry)', 'notified:review_invite' => 'Review invitation e-mailed to the client',
         'cancellation:requested' => 'Cancellation requested by the establishment', 'cancellation:client_notified' => 'Customer informed of the cancellation request', 'cancellation:client_accepted' => 'Customer agrees to the cancellation', 'cancellation:client_refused' => 'Customer objects to the cancellation', 'cancellation:accepted' => 'Cancellation request accepted by HammamLuxury', 'cancellation:refused' => 'Cancellation request refused by HammamLuxury',
         'payment:on_site' => 'Payment: to pay on site', 'payment:paid' => 'Payment: paid', 'payment:partial' => 'Payment: partial', 'payment:refunded' => 'Payment: refunded',
     ],
