@@ -18,7 +18,7 @@ class ListReviewInvitations extends ListRecords
             ->modifyQueryUsing(fn (Builder $query) => $query->whereIn('invitation_status', $statuses));
 
         return [
-            'all' => Tab::make(__('admin.ri_tab.all')),
+            'all' => Tab::make(__('admin.ri_tab.all'))->badge(fn () => ReviewInvitationResource::getEloquentQuery()->count()),
             'sent' => $tab('sent', ['sent', 'queued', 'invited_untracked']),
             'send_failed' => $tab('send_failed', ['send_failed']),
             'pending' => $tab('pending', ['pending']),

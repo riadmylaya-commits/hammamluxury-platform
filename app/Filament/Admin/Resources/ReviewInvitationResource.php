@@ -156,13 +156,13 @@ class ReviewInvitationResource extends Resource
                     ->options(fn () => collect(self::STATUSES)->mapWithKeys(fn ($s) => [$s => __("admin.ri_status.$s")])->all())
                     ->query(fn (Builder $query, array $data) => filled($data['values'] ?? null) ? $query->whereIn('invitation_status', $data['values']) : $query),
                 Tables\Filters\Filter::make('end_at')->label(__('admin.ri_end_at'))
-                    ->form([DatePicker::make('from')->label(__('admin.ri_from')), DatePicker::make('until')->label(__('admin.ri_until'))])
+                    ->form([DatePicker::make('from')->label(__('admin.ri_end_at').' — '.__('admin.ri_from')), DatePicker::make('until')->label(__('admin.ri_end_at').' — '.__('admin.ri_until'))])
                     ->query(fn (Builder $query, array $data) => $query
                         ->when($data['from'] ?? null, fn ($q, $d) => $q->whereDate('end_at', '>=', $d))
                         ->when($data['until'] ?? null, fn ($q, $d) => $q->whereDate('end_at', '<=', $d)))
                     ->indicateUsing(fn (array $data) => array_filter([$data['from'] ?? null ? __('admin.ri_from').' '.$data['from'] : null, $data['until'] ?? null ? __('admin.ri_until').' '.$data['until'] : null])),
                 Tables\Filters\Filter::make('invited_at')->label(__('admin.ri_invited_at'))
-                    ->form([DatePicker::make('from')->label(__('admin.ri_from')), DatePicker::make('until')->label(__('admin.ri_until'))])
+                    ->form([DatePicker::make('from')->label(__('admin.ri_invited_at').' — '.__('admin.ri_from')), DatePicker::make('until')->label(__('admin.ri_invited_at').' — '.__('admin.ri_until'))])
                     ->query(fn (Builder $query, array $data) => $query
                         ->when($data['from'] ?? null, fn ($q, $d) => $q->whereDate('invited_at', '>=', $d))
                         ->when($data['until'] ?? null, fn ($q, $d) => $q->whereDate('invited_at', '<=', $d)))
