@@ -335,6 +335,10 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         $this->assertFalse($r->canReply());
         $this->assertTrue($r->canEditReply());
 
+        // Filtre Admin « À modérer » : l'avis publié avec réponse publiée n'y figure pas ; il y revient avec un brouillon en attente.
+        $this->asAdmin();
+        Livewire::test(AdminListReviews::class)->filterTable('status', 'pending')->assertCanNotSeeTableRecords([$r]);
+
         // Le partenaire voit les critères détaillés et les moyennes ; le site public ne montre que la note globale.
         $this->asPartner();
         Livewire::test(PartnerListReviews::class)->assertCanSeeTableRecords([$r])
@@ -345,6 +349,9 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         $r->refresh();
         $this->assertTrue($r->hasPendingDraft());
         $this->assertTrue($r->replyPublished());
+        $this->asAdmin();
+        Livewire::test(AdminListReviews::class)->filterTable('status', 'pending')->assertCanSeeTableRecords([$r])
+            ->filterTable('status', 'published')->assertCanSeeTableRecords([$r]);
         $this->assertSame('Merci pour votre retour, nous avons renforcé notre équipe d’accueil.', $r->reply);
         Livewire::test(SpaShow::class, ['spa' => $this->spa])->assertSee('renforcé notre équipe d’accueil')->assertDontSee('Version corrigée')->assertDontSee('Propreté');
 

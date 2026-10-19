@@ -135,10 +135,10 @@ class ReviewResource extends Resource
                     'pending' => __('admin.r_pending_filter'),
                     'published' => __('admin.r_published'),
                     'rejected' => __('admin.r_rejected'),
-                ])->default('pending')->query(fn (Builder $q, array $data) => match ($data['value'] ?? null) {
-                    'pending' => $q->whereRaw('(status = ? or reply_status = ? or reply_draft_status = ?)', ['pending', 'pending', 'pending']),
-                    null, '' => $q,
-                    default => $q->where('status', $data['value']),
+                ])->default('pending')->query(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
+                    'pending' => $query->whereRaw('(status = ? or reply_status = ? or reply_draft_status = ?)', ['pending', 'pending', 'pending']),
+                    null, '' => $query,
+                    default => $query->where('status', $data['value']),
                 }),
                 Tables\Filters\TernaryFilter::make('reply_pending')->label(__('admin.review_reply_pending'))
                     ->queries(true: fn (Builder $q) => $q->where(fn ($q) => $q->where('reply_status', 'pending')->orWhere('reply_draft_status', 'pending')), false: fn (Builder $q) => $q->where(fn ($q) => $q->whereNull('reply_status')->orWhere('reply_status', '!=', 'pending'))),
