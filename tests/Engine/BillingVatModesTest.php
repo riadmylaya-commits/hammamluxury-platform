@@ -8,6 +8,8 @@ use App\Domain\Billing\CreditNoteService;
 use App\Domain\Billing\InvoiceDrafter;
 use App\Domain\Billing\InvoiceIssuer;
 use App\Domain\Billing\PaymentRecorder;
+use App\Filament\Admin\Pages\PartnerCreditsPage;
+use App\Filament\Partner\Pages\Invoices;
 use App\Jobs\GenerateCreditNotePdf;
 use App\Jobs\GenerateInvoicePdf;
 use App\Jobs\GenerateReceiptPdf;
@@ -17,9 +19,11 @@ use App\Models\Partner;
 use App\Models\PartnerCredit;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 /** Régimes de TVA (aucune, HT + TVA, TVA incluse) : montants HT / TVA / TTC cohérents sur la facture, l'avoir et le crédit partenaire. */
@@ -119,6 +123,30 @@ class BillingVatModesTest extends BookingFlowTestCase
 
         $reversal = $service->reverse($note, $this->admin, 'Annulation de test');
         $this->assertAmounts(array_map(fn (float $v) => -$v, $expected), $reversal->subtotal_ht, $reversal->vat_amount, $reversal->total_ttc, 'avoir inverse');
+
+        $credit->refresh();
+        $this->assertSame(PartnerCredit::STATUS_REVERSED, $credit->status);
+        $this->assertSame(0.0, $credit->remaining(), 'un crédit annulé par avoir inverse n’a plus aucun reste disponible');
+        $this->assertCount(0, PartnerCredit::open()->get());
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $this->actingAs($this->admin);
+        Livewire::test(PartnerCreditsPage::class)->assertOk()->tap(fn ($page) => $this->assertReversedCreditShowsNothingAvailable($page->html()));
+        auth()->logout();
+        $this->actingAs($this->partner()->user);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+        Livewire::test(Invoices::class)->assertOk()->call('select', $invoice->id)->tap(fn ($page) => $this->assertReversedCreditShowsNothingAvailable($page->html()));
+    }
+
+    /** Toute ligne mentionnant le crédit annulé affiche un reste à 0,00 et aucune mise en valeur « disponible ». */
+    private function assertReversedCreditShowsNothingAvailable(string $html): void
+    {
+        $rows = array_filter(explode('<tr', $html), fn (string $row) => str_contains($row, __('billing.credit_status_reversed')) && str_contains($row, 'MAD'));
+        $this->assertNotEmpty($rows, 'la ligne du crédit annulé doit être affichée');
+        foreach ($rows as $row) {
+            $this->assertStringNotContainsString('text-success-600', $row);
+            $this->assertStringContainsString('0,00 MAD', $row);
+        }
     }
 
     /** @return array{subtotal_ht: float, vat_amount: float, total_ttc: float} */

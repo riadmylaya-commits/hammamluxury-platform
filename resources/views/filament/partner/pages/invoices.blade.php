@@ -72,7 +72,7 @@
                                 <td class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->amount, 2, ',', ' ') }} {{ $c->currency }}</td>
                                 <td class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->applied_amount, 2, ',', ' ') }} {{ $c->currency }}</td>
                                 <td class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->refunded_amount, 2, ',', ' ') }} {{ $c->currency }}</td>
-                                <td class="text-right font-semibold {{ $c->remaining() > 0 ? 'text-success-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->remaining(), 2, ',', ' ') }} {{ $c->currency }}</td>
+                                <td class="text-right font-semibold {{ $c->isOpen() && $c->remaining() > 0 ? 'text-success-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->remaining(), 2, ',', ' ') }} {{ $c->currency }}</td>
                                 <td style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$c->status === 'open' ? 'success' : 'gray'">{{ __('billing.credit_status_'.$c->status) }}</x-filament::badge></td>
                             </tr>
                         @endforeach

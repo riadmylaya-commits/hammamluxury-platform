@@ -70,8 +70,13 @@ class PartnerCredit extends Model
         return $this->belongsTo(User::class, 'closed_by');
     }
 
+    /** Reste consommable : nul dès que le crédit est fermé (imputé, remboursé ou annulé par avoir inverse). */
     public function remaining(): float
     {
+        if ($this->status !== self::STATUS_OPEN) {
+            return 0.0;
+        }
+
         return round(max(0, $this->amount - $this->applied_amount - $this->refunded_amount), 2);
     }
 
