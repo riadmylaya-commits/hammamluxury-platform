@@ -108,9 +108,10 @@ class InvoiceDrafter
             $vat = round($subtotal * $rate / 100, 2);
             $ttc = round($subtotal + $vat, 2);
         } elseif ($mode === 'ttc_included' && $rate !== null) {
-            $vat = round($subtotal - $subtotal / (1 + $rate / 100), 2);
+            $ht = round($subtotal / (1 + $rate / 100), 2);
+            $vat = round($subtotal - $ht, 2);
         }
 
-        return ['subtotal_ht' => round($subtotal, 2), 'vat_mode' => $mode, 'vat_rate' => $rate, 'vat_amount' => $vat, 'total_ttc' => $ttc];
+        return ['subtotal_ht' => $ht ?? round($subtotal, 2), 'vat_mode' => $mode, 'vat_rate' => $rate, 'vat_amount' => $vat, 'total_ttc' => $ttc];
     }
 }
