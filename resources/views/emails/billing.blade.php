@@ -9,7 +9,35 @@
 
 {{ __('emails.billing.statement_available.window', ['day' => app(\App\Domain\Billing\BillingSettings::class)->get('dispute_until_day')]) }}
 @endif
-@if($invoice)
+@if($note)
+**{{ __('billing.credit_note_number') }} :** {{ $note->number }}
+**{{ __('billing.invoice_number') }} :** {{ $vars['invoice'] }}
+@if($notification->event === 'credit_note_pdf_failed')
+**{{ __('billing.pdf_error') }} :** {{ $vars['error'] }}
+@else
+**{{ __('billing.credit_note_total') }} :** {{ $vars['total'] }}
+**{{ __('billing.balance') }} :** {{ $vars['balance'] }}
+@if($vars['reverses'])
+**{{ __('billing.credit_note_reverses') }} :** {{ $vars['reverses'] }}
+@endif
+@endif
+@elseif($invoice && in_array($notification->event, ['credit_applied', 'credit_refunded'], true))
+**{{ __('billing.invoice_number') }} :** {{ $invoice->number }}
+**{{ __('billing.credit_source') }} :** {{ $vars['source'] }}
+**{{ __('billing.amount') }} :** {{ $vars['amount'] }}
+@if($notification->event === 'credit_applied')
+**{{ __('billing.balance') }} :** {{ $vars['balance'] }}
+@else
+**{{ __('billing.refund_on') }} :** {{ $vars['refund_on'] }}
+**{{ __('billing.method') }} :** {{ $vars['method'] }}
+**{{ __('billing.reference') }} :** {{ $vars['reference'] }}
+@endif
+**{{ __('billing.credit_remaining') }} :** {{ $vars['remaining'] }}
+@elseif($invoice && $notification->event === 'corrections_overdue')
+**{{ __('billing.invoice_number') }} :** {{ $invoice->number }}
+**{{ __('booking.reference') }} :** {{ $vars['reference'] }}
+**{{ __('billing.amount') }} :** {{ $vars['amount'] }}
+@elseif($invoice)
 **{{ __('billing.invoice_number') }} :** {{ $invoice->number }}
 **{{ __('billing.period') }} :** {{ $vars['period'] ?: $invoice->period }}
 **{{ __('billing.total_ttc') }} :** {{ $vars['total'] }}

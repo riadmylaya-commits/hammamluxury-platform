@@ -2,6 +2,9 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Domain\Billing\CreditNoteException;
+use App\Domain\Billing\CreditNotePdf;
+use App\Domain\Billing\CreditNoteService;
 use App\Domain\Billing\InvoiceDrafter;
 use App\Domain\Billing\InvoiceException;
 use App\Domain\Billing\InvoiceIssuer;
@@ -11,6 +14,7 @@ use App\Domain\Billing\PaymentRecorder;
 use App\Domain\Billing\ReceiptPdf;
 use App\Filament\Admin\Resources\InvoiceResource\Pages;
 use App\Filament\Shared\BillingPeriods;
+use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\Partner;
@@ -77,11 +81,12 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('period')->label(__('billing.period'))->sortable(),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()->formatStateUsing(fn (string $state) => __('billing.invoice_status_'.$state))
                     ->color(fn (string $state) => match ($state) {
-                        'draft' => 'gray', 'issued' => 'warning', 'paid' => 'success', 'overdue' => 'danger', default => 'info'
+                        'draft' => 'gray', 'issued' => 'warning', 'paid' => 'success', 'overdue' => 'danger', 'cancelled' => 'gray', default => 'info'
                     }),
                 Tables\Columns\TextColumn::make('lines_count')->label(__('billing.invoice_lines'))->alignRight(),
                 Tables\Columns\TextColumn::make('total_ttc')->label(__('billing.total_ttc'))->formatStateUsing($fmt)->alignRight()->sortable(),
                 Tables\Columns\TextColumn::make('paid_amount')->label(__('billing.paid_amount'))->formatStateUsing($fmt)->alignRight()->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('credited_amount')->label(__('billing.credited_amount'))->formatStateUsing($fmt)->alignRight()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('balance')->label(__('billing.balance'))->formatStateUsing($fmt)->alignRight()->sortable()
                     ->color(fn (Invoice $record) => $record->isIssued() && $record->balance > 0 ? ($record->status === Invoice::STATUS_OVERDUE ? 'danger' : 'warning') : 'gray'),
                 Tables\Columns\TextColumn::make('issued_at')->label(__('billing.issued_at'))->dateTime('d/m/Y H:i', config('hl.timezone'))->placeholder('—')->sortable(),
@@ -129,7 +134,115 @@ class InvoiceResource extends Resource
                 }),
             self::pdfAction($class),
             self::recordPaymentAction($class),
+            self::createCreditNoteAction($class),
         ];
+    }
+
+    /** Brouillon d'avoir à partir des corrections post-émission en attente de cette facture (Admin seul, service verrouillé). */
+    public static function createCreditNoteAction(string $class = Tables\Actions\Action::class): mixed
+    {
+        $pending = fn (Invoice $record) => app(CreditNoteService::class)->pendingCorrections(null, $record);
+
+        return $class::make('createCreditNote')->label(__('billing.credit_note_create'))->icon('heroicon-o-receipt-refund')->color('warning')
+            ->visible(fn (Invoice $record) => $record->isIssued() && ! $record->isCancelled() && auth()->user()?->isAdmin() && $pending($record)->isNotEmpty())
+            ->modalHeading(__('billing.credit_note_create'))->modalDescription(__('billing.credit_note_create_help'))
+            ->form(fn (Invoice $record) => [
+                Forms\Components\CheckboxList::make('entries')->label(__('billing.corrections_pending'))->required()
+                    ->options($pending($record)->mapWithKeys(fn (array $c) => [$c['entry']->id => ($c['entry']->booking?->reference ?? $c['entry']->booking_reference).' · '
+                        .__('billing.line_'.$c['entry']->type, ['status' => '']).' · '.number_format(-(float) $c['entry']->amount, 2, ',', ' ').' '.$record->currency
+                        .' · '.__('billing.correction_age_days', ['days' => $c['age_days']])])->all())
+                    ->default($pending($record)->map(fn (array $c) => $c['entry']->id)->all()),
+                Forms\Components\Textarea::make('reason')->label(__('billing.credit_note_reason'))->rows(2)->rules(['required'])->markAsRequired()->maxLength(500),
+            ])
+            ->action(function (Invoice $record, array $data, mixed $livewire) use ($pending) {
+                try {
+                    $dispute = $pending($record)->first(fn (array $c) => in_array($c['entry']->id, array_map('intval', $data['entries'] ?? []), true) && $c['dispute'] !== null)['dispute'] ?? null;
+                    $note = app(CreditNoteService::class)->draft($record, auth()->user(), array_map('intval', $data['entries'] ?? []), (string) $data['reason'], $dispute);
+                    Notification::make()->title(__('billing.credit_note_drafted'))->body(__('billing.credit_note_total').' : '.number_format($note->total_ttc, 2, ',', ' ').' '.$note->currency)->success()->send();
+                    $livewire->redirect(static::getUrl('view', ['record' => $record]));
+                } catch (CreditNoteException $e) {
+                    Notification::make()->title(__('billing.credit_note_refused'))->body($e->getMessage())->danger()->persistent()->send();
+                }
+            });
+    }
+
+    /** Émission d'un brouillon d'avoir (deux étapes : confirmation puis service verrouillé ; PDF par job). */
+    public static function issueCreditNoteAction(string $class = Action::class): mixed
+    {
+        return $class::make('issueCreditNote')->label(__('billing.credit_note_issue'))->icon('heroicon-o-check-badge')->color('success')->size('xs')
+            ->requiresConfirmation()->modalDescription(__('billing.credit_note_issue_confirm'))
+            ->action(function (array $arguments, mixed $livewire) {
+                $note = CreditNote::find((int) ($arguments['note'] ?? 0));
+                if ($note === null) {
+                    Notification::make()->title(__('billing.credit_note_error.not_found'))->danger()->send();
+
+                    return;
+                }
+                try {
+                    $issued = app(CreditNoteService::class)->issue($note, auth()->user());
+                    Notification::make()->title(__('billing.credit_note_issued'))->body($issued->number)->success()->send();
+                    $livewire->redirect(static::getUrl('view', ['record' => $issued->invoice_id]));
+                } catch (CreditNoteException $e) {
+                    Notification::make()->title(__('billing.credit_note_refused'))->body($e->getMessage())->danger()->persistent()->send();
+                }
+            });
+    }
+
+    public static function discardCreditNoteAction(string $class = Action::class): mixed
+    {
+        return $class::make('discardCreditNote')->label(__('billing.credit_note_discard'))->icon('heroicon-o-trash')->color('gray')->size('xs')->outlined()
+            ->requiresConfirmation()
+            ->action(function (array $arguments, mixed $livewire) {
+                $note = CreditNote::find((int) ($arguments['note'] ?? 0));
+                if ($note === null) {
+                    return;
+                }
+                try {
+                    app(CreditNoteService::class)->discard($note, auth()->user());
+                    Notification::make()->title(__('billing.credit_note_discarded'))->success()->send();
+                    $livewire->redirect(static::getUrl('view', ['record' => $note->invoice_id]));
+                } catch (CreditNoteException $e) {
+                    Notification::make()->title(__('billing.credit_note_refused'))->body($e->getMessage())->danger()->persistent()->send();
+                }
+            });
+    }
+
+    public static function reverseCreditNoteAction(string $class = Action::class): mixed
+    {
+        return $class::make('reverseCreditNote')->label(__('billing.credit_note_reverse'))->icon('heroicon-o-arrow-uturn-left')->color('danger')->size('xs')->outlined()
+            ->modalHeading(__('billing.credit_note_reverse'))->modalDescription(__('billing.credit_note_reverse_help'))
+            ->form([Forms\Components\Textarea::make('reason')->label(__('billing.reversal_reason'))->rows(2)->rules(['required'])->markAsRequired()->maxLength(500)])
+            ->action(function (array $data, array $arguments, mixed $livewire) {
+                $note = CreditNote::find((int) ($arguments['note'] ?? 0));
+                if ($note === null) {
+                    Notification::make()->title(__('billing.credit_note_error.not_found'))->danger()->send();
+
+                    return;
+                }
+                try {
+                    $reversal = app(CreditNoteService::class)->reverse($note, auth()->user(), (string) $data['reason']);
+                    Notification::make()->title(__('billing.credit_note_reversed'))->body($reversal->number)->success()->send();
+                    $livewire->redirect(static::getUrl('view', ['record' => $reversal->invoice_id]));
+                } catch (CreditNoteException $e) {
+                    Notification::make()->title(__('billing.credit_note_refused'))->body($e->getMessage())->danger()->persistent()->send();
+                }
+            });
+    }
+
+    /** Téléchargement du PDF d'avoir après vérification de l'empreinte ; `$resolve(int $id)` applique le filtrage tenant côté partenaire. */
+    public static function creditNotePdfAction(callable $resolve, string $class = Action::class): mixed
+    {
+        return $class::make('creditNotePdf')->label(__('billing.credit_note_pdf'))->icon('heroicon-o-arrow-down-tray')->color('gray')->size('xs')->outlined()
+            ->action(function (array $arguments) use ($resolve) {
+                $note = $resolve((int) ($arguments['note'] ?? 0));
+                if (! $note instanceof CreditNote || $note->pdf_status !== CreditNote::PDF_READY || ! app(CreditNotePdf::class)->verify($note)) {
+                    Notification::make()->title(__('billing.pdf_corrupt'))->danger()->send();
+
+                    return null;
+                }
+
+                return Storage::disk(CreditNotePdf::DISK)->download($note->pdf_path, $note->number.'.pdf', ['Cache-Control' => 'no-store, private']);
+            });
     }
 
     /** Saisie Admin d'un paiement reçu ; la clé d'opération est générée à l'ouverture du formulaire (un double envoi ne crée qu'un paiement). */

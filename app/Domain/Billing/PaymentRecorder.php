@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  */
 class PaymentRecorder
 {
-    public function __construct(private readonly BillingSettings $settings, private readonly BillingNotifier $notifier) {}
+    public function __construct(private readonly BillingSettings $settings, private readonly BillingNotifier $notifier, private readonly InvoiceBalance $balance) {}
 
     /**
      * @param  array{amount: float|int|string, paid_on: string, method: string, reference?: ?string, note?: ?string, idempotency_key: string}  $data
@@ -70,8 +70,9 @@ class PaymentRecorder
                 }
                 $paidBefore = round((float) $locked->paid_amount, 2);
                 $paidAfter = round($paidBefore + $amount, 2);
-                $excess = round(max(0, $paidAfter - (float) $locked->total_ttc), 2);
-                $balanceAfter = round(max(0, (float) $locked->total_ttc - $paidAfter), 2);
+                $credited = round((float) $locked->credited_amount, 2);
+                $excess = round($this->balance->excess($locked, $paidAfter, $credited) - $this->balance->excess($locked, $paidBefore, $credited), 2);
+                $balanceAfter = round(max(0, (float) $locked->total_ttc - $paidAfter - $credited), 2);
 
                 $cash = $method === InvoicePayment::METHOD_CASH;
                 $payment = InvoicePayment::create([
@@ -145,8 +146,11 @@ class PaymentRecorder
                 if ($original->reversedBy()->exists()) {
                     throw new PaymentException('already_reversed');
                 }
+                if ($original->isCreditApplication()) {
+                    throw new PaymentException('cannot_reverse_credit');
+                }
                 $paidAfter = round((float) $locked->paid_amount - (float) $original->amount, 2);
-                $balanceAfter = round(max(0, (float) $locked->total_ttc - $paidAfter), 2);
+                $balanceAfter = round(max(0, (float) $locked->total_ttc - $paidAfter - (float) $locked->credited_amount), 2);
                 $reversal = InvoicePayment::create([
                     'invoice_id' => $locked->id, 'partner_id' => $locked->partner_id, 'amount' => -(float) $original->amount, 'currency' => $locked->currency,
                     'paid_on' => $now->toDateString(), 'method' => $original->method, 'reference' => $original->reference,
@@ -177,26 +181,12 @@ class PaymentRecorder
     /** Statut cohérent avec le solde et l'échéance ; à appeler sous verrou (paiement) ou par le passage quotidien (retard). */
     public function apply(Invoice $locked, float $paidAfter, CarbonImmutable $now): void
     {
-        $paidAfter = round($paidAfter, 2);
-        $balance = round(max(0, (float) $locked->total_ttc - $paidAfter), 2);
-        $locked->update([
-            'paid_amount' => $paidAfter,
-            'balance' => $balance,
-            'status' => $this->statusFor($locked, $balance, $paidAfter, $now),
-            'paid_at' => $balance <= 0 ? ($locked->paid_at ?? $now) : null,
-        ]);
+        $this->balance->apply($locked, $paidAfter, (float) $locked->credited_amount, $now);
     }
 
     public function statusFor(Invoice $invoice, float $balance, float $paid, CarbonImmutable $now): string
     {
-        if ($balance <= 0) {
-            return Invoice::STATUS_PAID;
-        }
-        if ($invoice->due_at !== null && $invoice->due_at->lt($now->startOfDay())) {
-            return Invoice::STATUS_OVERDUE;
-        }
-
-        return $paid > 0 ? Invoice::STATUS_PARTIALLY_PAID : Invoice::STATUS_ISSUED;
+        return $this->balance->statusFor($invoice, $balance, $paid, $now);
     }
 
     /** Cumul des espèces déjà reçues sur la facture (contre-passations déduites). */

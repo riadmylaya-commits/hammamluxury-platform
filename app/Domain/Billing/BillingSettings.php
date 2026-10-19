@@ -15,7 +15,7 @@ use InvalidArgumentException;
 class BillingSettings
 {
     public const KEYS = [
-        'enabled', 'start_period', 'vat_mode', 'vat_rate', 'due_days', 'issue_day', 'dispute_until_day', 'accountant_validated_at', 'cash_limit',
+        'enabled', 'start_period', 'vat_mode', 'vat_rate', 'due_days', 'issue_day', 'dispute_until_day', 'accountant_validated_at', 'cash_limit', 'correction_due_days',
         'issuer.company_name', 'issuer.legal_form', 'issuer.ice', 'issuer.tax_id', 'issuer.registry_number', 'issuer.address', 'issuer.bank_account',
     ];
 
@@ -121,6 +121,9 @@ class BillingSettings
         if ($key === 'cash_limit' && (! is_numeric($value) || (float) $value <= 0)) {
             throw new InvalidArgumentException('cash_limit must be a positive amount.');
         }
+        if ($key === 'correction_due_days' && (! is_numeric($value) || (int) $value < 1 || (int) $value > 90)) {
+            throw new InvalidArgumentException('correction_due_days must be between 1 and 90.');
+        }
 
         return (string) $value;
     }
@@ -134,7 +137,7 @@ class BillingSettings
         return match ($key) {
             'enabled' => in_array($value, [true, 1, '1', 'true'], true),
             'vat_rate', 'cash_limit' => (float) $value,
-            'due_days', 'issue_day', 'dispute_until_day' => (int) $value,
+            'due_days', 'issue_day', 'dispute_until_day', 'correction_due_days' => (int) $value,
             default => (string) $value,
         };
     }

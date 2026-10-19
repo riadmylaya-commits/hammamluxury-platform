@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\InvoiceResource\Pages;
 use App\Domain\Billing\InvoiceIssuer;
 use App\Filament\Admin\Resources\BookingResource;
 use App\Filament\Admin\Resources\InvoiceResource;
+use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use Filament\Actions;
@@ -46,6 +47,26 @@ class ViewInvoice extends ViewRecord
     public function receiptAction(): Actions\Action
     {
         return InvoiceResource::receiptAction(fn (int $id) => InvoicePayment::where('invoice_id', $this->record->id)->find($id), Actions\Action::class);
+    }
+
+    public function issueCreditNoteAction(): Actions\Action
+    {
+        return InvoiceResource::issueCreditNoteAction(Actions\Action::class);
+    }
+
+    public function discardCreditNoteAction(): Actions\Action
+    {
+        return InvoiceResource::discardCreditNoteAction(Actions\Action::class);
+    }
+
+    public function reverseCreditNoteAction(): Actions\Action
+    {
+        return InvoiceResource::reverseCreditNoteAction(Actions\Action::class);
+    }
+
+    public function creditNotePdfAction(): Actions\Action
+    {
+        return InvoiceResource::creditNotePdfAction(fn (int $id) => CreditNote::where('invoice_id', $this->record->id)->find($id), Actions\Action::class);
     }
 
     public function bookingUrl(int $id): string

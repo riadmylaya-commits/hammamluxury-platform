@@ -18,7 +18,13 @@ class InvoicePayment extends Model
 
     public const METHOD_CASH = 'cash';
 
+    /** Imputation d'un crédit partenaire (F4) : jamais saisissable à la main, toujours via PartnerCreditService. */
+    public const METHOD_CREDIT = 'credit';
+
+    /** Modes saisissables par l'administrateur. */
     public const METHODS = ['bank_transfer', 'cash'];
+
+    public const ALL_METHODS = ['bank_transfer', 'cash', 'credit'];
 
     public const RECEIPT_PENDING = 'pending';
 
@@ -72,6 +78,16 @@ class InvoicePayment extends Model
     public function overpayment(): HasOne
     {
         return $this->hasOne(InvoiceOverpayment::class, 'payment_id');
+    }
+
+    public function creditApplication(): HasOne
+    {
+        return $this->hasOne(PartnerCreditApplication::class, 'invoice_payment_id');
+    }
+
+    public function isCreditApplication(): bool
+    {
+        return $this->method === self::METHOD_CREDIT;
     }
 
     public function isReversal(): bool

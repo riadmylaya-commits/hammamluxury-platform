@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\BillingNotification;
 use App\Models\CommissionDispute;
+use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\Partner;
 use Illuminate\Mail\Mailable;
@@ -34,7 +35,8 @@ class BillingMail extends Mailable
             'notification' => $n,
             'vars' => $this->vars(),
             'dispute' => $subject instanceof CommissionDispute ? $subject : null,
-            'invoice' => $subject instanceof Invoice ? $subject : null,
+            'invoice' => $subject instanceof Invoice ? $subject : ($subject instanceof CreditNote ? $subject->invoice : null),
+            'note' => $subject instanceof CreditNote ? $subject : null,
             'partner' => $subject instanceof Partner ? $subject : ($subject instanceof CommissionDispute ? $subject->partner : null),
         ]);
     }
@@ -59,7 +61,15 @@ class BillingMail extends Mailable
             'receipt_line' => ! empty($p['receipt']) ? __('emails.billing.receipt_line', ['receipt' => $p['receipt']]) : '',
             'booking' => (string) ($p['booking'] ?? ($n->notifiable instanceof CommissionDispute ? $n->notifiable->booking?->reference : '')),
             'decision' => isset($p['decision']) ? __('billing.dispute_status_'.$p['decision']) : '',
-            'partner' => (string) ($n->notifiable instanceof CommissionDispute ? $n->notifiable->partner?->company_name : ($n->notifiable instanceof Partner ? $n->notifiable->company_name : ($n->notifiable instanceof Invoice ? (string) ($n->notifiable->partner_snapshot['company_name'] ?? $n->notifiable->partner?->company_name) : ''))),
+            'invoice' => (string) ($p['invoice'] ?? ''),
+            'reverses' => (string) ($p['reverses'] ?? ''),
+            'source' => (string) ($p['source'] ?? ''),
+            'remaining' => number_format((float) ($p['remaining'] ?? 0), 2, ',', ' ').' '.config('hl.currency'),
+            'refund_on' => (string) ($p['refund_on'] ?? ''),
+            'reference' => (string) ($p['reference'] ?? ''),
+            'age' => (string) ($p['age'] ?? ''),
+            'due_days' => (string) ($p['due'] ?? ''),
+            'partner' => (string) ($n->notifiable instanceof CommissionDispute ? $n->notifiable->partner?->company_name : ($n->notifiable instanceof Partner ? $n->notifiable->company_name : ($n->notifiable instanceof Invoice || $n->notifiable instanceof CreditNote ? (string) ($p['partner'] ?? $n->notifiable->partner_snapshot['company_name'] ?? $n->notifiable->partner?->company_name) : ''))),
         ];
     }
 }

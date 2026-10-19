@@ -71,6 +71,7 @@ class BillingSettingsPage extends Page implements HasForms
                     ->visible(fn (Forms\Get $get) => $get('vat_mode') !== 'none'),
                 Forms\Components\DatePicker::make('accountant_validated_at')->label(__('billing.accountant_validated_at'))->helperText(__('billing.accountant_help'))->native(false)->maxDate(now()),
                 Forms\Components\TextInput::make('cash_limit')->label(__('billing.cash_limit'))->helperText(__('billing.cash_limit_help'))->numeric()->minValue(1)->suffix(config('hl.currency'))->required(),
+                Forms\Components\TextInput::make('correction_due_days')->label(__('billing.correction_due_days'))->helperText(__('billing.correction_due_days_help'))->numeric()->minValue(1)->maxValue(90)->required(),
             ])->columns(3),
             Forms\Components\Section::make(__('billing.section_issuer'))->schema([
                 Forms\Components\TextInput::make('issuer__company_name')->label(__('billing.issuer_company_name'))->maxLength(190),

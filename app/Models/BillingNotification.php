@@ -12,7 +12,8 @@ class BillingNotification extends Model
 
     public const EVENTS = ['statement_available', 'dispute_opened', 'dispute_decided', 'invoice_issued', 'invoice_pdf_failed',
         'payment_partial', 'payment_received', 'overpayment_detected', 'receipt_pdf_failed',
-        'reminder_before_due', 'reminder_due', 'reminder_late_1', 'reminder_late_2', 'invoice_late'];
+        'reminder_before_due', 'reminder_due', 'reminder_late_1', 'reminder_late_2', 'invoice_late',
+        'credit_note_issued', 'credit_note_pdf_failed', 'credit_applied', 'credit_refunded', 'correction_request_opened', 'corrections_overdue'];
 
     protected $guarded = [];
 

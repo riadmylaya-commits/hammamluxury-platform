@@ -4,6 +4,7 @@ namespace App\Domain\Billing;
 
 use App\Models\Booking;
 use App\Models\CommissionDispute;
+use App\Models\CreditNoteLine;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\LedgerEntry;
@@ -77,7 +78,10 @@ class StatementBuilder
         $disputeUntil = $period->addMonth()->day(max(1, min(28, (int) $this->settings->get('dispute_until_day'))))->endOfDay();
 
         $issued = $this->issuedPeriods($partner);
-        $invoiced = InvoiceLine::query()->whereHas('invoice', fn ($q) => $q->issued()->where('partner_id', $partner->id))->pluck('ledger_entry_id')->flip()->all();
+        $invoicedLines = InvoiceLine::query()->whereHas('invoice', fn ($q) => $q->issued()->where('partner_id', $partner->id))->get(['ledger_entry_id', 'booking_id']);
+        $invoiced = $invoicedLines->pluck('ledger_entry_id')->flip()->all();
+        $invoicedBookings = $invoicedLines->pluck('booking_id')->filter()->flip()->all();
+        $credited = CreditNoteLine::query()->pluck('ledger_entry_id')->flip()->all();
         $entries = LedgerEntry::query()
             ->where('partner_id', $partner->id)
             ->whereIn('type', LedgerEntry::COMMISSION_TYPES)
@@ -87,7 +91,7 @@ class StatementBuilder
             ->orderBy('id')
             ->get()
             ->filter(fn (LedgerEntry $e) => $this->effectivePeriod($e, $issued)->eq($period))
-            ->reject(fn (LedgerEntry $e) => isset($invoiced[$e->id]))
+            ->reject(fn (LedgerEntry $e) => isset($invoiced[$e->id]) || isset($credited[$e->id]))
             ->filter(fn (LedgerEntry $e) => $e->booking === null || $e->booking->source !== 'partner');
 
         $blocking = CommissionDispute::blocking()->where('partner_id', $partner->id)
@@ -120,7 +124,10 @@ class StatementBuilder
                 'exclusion' => null,
                 'dispute_id' => null,
             ];
-            if ($booking !== null && isset($blocking[$booking->id])) {
+            if ($booking !== null && isset($invoicedBookings[$booking->id]) && $line['amount'] < 0) {
+                // Correction négative d'une réservation déjà facturée : jamais déduite d'une facture suivante, uniquement par avoir (F4).
+                $line['exclusion'] = 'credit_note';
+            } elseif ($booking !== null && isset($blocking[$booking->id])) {
                 $line['exclusion'] = 'disputed';
                 $line['dispute_id'] = $blocking[$booking->id]->id;
             } elseif ($booking !== null && $booking->needsArbitration()) {

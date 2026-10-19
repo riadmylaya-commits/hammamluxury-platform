@@ -16,6 +16,7 @@
             @if ($invoice->isIssued())
                 <div><dt class="text-gray-500">{{ __('billing.total_ttc') }}</dt><dd class="font-semibold">{{ $fmt($invoice->total_ttc) }}</dd></div>
                 <div><dt class="text-gray-500">{{ __('billing.paid_amount') }}</dt><dd>{{ $fmt($invoice->paid_amount) }}</dd></div>
+                @if ($invoice->credited_amount > 0)<div><dt class="text-gray-500">{{ __('billing.credited_amount') }}</dt><dd>{{ $fmt($invoice->credited_amount) }}</dd></div>@endif
                 <div><dt class="text-gray-500">{{ __('billing.balance') }}</dt><dd class="font-semibold {{ $invoice->balance > 0 ? 'text-warning-600' : 'text-success-600' }}">{{ $fmt($invoice->balance) }}</dd></div>
                 <div><dt class="text-gray-500">{{ __('billing.paid_at') }}</dt><dd>{{ $invoice->paid_at?->setTimezone($tz)->format('d/m/Y H:i') ?? '—' }}</dd></div>
             @endif
@@ -77,6 +78,58 @@
                 </div>
             @endif
         </x-filament::section>
+
+        @php($notes = $invoice->creditNotes()->with(['issuedBy', 'reverses', 'reversedBy', 'partnerCredit', 'lines'])->get())
+        @php($cnActions = $creditNoteActions ?? [])
+        @if ($notes->isNotEmpty())
+        <x-filament::section :heading="__('billing.credit_notes')">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-gray-500">
+                            <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.credit_note_number') }}</th>
+                            <th style="padding:.25rem .75rem .25rem 0">{{ __('partner.status') }}</th>
+                            <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.credit_note_reason') }}</th>
+                            <th class="text-right" style="padding:.25rem .75rem .25rem 0">{{ __('billing.credit_note_total') }}</th>
+                            <th class="text-right" style="padding:.25rem .75rem .25rem 0">{{ __('billing.balance_after') }}</th>
+                            <th style="padding:.25rem 0 .25rem 1rem">{{ __('billing.pdf') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($notes as $n)
+                            <tr class="border-t border-gray-100 dark:border-gray-800 align-top">
+                                <td class="font-mono" style="padding:.5rem .75rem .5rem 0">{{ $n->label() }}
+                                    @if ($n->issued_at)<div class="text-xs text-gray-500">{{ $n->issued_at->setTimezone($tz)->format('d/m/Y H:i') }} · {{ $n->issuedBy?->name }}</div>@endif
+                                    @if ($n->isReversal())<div class="text-xs text-danger-600">{{ __('billing.credit_note_reverses') }} {{ $n->reverses?->number }}</div>@endif
+                                    @if ($n->reversedBy)<div class="text-xs text-danger-600">{{ __('billing.credit_note_status_reversed') }} · {{ $n->reversedBy->number }}</div>@endif
+                                    @if ($n->lines->isNotEmpty())<div class="text-xs text-gray-500">{{ $n->lines->pluck('booking_reference')->filter()->implode(', ') }}</div>@endif</td>
+                                <td style="padding:.5rem .75rem .5rem 0"><x-filament::badge :color="$n->isDraft() ? 'gray' : ($n->reversedBy ? 'danger' : 'success')">{{ __('billing.credit_note_status_'.($n->reversedBy ? 'reversed' : $n->status)) }}</x-filament::badge>
+                                    @if ($n->partnerCredit)<div class="text-xs text-warning-600">{{ __('billing.credit') }} : {{ $fmt($n->partnerCredit->amount) }} · {{ __('billing.credit_status_'.$n->partnerCredit->status) }}</div>@endif</td>
+                                <td style="padding:.5rem .75rem .5rem 0">{{ $n->reason }}</td>
+                                <td class="text-right font-semibold {{ $n->total_ttc < 0 ? 'text-danger-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ $fmt($n->total_ttc) }}</td>
+                                <td class="text-right" style="padding:.5rem .75rem .5rem 0">{{ $n->invoice_balance_after !== null ? $fmt($n->invoice_balance_after) : '—' }}</td>
+                                <td style="padding:.5rem 0 .5rem 1rem">
+                                    @if ($n->isDraft())
+                                        @if (! empty($cnActions['issue']))<div>{{ $cnActions['issue'](['note' => $n->id]) }}</div>@endif
+                                        @if (! empty($cnActions['discard']))<div class="mt-1">{{ $cnActions['discard'](['note' => $n->id]) }}</div>@endif
+                                    @else
+                                        @if ($n->pdf_status === 'ready' && ! empty($cnActions['pdf']))
+                                            <div>{{ $cnActions['pdf'](['note' => $n->id]) }}</div>
+                                        @else
+                                            <div class="text-xs text-gray-500">{{ $n->pdf_status ? __('billing.pdf_'.$n->pdf_status) : '—' }}@if ($n->pdf_error) · <span class="text-danger-600">{{ $n->pdf_error }}</span>@endif</div>
+                                        @endif
+                                        @if (! empty($cnActions['reverse']) && ! $n->isReversal() && ! $n->reversedBy)
+                                            <div class="mt-1">{{ $cnActions['reverse'](['note' => $n->id]) }}</div>
+                                        @endif
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </x-filament::section>
+        @endif
     @endif
 
     @if ($invoice->isDraft())
