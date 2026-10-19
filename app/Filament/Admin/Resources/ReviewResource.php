@@ -59,7 +59,7 @@ class ReviewResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $n = Review::where('status', 'pending')->orWhere('reply_status', 'pending')->count();
+        $n = Review::where('status', 'pending')->orWhere('reply_status', 'pending')->orWhere('reply_draft_status', 'pending')->count();
 
         return $n ? (string) $n : null;
     }
@@ -96,11 +96,11 @@ class ReviewResource extends Resource
                 ->form($reasonForm('review'))
                 ->action(fn (Review $r, array $data) => $run(fn (ReviewService $s, $u) => $s->moderate($r, $u, 'rejected', $data['reason'], $data['note'] ?? null))),
             $class::make('publish_reply')->label(__('admin.review_publish_reply'))->icon('heroicon-o-chat-bubble-left-ellipsis')->color('success')
-                ->visible(fn (Review $r) => $r->reply !== null && $r->reply_status !== 'published')
-                ->requiresConfirmation()->modalDescription(fn (Review $r) => $r->reply)
+                ->visible(fn (Review $r) => $r->hasPendingDraft() || ($r->reply !== null && $r->reply_status !== 'published'))
+                ->requiresConfirmation()->modalDescription(fn (Review $r) => $r->hasPendingDraft() ? __('admin.review_reply_draft_publish', ['text' => $r->reply_draft]) : $r->reply)
                 ->action(fn (Review $r) => $run(fn (ReviewService $s, $u) => $s->moderateReply($r, $u, 'published'))),
             $class::make('reject_reply')->label(__('admin.review_reject_reply'))->icon('heroicon-o-chat-bubble-left')->color('danger')
-                ->visible(fn (Review $r) => $r->reply !== null && $r->reply_status !== 'rejected')
+                ->visible(fn (Review $r) => $r->hasPendingDraft() || ($r->reply !== null && $r->reply_status !== 'rejected'))
                 ->form($reasonForm('reply'))
                 ->action(fn (Review $r, array $data) => $run(fn (ReviewService $s, $u) => $s->moderateReply($r, $u, 'rejected', $data['reason']))),
         ];
@@ -136,12 +136,12 @@ class ReviewResource extends Resource
                     'published' => __('admin.r_published'),
                     'rejected' => __('admin.r_rejected'),
                 ])->default('pending')->query(fn (Builder $q, array $data) => match ($data['value'] ?? null) {
-                    'pending' => $q->whereRaw('(status = ? or reply_status = ?)', ['pending', 'pending']),
+                    'pending' => $q->whereRaw('(status = ? or reply_status = ? or reply_draft_status = ?)', ['pending', 'pending', 'pending']),
                     null, '' => $q,
                     default => $q->where('status', $data['value']),
                 }),
                 Tables\Filters\TernaryFilter::make('reply_pending')->label(__('admin.review_reply_pending'))
-                    ->queries(true: fn (Builder $q) => $q->where('reply_status', 'pending'), false: fn (Builder $q) => $q->where(fn ($q) => $q->whereNull('reply_status')->orWhere('reply_status', '!=', 'pending'))),
+                    ->queries(true: fn (Builder $q) => $q->where(fn ($q) => $q->where('reply_status', 'pending')->orWhere('reply_draft_status', 'pending')), false: fn (Builder $q) => $q->where(fn ($q) => $q->whereNull('reply_status')->orWhere('reply_status', '!=', 'pending'))),
             ])
             ->actions([Tables\Actions\ViewAction::make(), ...self::moderationActions()]);
     }
@@ -186,6 +186,8 @@ class ReviewResource extends Resource
                         'published' => 'success', 'pending' => 'warning', default => 'danger'
                     }),
                 TextEntry::make('reply_at')->label(__('admin.review_submitted_at'))->dateTime('d/m/Y H:i'),
+                TextEntry::make('reply_draft')->label(__('admin.review_reply_draft'))->columnSpanFull()->visible(fn (Review $r) => $r->reply_draft !== null)
+                    ->helperText(fn (Review $r) => $r->hasPendingDraft() ? __('admin.review_reply_draft_pending') : __('admin.review_reply_draft_rejected')),
                 TextEntry::make('reply_rejection_reason')->label(__('admin.review_rejection_reason'))->badge()->color('danger')->placeholder('—')
                     ->formatStateUsing(fn ($state) => __('admin.review_rejection_reasons.'.$state)),
             ])->columns(3)->visible(fn (Review $r) => $r->reply !== null),

@@ -63,16 +63,36 @@ class ReviewResource extends Resource
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['booking', 'photos']))
             ->columns([
                 Tables\Columns\TextColumn::make('published_at')->label(__('partner.review_date'))->date('d/m/Y')->sortable(),
-                Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->formatStateUsing(fn ($state) => str_repeat('★', (int) $state).str_repeat('☆', 5 - (int) $state))->sortable(),
+                Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->formatStateUsing(fn ($state) => str_repeat('★', (int) $state).str_repeat('☆', 5 - (int) $state))->sortable()
+                    ->description(fn (Review $r) => static::criteriaLine($r->criteriaScores()))->wrap(),
                 Tables\Columns\TextColumn::make('author_name')->label(__('partner.customer'))->description(fn (Review $r) => $r->booking?->reference),
                 Tables\Columns\TextColumn::make('body')->label(__('partner.review'))->limit(100)->wrap()->description(fn (Review $r) => $r->title),
                 Tables\Columns\TextColumn::make('reply_status')->label(__('partner.review_reply'))->badge()->placeholder(__('partner.review_no_reply'))
                     ->formatStateUsing(fn ($state) => __('partner.review_reply_status.'.$state))
+                    ->description(fn (Review $r) => $r->reply_draft_status ? __('partner.review_draft_'.$r->reply_draft_status) : null)
                     ->color(fn ($state) => match ($state) {
                         'published' => 'success', 'pending' => 'warning', default => 'danger'
                     }),
             ])
+            ->description(fn () => static::averagesLine())
             ->actions([
+                Tables\Actions\Action::make('edit_reply')->label(__('partner.review_edit_reply'))->icon('heroicon-o-pencil-square')
+                    ->visible(fn (Review $r) => $r->canEditReply())
+                    ->modalHeading(__('partner.review_edit_reply'))
+                    ->fillForm(fn (Review $r) => ['reply' => $r->replyUnderReview() ?? $r->reply])
+                    ->form([
+                        Placeholder::make('review')->label(__('partner.review'))->content(fn (Review $r) => new HtmlString(e(str_repeat('★', (int) $r->rating)).' — '.e($r->body))),
+                        Textarea::make('reply')->label(__('partner.review_reply'))->rows(5)->required()->minLength(Review::MIN_BODY)->maxLength(2000)
+                            ->helperText(fn (Review $r) => __($r->replyPublished() ? 'partner.review_edit_reply_hint' : 'partner.review_reply_hint', ['min' => Review::MIN_BODY])),
+                    ])
+                    ->action(function (Review $r, array $data): void {
+                        try {
+                            app(ReviewService::class)->reply($r, auth()->user(), $data['reply']);
+                            Notification::make()->title(__($r->hasPendingDraft() ? 'partner.review_edit_reply_sent' : 'partner.review_reply_sent'))->success()->send();
+                        } catch (BookingException $e) {
+                            Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
+                        }
+                    }),
                 Tables\Actions\Action::make('reply')->label(__('partner.review_reply_action'))->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->visible(fn (Review $r) => $r->canReply())
                     ->modalHeading(__('partner.review_reply_action'))
@@ -90,6 +110,46 @@ class ReviewResource extends Resource
                         }
                     }),
             ]);
+    }
+
+    public const SCORE_ICONS = [1 => '🙁', 2 => '😐', 3 => '😊'];
+
+    /** « Accueil 😊 · Propreté 😐 … » pour un avis ; vide si le client n'a noté aucun critère. */
+    public static function criteriaLine(array $scores): ?string
+    {
+        if ($scores === []) {
+            return null;
+        }
+        $parts = [];
+        foreach ($scores as $k => $v) {
+            $parts[] = __('ui.review.criteria.'.$k).' '.(self::SCORE_ICONS[max(1, min(3, $v))] ?? '');
+        }
+
+        return implode(' · ', $parts);
+    }
+
+    /** Moyennes de l'établissement : note globale puis chaque critère (sur 3), sur les avis publiés. */
+    public static function averagesLine(): ?string
+    {
+        $reviews = static::getEloquentQuery()->get(['rating', 'criteria']);
+        if ($reviews->isEmpty()) {
+            return null;
+        }
+        $sums = [];
+        foreach ($reviews as $r) {
+            foreach ($r->criteriaScores() as $k => $v) {
+                $sums[$k][] = $v;
+            }
+        }
+        $parts = [__('partner.review_avg_rating', ['avg' => number_format($reviews->avg('rating'), 1, ',', ' ')])];
+        foreach (Review::CRITERIA as $k) {
+            if (! empty($sums[$k])) {
+                $avg = array_sum($sums[$k]) / count($sums[$k]);
+                $parts[] = __('ui.review.criteria.'.$k).' '.(self::SCORE_ICONS[(int) round($avg)] ?? '').' '.number_format($avg, 1, ',', ' ').'/3';
+            }
+        }
+
+        return __('partner.review_averages', ['n' => $reviews->count()]).' — '.implode(' · ', $parts);
     }
 
     public static function getPages(): array

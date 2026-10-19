@@ -31,7 +31,7 @@ class Review extends Model
     protected $casts = [
         'criteria' => 'array', 'bonus' => 'array',
         'invited_at' => 'datetime', 'submitted_at' => 'datetime', 'published_at' => 'datetime', 'moderated_at' => 'datetime',
-        'reply_at' => 'datetime', 'reply_moderated_at' => 'datetime',
+        'reply_at' => 'datetime', 'reply_moderated_at' => 'datetime', 'reply_draft_at' => 'datetime',
     ];
 
     public function spa(): BelongsTo
@@ -83,6 +83,36 @@ class Review extends Model
     public function canReply(): bool
     {
         return $this->isPublished() && ($this->reply === null || $this->reply_status === 'rejected');
+    }
+
+    /** Une réponse existe (en attente ou publiée) : l'établissement peut la modifier. */
+    public function canEditReply(): bool
+    {
+        return $this->isPublished() && $this->reply !== null && $this->reply_status !== 'rejected';
+    }
+
+    public function hasPendingDraft(): bool
+    {
+        return $this->reply_draft !== null && $this->reply_draft_status === 'pending';
+    }
+
+    /** Texte de la réponse soumis à vérification : brouillon d'une réponse publiée, ou première réponse en attente. */
+    public function replyUnderReview(): ?string
+    {
+        return $this->hasPendingDraft() ? $this->reply_draft : ($this->reply_status === 'pending' ? $this->reply : null);
+    }
+
+    /** Critères détaillés (1 = à améliorer, 2 = moyen, 3 = bien) dans l'ordre de référence. */
+    public function criteriaScores(): array
+    {
+        $out = [];
+        foreach (self::CRITERIA as $k) {
+            if (isset($this->criteria[$k])) {
+                $out[$k] = (int) $this->criteria[$k];
+            }
+        }
+
+        return $out;
     }
 
     public function isNegative(): bool
