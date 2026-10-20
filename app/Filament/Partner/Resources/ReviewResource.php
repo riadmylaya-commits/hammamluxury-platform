@@ -62,16 +62,9 @@ class ReviewResource extends Resource
             ->defaultSort('published_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['booking', 'photos']))
             ->columns([
-                // Mobile : une carte par avis (note, date, client, critères, commentaire, statut, puis les actions).
-                Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\TextColumn::make('m_rating')->state(fn (Review $r) => static::stars($r->rating))->weight('bold')->size('lg')
-                        ->description(fn (Review $r) => static::criteriaLine($r->criteriaScores()))->wrap(),
-                    Tables\Columns\TextColumn::make('m_meta')->state(fn (Review $r) => $r->published_at?->format('d/m/Y').' · '.$r->author_name.($r->booking ? ' · '.$r->booking->reference : ''))->color('gray')->size('sm'),
-                    Tables\Columns\TextColumn::make('m_body')->state(fn (Review $r) => $r->body)->wrap()->description(fn (Review $r) => $r->title, position: 'above'),
-                    Tables\Columns\TextColumn::make('m_reply')->state(fn (Review $r) => $r->reply_status ? __('partner.review_reply_status.'.$r->reply_status) : __('partner.review_no_reply'))->badge()
-                        ->color(fn (Review $r) => static::replyColor($r->reply_status))
-                        ->description(fn (Review $r) => $r->reply_draft_status ? __('partner.review_draft_'.$r->reply_draft_status) : null),
-                ])->space(2)->hiddenFrom('md'),
+                // Mobile : une carte par avis (une colonne de type texte, pas un composant de mise en page,
+                // afin que l'en-tête du tableau reste présent sur ordinateur).
+                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Review $r) => static::mobileCard($r))->html()->wrap()->hiddenFrom('md'),
                 // Ordinateur : tableau classique.
                 Tables\Columns\TextColumn::make('published_at')->label(__('partner.review_date'))->date('d/m/Y')->sortable()->visibleFrom('md'),
                 Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->formatStateUsing(fn ($state) => static::stars($state))->sortable()->visibleFrom('md')
@@ -126,6 +119,28 @@ class ReviewResource extends Resource
     public static function stars(mixed $rating): string
     {
         return str_repeat('★', (int) $rating).str_repeat('☆', 5 - (int) $rating);
+    }
+
+    /** Carte mobile : note, critères, date · client · référence, titre, commentaire, statut de la réponse. */
+    public static function mobileCard(Review $r): HtmlString
+    {
+        $muted = 'style="color:#6b7280;font-size:.8rem"';
+        $badge = sprintf('<span class="fi-badge fi-color-%s" style="display:inline-block;border-radius:.375rem;padding:.1rem .5rem;font-size:.75rem;font-weight:600;%s">%s</span>',
+            static::replyColor($r->reply_status),
+            match (static::replyColor($r->reply_status)) {
+                'success' => 'background:#dcfce7;color:#166534', 'warning' => 'background:#fef3c7;color:#92400e', 'danger' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#374151'
+            },
+            e($r->reply_status ? __('partner.review_reply_status.'.$r->reply_status) : __('partner.review_no_reply')));
+        $parts = [
+            '<div style="font-size:1.05rem;font-weight:700">'.e(static::stars($r->rating)).'</div>',
+            ($c = static::criteriaLine($r->criteriaScores())) ? '<div '.$muted.'>'.e($c).'</div>' : '',
+            '<div '.$muted.'>'.e(trim($r->published_at?->format('d/m/Y').' · '.$r->author_name.($r->booking ? ' · '.$r->booking->reference : ''))).'</div>',
+            $r->title ? '<div style="font-weight:600;margin-top:.35rem">'.e($r->title).'</div>' : '',
+            '<div style="margin-top:.2rem;white-space:normal">'.e($r->body).'</div>',
+            '<div style="margin-top:.45rem">'.$badge.($r->reply_draft_status ? ' <span '.$muted.'>'.e(__('partner.review_draft_'.$r->reply_draft_status)).'</span>' : '').'</div>',
+        ];
+
+        return new HtmlString('<div style="display:flex;flex-direction:column;gap:.15rem;max-width:100%">'.implode('', array_filter($parts)).'</div>');
     }
 
     public static function replyColor(?string $status): string
