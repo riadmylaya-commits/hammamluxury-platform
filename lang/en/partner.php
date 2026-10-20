@@ -486,6 +486,7 @@ return [
     'review_reply_action' => 'Reply',
     'review_reply_hint' => 'At least :min characters. Your reply is checked by HammamLuxury before publication and must follow the same rules as reviews (courtesy, no personal data).',
     'review_reply_sent' => 'Reply sent: it will be published once checked by HammamLuxury.',
+    'review_actions' => 'Reply',
     'review_edit_reply' => 'Edit my reply',
     'review_edit_reply_hint' => 'At least :min characters. Your current reply stays published until HammamLuxury has checked the new version; if it is rejected, the previous one stays online.',
     'review_edit_reply_sent' => 'New version sent: your current reply stays published until it is checked.',

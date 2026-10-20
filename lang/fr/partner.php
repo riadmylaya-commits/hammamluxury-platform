@@ -493,6 +493,7 @@ return [
     'review_reply_action' => 'Répondre',
     'review_reply_hint' => 'Au moins :min caractères. Votre réponse est vérifiée par HammamLuxury avant publication et doit respecter les mêmes règles que les avis (courtoisie, pas de données personnelles).',
     'review_reply_sent' => 'Réponse envoyée : elle sera publiée après vérification par HammamLuxury.',
+    'review_actions' => 'Réponse',
     'review_edit_reply' => 'Modifier ma réponse',
     'review_edit_reply_hint' => 'Au moins :min caractères. Votre réponse actuelle reste publiée jusqu’à la vérification de la nouvelle version par HammamLuxury ; si elle est refusée, l’ancienne reste en ligne.',
     'review_edit_reply_sent' => 'Nouvelle version envoyée : votre réponse actuelle reste publiée jusqu’à sa vérification.',

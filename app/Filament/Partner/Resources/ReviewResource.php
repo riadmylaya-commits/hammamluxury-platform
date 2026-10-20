@@ -78,40 +78,54 @@ class ReviewResource extends Resource
             ])
             ->description(fn () => static::averagesLine())
             ->actions([
-                Tables\Actions\Action::make('edit_reply')->label(__('partner.review_edit_reply'))->icon('heroicon-o-pencil-square')
-                    ->visible(fn (Review $r) => $r->canEditReply())
-                    ->modalHeading(__('partner.review_edit_reply'))
-                    ->fillForm(fn (Review $r) => ['reply' => $r->replyUnderReview() ?? $r->reply])
-                    ->form([
-                        Placeholder::make('review')->label(__('partner.review'))->content(fn (Review $r) => new HtmlString(e(str_repeat('★', (int) $r->rating)).' — '.e($r->body))),
-                        Textarea::make('reply')->label(__('partner.review_reply'))->rows(5)->required()->minLength(Review::MIN_BODY)->maxLength(2000)
-                            ->helperText(fn (Review $r) => __($r->replyPublished() ? 'partner.review_edit_reply_hint' : 'partner.review_reply_hint', ['min' => Review::MIN_BODY])),
-                    ])
-                    ->action(function (Review $r, array $data): void {
-                        try {
-                            app(ReviewService::class)->reply($r, auth()->user(), $data['reply']);
-                            Notification::make()->title(__($r->hasPendingDraft() ? 'partner.review_edit_reply_sent' : 'partner.review_reply_sent'))->success()->send();
-                        } catch (BookingException $e) {
-                            Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
-                        }
-                    }),
-                Tables\Actions\Action::make('reply')->label(__('partner.review_reply_action'))->icon('heroicon-o-chat-bubble-left-ellipsis')
-                    ->visible(fn (Review $r) => $r->canReply())
-                    ->modalHeading(__('partner.review_reply_action'))
-                    ->form([
-                        Placeholder::make('review')->label(__('partner.review'))->content(fn (Review $r) => new HtmlString(e(str_repeat('★', (int) $r->rating)).' — '.e($r->body))),
-                        Textarea::make('reply')->label(__('partner.review_reply'))->rows(5)->required()->minLength(Review::MIN_BODY)->maxLength(2000)
-                            ->helperText(__('partner.review_reply_hint', ['min' => Review::MIN_BODY])),
-                    ])
-                    ->action(function (Review $r, array $data): void {
-                        try {
-                            app(ReviewService::class)->reply($r, auth()->user(), $data['reply']);
-                            Notification::make()->title(__('partner.review_reply_sent'))->success()->send();
-                        } catch (BookingException $e) {
-                            Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
-                        }
-                    }),
+                // Ordinateur : boutons explicites ; mobile : un seul bouton « Réponse » ouvrant les mêmes actions (gain de largeur).
+                static::editReplyAction('edit_reply')->extraAttributes(['class' => 'hidden md:flex']),
+                static::replyAction('reply')->extraAttributes(['class' => 'hidden md:flex']),
+                Tables\Actions\ActionGroup::make([static::editReplyAction('edit_reply_mobile'), static::replyAction('reply_mobile')])
+                    ->label(__('partner.review_actions'))->icon('heroicon-m-chat-bubble-left-ellipsis')->button()->size('sm')->color('gray')
+                    ->extraAttributes(['class' => 'md:hidden']),
             ]);
+    }
+
+    public static function editReplyAction(string $name): Tables\Actions\Action
+    {
+        return Tables\Actions\Action::make($name)->label(__('partner.review_edit_reply'))->icon('heroicon-o-pencil-square')
+            ->visible(fn (Review $r) => $r->canEditReply())
+            ->modalHeading(__('partner.review_edit_reply'))
+            ->fillForm(fn (Review $r) => ['reply' => $r->replyUnderReview() ?? $r->reply])
+            ->form([
+                Placeholder::make('review')->label(__('partner.review'))->content(fn (Review $r) => new HtmlString(e(str_repeat('★', (int) $r->rating)).' — '.e($r->body))),
+                Textarea::make('reply')->label(__('partner.review_reply'))->rows(5)->required()->minLength(Review::MIN_BODY)->maxLength(2000)
+                    ->helperText(fn (Review $r) => __($r->replyPublished() ? 'partner.review_edit_reply_hint' : 'partner.review_reply_hint', ['min' => Review::MIN_BODY])),
+            ])
+            ->action(function (Review $r, array $data): void {
+                try {
+                    app(ReviewService::class)->reply($r, auth()->user(), $data['reply']);
+                    Notification::make()->title(__($r->hasPendingDraft() ? 'partner.review_edit_reply_sent' : 'partner.review_reply_sent'))->success()->send();
+                } catch (BookingException $e) {
+                    Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
+                }
+            });
+    }
+
+    public static function replyAction(string $name): Tables\Actions\Action
+    {
+        return Tables\Actions\Action::make($name)->label(__('partner.review_reply_action'))->icon('heroicon-o-chat-bubble-left-ellipsis')
+            ->visible(fn (Review $r) => $r->canReply())
+            ->modalHeading(__('partner.review_reply_action'))
+            ->form([
+                Placeholder::make('review')->label(__('partner.review'))->content(fn (Review $r) => new HtmlString(e(str_repeat('★', (int) $r->rating)).' — '.e($r->body))),
+                Textarea::make('reply')->label(__('partner.review_reply'))->rows(5)->required()->minLength(Review::MIN_BODY)->maxLength(2000)
+                    ->helperText(__('partner.review_reply_hint', ['min' => Review::MIN_BODY])),
+            ])
+            ->action(function (Review $r, array $data): void {
+                try {
+                    app(ReviewService::class)->reply($r, auth()->user(), $data['reply']);
+                    Notification::make()->title(__('partner.review_reply_sent'))->success()->send();
+                } catch (BookingException $e) {
+                    Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
+                }
+            });
     }
 
     public const SCORE_ICONS = [1 => '🙁', 2 => '😐', 3 => '😊'];
