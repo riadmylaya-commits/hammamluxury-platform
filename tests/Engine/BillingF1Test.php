@@ -426,11 +426,13 @@ class BillingF1Test extends BookingFlowTestCase
         $this->viewAfter();
         $owner = $this->partnerUser();
         $this->actingAs($owner)->get('/partenaire/'.$this->spa->slug.'/commission-statement')->assertOk()->assertSee(__('billing.statement_title'));
-        $current = now(config('hl.timezone'))->format('Y-m');
-        $this->actingAs($owner)->get('/partenaire/'.$this->spa->slug.'/commission-statement?period='.$current)->assertOk()
-            ->assertSee('value="'.$current.'" selected', false);
-        $this->actingAs($owner)->get('/partenaire/'.$this->spa->slug.'/commission-statement?period=2099-13')->assertOk()
-            ->assertSee('value="'.BillingPeriods::previous().'" selected', false);
+        // Mois demandé par le tableau de bord (?period=) : retenu s'il est valide et proposé, sinon mois précédent.
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+        $current = BillingPeriods::current();
+        Livewire::withQueryParams(['period' => $current])->actingAs($owner)->test(CommissionStatement::class)->assertSet('period', $current);
+        Livewire::withQueryParams(['period' => '2099-13'])->actingAs($owner)->test(CommissionStatement::class)->assertSet('period', BillingPeriods::previous());
+        Livewire::withQueryParams(['period' => '2001-01'])->actingAs($owner)->test(CommissionStatement::class)->assertSet('period', BillingPeriods::previous());
 
         $otherUser = User::create(['name' => 'Autre', 'email' => 'autre@example.test', 'password' => 'secret-test', 'role' => 'partner', 'email_verified_at' => now()]);
         $other = Partner::create(['user_id' => $otherUser->id, 'company_name' => 'Autre SARL', 'status' => 'approved']);
