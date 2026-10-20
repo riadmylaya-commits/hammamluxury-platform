@@ -12,6 +12,7 @@ use App\Domain\Booking\CancellationService;
 use App\Filament\Admin\Resources\CommissionDisputeResource\Pages\ViewCommissionDispute;
 use App\Filament\Partner\Pages\CommissionStatement;
 use App\Filament\Partner\Resources\CommissionDisputeResource;
+use App\Filament\Shared\BillingPeriods;
 use App\Jobs\SendBillingNotification;
 use App\Mail\BillingMail;
 use App\Models\ActivityLog;
@@ -425,6 +426,11 @@ class BillingF1Test extends BookingFlowTestCase
         $this->viewAfter();
         $owner = $this->partnerUser();
         $this->actingAs($owner)->get('/partenaire/'.$this->spa->slug.'/commission-statement')->assertOk()->assertSee(__('billing.statement_title'));
+        $current = now(config('hl.timezone'))->format('Y-m');
+        $this->actingAs($owner)->get('/partenaire/'.$this->spa->slug.'/commission-statement?period='.$current)->assertOk()
+            ->assertSee('value="'.$current.'" selected', false);
+        $this->actingAs($owner)->get('/partenaire/'.$this->spa->slug.'/commission-statement?period=2099-13')->assertOk()
+            ->assertSee('value="'.BillingPeriods::previous().'" selected', false);
 
         $otherUser = User::create(['name' => 'Autre', 'email' => 'autre@example.test', 'password' => 'secret-test', 'role' => 'partner', 'email_verified_at' => now()]);
         $other = Partner::create(['user_id' => $otherUser->id, 'company_name' => 'Autre SARL', 'status' => 'approved']);

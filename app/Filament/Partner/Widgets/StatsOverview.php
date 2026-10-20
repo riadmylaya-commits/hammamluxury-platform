@@ -5,6 +5,7 @@ namespace App\Filament\Partner\Widgets;
 use App\Filament\Partner\Pages\CommissionStatement;
 use App\Filament\Partner\Pages\EditSpaProfile;
 use App\Filament\Partner\Resources\BookingResource;
+use App\Filament\Shared\BillingPeriods;
 use App\Models\Booking;
 use Filament\Facades\Filament;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -34,7 +35,7 @@ class StatsOverview extends BaseWidget
                 ->url($bookings(['status' => ['values' => ['confirmed']], 'upcoming' => ['isActive' => true]]))->extraAttributes($clickable),
             Stat::make(__('booking.finance_realized_month'), $money((float) $realized))
                 ->description(__('booking.finance_realized_net', ['amount' => $money((float) $realizedNet)]))
-                ->url(CommissionStatement::getUrl())->extraAttributes($clickable),
+                ->url(CommissionStatement::getUrl(['period' => BillingPeriods::current()]))->extraAttributes($clickable),
             Stat::make(__('booking.finance_forecast_month'), $money((float) $forecast->sum('total')))
                 ->description(__('booking.finance_forecast_net', ['amount' => $money((float) $forecast->sum(fn (Booking $b) => $b->netForPartner()))]))
                 ->url($bookings(['status' => ['values' => ['confirmed']]]))->extraAttributes($clickable),

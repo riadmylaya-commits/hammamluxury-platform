@@ -57,9 +57,11 @@ class CommissionStatement extends Page implements HasActions, HasForms
         return __('billing.statement_help');
     }
 
+    /** Mois demandé dans l'URL (`?period=AAAA-MM`, ex. depuis le tableau de bord), sinon le mois précédent. */
     public function mount(): void
     {
-        $this->period = BillingPeriods::previous();
+        $asked = request()->query('period');
+        $this->period = BillingPeriods::valid($asked) && array_key_exists($asked, BillingPeriods::options()) ? $asked : BillingPeriods::previous();
     }
 
     /** Le partenaire est toujours résolu depuis le tenant courant, jamais depuis la requête. */

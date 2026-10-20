@@ -62,17 +62,26 @@ class ReviewResource extends Resource
             ->defaultSort('published_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['booking', 'photos']))
             ->columns([
-                Tables\Columns\TextColumn::make('published_at')->label(__('partner.review_date'))->date('d/m/Y')->sortable(),
-                Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->formatStateUsing(fn ($state) => str_repeat('★', (int) $state).str_repeat('☆', 5 - (int) $state))->sortable()
+                // Mobile : une carte par avis (note, date, client, critères, commentaire, statut, puis les actions).
+                Tables\Columns\Layout\Stack::make([
+                    Tables\Columns\TextColumn::make('m_rating')->state(fn (Review $r) => static::stars($r->rating))->weight('bold')->size('lg')
+                        ->description(fn (Review $r) => static::criteriaLine($r->criteriaScores()))->wrap(),
+                    Tables\Columns\TextColumn::make('m_meta')->state(fn (Review $r) => $r->published_at?->format('d/m/Y').' · '.$r->author_name.($r->booking ? ' · '.$r->booking->reference : ''))->color('gray')->size('sm'),
+                    Tables\Columns\TextColumn::make('m_body')->state(fn (Review $r) => $r->body)->wrap()->description(fn (Review $r) => $r->title, position: 'above'),
+                    Tables\Columns\TextColumn::make('m_reply')->state(fn (Review $r) => $r->reply_status ? __('partner.review_reply_status.'.$r->reply_status) : __('partner.review_no_reply'))->badge()
+                        ->color(fn (Review $r) => static::replyColor($r->reply_status))
+                        ->description(fn (Review $r) => $r->reply_draft_status ? __('partner.review_draft_'.$r->reply_draft_status) : null),
+                ])->space(2)->hiddenFrom('md'),
+                // Ordinateur : tableau classique.
+                Tables\Columns\TextColumn::make('published_at')->label(__('partner.review_date'))->date('d/m/Y')->sortable()->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->formatStateUsing(fn ($state) => static::stars($state))->sortable()->visibleFrom('md')
                     ->description(fn (Review $r) => static::criteriaLine($r->criteriaScores()))->wrap(),
-                Tables\Columns\TextColumn::make('author_name')->label(__('partner.customer'))->description(fn (Review $r) => $r->booking?->reference),
-                Tables\Columns\TextColumn::make('body')->label(__('partner.review'))->limit(100)->wrap()->description(fn (Review $r) => $r->title),
-                Tables\Columns\TextColumn::make('reply_status')->label(__('partner.review_reply'))->badge()->placeholder(__('partner.review_no_reply'))
+                Tables\Columns\TextColumn::make('author_name')->label(__('partner.customer'))->description(fn (Review $r) => $r->booking?->reference)->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('body')->label(__('partner.review'))->limit(100)->wrap()->description(fn (Review $r) => $r->title)->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('reply_status')->label(__('partner.review_reply'))->badge()->placeholder(__('partner.review_no_reply'))->visibleFrom('md')
                     ->formatStateUsing(fn ($state) => __('partner.review_reply_status.'.$state))
                     ->description(fn (Review $r) => $r->reply_draft_status ? __('partner.review_draft_'.$r->reply_draft_status) : null)
-                    ->color(fn ($state) => match ($state) {
-                        'published' => 'success', 'pending' => 'warning', default => 'danger'
-                    }),
+                    ->color(fn ($state) => static::replyColor($state)),
             ])
             ->description(fn () => static::averagesLine())
             ->actions([
@@ -113,6 +122,18 @@ class ReviewResource extends Resource
     }
 
     public const SCORE_ICONS = [1 => '🙁', 2 => '😐', 3 => '😊'];
+
+    public static function stars(mixed $rating): string
+    {
+        return str_repeat('★', (int) $rating).str_repeat('☆', 5 - (int) $rating);
+    }
+
+    public static function replyColor(?string $status): string
+    {
+        return match ($status) {
+            'published' => 'success', 'pending' => 'warning', null => 'gray', default => 'danger'
+        };
+    }
 
     /** « Accueil 😊 · Propreté 😐 … » pour un avis ; vide si le client n'a noté aucun critère. */
     public static function criteriaLine(array $scores): ?string

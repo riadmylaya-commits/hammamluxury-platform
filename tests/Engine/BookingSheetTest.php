@@ -127,7 +127,7 @@ class BookingSheetTest extends BookingFlowTestCase
         Livewire::test(StatsOverview::class)
             ->assertSee('Chiffre d’affaires acquis ce mois')->assertSee('dont net partenaire')
             ->assertSee('/partenaire/'.$this->spa->slug.'/bookings?tableFilters', false)
-            ->assertSee('/partenaire/'.$this->spa->slug.'/commission-statement', false)
+            ->assertSee('/partenaire/'.$this->spa->slug.'/commission-statement?period='.now(config('hl.timezone'))->format('Y-m'), false)
             ->assertSee('/partenaire/'.$this->spa->slug.'/profile', false);
     }
 }
