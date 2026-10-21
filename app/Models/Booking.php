@@ -18,6 +18,9 @@ class Booking extends Model
 
     public const CHANNELS = ['phone', 'whatsapp', 'walk_in', 'email', 'other'];
 
+    /** Canal enregistré automatiquement pour une saisie directe par l'établissement (le formulaire ne le demande plus). */
+    public const OFFLINE_DEFAULT_CHANNEL = 'other';
+
     public const PAYMENT_STATUSES = ['on_site', 'paid', 'partial', 'refunded'];
 
     /** Statuts qui ne consomment plus de capacité. */

@@ -342,7 +342,7 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         // Le partenaire voit les critères détaillés et les moyennes ; le site public ne montre que la note globale.
         $this->asPartner();
         Livewire::test(PartnerListReviews::class)->assertCanSeeTableRecords([$r])
-            ->assertSee('Accueil / personnel 😊')->assertSee('Propreté 🙁')->assertSee('Moyennes de vos 1 avis publiés')
+            ->assertSee('Accueil / personnel 3/3')->assertSee('Propreté 1/3')->assertSee('Notes détaillées')->assertSee('Moyennes de vos 1 avis publiés')->assertSee('3,0 / 3')->assertSee('1,0 / 3')->assertDontSee('😊')
             ->assertTableActionVisible('edit_reply', $r)->assertTableActionHidden('reply', $r)
             ->callTableAction('edit_reply', $r, ['reply' => 'Version corrigée : nous avons renforcé notre équipe et revu le nettoyage.'])
             ->assertHasNoTableActionErrors();

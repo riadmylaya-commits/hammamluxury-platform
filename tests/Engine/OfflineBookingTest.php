@@ -130,13 +130,13 @@ class OfflineBookingTest extends TestCase
         $this->get('/partenaire/'.$this->spa->slug.'/offline-booking')->assertOk()->assertSee(__('partner.offline_title'));
 
         $t = Livewire::test(OfflineBooking::class)
-            ->fillForm(['treatment_id' => $this->massageId(), 'party' => 1, 'date' => $this->day->toDateString(), 'first_name' => 'Sara', 'last_name' => 'Idrissi', 'phone_country' => 'MA', 'phone' => '0661351989', 'channel' => 'walk_in', 'note' => 'Paiement en espèces à l’arrivée']);
+            ->fillForm(['treatment_id' => $this->massageId(), 'party' => 1, 'date' => $this->day->toDateString(), 'first_name' => 'Sara', 'last_name' => 'Idrissi', 'phone_country' => 'MA', 'phone' => '0661351989', 'note' => 'Paiement en espèces à l’arrivée']);
         $t->fillForm(['time' => '10:00'])->call('save');
         $this->assertFalse($this->spa->bookings()->where('first_name', 'Sara')->exists(), 'heure déjà prise : refusée par le moteur');
 
         $t->fillForm(['time' => '11:00'])->call('save')->assertHasNoFormErrors();
         $b = $this->spa->bookings()->where('first_name', 'Sara')->firstOrFail();
-        $this->assertSame(['confirmed', 'partner', 'walk_in', '+212661351989'], [$b->status, $b->source, $b->channel, $b->phone]);
+        $this->assertSame(['confirmed', 'partner', 'other', '+212661351989'], [$b->status, $b->source, $b->channel, $b->phone], 'canal « Saisie directe » enregistré automatiquement');
         $this->assertSame('11:00', $b->start_at->format('H:i'));
         $this->assertNull($b->note, 'la note partenaire ne doit pas être traitée comme une note client');
         $this->assertSame('Paiement en espèces à l’arrivée', $b->notes()->value('body'));
@@ -212,5 +212,21 @@ class OfflineBookingTest extends TestCase
         $this->bookings->decline($online, 'partner', 'full');
         $offline = $this->bookings->bookOffline($this->spa, $this->day->setTime(16, 0), $items, $this->customer(), 'phone');
         $this->assertSame('confirmed', $offline->status);
+    }
+
+    public function test_partner_can_record_a_booking_with_only_the_required_fields(): void
+    {
+        $this->actingAs($this->owner);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        Livewire::test(OfflineBooking::class)
+            ->fillForm(['treatment_id' => $this->massageId(), 'party' => 1, 'date' => $this->day->toDateString(), 'first_name' => 'Lina', 'last_name' => 'Amrani', 'phone_country' => 'MA', 'phone' => null, 'email' => null, 'note' => null])
+            ->fillForm(['time' => '11:00'])->call('save')->assertHasNoFormErrors();
+
+        $b = $this->spa->bookings()->where('first_name', 'Lina')->firstOrFail();
+        $this->assertSame(['confirmed', 'partner', 'other', '', '', 0.0], [$b->status, $b->source, $b->channel, $b->phone, $b->email, (float) $b->commission_amount]);
+        $this->assertStringContainsString('Saisie directe', __('partner.channels')[$b->channel]);
+        $this->assertEquals($this->owner->id, $b->created_by_user_id);
     }
 }
