@@ -26,10 +26,10 @@
         <div class="rv-crit">
             @foreach (\App\Models\Review::CRITERIA as $key)
                 <div class="rv-row"><span>{{ __('ui.review.criteria.'.$key) }}</span>
-                    <span class="rv-scale" role="group" aria-label="{{ __('ui.review.criteria.'.$key) }}">
-                        @foreach ([1, 2, 3] as $v)
-                            <button type="button" wire:click="setCriterion('{{ $key }}', {{ $v }})" @class(['on' => ($criteria[$key] ?? 0) === $v]) title="{{ __('ui.review.smiley.'.$v) }}">{{ $v }}<small>/3</small></button>
-                        @endforeach
+                    <span class="rv-stars sm" role="radiogroup" aria-label="{{ __('ui.review.criteria.'.$key) }}">
+                        @for ($v = 1; $v <= \App\Models\Review::CRITERIA_SCALE; $v++)
+                            <button type="button" wire:click="setCriterion('{{ $key }}', {{ $v }})" @class(['on' => $v <= ($criteria[$key] ?? 0)]) role="radio" aria-checked="{{ ($criteria[$key] ?? 0) === $v ? 'true' : 'false' }}" aria-label="{{ $v }}" title="{{ __('ui.review.rating_labels.'.$v) }}">★</button>
+                        @endfor
                     </span>
                 </div>
             @endforeach

@@ -13,7 +13,7 @@ use Livewire\WithFileUploads;
 
 /**
  * Dépôt d'un avis vérifié depuis le lien unique reçu par e-mail, en deux étapes :
- * 1. note globale + critères (smileys) ; 2. apprécié / à améliorer / titre / commentaire (≥ 20 car.) / photos facultatives.
+ * 1. note globale + critères (étoiles sur 5) ; 2. apprécié / à améliorer / titre / commentaire (≥ 20 car.) / photos facultatives.
  */
 #[Layout('components.layouts.site')]
 class ReviewForm extends Component
@@ -62,7 +62,7 @@ class ReviewForm extends Component
     public function setCriterion(string $key, int $value): void
     {
         if (in_array($key, Review::CRITERIA, true)) {
-            $this->criteria[$key] = max(1, min(3, $value));
+            $this->criteria[$key] = max(1, min(Review::CRITERIA_SCALE, $value));
         }
     }
 

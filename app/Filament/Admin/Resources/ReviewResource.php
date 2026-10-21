@@ -148,7 +148,6 @@ class ReviewResource extends Resource
 
     public static function infolist(Infolist $infolist): Infolist
     {
-        $smiley = fn ($v) => [1 => '🙁', 2 => '😐', 3 => '😊'][(int) $v] ?? '—';
 
         return $infolist->schema([
             Section::make(__('admin.review'))->schema([
@@ -167,7 +166,7 @@ class ReviewResource extends Resource
                 TextEntry::make('liked')->label(__('ui.review.liked'))->placeholder('—'),
                 TextEntry::make('improve')->label(__('ui.review.improve'))->placeholder('—'),
                 TextEntry::make('criteria')->label(__('ui.review.criteria_title'))->placeholder('—')->columnSpanFull()
-                    ->formatStateUsing(fn ($state, Review $r) => collect($r->criteria ?? [])->map(fn ($v, $k) => __('ui.review.criteria.'.$k).' '.$smiley($v))->implode(' · ')),
+                    ->formatStateUsing(fn ($state, Review $r) => $r->criteriaSummary().($r->hasLegacyCriteria() ? ' ('.__('partner.review_legacy_scale').')' : '')),
                 TextEntry::make('bonus')->label(__('ui.review.bonus_title'))->placeholder('—')->columnSpanFull()
                     ->formatStateUsing(fn ($state, Review $r) => collect($r->bonus ?? [])->map(fn ($v, $k) => __('ui.review.bonus.'.$k).' : '.__('ui.review.'.$v))->implode(' · ')),
                 ImageEntry::make('photos')->label(__('admin.review_photos'))->columnSpanFull()->height(140)
