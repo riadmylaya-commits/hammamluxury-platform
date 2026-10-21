@@ -12,6 +12,7 @@ use App\Domain\Booking\CancellationService;
 use App\Filament\Admin\Resources\CommissionDisputeResource\Pages\ViewCommissionDispute;
 use App\Filament\Partner\Pages\CommissionStatement;
 use App\Filament\Partner\Resources\CommissionDisputeResource;
+use App\Filament\Shared\BillingPeriods;
 use App\Jobs\SendBillingNotification;
 use App\Mail\BillingMail;
 use App\Models\ActivityLog;
@@ -425,6 +426,13 @@ class BillingF1Test extends BookingFlowTestCase
         $this->viewAfter();
         $owner = $this->partnerUser();
         $this->actingAs($owner)->get('/partenaire/'.$this->spa->slug.'/commission-statement')->assertOk()->assertSee(__('billing.statement_title'));
+        // Mois demandé par le tableau de bord (?period=) : retenu s'il est valide et proposé, sinon mois précédent.
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+        $current = BillingPeriods::current();
+        Livewire::withQueryParams(['period' => $current])->actingAs($owner)->test(CommissionStatement::class)->assertSet('period', $current);
+        Livewire::withQueryParams(['period' => '2099-13'])->actingAs($owner)->test(CommissionStatement::class)->assertSet('period', BillingPeriods::previous());
+        Livewire::withQueryParams(['period' => '2001-01'])->actingAs($owner)->test(CommissionStatement::class)->assertSet('period', BillingPeriods::previous());
 
         $otherUser = User::create(['name' => 'Autre', 'email' => 'autre@example.test', 'password' => 'secret-test', 'role' => 'partner', 'email_verified_at' => now()]);
         $other = Partner::create(['user_id' => $otherUser->id, 'company_name' => 'Autre SARL', 'status' => 'approved']);

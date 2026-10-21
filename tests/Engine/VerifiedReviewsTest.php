@@ -325,4 +325,51 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         $this->actingAs($this->spa->partner->user)->get(route('review.photo', $photo))->assertOk();
         $this->actingAs($this->admin)->get(route('review.photo', $photo))->assertOk();
     }
+
+    public function test_published_reply_can_be_edited_and_stays_online_until_the_new_version_is_checked(): void
+    {
+        $r = $this->reviews->moderate($this->submitted(['criteria' => ['welcome' => 3, 'cleanliness' => 1]]), $this->admin, 'published');
+        $this->reviews->reply($r, $this->spa->partner->user, 'Merci pour votre retour, nous avons renforcé notre équipe d’accueil.');
+        $r = $this->reviews->moderateReply($r->fresh(), $this->admin, 'published');
+        $this->assertTrue($r->replyPublished());
+        $this->assertFalse($r->canReply());
+        $this->assertTrue($r->canEditReply());
+
+        // Filtre Admin « À modérer » : l'avis publié avec réponse publiée n'y figure pas ; il y revient avec un brouillon en attente.
+        $this->asAdmin();
+        Livewire::test(AdminListReviews::class)->filterTable('status', 'pending')->assertCanNotSeeTableRecords([$r]);
+
+        // Le partenaire voit les critères détaillés et les moyennes ; le site public ne montre que la note globale.
+        $this->asPartner();
+        Livewire::test(PartnerListReviews::class)->assertCanSeeTableRecords([$r])
+            ->assertSee('Accueil / personnel 😊')->assertSee('Propreté 🙁')->assertSee('Moyennes de vos 1 avis publiés')
+            ->assertTableActionVisible('edit_reply', $r)->assertTableActionHidden('reply', $r)
+            ->callTableAction('edit_reply', $r, ['reply' => 'Version corrigée : nous avons renforcé notre équipe et revu le nettoyage.'])
+            ->assertHasNoTableActionErrors();
+        $r->refresh();
+        $this->assertTrue($r->hasPendingDraft());
+        $this->assertTrue($r->replyPublished());
+        $this->asAdmin();
+        Livewire::test(AdminListReviews::class)->filterTable('status', 'pending')->assertCanSeeTableRecords([$r])
+            ->filterTable('status', 'published')->assertCanSeeTableRecords([$r]);
+        $this->assertSame('Merci pour votre retour, nous avons renforcé notre équipe d’accueil.', $r->reply);
+        Livewire::test(SpaShow::class, ['spa' => $this->spa])->assertSee('renforcé notre équipe d’accueil')->assertDontSee('Version corrigée')->assertDontSee('Propreté');
+
+        // Refus de la nouvelle version : l'ancienne réponse reste publiée.
+        $this->asAdmin();
+        $this->reviews->moderateReply($r->fresh(), $this->admin, 'rejected', 'personal_data');
+        $r->refresh();
+        $this->assertSame('rejected', $r->reply_draft_status);
+        $this->assertTrue($r->replyPublished());
+        Livewire::test(SpaShow::class, ['spa' => $this->spa])->assertSee('renforcé notre équipe d’accueil')->assertDontSee('Version corrigée');
+
+        // Nouvelle modification validée : elle remplace l'ancienne réponse.
+        $this->reviews->reply($r->fresh(), $this->spa->partner->user, 'Version finale : nous avons renforcé notre équipe et revu le nettoyage.');
+        Livewire::test(ViewReview::class, ['record' => $r->getRouteKey()])->assertSee('Nouvelle version proposée')->callAction('publish_reply')->assertHasNoActionErrors();
+        $r->refresh();
+        $this->assertNull($r->reply_draft);
+        $this->assertSame('Version finale : nous avons renforcé notre équipe et revu le nettoyage.', $r->reply);
+        $this->assertTrue($r->replyPublished());
+        Livewire::test(SpaShow::class, ['spa' => $this->spa])->assertSee('Version finale')->assertDontSee('renforcé notre équipe d’accueil');
+    }
 }

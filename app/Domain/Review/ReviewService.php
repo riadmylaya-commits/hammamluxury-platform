@@ -195,14 +195,26 @@ class ReviewService
     }
 
     /** Réponse de l'établissement à un avis publié : en attente de modération, invisible du public jusqu'à publication. */
+    /**
+     * Première réponse (ou nouvelle réponse après refus) : soumise à vérification avant publication.
+     * Modification d'une réponse en attente : le texte est remplacé. Modification d'une réponse publiée :
+     * conservée en brouillon jusqu'à vérification, l'ancienne réponse reste publiée entre-temps.
+     */
     public function reply(Review $review, ?User $partner, string $text): Review
     {
-        if (! $review->canReply()) {
+        if (! $review->canReply() && ! $review->canEditReply()) {
             throw BookingException::make('reply', 'review_reply_not_allowed', [], 409);
         }
         $text = trim($text);
         if (mb_strlen($text) < Review::MIN_BODY) {
             throw BookingException::make('reply', 'review_body_required', ['min' => Review::MIN_BODY]);
+        }
+        if ($review->replyPublished()) {
+            $review->update(['reply_draft' => $text, 'reply_draft_status' => 'pending', 'reply_draft_rejection_reason' => null, 'reply_draft_at' => now()]);
+            $review->booking?->log('review:reply_edit_submitted', 'partner', ['review' => $review->id]);
+            ActivityLog::record('review.reply_edit_submitted', $review, ['spa' => $review->spa->name], 'partner');
+
+            return $review;
         }
         $review->update(['reply' => $text, 'reply_status' => 'pending', 'reply_at' => now(), 'reply_rejection_reason' => null, 'reply_moderated_at' => null]);
         $review->booking?->log('review:reply_submitted', 'partner', ['review' => $review->id]);
@@ -218,6 +230,16 @@ class ReviewService
         }
         if ($status === 'rejected' && ! in_array($reason, Review::REJECTION_REASONS, true)) {
             throw BookingException::make('reason', 'review_rejection_reason_required');
+        }
+        if ($review->hasPendingDraft()) {
+            $review->update($status === 'published'
+                ? ['reply' => $review->reply_draft, 'reply_status' => 'published', 'reply_at' => $review->reply_draft_at, 'reply_rejection_reason' => null, 'reply_moderated_at' => now(),
+                    'reply_draft' => null, 'reply_draft_status' => null, 'reply_draft_rejection_reason' => null, 'reply_draft_at' => null]
+                : ['reply_draft_status' => 'rejected', 'reply_draft_rejection_reason' => $reason]);
+            $review->booking?->log('review:reply_edit_'.$status, 'admin', array_filter(['review' => $review->id, 'reason' => $reason]));
+            ActivityLog::record('review.reply_edit_'.$status, $review, array_filter(['spa' => $review->spa->name, 'reason' => $reason]), 'admin');
+
+            return $review;
         }
         $review->update(['reply_status' => $status, 'reply_rejection_reason' => $status === 'rejected' ? $reason : null, 'reply_moderated_at' => now()]);
         $review->booking?->log('review:reply_'.$status, 'admin', array_filter(['review' => $review->id, 'reason' => $reason]));

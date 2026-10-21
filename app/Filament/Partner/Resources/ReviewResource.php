@@ -62,34 +62,144 @@ class ReviewResource extends Resource
             ->defaultSort('published_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['booking', 'photos']))
             ->columns([
-                Tables\Columns\TextColumn::make('published_at')->label(__('partner.review_date'))->date('d/m/Y')->sortable(),
-                Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->formatStateUsing(fn ($state) => str_repeat('★', (int) $state).str_repeat('☆', 5 - (int) $state))->sortable(),
-                Tables\Columns\TextColumn::make('author_name')->label(__('partner.customer'))->description(fn (Review $r) => $r->booking?->reference),
-                Tables\Columns\TextColumn::make('body')->label(__('partner.review'))->limit(100)->wrap()->description(fn (Review $r) => $r->title),
-                Tables\Columns\TextColumn::make('reply_status')->label(__('partner.review_reply'))->badge()->placeholder(__('partner.review_no_reply'))
+                // Mobile : une carte par avis (une colonne de type texte, pas un composant de mise en page,
+                // afin que l'en-tête du tableau reste présent sur ordinateur).
+                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Review $r) => static::mobileCard($r))->html()->wrap()->hiddenFrom('md'),
+                // Ordinateur : tableau classique.
+                Tables\Columns\TextColumn::make('published_at')->label(__('partner.review_date'))->date('d/m/Y')->sortable()->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->formatStateUsing(fn ($state) => static::stars($state))->sortable()->visibleFrom('md')
+                    ->description(fn (Review $r) => static::criteriaLine($r->criteriaScores()))->wrap(),
+                Tables\Columns\TextColumn::make('author_name')->label(__('partner.customer'))->description(fn (Review $r) => $r->booking?->reference)->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('body')->label(__('partner.review'))->limit(100)->wrap()->description(fn (Review $r) => $r->title)->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('reply_status')->label(__('partner.review_reply'))->badge()->placeholder(__('partner.review_no_reply'))->visibleFrom('md')
                     ->formatStateUsing(fn ($state) => __('partner.review_reply_status.'.$state))
-                    ->color(fn ($state) => match ($state) {
-                        'published' => 'success', 'pending' => 'warning', default => 'danger'
-                    }),
+                    ->description(fn (Review $r) => $r->reply_draft_status ? __('partner.review_draft_'.$r->reply_draft_status) : null)
+                    ->color(fn ($state) => static::replyColor($state)),
             ])
+            ->description(fn () => static::averagesLine())
             ->actions([
-                Tables\Actions\Action::make('reply')->label(__('partner.review_reply_action'))->icon('heroicon-o-chat-bubble-left-ellipsis')
-                    ->visible(fn (Review $r) => $r->canReply())
-                    ->modalHeading(__('partner.review_reply_action'))
-                    ->form([
-                        Placeholder::make('review')->label(__('partner.review'))->content(fn (Review $r) => new HtmlString(e(str_repeat('★', (int) $r->rating)).' — '.e($r->body))),
-                        Textarea::make('reply')->label(__('partner.review_reply'))->rows(5)->required()->minLength(Review::MIN_BODY)->maxLength(2000)
-                            ->helperText(__('partner.review_reply_hint', ['min' => Review::MIN_BODY])),
-                    ])
-                    ->action(function (Review $r, array $data): void {
-                        try {
-                            app(ReviewService::class)->reply($r, auth()->user(), $data['reply']);
-                            Notification::make()->title(__('partner.review_reply_sent'))->success()->send();
-                        } catch (BookingException $e) {
-                            Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
-                        }
-                    }),
+                // Ordinateur : boutons explicites ; mobile : un seul bouton « Réponse » ouvrant les mêmes actions (gain de largeur).
+                static::editReplyAction('edit_reply')->extraAttributes(['class' => 'hidden md:flex']),
+                static::replyAction('reply')->extraAttributes(['class' => 'hidden md:flex']),
+                Tables\Actions\ActionGroup::make([static::editReplyAction('edit_reply_mobile'), static::replyAction('reply_mobile')])
+                    ->label(__('partner.review_actions'))->icon('heroicon-m-chat-bubble-left-ellipsis')->button()->size('sm')->color('gray')
+                    ->extraAttributes(['class' => 'md:hidden']),
             ]);
+    }
+
+    public static function editReplyAction(string $name): Tables\Actions\Action
+    {
+        return Tables\Actions\Action::make($name)->label(__('partner.review_edit_reply'))->icon('heroicon-o-pencil-square')
+            ->visible(fn (Review $r) => $r->canEditReply())
+            ->modalHeading(__('partner.review_edit_reply'))
+            ->fillForm(fn (Review $r) => ['reply' => $r->replyUnderReview() ?? $r->reply])
+            ->form([
+                Placeholder::make('review')->label(__('partner.review'))->content(fn (Review $r) => new HtmlString(e(str_repeat('★', (int) $r->rating)).' — '.e($r->body))),
+                Textarea::make('reply')->label(__('partner.review_reply'))->rows(5)->required()->minLength(Review::MIN_BODY)->maxLength(2000)
+                    ->helperText(fn (Review $r) => __($r->replyPublished() ? 'partner.review_edit_reply_hint' : 'partner.review_reply_hint', ['min' => Review::MIN_BODY])),
+            ])
+            ->action(function (Review $r, array $data): void {
+                try {
+                    app(ReviewService::class)->reply($r, auth()->user(), $data['reply']);
+                    Notification::make()->title(__($r->hasPendingDraft() ? 'partner.review_edit_reply_sent' : 'partner.review_reply_sent'))->success()->send();
+                } catch (BookingException $e) {
+                    Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
+                }
+            });
+    }
+
+    public static function replyAction(string $name): Tables\Actions\Action
+    {
+        return Tables\Actions\Action::make($name)->label(__('partner.review_reply_action'))->icon('heroicon-o-chat-bubble-left-ellipsis')
+            ->visible(fn (Review $r) => $r->canReply())
+            ->modalHeading(__('partner.review_reply_action'))
+            ->form([
+                Placeholder::make('review')->label(__('partner.review'))->content(fn (Review $r) => new HtmlString(e(str_repeat('★', (int) $r->rating)).' — '.e($r->body))),
+                Textarea::make('reply')->label(__('partner.review_reply'))->rows(5)->required()->minLength(Review::MIN_BODY)->maxLength(2000)
+                    ->helperText(__('partner.review_reply_hint', ['min' => Review::MIN_BODY])),
+            ])
+            ->action(function (Review $r, array $data): void {
+                try {
+                    app(ReviewService::class)->reply($r, auth()->user(), $data['reply']);
+                    Notification::make()->title(__('partner.review_reply_sent'))->success()->send();
+                } catch (BookingException $e) {
+                    Notification::make()->title(__('partner.action_failed'))->body($e->getMessage())->danger()->send();
+                }
+            });
+    }
+
+    public const SCORE_ICONS = [1 => '🙁', 2 => '😐', 3 => '😊'];
+
+    public static function stars(mixed $rating): string
+    {
+        return str_repeat('★', (int) $rating).str_repeat('☆', 5 - (int) $rating);
+    }
+
+    /** Carte mobile : note, critères, date · client · référence, titre, commentaire, statut de la réponse. */
+    public static function mobileCard(Review $r): HtmlString
+    {
+        $muted = 'style="color:#6b7280;font-size:.8rem"';
+        $badge = sprintf('<span class="fi-badge fi-color-%s" style="display:inline-block;border-radius:.375rem;padding:.1rem .5rem;font-size:.75rem;font-weight:600;%s">%s</span>',
+            static::replyColor($r->reply_status),
+            match (static::replyColor($r->reply_status)) {
+                'success' => 'background:#dcfce7;color:#166534', 'warning' => 'background:#fef3c7;color:#92400e', 'danger' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#374151'
+            },
+            e($r->reply_status ? __('partner.review_reply_status.'.$r->reply_status) : __('partner.review_no_reply')));
+        $parts = [
+            '<div style="font-size:1.05rem;font-weight:700">'.e(static::stars($r->rating)).'</div>',
+            ($c = static::criteriaLine($r->criteriaScores())) ? '<div '.$muted.'>'.e($c).'</div>' : '',
+            '<div '.$muted.'>'.e(trim($r->published_at?->format('d/m/Y').' · '.$r->author_name.($r->booking ? ' · '.$r->booking->reference : ''))).'</div>',
+            $r->title ? '<div style="font-weight:600;margin-top:.35rem">'.e($r->title).'</div>' : '',
+            '<div style="margin-top:.2rem;white-space:normal">'.e($r->body).'</div>',
+            '<div style="margin-top:.45rem">'.$badge.($r->reply_draft_status ? ' <span '.$muted.'>'.e(__('partner.review_draft_'.$r->reply_draft_status)).'</span>' : '').'</div>',
+        ];
+
+        return new HtmlString('<div style="display:flex;flex-direction:column;gap:.15rem;max-width:100%">'.implode('', array_filter($parts)).'</div>');
+    }
+
+    public static function replyColor(?string $status): string
+    {
+        return match ($status) {
+            'published' => 'success', 'pending' => 'warning', null => 'gray', default => 'danger'
+        };
+    }
+
+    /** « Accueil 😊 · Propreté 😐 … » pour un avis ; vide si le client n'a noté aucun critère. */
+    public static function criteriaLine(array $scores): ?string
+    {
+        if ($scores === []) {
+            return null;
+        }
+        $parts = [];
+        foreach ($scores as $k => $v) {
+            $parts[] = __('ui.review.criteria.'.$k).' '.(self::SCORE_ICONS[max(1, min(3, $v))] ?? '');
+        }
+
+        return implode(' · ', $parts);
+    }
+
+    /** Moyennes de l'établissement : note globale puis chaque critère (sur 3), sur les avis publiés. */
+    public static function averagesLine(): ?string
+    {
+        $reviews = static::getEloquentQuery()->get(['rating', 'criteria']);
+        if ($reviews->isEmpty()) {
+            return null;
+        }
+        $sums = [];
+        foreach ($reviews as $r) {
+            foreach ($r->criteriaScores() as $k => $v) {
+                $sums[$k][] = $v;
+            }
+        }
+        $parts = [__('partner.review_avg_rating', ['avg' => number_format($reviews->avg('rating'), 1, ',', ' ')])];
+        foreach (Review::CRITERIA as $k) {
+            if (! empty($sums[$k])) {
+                $avg = array_sum($sums[$k]) / count($sums[$k]);
+                $parts[] = __('ui.review.criteria.'.$k).' '.(self::SCORE_ICONS[(int) round($avg)] ?? '').' '.number_format($avg, 1, ',', ' ').'/3';
+            }
+        }
+
+        return __('partner.review_averages', ['n' => $reviews->count()]).' — '.implode(' · ', $parts);
     }
 
     public static function getPages(): array

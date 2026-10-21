@@ -20,6 +20,11 @@ class BillingPeriods
         return $out;
     }
 
+    public static function current(): string
+    {
+        return CarbonImmutable::now(config('hl.timezone'))->format('Y-m');
+    }
+
     public static function previous(): string
     {
         return CarbonImmutable::now(config('hl.timezone'))->subMonthNoOverflow()->format('Y-m');

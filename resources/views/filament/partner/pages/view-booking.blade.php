@@ -18,6 +18,7 @@
         .hl-head .hl-name{font-size:1.35rem;font-weight:700;line-height:1.2}
         .hl-head .hl-ref{font-family:ui-monospace,monospace;color:#6b7280;font-size:.9rem}
         .hl-badge{display:inline-block;border-radius:999px;padding:.15rem .65rem;font-size:.75rem;font-weight:600}
+        .hl-badge-muted{background:#f3f4f6;color:#374151}
         .hl-badge-success{background:#dcfce7;color:#166534}.hl-badge-warning{background:#fef3c7;color:#92400e}
         .hl-badge-danger{background:#fee2e2;color:#991b1b}.hl-badge-info{background:#dbeafe;color:#1e40af}.hl-badge-gray{background:#e5e7eb;color:#374151}
         .hl-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:1rem}
@@ -177,26 +178,37 @@
         </div>
 
         {{-- Prix / commission / net --}}
+        @php
+            $financeState = $b->source === 'partner' ? 'offline' : ($b->nothingDue() ? 'none' : (in_array($b->status, ['waiting', 'confirmed'], true) ? 'forecast' : 'accrued'));
+            $pctLabel = rtrim(rtrim(number_format($b->commission_pct, 2, ',', ''), '0'), ',');
+        @endphp
         <div class="hl-card">
-            <h3>{{ __('partner.pricing') }}</h3>
+            <h3 style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">{{ __('partner.pricing') }}
+                @if ($financeState === 'forecast')<span class="hl-badge hl-badge-muted">{{ __('partner.finance_forecast') }}</span>
+                @elseif ($financeState === 'accrued')<span class="hl-badge hl-badge-success">{{ __('partner.finance_accrued') }}</span>
+                @elseif ($financeState === 'none')<span class="hl-badge hl-badge-muted">{{ __('partner.finance_none') }}</span>@endif
+            </h3>
             <div class="hl-row"><span class="hl-k">{{ __('partner.customer_total') }}</span><span class="hl-v">{{ $money($b->total) }}</span></div>
-            @if ($b->source === 'partner')
+            @if ($financeState === 'offline')
                 <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.offline_no_commission') }}</p>
-            @else
-            <div class="hl-row"><span class="hl-k">{{ __('partner.commissionable') }}</span><span class="hl-v">{{ $money($s['commissionable']) }}</span></div>
-            <div class="hl-row"><span class="hl-k">{{ __('partner.commission_hl', ['pct' => rtrim(rtrim(number_format($b->commission_pct, 2, ',', ''), '0'), ',')]) }}</span><span class="hl-v hl-minus">− {{ $money($b->commissionDue()) }}</span></div>
-            <div class="hl-total"><span>{{ __('partner.net_partner') }}</span><span class="hl-net">{{ $money($b->netDue()) }}</span></div>
-            @if (in_array($b->status, ['waiting', 'confirmed'], true))
-                <div class="hl-row"><span class="hl-k">{{ __('booking.finance_commission_estimate') }}</span><span class="hl-v">{{ $money($b->commission_amount) }}</span></div>
-                <div class="hl-row"><span class="hl-k">{{ __('booking.finance_net_estimate') }}</span><span class="hl-v">{{ $money($b->netForPartner()) }}</span></div>
-                <p class="hl-muted">{{ __('booking.finance_not_accrued') }}</p>
-            @endif
-            @endif
-            @if ($b->nothingDue())
+            @elseif ($financeState === 'none')
                 <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.nothing_due') }}</p>
-            @endif
-            @if ($b->source !== 'partner' && $s['commissionable'] < $b->total && ! $b->nothingDue())
-                <p class="hl-muted" style="margin-top:.4rem">{{ __('partner.non_commissionable_note') }}</p>
+            @else
+                @php
+                    $commission = $financeState === 'forecast' ? (float) $b->commission_amount : $b->commissionDue();
+                    $net = $financeState === 'forecast' ? $b->netForPartner() : $b->netDue();
+                @endphp
+                @if ($financeState === 'accrued' && $b->amountDue() < (float) $b->total)
+                    <div class="hl-row"><span class="hl-k">{{ __('partner.amount_due_customer') }}</span><span class="hl-v">{{ $money($b->amountDue()) }}</span></div>
+                @endif
+                @if ($b->commissionableAmount() < (float) $b->total)
+                    <div class="hl-row"><span class="hl-k hl-muted">{{ __('partner.commissionable_of') }}</span><span class="hl-v hl-muted">{{ $money($b->commissionableAmount()) }}</span></div>
+                @endif
+                <div class="hl-row"><span class="hl-k">{{ __('partner.commission_hl', ['pct' => $pctLabel]) }}</span><span class="hl-v hl-minus">− {{ $money($commission) }}</span></div>
+                <div class="hl-total"><span>{{ __('partner.net_partner') }}</span><span class="hl-net">{{ $money($net) }}</span></div>
+                @if ($financeState === 'forecast')
+                    <p class="hl-muted">{{ __('partner.finance_forecast_note') }}</p>
+                @endif
             @endif
             <div class="hl-row" style="margin-top:.6rem;border-top:1px solid #e5e7eb;border-bottom:0">
                 <span class="hl-k">{{ __('booking.finance_payment_declared') }}</span>

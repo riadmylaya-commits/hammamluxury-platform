@@ -6,6 +6,7 @@ use App\Domain\Booking\QuoteBuilder;
 use App\Filament\Admin\Resources\SpaResource\Pages\EditSpa;
 use App\Filament\Admin\Resources\SpaResource\RelationManagers\ExtrasRelationManager;
 use App\Filament\Partner\Resources\BookingResource\Pages\ViewBooking;
+use App\Filament\Partner\Widgets\StatsOverview;
 use App\Models\ActivityLog;
 use App\Models\LedgerEntry;
 use App\Models\User;
@@ -79,7 +80,8 @@ class BookingSheetTest extends BookingFlowTestCase
             ->assertSee('France (+33)')->assertSee('tel:+33612345678')
             ->assertDontSee('claire.dupont@example.test')
             ->assertSee('Hammam + Massage')->assertSee('Massage crânien')->assertSee('+15 min')
-            ->assertSee('Montant commissionnable')->assertSee('Net partenaire')->assertSee('À payer sur place')
+            ->assertSee('Prévisionnel')->assertSee('Commission HammamLuxury (15 %)')->assertSee('Net partenaire')->assertDontSee('Commission prévisionnelle')->assertSee('À payer sur place')
+            ->assertDontSee('contactez HammamLuxury')->assertSee('Vous pouvez le déclarer')
             ->assertActionHidden('complete')->assertActionHidden('cancel')->assertActionVisible('payment');
 
         $page->callAction('payment', ['payment_status' => 'paid'])->assertHasNoActionErrors();
@@ -108,5 +110,24 @@ class BookingSheetTest extends BookingFlowTestCase
             ->call('updateTableColumnState', 'commissionable', $this->cr->getKey(), false);
         $this->assertFalse($this->cr->fresh()->commissionable);
         $this->assertTrue(ActivityLog::where('action', 'extra.non_commissionable')->exists());
+    }
+
+    public function test_partner_dashboard_blocks_link_to_bookings_statement_and_profile(): void
+    {
+        $b = $this->submit($this->intent('10:00', ['treatment' => $this->hm->id, 'party' => 2]), [
+            'first_name' => 'Claire', 'last_name' => 'Dupont', 'email' => 'claire.dupont@example.test', 'phone' => '+33612345678',
+        ])['booking'];
+        Mail::fake();
+        $this->bookings->accept($b, 'partner');
+
+        $this->actingAs($this->spa->partner->user);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+
+        Livewire::test(StatsOverview::class)
+            ->assertSee('Chiffre d’affaires acquis ce mois')->assertSee('dont net partenaire')
+            ->assertSee('/partenaire/'.$this->spa->slug.'/bookings?tableFilters', false)
+            ->assertSee('/partenaire/'.$this->spa->slug.'/commission-statement?period='.now(config('hl.timezone'))->format('Y-m'), false)
+            ->assertSee('/partenaire/'.$this->spa->slug.'/profile', false);
     }
 }
