@@ -205,7 +205,7 @@ return [
         'overall' => 'Quelle note générale donnez-vous à votre expérience ?',
         'rating_labels' => [1 => 'Très décevant', 2 => 'Décevant', 3 => 'Correct', 4 => 'Très bien', 5 => 'Excellent'],
         'criteria_title' => 'Comment évaluez-vous…',
-        'criteria_hint' => 'Un smiley par critère, facultatif.',
+        'criteria_hint' => 'Une note de 1 à 3 par critère, facultatif.',
         'criteria' => ['welcome' => 'Accueil / personnel', 'cleanliness' => 'Propreté', 'treatment_quality' => 'Qualité du soin', 'comfort' => 'Confort', 'value' => 'Rapport qualité / prix', 'ambiance' => 'Ambiance / cadre'],
         'smiley' => [1 => 'Insatisfait', 2 => 'Moyen', 3 => 'Satisfait'],
         'bonus_title' => 'Quelques questions bonus',
