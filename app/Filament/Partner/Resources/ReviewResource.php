@@ -183,7 +183,9 @@ class ReviewResource extends Resource
             return null;
         }
 
-        return new HtmlString('<details style="font-size:.8rem;color:#6b7280"><summary style="cursor:pointer">'.e(__('partner.review_criteria_toggle')).'</summary><div style="margin-top:.25rem">'.e($line).'</div></details>');
+        $items = implode('', array_map(fn (string $part) => '<div>'.e($part).'</div>', explode(' · ', $line)));
+
+        return new HtmlString('<details style="font-size:.8rem;color:#6b7280;white-space:normal;max-width:16rem"><summary style="cursor:pointer">'.e(__('partner.review_criteria_toggle')).'</summary><div style="margin-top:.25rem;line-height:1.35">'.$items.'</div></details>');
     }
 
     /** Moyennes des avis publiés : note globale puis une ligne par critère (x,x / 3) avec barre de progression. */
