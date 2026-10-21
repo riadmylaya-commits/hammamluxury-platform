@@ -76,9 +76,9 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         Filament::setTenant(null, true);
     }
 
-    private function submitted(array $over = [], array $photos = []): Review
+    private function submitted(array $over = [], array $photos = [], string $time = '10:00'): Review
     {
-        $b = $this->completed();
+        $b = $this->completed($time);
         $r = $this->reviews->invite($b);
 
         return $this->reviews->submit($r, $over + ['rating' => 2, 'body' => 'Accueil froid et soin écourté de vingt minutes.', 'title' => 'Décevant'], $photos);
@@ -177,10 +177,11 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         $photos = [UploadedFile::fake()->image('a.jpg', 1200, 900), UploadedFile::fake()->image('b.png', 1000, 800)];
         $r = $this->reviews->submit($r->fresh(), [
             'rating' => 5, 'body' => 'Une parenthèse hors du temps, personnel adorable.', 'title' => 'Parfait', 'liked' => 'Le thé', 'improve' => '',
-            'criteria' => ['welcome' => 3, 'cleanliness' => 3, 'bogus' => 3, 'value' => 9], 'bonus' => ['recommend' => 'yes', 'welcomed' => 'maybe'],
+            'criteria' => ['welcome' => 5, 'cleanliness' => 3, 'bogus' => 3, 'value' => 6, 'ambiance' => 0], 'bonus' => ['recommend' => 'yes', 'welcomed' => 'maybe'],
         ], $photos);
         $this->assertSame('pending', $r->status);
-        $this->assertSame(['welcome' => 3, 'cleanliness' => 3], $r->criteria);
+        $this->assertSame(['welcome' => 5, 'cleanliness' => 3], $r->criteria);
+        $this->assertSame(5, $r->criteria_scale);
         $this->assertSame(['recommend' => 'yes'], $r->bonus);
         $this->assertNull($r->improve);
         $this->assertCount(2, $r->photos);
@@ -342,7 +343,7 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         // Le partenaire voit les critères détaillés et les moyennes ; le site public ne montre que la note globale.
         $this->asPartner();
         Livewire::test(PartnerListReviews::class)->assertCanSeeTableRecords([$r])
-            ->assertSee('Accueil / personnel 😊')->assertSee('Propreté 🙁')->assertSee('Moyennes de vos 1 avis publiés')
+            ->assertSee('Accueil / personnel 3/5')->assertSee('Propreté 1/5')->assertSee('Notes détaillées')->assertSee('Moyennes de vos 1 avis publiés')->assertSee('Critères détaillés sur 5 (1 avis)')->assertSee('3,0 / 5')->assertSee('1,0 / 5')->assertDontSee('😊')->assertDontSee('Ancienne échelle')
             ->assertTableActionVisible('edit_reply', $r)->assertTableActionHidden('reply', $r)
             ->callTableAction('edit_reply', $r, ['reply' => 'Version corrigée : nous avons renforcé notre équipe et revu le nettoyage.'])
             ->assertHasNoTableActionErrors();
@@ -371,5 +372,29 @@ class VerifiedReviewsTest extends BookingFlowTestCase
         $this->assertSame('Version finale : nous avons renforcé notre équipe et revu le nettoyage.', $r->reply);
         $this->assertTrue($r->replyPublished());
         Livewire::test(SpaShow::class, ['spa' => $this->spa])->assertSee('Version finale')->assertDontSee('renforcé notre équipe d’accueil');
+    }
+
+    public function test_former_scores_out_of_3_stay_as_is_and_only_scores_out_of_5_feed_the_averages(): void
+    {
+        $legacy = $this->reviews->moderate($this->submitted(['criteria' => ['welcome' => 3, 'cleanliness' => 2]]), $this->admin, 'published');
+        $legacy->forceFill(['criteria_scale' => 3])->save(); // avis antérieur au passage sur 5 : valeurs conservées, échelle 3 mémorisée
+        $new = $this->reviews->moderate($this->submitted(['criteria' => ['welcome' => 5, 'comfort' => 4]], [], '11:00'), $this->admin, 'published');
+        $this->assertSame(5, $new->criteria_scale);
+        $this->assertSame(['welcome' => 3, 'cleanliness' => 2], $legacy->fresh()->criteria);
+        $this->assertTrue($legacy->fresh()->hasLegacyCriteria());
+        $this->assertFalse($new->hasLegacyCriteria());
+
+        // Partenaire : chaque avis dans son échelle d'origine ; moyennes sur 5 calculées sur le seul avis noté sur 5 (5,0 et non 4,0).
+        $this->asPartner();
+        Livewire::test(PartnerListReviews::class)->assertCanSeeTableRecords([$legacy, $new])
+            ->assertSee('Accueil / personnel 3/3')->assertSee('Propreté 2/3')->assertSee('Ancienne échelle de notation (sur 3)')
+            ->assertSee('Accueil / personnel 5/5')->assertSee('Confort 4/5')
+            ->assertSee('Moyennes de vos 2 avis publiés')->assertSee('Critères détaillés sur 5 (1 avis)')->assertSee('5,0 / 5')->assertSee('4,0 / 5')
+            ->assertSee('1 avis notés sur l’ancienne échelle (sur 3) ne sont pas inclus')->assertDontSee('/ 3</span>')->assertDontSee('😊');
+
+        // Admin : plus aucun smiley, échelle d'origine indiquée.
+        $this->asAdmin();
+        Livewire::test(ViewReview::class, ['record' => $legacy->getRouteKey()])->assertSee('Accueil / personnel 3/3 · Propreté 2/3 (Ancienne échelle de notation (sur 3))')->assertDontSee('😊')->assertDontSee('🙁');
+        Livewire::test(ViewReview::class, ['record' => $new->getRouteKey()])->assertSee('Accueil / personnel 5/5 · Confort 4/5')->assertDontSee('Ancienne échelle');
     }
 }

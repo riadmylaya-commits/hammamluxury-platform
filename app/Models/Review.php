@@ -17,6 +17,11 @@ class Review extends Model
 
     public const CRITERIA = ['welcome', 'cleanliness', 'treatment_quality', 'comfort', 'value', 'ambiance'];
 
+    /** Échelle actuelle des critères (étoiles) ; les avis antérieurs gardent leur échelle d'origine dans `criteria_scale`. */
+    public const CRITERIA_SCALE = 5;
+
+    public const LEGACY_CRITERIA_SCALE = 3;
+
     public const BONUS = ['as_described', 'welcomed', 'recommend'];
 
     /** Motifs de refus admissibles : jamais « avis négatif ». */
@@ -102,7 +107,7 @@ class Review extends Model
         return $this->hasPendingDraft() ? $this->reply_draft : ($this->reply_status === 'pending' ? $this->reply : null);
     }
 
-    /** Critères détaillés (1 = à améliorer, 2 = moyen, 3 = bien) dans l'ordre de référence. */
+    /** Critères détaillés (1 à criteriaScale()) dans l'ordre de référence, valeurs stockées telles quelles. */
     public function criteriaScores(): array
     {
         $out = [];
@@ -113,6 +118,28 @@ class Review extends Model
         }
 
         return $out;
+    }
+
+    public function criteriaScale(): int
+    {
+        return (int) ($this->criteria_scale ?: self::CRITERIA_SCALE);
+    }
+
+    public function hasLegacyCriteria(): bool
+    {
+        return $this->criteriaScores() !== [] && $this->criteriaScale() !== self::CRITERIA_SCALE;
+    }
+
+    /** « Accueil / personnel 4/5 · Propreté 3/5 » dans l'échelle d'origine de l'avis ; vide si aucun critère noté. */
+    public function criteriaSummary(): ?string
+    {
+        $scale = $this->criteriaScale();
+        $parts = [];
+        foreach ($this->criteriaScores() as $k => $v) {
+            $parts[] = __('ui.review.criteria.'.$k).' '.max(1, min($scale, $v)).'/'.$scale;
+        }
+
+        return $parts === [] ? null : implode(' · ', $parts);
     }
 
     public function isNegative(): bool

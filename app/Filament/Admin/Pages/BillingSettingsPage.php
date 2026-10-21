@@ -5,6 +5,8 @@ namespace App\Filament\Admin\Pages;
 use App\Domain\Billing\BillingGate;
 use App\Domain\Billing\BillingLockedException;
 use App\Domain\Billing\BillingSettings;
+use App\Domain\Billing\InvoiceSpecimenPdf;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -54,6 +56,15 @@ class BillingSettingsPage extends Page implements HasForms
             $state[str_replace('.', '__', $key)] = is_bool($value) ? $value : ($value === null ? null : (string) $value);
         }
         $this->form->fill($state);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\Action::make('specimen')->label(__('billing.specimen_action'))->icon('heroicon-o-document-text')->color('gray')
+                ->tooltip(__('billing.specimen_action_help'))
+                ->action(fn (InvoiceSpecimenPdf $pdf) => response()->streamDownload(fn () => print $pdf->render(), $pdf->filename(), ['Content-Type' => 'application/pdf'])),
+        ];
     }
 
     public function form(Form $form): Form

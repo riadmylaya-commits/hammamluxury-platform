@@ -115,7 +115,7 @@ class ReviewService
         }
         $criteria = [];
         foreach ($data['criteria'] ?? [] as $key => $value) {
-            if (in_array($key, Review::CRITERIA, true) && (int) $value >= 1 && (int) $value <= 3) {
+            if (in_array($key, Review::CRITERIA, true) && (int) $value >= 1 && (int) $value <= Review::CRITERIA_SCALE) {
                 $criteria[$key] = (int) $value;
             }
         }
@@ -146,6 +146,7 @@ class ReviewService
                 'liked' => trim((string) ($data['liked'] ?? '')) ?: null,
                 'improve' => trim((string) ($data['improve'] ?? '')) ?: null,
                 'criteria' => $criteria ?: null,
+                'criteria_scale' => Review::CRITERIA_SCALE,
                 'bonus' => $bonus ?: null,
                 'status' => 'pending',
                 'submitted_at' => now(),
