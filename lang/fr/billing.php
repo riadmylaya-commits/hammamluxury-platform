@@ -436,4 +436,20 @@ return [
         'idempotency_key_invalid' => 'Clé d’opération invalide : rouvrez le formulaire.',
         'conflict' => 'Conflit d’enregistrement : rechargez la page.',
     ],
+
+    // Spécimen de facture de commission (présentation uniquement, aucune émission)
+    'specimen_action' => 'Télécharger un spécimen de facture (PDF)',
+    'specimen_action_help' => 'Modèle de présentation avec des données fictives : aucune facture, aucun paiement ni écriture ne sont créés.',
+    'specimen_title' => 'Facture de commission',
+    'specimen_banner' => 'SPÉCIMEN – NON VALABLE COMME FACTURE',
+    'specimen_watermark' => 'SPÉCIMEN',
+    'specimen_to_complete' => '[à compléter]',
+    'specimen_to_define' => 'À définir',
+    'specimen_bookings' => 'Réservations',
+    'specimen_base' => 'Montant des réservations soumises à commission',
+    'specimen_line' => 'Commission HammamLuxury sur les réservations terminées — :period',
+    'specimen_commission' => 'Commission HammamLuxury (:pct %)',
+    'specimen_total_due' => 'Total des commissions à payer',
+    'specimen_note' => 'Document de présentation établi avec des données fictives. Il ne constitue ni une facture, ni une demande de paiement. Le régime de TVA sera précisé après validation comptable.',
+    'pdf_invoice_number' => 'Numéro de facture',
 ];

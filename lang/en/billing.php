@@ -436,4 +436,20 @@ return [
         'idempotency_key_invalid' => 'Invalid operation key: reopen the form.',
         'conflict' => 'Write conflict: reload the page.',
     ],
+
+    // Commission invoice specimen (layout only, nothing issued)
+    'specimen_action' => 'Download an invoice specimen (PDF)',
+    'specimen_action_help' => 'Layout template with fictitious data: no invoice, payment or ledger entry is created.',
+    'specimen_title' => 'Commission invoice',
+    'specimen_banner' => 'SPECIMEN – NOT VALID AS AN INVOICE',
+    'specimen_watermark' => 'SPECIMEN',
+    'specimen_to_complete' => '[to be completed]',
+    'specimen_to_define' => 'To be defined',
+    'specimen_bookings' => 'Bookings',
+    'specimen_base' => 'Amount of bookings subject to commission',
+    'specimen_line' => 'HammamLuxury commission on completed bookings — :period',
+    'specimen_commission' => 'HammamLuxury commission (:pct %)',
+    'specimen_total_due' => 'Total commissions payable',
+    'specimen_note' => 'Presentation document built with fictitious data. It is neither an invoice nor a payment request. The VAT regime will be specified after accounting validation.',
+    'pdf_invoice_number' => 'Invoice number',
 ];

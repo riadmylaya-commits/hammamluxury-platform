@@ -8,6 +8,7 @@ use App\Domain\Booking\CapacityEngine;
 use App\Domain\Booking\QuoteBuilder;
 use App\Domain\Phone\PhoneNumber;
 use App\Filament\Partner\Resources\BookingResource;
+use App\Models\Booking;
 use App\Models\Spa;
 use Carbon\CarbonImmutable;
 use Filament\Facades\Filament;
@@ -52,7 +53,7 @@ class OfflineBooking extends Page implements HasForms
 
     public function mount(): void
     {
-        $this->form->fill(['date' => now()->toDateString(), 'party' => 1, 'channel' => 'phone', 'phone_country' => 'MA']);
+        $this->form->fill(['date' => now()->toDateString(), 'party' => 1, 'phone_country' => 'MA']);
     }
 
     private function spa(): Spa
@@ -78,10 +79,9 @@ class OfflineBooking extends Page implements HasForms
             Forms\Components\Section::make(__('partner.customer'))->schema([
                 Forms\Components\TextInput::make('first_name')->label(__('partner.first_name'))->required()->maxLength(90),
                 Forms\Components\TextInput::make('last_name')->label(__('partner.last_name'))->required()->maxLength(90),
-                Forms\Components\Select::make('phone_country')->label(__('phone.country'))->options(PhoneNumber::options())->default('MA')->native(false)->searchable()->required(),
-                Forms\Components\TextInput::make('phone')->label(__('partner.phone'))->tel()->required()->maxLength(25),
+                Forms\Components\Select::make('phone_country')->label(__('phone.country'))->options(PhoneNumber::options())->default('MA')->native(false)->searchable(),
+                Forms\Components\TextInput::make('phone')->label(__('partner.phone_optional'))->tel()->maxLength(25),
                 Forms\Components\TextInput::make('email')->label(__('partner.email_optional'))->email()->maxLength(190),
-                Forms\Components\Select::make('channel')->label(__('partner.channel'))->options(__('partner.channels'))->required()->native(false),
                 Forms\Components\Textarea::make('note')->label(__('partner.offline_note'))->rows(2)->maxLength(1000)->columnSpanFull(),
             ])->columns(2),
         ]);
@@ -122,12 +122,12 @@ class OfflineBooking extends Page implements HasForms
         $spa = $this->spa();
         $customer = [
             'first_name' => $d['first_name'], 'last_name' => $d['last_name'],
-            'phone' => PhoneNumber::normalize($d['phone'], $d['phone_country']) ?? $d['phone'],
+            'phone' => filled($d['phone'] ?? null) ? (PhoneNumber::normalize($d['phone'], $d['phone_country'] ?? 'MA') ?? $d['phone']) : '',
             'email' => $d['email'] ?? '',
         ];
         try {
             $start = app(BookingService::class)->parseStart($d['date'], $d['time']);
-            $booking = app(BookingService::class)->bookOffline($spa, $start, [['treatment' => (int) $d['treatment_id'], 'party' => (int) $d['party'], 'extras' => []]], $customer, $d['channel'], auth()->id());
+            $booking = app(BookingService::class)->bookOffline($spa, $start, [['treatment' => (int) $d['treatment_id'], 'party' => (int) $d['party'], 'extras' => []]], $customer, Booking::OFFLINE_DEFAULT_CHANNEL, auth()->id());
         } catch (BookingException $e) {
             Notification::make()->title(__('partner.offline_refused'))->body($e->reason === 'unavailable' ? __('partner.offline_slot_gone') : $e->getMessage())->danger()->persistent()->send();
             $this->data['time'] = null;

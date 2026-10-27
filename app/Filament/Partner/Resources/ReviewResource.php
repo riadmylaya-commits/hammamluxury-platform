@@ -68,7 +68,7 @@ class ReviewResource extends Resource
                 // Ordinateur : tableau classique.
                 Tables\Columns\TextColumn::make('published_at')->label(__('partner.review_date'))->date('d/m/Y')->sortable()->visibleFrom('md'),
                 Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->formatStateUsing(fn ($state) => static::stars($state))->sortable()->visibleFrom('md')
-                    ->description(fn (Review $r) => static::criteriaLine($r->criteriaScores()))->wrap(),
+                    ->description(fn (Review $r) => static::criteriaDetails($r))->wrap(),
                 Tables\Columns\TextColumn::make('author_name')->label(__('partner.customer'))->description(fn (Review $r) => $r->booking?->reference)->visibleFrom('md'),
                 Tables\Columns\TextColumn::make('body')->label(__('partner.review'))->limit(100)->wrap()->description(fn (Review $r) => $r->title)->visibleFrom('md'),
                 Tables\Columns\TextColumn::make('reply_status')->label(__('partner.review_reply'))->badge()->placeholder(__('partner.review_no_reply'))->visibleFrom('md')
@@ -128,8 +128,6 @@ class ReviewResource extends Resource
             });
     }
 
-    public const SCORE_ICONS = [1 => '🙁', 2 => '😐', 3 => '😊'];
-
     public static function stars(mixed $rating): string
     {
         return str_repeat('★', (int) $rating).str_repeat('☆', 5 - (int) $rating);
@@ -147,7 +145,7 @@ class ReviewResource extends Resource
             e($r->reply_status ? __('partner.review_reply_status.'.$r->reply_status) : __('partner.review_no_reply')));
         $parts = [
             '<div style="font-size:1.05rem;font-weight:700">'.e(static::stars($r->rating)).'</div>',
-            ($c = static::criteriaLine($r->criteriaScores())) ? '<div '.$muted.'>'.e($c).'</div>' : '',
+            ($c = static::criteriaDetails($r)) ? $c->toHtml() : '',
             '<div '.$muted.'>'.e(trim($r->published_at?->format('d/m/Y').' · '.$r->author_name.($r->booking ? ' · '.$r->booking->reference : ''))).'</div>',
             $r->title ? '<div style="font-weight:600;margin-top:.35rem">'.e($r->title).'</div>' : '',
             '<div style="margin-top:.2rem;white-space:normal">'.e($r->body).'</div>',
@@ -164,42 +162,62 @@ class ReviewResource extends Resource
         };
     }
 
-    /** « Accueil 😊 · Propreté 😐 … » pour un avis ; vide si le client n'a noté aucun critère. */
-    public static function criteriaLine(array $scores): ?string
+    /** Détail des critères replié par défaut, dans l'échelle d'origine de l'avis (3 ou 5), pour ne pas alourdir la liste. */
+    public static function criteriaDetails(Review $r): ?HtmlString
     {
-        if ($scores === []) {
+        if (($line = $r->criteriaSummary()) === null) {
             return null;
         }
-        $parts = [];
-        foreach ($scores as $k => $v) {
-            $parts[] = __('ui.review.criteria.'.$k).' '.(self::SCORE_ICONS[max(1, min(3, $v))] ?? '');
-        }
 
-        return implode(' · ', $parts);
+        $items = implode('', array_map(fn (string $part) => '<div>'.e($part).'</div>', explode(' · ', $line)));
+        $legacy = $r->hasLegacyCriteria() ? '<div style="font-style:italic;margin-top:.2rem">'.e(__('partner.review_legacy_scale')).'</div>' : '';
+
+        return new HtmlString('<details style="font-size:.8rem;color:#6b7280;white-space:normal;max-width:16rem"><summary style="cursor:pointer">'.e(__('partner.review_criteria_toggle')).'</summary><div style="margin-top:.25rem;line-height:1.35">'.$items.$legacy.'</div></details>');
     }
 
-    /** Moyennes de l'établissement : note globale puis chaque critère (sur 3), sur les avis publiés. */
-    public static function averagesLine(): ?string
+    /**
+     * Moyennes des avis publiés : note globale (tous les avis) puis une ligne par critère (x,x / 5) avec barre de progression,
+     * calculée uniquement sur les avis notés sur 5 ; les avis sur l'ancienne échelle (sur 3) sont comptés à part, jamais convertis.
+     */
+    public static function averagesLine(): ?HtmlString
     {
-        $reviews = static::getEloquentQuery()->get(['rating', 'criteria']);
+        $reviews = static::getEloquentQuery()->get(['rating', 'criteria', 'criteria_scale']);
         if ($reviews->isEmpty()) {
             return null;
         }
         $sums = [];
+        $rated = 0;
+        $legacy = 0;
         foreach ($reviews as $r) {
-            foreach ($r->criteriaScores() as $k => $v) {
+            if (($scores = $r->criteriaScores()) === []) {
+                continue;
+            }
+            if ($r->hasLegacyCriteria()) {
+                $legacy++;
+
+                continue;
+            }
+            $rated++;
+            foreach ($scores as $k => $v) {
                 $sums[$k][] = $v;
             }
         }
-        $parts = [__('partner.review_avg_rating', ['avg' => number_format($reviews->avg('rating'), 1, ',', ' ')])];
+        $scale = Review::CRITERIA_SCALE;
+        $rows = '<div style="font-size:.8rem;color:#6b7280;margin-top:.2rem">'.e(__('partner.review_criteria_averages', ['n' => $rated])).'</div>';
         foreach (Review::CRITERIA as $k) {
-            if (! empty($sums[$k])) {
-                $avg = array_sum($sums[$k]) / count($sums[$k]);
-                $parts[] = __('ui.review.criteria.'.$k).' '.(self::SCORE_ICONS[(int) round($avg)] ?? '').' '.number_format($avg, 1, ',', ' ').'/3';
-            }
+            $avg = empty($sums[$k]) ? null : array_sum($sums[$k]) / count($sums[$k]);
+            $pct = $avg === null ? 0 : (int) round($avg / $scale * 100);
+            $rows .= '<div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem"><span style="flex:0 0 11rem">'.e(__('ui.review.criteria.'.$k)).'</span>'
+                .'<span style="flex:1;height:.4rem;background:#e5e7eb;border-radius:999px;overflow:hidden"><span style="display:block;width:'.$pct.'%;height:100%;background:#b8743a"></span></span>'
+                .'<span style="flex:0 0 4rem;text-align:right;font-weight:600">'.($avg === null ? '—' : e(number_format($avg, 1, ',', ' ').' / '.$scale)).'</span></div>';
         }
+        if ($legacy > 0) {
+            $rows .= '<div style="font-size:.8rem;color:#6b7280;font-style:italic">'.e(__('partner.review_legacy_excluded', ['n' => $legacy])).'</div>';
+        }
+        $head = '<div style="font-weight:600;margin-bottom:.35rem">'.e(__('partner.review_averages', ['n' => $reviews->count()])).' — '
+            .e(__('partner.review_avg_rating', ['avg' => number_format($reviews->avg('rating'), 1, ',', ' ')])).' '.e(static::stars((int) round($reviews->avg('rating')))).'</div>';
 
-        return __('partner.review_averages', ['n' => $reviews->count()]).' — '.implode(' · ', $parts);
+        return new HtmlString('<div style="display:flex;flex-direction:column;gap:.3rem;max-width:40rem">'.$head.$rows.'</div>');
     }
 
     public static function getPages(): array
