@@ -327,7 +327,9 @@ class BillingF2Test extends BookingFlowTestCase
         $this->assertSame($this->period, $line->origin_period);
         $this->assertTrue($line->carried);
         $second = $this->issue($carried);
-        $this->assertMatchesRegularExpression('/-000002$/', $second->number);
+        // La séquence est annuelle : si la seconde émission tombe sur l'année suivante, elle repart à 000001.
+        $sameYear = $second->issued_at->year === $issued->issued_at->year;
+        $this->assertSame(sprintf('HL-%d-%06d', $second->issued_at->year, $sameYear ? 2 : 1), $second->number);
         $this->assertSame(2, InvoiceLine::count(), 'each ledger entry is invoiced exactly once');
         $this->assertNull(app(InvoiceDrafter::class)->draft($this->partner(), $next->addMonth()->format('Y-m')));
     }
