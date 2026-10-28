@@ -88,7 +88,11 @@ class BookingResource extends Resource
                 Tables\Filters\SelectFilter::make('status')->label(__('partner.status'))->options(__('ui.status'))->default('waiting')->multiple(),
                 Tables\Filters\Filter::make('upcoming')->label(__('partner.upcoming'))->query(fn (Builder $query) => $query->where('start_at', '>=', now())),
             ])
-            ->actions([Tables\Actions\ViewAction::make(), ...BookingActions::all('partner')])
+            ->actions([
+                Tables\Actions\ActionGroup::make([Tables\Actions\ViewAction::make(), ...BookingActions::all('partner')])->extraAttributes(['class' => 'hl-mobile-only']),
+                Tables\Actions\ViewAction::make()->visibleFrom('md'),
+                ...array_map(fn ($a) => $a->visibleFrom('md'), BookingActions::all('partner')),
+            ])
             ->emptyStateHeading(__('partner.no_bookings'));
     }
 
