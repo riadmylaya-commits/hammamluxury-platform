@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{ isset($title) ? $title.' · ' : '' }}{{ config('app.name') }}</title>
     <meta name="description" content="{{ $description ?? __('ui.hero_sub') }}">
+    @if (config('hl.noindex'))
+        <meta name="robots" content="noindex, nofollow">
+    @endif
     @foreach (config('hl.locales') as $l)
         <link rel="alternate" hreflang="{{ $l }}" href="{{ url()->current() === url('/') ? url('/'.$l) : preg_replace('#^'.preg_quote(url('/'), '#').'/[a-z]{2}#', url('/'.$l), url()->current()) }}">
     @endforeach

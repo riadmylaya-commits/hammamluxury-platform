@@ -5,3 +5,4 @@ Disallow: /en/reservation/
 Disallow: /*/reservation/
 Disallow: /admin
 Disallow: /partner
+Disallow: /partenaire

@@ -1,0 +1,2032 @@
+{
+ "_source": "https://mythicoriental-spa.com (référence) — carte codée FR/EN relevée le 2026-10-28",
+ "_a_confirmer": [
+  "partner.email : adresse réelle du responsable Mythic (no-reply@hammamluxury.com provisoire)",
+  "spa.capacity : nombre exact de cabines et de praticiens (3/3 provisoires), capacité hammam 6 (site)",
+  "spa.lat/lng : position lue sur la carte intégrée du site, à vérifier",
+  "party_max : 6 au hammam, 4 en cabine (site) ; prix par personne",
+  "extras « au choix » (crânien ou dos, pieds ou dos) laissés en un seul extra",
+  "informations légales et licence : absentes du site"
+ ],
+ "partner": {
+  "company_name": "Mythic Oriental Spa",
+  "email": "no-reply@hammamluxury.com",
+  "first_name": "Mythic",
+  "last_name": "Oriental Spa",
+  "phone": "+212666947278",
+  "locale": "fr",
+  "commission_pct": 15
+ },
+ "spa": {
+  "slug": "mythic-oriental-spa-marrakech",
+  "name": "Mythic Oriental Spa",
+  "category": "hammam-massage",
+  "city": "Marrakech",
+  "area": "Médina — Riad Laarouss",
+  "address": "7 Derb Esaleh, quartier Riad Laarouss, Médina, Marrakech",
+  "lat": 31.635178,
+  "lng": -7.994914,
+  "phone": "+212524384161",
+  "email": "info@mythicoriental-spa.com",
+  "website": "https://mythicoriental-spa.com",
+  "description_fr": "À quelques pas dans un derb lumineux de la Médina, la porte du riad s'ouvre sur la culture orientale ancestrale du bien-être. Spa mixte : hammam traditionnel au savon noir, massages à l'huile d'amande douce et d'argan ou au baume premium à l'acide hyaluronique, soins du visage, jusqu'à 6 personnes dans le hammam et 4 dans une même cabine VIP. Tous les soins peuvent se faire en solo ou en duo ; groupes et privatisation possibles. L'expérience se termine en terrasse avec thé et gâteaux marocains offerts. Sous-vêtements jetables et serviettes fournis.",
+  "description_en": "A few steps down a bright derb in the Medina, the riad's door opens onto the ancestral oriental culture of well-being. Mixed spa: traditional hammam with black soap, massages with sweet almond and argan oil or premium hyaluronic acid balm, facials, up to 6 people in the hammam and 4 in the same VIP cabin. All treatments can be done solo or as a couple; groups and private hire possible. The experience ends on the terrace with complimentary tea and Moroccan pastries. Disposable underwear and towels provided.",
+  "categories": [
+   "hammam-massage",
+   "hammam",
+   "massage",
+   "soins-visage",
+   "couple"
+  ],
+  "amenities": [
+   "the-offert"
+  ],
+  "practical_info": {
+   "gender": "mixed",
+   "children": "ask",
+   "pregnant": "yes",
+   "accessible": "ask",
+   "bring": "Rien : sous-vêtements jetables et serviettes fournis"
+  },
+  "hours": [
+   {
+    "weekday": 0,
+    "opens": "09:30",
+    "closes": "21:30"
+   },
+   {
+    "weekday": 1,
+    "opens": "09:30",
+    "closes": "21:30"
+   },
+   {
+    "weekday": 2,
+    "opens": "09:30",
+    "closes": "21:30"
+   },
+   {
+    "weekday": 3,
+    "opens": "09:30",
+    "closes": "21:30"
+   },
+   {
+    "weekday": 4,
+    "opens": "09:30",
+    "closes": "21:30"
+   },
+   {
+    "weekday": 5,
+    "opens": "09:30",
+    "closes": "21:30"
+   },
+   {
+    "weekday": 6,
+    "opens": "09:30",
+    "closes": "21:30"
+   }
+  ],
+  "capacity": {
+   "hammam_capacity": 6,
+   "massage_cabins": 3,
+   "therapists": 3,
+   "cabin_buffer_min": 10
+  },
+  "cancellation_hours": 24
+ },
+ "extras": [
+  {
+   "code": "RH",
+   "name_fr": "Purification au rhassoul (dans le hammam)",
+   "name_en": "Rhassoul purification (in the hammam)",
+   "description_fr": "Purification au rhassoul naturel, à faire dans le hammam ( rhassoul aux huiles essentielles de lavande et romarin)",
+   "description_en": "Purification with natural rhassoul, to be done in the hammam (rhassoul with essential oils of lavender and rosemary)",
+   "price": 100,
+   "extra_min": 15,
+   "per_person": true,
+   "max_qty": 1,
+   "in_hammam": true
+  },
+  {
+   "code": "BA",
+   "name_fr": "Bain oriental aux sels et huiles essentielles",
+   "name_en": "Oriental bath with salts and essential oils",
+   "description_fr": "Les bains orientaux : plongé dans une baignoire de sels de bains aux extraits de plantes et huiles essentielles, essences de lavande et plante séchée de lavande",
+   "description_en": "Oriental baths: immersed in a bathtub of bath salts with plant extracts and essential oils, lavender essences and dried lavender plant",
+   "price": 120,
+   "extra_min": 15,
+   "per_person": true,
+   "max_qty": 1,
+   "in_hammam": true
+  },
+  {
+   "code": "15CD1",
+   "name_fr": "15 mn massage crânien ou dos — huile d'amande douce et d'argan",
+   "name_en": "15-min head or back massage — sweet almond and argan oil",
+   "description_fr": "massage crânien ou massage dos à l’huile \"d'amande douce et d'argan\"",
+   "description_en": "head massage or back massage with “sweet almond and argan” oil",
+   "price": 125,
+   "extra_min": 15,
+   "per_person": true,
+   "max_qty": 1,
+   "in_hammam": false
+  },
+  {
+   "code": "15CD2",
+   "name_fr": "15 mn massage crânien ou dos — baume premium à l'acide hyaluronique",
+   "name_en": "15-min head or back massage — premium hyaluronic acid balm",
+   "description_fr": "massage crânien ou massage dos au baume à l’acide hyaluronique",
+   "description_en": "head massage or back massage with hyaluronic acid balm",
+   "price": 150,
+   "extra_min": 15,
+   "per_person": true,
+   "max_qty": 1,
+   "in_hammam": false
+  },
+  {
+   "code": "30PD1",
+   "name_fr": "30 mn massage pieds ou dos — huile d'amande douce et d'argan",
+   "name_en": "30-min foot or back massage — sweet almond and argan oil",
+   "description_fr": "massage pieds ou massage dos à l’huile \"d'amande douce et d'argan\"",
+   "description_en": "foot massage or back massage with “sweet almond and argan” oil",
+   "price": 240,
+   "extra_min": 30,
+   "per_person": true,
+   "max_qty": 1,
+   "in_hammam": false
+  },
+  {
+   "code": "30PD2",
+   "name_fr": "30 mn massage pieds ou dos — baume premium à l'acide hyaluronique",
+   "name_en": "30-min foot or back massage — premium hyaluronic acid balm",
+   "description_fr": "massage pieds ou massage dos au baume à l’acide hyaluronique",
+   "description_en": "foot massage or back massage with hyaluronic acid balm",
+   "price": 290,
+   "extra_min": 30,
+   "per_person": true,
+   "max_qty": 1,
+   "in_hammam": false
+  },
+  {
+   "code": "ML",
+   "name_fr": "Massage visage liftant (acide hyaluronique, figue de barbarie et argan)",
+   "name_en": "Lifting facial massage (hyaluronic acid, prickly pear and argan)",
+   "description_fr": "massage visage liftant à l'acide hyaluronique et l'huile \"de figue de barbarie et d'argan\"",
+   "description_en": "lifting facial massage with hyaluronic acid and “prickly pear and argan” oil",
+   "price": 290,
+   "extra_min": 30,
+   "per_person": true,
+   "max_qty": 1,
+   "in_hammam": false
+  }
+ ],
+ "treatments": [
+  {
+   "code": "HMS1",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + Mythic massage 1h30 — huile d'amande douce et d'argan",
+   "name_en": "Hammam 35 mn + Mythic massage 1h30 — sweet almond and argan oil",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile d'amande douce et d'argan",
+   "description_en": "Hammam included scrub with black soap and massage with sweet almond and argan oil",
+   "duration_min": 125,
+   "price_per_person": 1030,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 90
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hms1-hammam-35-mn-mythic-massage-1h30"
+  },
+  {
+   "code": "HMS2",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + Mythic massage 1h30 — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Hammam 35 mn + Mythic massage 1h30 — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "Hammam included scrub with black soap and massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax",
+   "duration_min": 125,
+   "price_per_person": 1130,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 90
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hms2-hammam-35-mn-mythic-massage-1h30"
+  },
+  {
+   "code": "HMA1",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage ayurvédique 1h15 — huile d'amande douce et d'argan",
+   "name_en": "Hammam 35 mn + ayurvedic massage 1h15 — sweet almond and argan oil",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile chaude d'amande douce et d'argan",
+   "description_en": "Hammam included scrub with black soap and massage with hot sweet almond and argan oil",
+   "duration_min": 110,
+   "price_per_person": 930,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 75
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hma1-hammam-35-mn-massage-ayurvedique-1h15"
+  },
+  {
+   "code": "HMA2",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage ayurvédique 1h15 — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Hammam 35 mn + ayurvedic massage 1h15 — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume chaud à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "Hammam included scrub with black soap and massage with hot argan oil and hyaluronic acid balm , shea butter, jojoba oil, beeswax",
+   "duration_min": 110,
+   "price_per_person": 1030,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 75
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hma2-hammam-35-mn-massage-ayurvedique-1h15"
+  },
+  {
+   "code": "HMR1",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage relaxant 1h — huile d'amande douce et d'argan",
+   "name_en": "Hammam 35 mn + relaxing massage 1h — sweet almond and argan oil",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile d'amande douce et d'argan",
+   "description_en": "Hammam included scrub with black soap and massage with sweet almond and argan oil",
+   "duration_min": 95,
+   "price_per_person": 770,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmr1-hammam-35-mn-massage-relaxant-1h"
+  },
+  {
+   "code": "HMR2",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage relaxant 1h — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Hammam 35 mn + relaxing massage 1h — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "Hammam included scrub with black soap and massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax",
+   "duration_min": 95,
+   "price_per_person": 870,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmr2-hammam-35-mn-massage-relaxant-1h"
+  },
+  {
+   "code": "HMZ1",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage relaxant 1h15 — huile d'amande douce et d'argan",
+   "name_en": "Hammam 35 mn + relaxing massage 1h15 — sweet almond and argan oil",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile d'amande douce et d'argan",
+   "description_en": "Hammam included scrub with black soap and massage with sweet almond and argan oil",
+   "duration_min": 110,
+   "price_per_person": 880,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 75
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmz1-hammam-35-mn-massage-relaxant-1h15"
+  },
+  {
+   "code": "HMZ2",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage relaxant 1h15 — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Hammam 35 mn + relaxing massage 1h15 — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "Hammam included scrub with black soap and massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax",
+   "duration_min": 110,
+   "price_per_person": 980,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 75
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmz2-hammam-35-mn-massage-relaxant-1h15"
+  },
+  {
+   "code": "HMT1",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage tonique 1h — huile d'amande douce et d'argan",
+   "name_en": "Hammam 35 mn + toning massage 1h — sweet almond and argan oil",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile d'amande douce et d'argan",
+   "description_en": "Hammam included scrub with black soap and massage with sweet almond and argan oil",
+   "duration_min": 95,
+   "price_per_person": 820,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmt1-hammam-35-mn-massage-tonique-1h"
+  },
+  {
+   "code": "HMT2",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage tonique 1h — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Hammam 35 mn + toning massage 1h — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "Hammam included scrub with black soap and massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax",
+   "duration_min": 95,
+   "price_per_person": 920,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmt2-hammam-35-mn-massage-tonique-1h"
+  },
+  {
+   "code": "HMD1",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage du dos 1h — huile d'amande douce et d'argan",
+   "name_en": "Hammam 35 mn + back massage 1h — sweet almond and argan oil",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile d'amande douce et d'argan",
+   "description_en": "Hammam included scrub with black soap and massage with sweet almond and argan oil",
+   "duration_min": 95,
+   "price_per_person": 810,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmd1-hammam-35-mn-massage-du-dos-1h"
+  },
+  {
+   "code": "HMD2",
+   "section": "HAMMAM ET MASSAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage du dos 1h — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Hammam 35 mn + back massage 1h — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume à l'acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "Hammam included scrub with black soap and massage with hyaluronic acid balm, shea butter, jojoba oil, beeswax",
+   "duration_min": 95,
+   "price_per_person": 910,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmd2-hammam-35-mn-massage-du-dos-1h"
+  },
+  {
+   "code": "HMSV1",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + Mythic massage 1h30 + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Hammam 35 mn + Mythic massage 1h30 + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile d'amande douce et d'argan et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and massage with sweet almond and argan oil and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 175,
+   "price_per_person": 1520,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 140
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmsv1-hammam-35-mn-mythic-massage-1h30-soin-visage-50-mn"
+  },
+  {
+   "code": "HMSV2",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + Mythic massage 1h30 + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Hammam 35 mn + Mythic massage 1h30 + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 175,
+   "price_per_person": 1720,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 140
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmsv2-hammam-35-mn-mythic-massage-1h30-soin-visage-50-mn"
+  },
+  {
+   "code": "HMAV1",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage ayurvédique 1h15 + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Hammam 35 mn + ayurvedic massage 1h15 + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile chaude d'amande douce et d'argan et soin visage complet anti-âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam including black soap scrub and massage with hot sweet almond and argan oil and complete anti-aging facial (details of the treatment in the “facial care” chapter)",
+   "duration_min": 160,
+   "price_per_person": 1420,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 125
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmav1-hammam-35-mn-massage-ayurvedique-1h15-soin-visage-50-mn"
+  },
+  {
+   "code": "HMAV2",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage ayurvédique 1h15 + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Hammam 35 mn + ayurvedic massage 1h15 + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume chaud à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and massage with hot argan oil and hyaluronic acid balm , shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 160,
+   "price_per_person": 1620,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 125
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmav2-hammam-35-mn-massage-ayurvedique-1h15-soin-visage-50-mn"
+  },
+  {
+   "code": "HMRV1",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage relaxant 1h + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Hammam 35 mn + relaxing massage 1h + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile d'amande douce + d'argan et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and massage with sweet almond + argan oil and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 145,
+   "price_per_person": 1260,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmrv1-hammam-35-mn-massage-relaxant-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "HMRV2",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage relaxant 1h + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Hammam 35 mn + relaxing massage 1h + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 145,
+   "price_per_person": 1460,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmrv2-hammam-35-mn-massage-relaxant-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "HMZV1",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage relaxant 1h15 + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Hammam 35 mn + relaxing massage 1h15 + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile d'amande douce et d'argan et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and massage with sweet almond and argan oil and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 160,
+   "price_per_person": 1370,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 125
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmzv1-hammam-35-mn-massage-relaxant-1h15-soin-visage-50-mn"
+  },
+  {
+   "code": "HMZV2",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage relaxant 1h15 + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Hammam 35 mn + relaxing massage 1h15 + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume à l'acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and massage with hyaluronic acid balm, shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 160,
+   "price_per_person": 1570,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 125
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmzv2-hammam-35-mn-massage-relaxant-1h15-soin-visage-50-mn"
+  },
+  {
+   "code": "HMTV1",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage tonique 1h + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Hammam 35 mn + toning massage 1h + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile d'amande douce et d'argan et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and massage with sweet almond and argan oil and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 145,
+   "price_per_person": 1310,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmtv1-hammam-35-mn-massage-tonique-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "HMTV2",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage tonique 1h + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Hammam 35 mn + toning massage 1h + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 145,
+   "price_per_person": 1510,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmtv2-hammam-35-mn-massage-tonique-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "HMDV1",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage du dos 1h + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Hammam 35 mn + back massage 1h + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage à l’huile d'amande douce et d'argan et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and massage with sweet almond and argan oil and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 145,
+   "price_per_person": 1300,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmdv1-hammam-35-mn-massage-du-dos-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "HMDV2",
+   "section": "HAMMAM ET MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 35 mn + massage du dos 1h + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Hammam 35 mn + back massage 1h + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Hammam compris gommage au savon noir et massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 145,
+   "price_per_person": 1500,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 35
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA",
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hmdv2-hammam-35-mn-massage-du-dos-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "MS1",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Mythic massage 1h30 — huile d'amande douce et d'argan",
+   "name_en": "Mythic massage 1h30 — sweet almond and argan oil",
+   "description_fr": "À l’huile d'amande douce et d'argan",
+   "description_en": "With sweet almond and argan oil",
+   "duration_min": 90,
+   "price_per_person": 750,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 90
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "ms1-mythic-massage-1h30"
+  },
+  {
+   "code": "MS2",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Mythic massage 1h30 — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Mythic massage 1h30 — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "With argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax",
+   "duration_min": 90,
+   "price_per_person": 850,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 90
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "ms2-mythic-massage-1h30"
+  },
+  {
+   "code": "MA1",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Massage ayurvédique 1h15 — huile d'amande douce et d'argan",
+   "name_en": "Ayurvedic massage 1h15 — sweet almond and argan oil",
+   "description_fr": "À l’huile chaude d'amande douce et d'argan",
+   "description_en": "With hot sweet almond and argan oil",
+   "duration_min": 75,
+   "price_per_person": 650,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 75
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "ma1-massage-ayurvedique-1h15"
+  },
+  {
+   "code": "MA2",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Massage ayurvédique 1h15 — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Ayurvedic massage 1h15 — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Au baume chaud à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "With hot argan oil and hyaluronic acid balm , shea butter, jojoba oil, beeswax",
+   "duration_min": 75,
+   "price_per_person": 750,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 75
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "ma2-massage-ayurvedique-1h15"
+  },
+  {
+   "code": "MR1",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Massage relaxant 1h — huile d'amande douce et d'argan",
+   "name_en": "Relaxing massage 1h — sweet almond and argan oil",
+   "description_fr": "À l’huile d'amande douce et d'argan",
+   "description_en": "With sweet almond and argan oil",
+   "duration_min": 60,
+   "price_per_person": 470,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mr1-massage-relaxant-1h"
+  },
+  {
+   "code": "MR2",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Massage relaxant 1h — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Relaxing massage 1h — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "With argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax",
+   "duration_min": 60,
+   "price_per_person": 570,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mr2-massage-relaxant-1h"
+  },
+  {
+   "code": "MZ1",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Massage relaxant 1h15 — huile d'amande douce et d'argan",
+   "name_en": "Relaxing massage 1h15 — sweet almond and argan oil",
+   "description_fr": "À l’huile d'amande douce et d'argan",
+   "description_en": "With sweet almond and argan oil",
+   "duration_min": 75,
+   "price_per_person": 580,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 75
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mz1-massage-relaxant-1h15"
+  },
+  {
+   "code": "MZ2",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Massage relaxant 1h15 — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Relaxing massage 1h15 — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "With argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax",
+   "duration_min": 75,
+   "price_per_person": 680,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 75
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mz2-massage-relaxant-1h15"
+  },
+  {
+   "code": "MT1",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Massage tonique 1h — huile d'amande douce et d'argan",
+   "name_en": "Toning massage 1h — sweet almond and argan oil",
+   "description_fr": "À l’huile d'amande douce et d'argan",
+   "description_en": "With sweet almond and argan oil",
+   "duration_min": 60,
+   "price_per_person": 520,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mt1-massage-tonique-1h"
+  },
+  {
+   "code": "MT2",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Massage tonique 1h — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Toning massage 1h — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "With argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax",
+   "duration_min": 60,
+   "price_per_person": 620,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mt2-massage-tonique-1h"
+  },
+  {
+   "code": "MD1",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Massage du dos 1h — huile d'amande douce et d'argan",
+   "name_en": "Back massage 1h — sweet almond and argan oil",
+   "description_fr": "À l’huile d'amande douce et d'argan",
+   "description_en": "With sweet almond and argan oil",
+   "duration_min": 60,
+   "price_per_person": 500,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "md1-massage-du-dos-1h"
+  },
+  {
+   "code": "MD2",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Massage du dos 1h — baume premium à l'huile d'argan et acide hyaluronique",
+   "name_en": "Back massage 1h — premium argan oil and hyaluronic acid balm",
+   "description_fr": "Au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "With argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax",
+   "duration_min": 60,
+   "price_per_person": 600,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "md2-massage-du-dos-1h"
+  },
+  {
+   "code": "MFE",
+   "section": "MASSAGE",
+   "category": "massage",
+   "name_fr": "Massage spécial femme enceinte 1h — huile d'argan pure bio",
+   "name_en": "Pregnancy massage 1h — pure organic argan oil",
+   "description_fr": "À l'huile d'argan pure bio",
+   "description_en": "With pure organic argan oil",
+   "duration_min": 60,
+   "price_per_person": 500,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage",
+     "label_en": "Massage",
+     "duration_min": 60
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mfe-massage-special-femme-enceinte-1h"
+  },
+  {
+   "code": "MSV1",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Mythic massage 1h30 + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Mythic massage 1h30 + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Massage à l’huile d'amande douce et d'argan et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with sweet almond and argan oil and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 140,
+   "price_per_person": 1170,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 140
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "msv1-mythic-massage-1h30-soin-visage-50-mn"
+  },
+  {
+   "code": "MSV2",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Mythic massage 1h30 + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Mythic massage 1h30 + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 140,
+   "price_per_person": 1370,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 140
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "msv2-mythic-massage-1h30-soin-visage-50-mn"
+  },
+  {
+   "code": "MAV1",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Massage ayurvédique 1h15 + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Ayurvedic massage 1h15 + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Massage à l’huile chaude d'amande douce et d'argan et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with hot sweet almond and argan oil and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 125,
+   "price_per_person": 1080,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 125
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mav1-massage-ayurvedique-1h15-soin-visage-50-mn"
+  },
+  {
+   "code": "MAV2",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Massage ayurvédique 1h15 + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Ayurvedic massage 1h15 + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Massage au baume chaud à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with hot argan oil and hyaluronic acid balm , shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 125,
+   "price_per_person": 1280,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 125
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mav2-massage-ayurvedique-1h15-soin-visage-50-mn"
+  },
+  {
+   "code": "MRV1",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Massage relaxant 1h + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Relaxing massage 1h + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Massage à l’huile d'amande douce et d'argan et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with sweet almond and argan oil and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 110,
+   "price_per_person": 920,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mrv1-massage-relaxant-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "MRV2",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Massage relaxant 1h + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Relaxing massage 1h + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 110,
+   "price_per_person": 1120,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mrv2-massage-relaxant-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "MZV1",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Massage relaxant 1h15 + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Relaxing massage 1h15 + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Massage à l’huile d'amande douce et d'argan et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with sweet almond and argan oil and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 125,
+   "price_per_person": 1010,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 125
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mzv1-massage-relaxant-1h15-soin-visage-50-mn"
+  },
+  {
+   "code": "MZV2",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Massage relaxant 1h15 + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Relaxing massage 1h15 + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 125,
+   "price_per_person": 1210,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 125
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mzv2-massage-relaxant-1h15-soin-visage-50-mn"
+  },
+  {
+   "code": "MTV1",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Massage tonique 1h + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Toning massage 1h + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Massage à l’huile d'amande douce et d'argan et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with sweet almond and argan oil and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 110,
+   "price_per_person": 960,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mtv1-massage-tonique-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "MTV2",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Massage tonique 1h + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Toning massage 1h + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 110,
+   "price_per_person": 1160,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mtv2-massage-tonique-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "MDV1",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Massage du dos 1h + soin visage 50 mn — huile d'amande douce et d'argan, soin visage anti-âge",
+   "name_en": "Back massage 1h + facial 50 mn — sweet almond and argan oil, anti-ageing facial",
+   "description_fr": "Massage à l’huile d'amande douce et d'argan et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with sweet almond and argan oil and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 110,
+   "price_per_person": 940,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mdv1-massage-du-dos-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "MDV2",
+   "section": "MASSAGE ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Massage du dos 1h + soin visage 50 mn — baume premium à l'huile d'argan et acide hyaluronique, soin visage à l'acide hyaluronique",
+   "name_en": "Back massage 1h + facial 50 mn — premium argan oil and hyaluronic acid balm, hyaluronic acid facial",
+   "description_fr": "Massage au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Massage with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 110,
+   "price_per_person": 1140,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Massage + soin visage",
+     "label_en": "Massage + facial care",
+     "duration_min": 110
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML",
+    "BA"
+   ],
+   "slug": "mdv2-massage-du-dos-1h-soin-visage-50-mn"
+  },
+  {
+   "code": "V1",
+   "section": "SOIN VISAGE",
+   "category": "face",
+   "name_fr": "Soin visage complet anti-âge 50 mn",
+   "name_en": "Complete anti-ageing facial 50 mn",
+   "description_fr": "Démaquillage, gommage végan, vapeur, extraction de comédons, modelage au sérum \"huile argan et figue de barbarie\", pose de masque anti-âge, crème hydratante aux puissants actifs naturels",
+   "description_en": "Make-up removal, vegan scrub, steam, blackhead extraction, massage with “argan oil and prickly pear” serum, application of anti-aging mask, moisturizing cream with powerful natural active ingredients",
+   "duration_min": 50,
+   "price_per_person": 550,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Soin visage",
+     "label_en": "Facial care",
+     "duration_min": 50
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "v1-soin-visage-complet-anti-age-50-mn"
+  },
+  {
+   "code": "V2",
+   "section": "SOIN VISAGE",
+   "category": "face",
+   "name_fr": "Soin visage complet à l’acide hyaluronique 50 mn",
+   "name_en": "Complete hyaluronic acid facial 50 mn",
+   "description_fr": "Démaquillage, gommage végan, vapeur, extraction comédons, modelage au sérum argan+figue de barbarie, pose masque, sérum acide hyaluronic, hydratation à l'acide hyaluronic, beurre de karité, argan bio, amande douce",
+   "description_en": "Make-up removal, vegan scrub, steam, blackhead extraction, massage with argan + prickly pear serum, mask application, hyaluronic acid serum, hydration with hyaluronic acid, shea butter, organic argan, sweet almond",
+   "duration_min": 50,
+   "price_per_person": 680,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "massage",
+     "label_fr": "Soin visage",
+     "label_en": "Facial care",
+     "duration_min": 50
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "15CD2",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "v2-soin-visage-complet-a-l-acide-hyaluronique-50-mn"
+  },
+  {
+   "code": "HV1",
+   "section": "HAMMAM ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 40 mn + soin visage anti-âge 50 mn",
+   "name_en": "Hammam 40 mn + anti-ageing facial 50 mn",
+   "description_fr": "Hammam compris gommage au savon noir et soin visage complet anti âge (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and complete anti-aging facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 90,
+   "price_per_person": 850,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 40
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Soin visage",
+     "label_en": "Facial care",
+     "duration_min": 50
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hv1-hammam-40-mn-soin-visage-anti-age-50-mn"
+  },
+  {
+   "code": "HV2",
+   "section": "HAMMAM ET SOIN VISAGE",
+   "category": "ritual",
+   "name_fr": "Hammam 40 mn + soin visage à l'acide hyaluronique 50 mn",
+   "name_en": "Hammam 40 mn + hyaluronic acid facial 50 mn",
+   "description_fr": "Hammam compris gommage au savon noir et soin visage complet à l'acide hyaluronique (détail du soin dans le chapitre \"soins visage\")",
+   "description_en": "Hammam included scrub with black soap and complete hyaluronic acid facial treatment (details of the treatment in the “facial care” chapter)",
+   "duration_min": 90,
+   "price_per_person": 970,
+   "party_min": 1,
+   "party_max": 4,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 40
+    },
+    {
+     "kind": "massage",
+     "label_fr": "Soin visage",
+     "label_en": "Facial care",
+     "duration_min": 50
+    }
+   ],
+   "extras": [
+    "15CD1",
+    "30PD1",
+    "30PD2",
+    "ML"
+   ],
+   "slug": "hv2-hammam-40-mn-soin-visage-a-l-acide-hyaluronique-50-mn"
+  },
+  {
+   "code": "H1",
+   "section": "HAMMAM",
+   "category": "hammam",
+   "name_fr": "Hammam beldi 40 mn — gommage au savon noir, hydratation au lait à l’huile d’argan",
+   "name_en": "Beldi hammam 40 mn — black-soap scrub, argan-oil milk hydration",
+   "description_fr": "Hammam marocain traditionnel compris gommage de la peau au savon noir + hydratation au lait à l’huile d’argan",
+   "description_en": "Traditional Moroccan hammam including skin scrub with black soap + hydration with milk and argan oil",
+   "duration_min": 40,
+   "price_per_person": 450,
+   "party_min": 1,
+   "party_max": 6,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 40
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA"
+   ],
+   "slug": "h1-hammam-beldi-40-mn"
+  },
+  {
+   "code": "H2",
+   "section": "HAMMAM",
+   "category": "hammam",
+   "name_fr": "Hammam beldi 40 mn — gommage au savon noir, hydratation au baume premium",
+   "name_en": "Beldi hammam 40 mn — black-soap scrub, premium balm hydration",
+   "description_fr": "Hammam marocain traditionnel compris gommage de la peau au savon noir + hydratation au baume à l'huile d'argan et acide hyaluronique, beure de karité, huile de jojoba, cire d'abeille",
+   "description_en": "Traditional Moroccan hammam including skin scrub with black soap + hydration with argan oil and hyaluronic acid balm, shea butter, jojoba oil, beeswax",
+   "duration_min": 40,
+   "price_per_person": 550,
+   "party_min": 1,
+   "party_max": 6,
+   "steps": [
+    {
+     "kind": "hammam",
+     "label_fr": "Hammam & gommage au savon noir",
+     "label_en": "Hammam & black-soap scrub",
+     "duration_min": 40
+    }
+   ],
+   "extras": [
+    "RH",
+    "BA"
+   ],
+   "slug": "h2-hammam-beldi-40-mn"
+  }
+ ],
+ "photos": [
+  "image-15-scaled.jpg",
+  "image-16-scaled.jpg",
+  "image-17-scaled.jpg",
+  "image-18-scaled.jpg",
+  "image-19-scaled.jpg",
+  "image-20-scaled.jpg",
+  "image-21-scaled.jpg",
+  "image-22-scaled.jpg",
+  "image-23-scaled.jpg",
+  "image-24-scaled.jpg",
+  "image-25-scaled.jpg",
+  "image-26-scaled.jpg",
+  "image-27-scaled.jpg",
+  "image-28-scaled.jpg",
+  "image-29-scaled.jpg",
+  "image-30-scaled.jpg",
+  "image-31-scaled.jpg",
+  "image-32-scaled.jpg",
+  "image-33-scaled.jpg",
+  "image-34-scaled.jpg",
+  "image-35-scaled.jpg",
+  "image-36-scaled.jpg",
+  "image-37-scaled.jpg",
+  "image-38-scaled.jpg",
+  "image-39-scaled.jpg",
+  "image-40-scaled.jpg",
+  "image-41-scaled.jpg",
+  "image-42-scaled.jpg",
+  "image-43-scaled.jpg",
+  "image-5-scaled.jpg"
+ ]
+}
