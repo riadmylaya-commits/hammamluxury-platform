@@ -94,6 +94,7 @@ class TreatmentResource extends Resource
                                 ->required(),
                             Forms\Components\TextInput::make('duration_min')->label(__('partner.duration'))->numeric()->minValue(5)->step(5)->suffix('min')->required()->default(60),
                             Forms\Components\TextInput::make('label')->label(__('partner.step_label'))->maxLength(120)->placeholder(__('partner.component_label_help')),
+                            Forms\Components\TextInput::make('label_en')->label(__('partner.step_label_en'))->maxLength(190),
                             Forms\Components\Select::make('staff_per_person')->label(__('partner.staff_per_person'))->options(__('partner.staff_options_all'))->default(0)->native(false)->dehydrateStateUsing(fn ($state) => (int) $state)
                                 ->helperText(__('partner.staff_per_person_help')),
                             Forms\Components\Toggle::make('parallel_with_previous')->label(__('partner.component_parallel'))->helperText(__('partner.component_parallel_help'))->inline(false)->default(false)->dehydrateStateUsing(fn ($state) => (bool) $state),

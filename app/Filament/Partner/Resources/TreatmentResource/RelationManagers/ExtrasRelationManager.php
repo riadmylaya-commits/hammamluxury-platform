@@ -2,6 +2,7 @@
 
 namespace App\Filament\Partner\Resources\TreatmentResource\RelationManagers;
 
+use App\Domain\Partner\OnboardingService;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -26,6 +27,8 @@ class ExtrasRelationManager extends RelationManager
             Forms\Components\TextInput::make('name_en')->label(__('partner.name_en'))->maxLength(190),
             Forms\Components\TextInput::make('price')->label(__('partner.extra_price'))->numeric()->minValue(0)->suffix(config('hl.currency'))->required()->default(0),
             Forms\Components\TextInput::make('extra_min')->label(__('partner.extra_min'))->numeric()->minValue(0)->step(5)->suffix('min')->default(0)->helperText(__('partner.extra_min_help')),
+            Forms\Components\Select::make('applies_to')->label(__('partner.extra_applies_to'))->options(fn () => collect(OnboardingService::RESOURCE_TYPES)->except('praticien')->mapWithKeys(fn ($d, $k) => [$k => $d[1]])->all())
+                ->placeholder(__('partner.extra_applies_to_none'))->native(false)->helperText(__('partner.extra_applies_to_help')),
             Forms\Components\Toggle::make('per_person')->label(__('partner.per_person'))->default(true)->helperText(__('partner.per_person_help')),
             Forms\Components\TextInput::make('max_qty')->label(__('partner.max_qty'))->numeric()->minValue(1)->default(1),
         ])->columns(2);

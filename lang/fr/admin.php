@@ -234,4 +234,6 @@ return [
     'instant_booking' => 'Réservation instantanée',
     'instant_booking_help' => 'Les réservations clients sont confirmées immédiatement, sans validation du partenaire.',
     'instant_booking_at' => 'Activée le',
+    'waiting_ttl' => 'Délai de réponse aux demandes',
+    'waiting_ttl_help' => 'Heures laissées au partenaire pour accepter une demande avant son expiration automatique (vide = valeur globale : :default h).',
 ];

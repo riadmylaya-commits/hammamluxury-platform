@@ -17,7 +17,7 @@ class Presentation
     public const LANGUAGES = ['fr', 'en', 'ar', 'es', 'de', 'it'];
 
     /** @var list<string> clés d'infos pratiques stockées dans `spas.practical_info` */
-    public const PRACTICAL_KEYS = ['gender', 'children', 'pregnant', 'accessible', 'languages', 'bring', 'notes'];
+    public const PRACTICAL_KEYS = ['gender', 'children', 'pregnant', 'accessible', 'languages', 'bring', 'notes', 'bring_en', 'notes_en'];
 
     /** @return array<string, string> */
     public static function includedOptions(): array
@@ -98,8 +98,9 @@ class Presentation
             $rows[] = ['label' => __('ui.practical.languages'), 'value' => collect($info['languages'])->map(fn ($l) => __('ui.practical.lang_'.$l))->implode(', ')];
         }
         foreach (['bring', 'notes'] as $k) {
-            if (! empty($info[$k])) {
-                $rows[] = ['label' => __('ui.practical.'.$k), 'value' => $info[$k]];
+            $value = app()->getLocale() === 'en' && ! empty($info[$k.'_en']) ? $info[$k.'_en'] : ($info[$k] ?? null);
+            if (! empty($value)) {
+                $rows[] = ['label' => __('ui.practical.'.$k), 'value' => $value];
             }
         }
 

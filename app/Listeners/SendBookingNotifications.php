@@ -58,12 +58,9 @@ class SendBookingNotifications
             return null;
         }
 
-        DB::afterCommit(function () use ($booking, $n, $event) {
+        DB::afterCommit(function () use ($n) {
             $n->update(['status' => 'queued', 'queued_at' => now()]);
             SendBookingNotification::dispatch($n->id);
-            if (! $booking->events()->where('type', 'notified:'.$event)->exists()) {
-                $booking->log('notified:'.$event, 'system');
-            }
         });
 
         return $n;

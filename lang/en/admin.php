@@ -234,4 +234,6 @@ return [
     'instant_booking' => 'Instant booking',
     'instant_booking_help' => 'Client bookings are confirmed immediately, without partner validation.',
     'instant_booking_at' => 'Enabled on',
+    'waiting_ttl' => 'Response time for requests',
+    'waiting_ttl_help' => 'Hours the partner has to accept a request before it expires automatically (empty = global value: :default h).',
 ];

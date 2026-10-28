@@ -23,6 +23,8 @@ return [
     'max_participants' => 20,
     'min_photos' => (int) env('HL_MIN_PHOTOS', 10),
     'max_photos' => (int) env('HL_MAX_PHOTOS', 40),
+    // Environnements de recette : aucune page indexée par les moteurs de recherche.
+    'noindex' => (bool) env('HL_NOINDEX', false),
     'geocoder_url' => env('HL_GEOCODER_URL', 'https://nominatim.openstreetmap.org/search'),
 
     // Formulaire Contact public : adresse de réception.

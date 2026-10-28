@@ -24,7 +24,7 @@ class SecurityHeaders
         $h->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()');
         $h->set('Cross-Origin-Opener-Policy', 'same-origin');
 
-        if (self::isPrivatePage($request)) {
+        if (self::isPrivatePage($request) || config('hl.noindex')) {
             $h->set('X-Robots-Tag', 'noindex, nofollow, noarchive');
             $h->set('Cache-Control', 'no-store, private');
             $h->set('Pragma', 'no-cache');
@@ -46,7 +46,7 @@ class SecurityHeaders
     /** Pages personnelles (lien de suivi, espaces connectés) : jamais indexées, jamais mises en cache. */
     public static function isPrivatePage(Request $request): bool
     {
-        return $request->is('reservation/*', '*/reservation/*', 'admin', 'admin/*', 'partner', 'partner/*');
+        return $request->is('reservation/*', '*/reservation/*', 'admin', 'admin/*', 'partner', 'partner/*', 'partenaire', 'partenaire/*');
     }
 
     public static function policy(): string

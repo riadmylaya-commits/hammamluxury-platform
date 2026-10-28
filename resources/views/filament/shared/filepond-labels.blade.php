@@ -15,3 +15,9 @@
         });
     });
 </script>
+
+<style>
+    /* Actions regroupées en un menu sur mobile (tableau des réservations partenaire) */
+    @media (min-width: 768px) { .hl-mobile-only { display: none; } }
+    @media (max-width: 767px) { .hl-desktop-only { display: none; } }
+</style>

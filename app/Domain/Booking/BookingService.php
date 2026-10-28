@@ -212,7 +212,7 @@ class BookingService
                 'locale' => $locale ?? app()->getLocale(),
                 'quote' => $quote,
                 'intent_id' => $intentId,
-                'expires_at' => $status === 'waiting' ? min($this->waitingDeadline(), $start) : null,
+                'expires_at' => $status === 'waiting' ? min($this->waitingDeadline(spa: $spa), $start) : null,
                 'confirmed_at' => $status === 'confirmed' ? now() : null,
             ]);
             $participantIds = [];
@@ -583,9 +583,11 @@ class BookingService
 
     /* ------------------------------------------------------------------ Expiration */
 
-    public function waitingDeadline(?CarbonImmutable $from = null): CarbonImmutable
+    public function waitingDeadline(?CarbonImmutable $from = null, ?Spa $spa = null): CarbonImmutable
     {
-        return ($from ?? CarbonImmutable::now())->addMinutes((int) round(60 * (float) config('hl.waiting_ttl_hours')));
+        $hours = $spa?->waitingTtlHours() ?? (float) config('hl.waiting_ttl_hours');
+
+        return ($from ?? CarbonImmutable::now())->addMinutes((int) round(60 * $hours));
     }
 
     /**

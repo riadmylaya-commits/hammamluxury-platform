@@ -28,7 +28,7 @@ class Spa extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['instant_booking' => 'bool', 'instant_booking_at' => 'datetime', 'submitted_at' => 'datetime', 'published_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array', 'cancellation_hours' => 'int'];
+    protected $casts = ['instant_booking' => 'bool', 'instant_booking_at' => 'datetime', 'submitted_at' => 'datetime', 'published_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array', 'cancellation_hours' => 'int', 'waiting_ttl_hours' => 'float'];
 
     /** Position sur la carte : `['lat' => ?, 'lng' => ?]`, éditable comme un seul champ de formulaire. */
     protected function location(): Attribute
@@ -237,6 +237,12 @@ class Spa extends Model
     public function openingRanges(int $weekday): array
     {
         return $this->hours->where('weekday', $weekday)->map(fn ($h) => [(int) $h->opens_min, (int) $h->closes_min])->values()->all();
+    }
+
+    /** Délai d'attente d'une demande (heures) : propre à l'établissement, sinon valeur globale. */
+    public function waitingTtlHours(): float
+    {
+        return $this->waiting_ttl_hours > 0 ? (float) $this->waiting_ttl_hours : (float) config('hl.waiting_ttl_hours');
     }
 
     public function refreshPriceFrom(): void

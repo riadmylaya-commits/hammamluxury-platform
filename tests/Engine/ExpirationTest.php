@@ -52,6 +52,24 @@ class ExpirationTest extends BookingFlowTestCase
         $this->artisan('hl:expire-waiting')->expectsOutputToContain('0 demande(s)')->assertSuccessful();
     }
 
+    public function test_spa_specific_waiting_ttl_overrides_global_value(): void
+    {
+        config(['hl.waiting_ttl_hours' => 2]);
+        $this->spa->update(['waiting_ttl_hours' => 12]);
+        $b = $this->submit($this->intent('17:00', ['treatment' => $this->h->id, 'party' => 1]))['booking'];
+        $delta = $b->expires_at->diffInMinutes(now(), true);
+        $this->assertTrue($delta > 718 && $delta < 722, 'Délai propre à l’établissement : 12 h → '.round($delta).' min');
+
+        $mail = (new BookingMail($b, 'created', 'partner'))->render();
+        $this->assertStringContainsString('12', $mail, 'E-mail « nouvelle demande » : délai propre à l’établissement');
+        $this->assertStringNotContainsString(' 2 h', $mail);
+
+        $this->spa->update(['waiting_ttl_hours' => null]);
+        $b = $this->submit($this->intent('18:00', ['treatment' => $this->h->id, 'party' => 1]))['booking'];
+        $delta = $b->expires_at->diffInMinutes(now(), true);
+        $this->assertTrue($delta > 118 && $delta < 122, 'Sans valeur propre : retour au délai global de 2 h → '.round($delta).' min');
+    }
+
     public function test_confirmed_bookings_never_expire(): void
     {
         $b = $this->submit($this->intent('10:00', ['treatment' => $this->h->id, 'party' => 1]))['booking'];

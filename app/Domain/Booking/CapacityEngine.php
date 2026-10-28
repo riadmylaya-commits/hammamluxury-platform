@@ -48,18 +48,38 @@ class CapacityEngine
             if ($party < $treatment->party_min || $party > $treatment->party_max) {
                 throw BookingException::make('party', 'party_range', ['name' => $treatment->tr('name'), 'min' => $treatment->party_min, 'max' => $treatment->party_max]);
             }
-            $extraMin = 0;
-            if (! empty($item['extras'])) {
-                $extras = $treatment->extras->where('status', 'active')->keyBy('id');
-                foreach (self::normalizeExtras($extras, $item['extras']) as $eid => $qty) {
-                    $extraMin += $qty * (int) $extras[$eid]->extra_min;
-                }
-            }
             $steps = $treatment->steps->values();
             if ($steps->isEmpty()) {
                 throw BookingException::make('no_steps', 'treatment_no_resources', ['name' => $treatment->tr('name')]);
             }
+            // Minutes d'extras : rattachées à l'étape de leur type de ressource (ex. rhassoul dans le hammam), sinon à la dernière étape.
+            $extraMin = 0;
+            $extraByType = [];
+            $stepTypes = $steps->map(fn ($s) => $s->resourceType?->slug)->all();
+            if (! empty($item['extras'])) {
+                $extras = $treatment->extras->where('status', 'active')->keyBy('id');
+                foreach (self::normalizeExtras($extras, $item['extras']) as $eid => $qty) {
+                    $min = $qty * (int) $extras[$eid]->extra_min;
+                    $target = $extras[$eid]->applies_to;
+                    if ($target && in_array($target, $stepTypes, true)) {
+                        $extraByType[$target] = ($extraByType[$target] ?? 0) + $min;
+                    } else {
+                        $extraMin += $min;
+                    }
+                }
+            }
             $offsets = self::stepOffsets($steps);
+            $applied = [];
+            $shift = 0;
+            foreach ($steps as $i => $s) {
+                $offsets[$i] += $shift;
+                $slug = $s->resourceType?->slug;
+                if ($slug && isset($extraByType[$slug])) {
+                    $applied[$i] = $extraByType[$slug];
+                    $shift += $extraByType[$slug];
+                    unset($extraByType[$slug]);
+                }
+            }
             $last = 0;
             foreach ($steps as $i => $s) {
                 if ($offsets[$i] + $s->duration_min >= $offsets[$last] + $steps[$last]->duration_min) {
@@ -70,7 +90,7 @@ class CapacityEngine
             foreach ($steps as $i => $s) {
                 $type = $s->resourceType;
                 $needStart = $start->addMinutes($offsets[$i]);
-                $needEnd = $needStart->addMinutes($s->duration_min + ($i === $last ? $extraMin : 0));
+                $needEnd = $needStart->addMinutes($s->duration_min + ($applied[$i] ?? 0) + ($i === $last ? $extraMin : 0));
                 $base = [
                     'start' => $needStart,
                     'end' => $needEnd,
