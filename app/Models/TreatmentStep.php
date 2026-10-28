@@ -29,6 +29,8 @@ class TreatmentStep extends Model
     /** Libellé affiché au client : texte libre du partenaire, sinon nom du type de ressource. */
     public function displayLabel(): string
     {
-        return filled($this->label) ? $this->label : (string) $this->resourceType?->tr('name');
+        $label = app()->getLocale() === 'en' && filled($this->label_en) ? $this->label_en : $this->label;
+
+        return filled($label) ? $label : (string) $this->resourceType?->tr('name');
     }
 }

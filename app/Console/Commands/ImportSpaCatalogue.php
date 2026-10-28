@@ -230,6 +230,7 @@ class ImportSpaCatalogue extends Command
                 $t->steps()->create([
                     'resource_type_id' => $this->resourceType($spa, $step['kind'])->id,
                     'label' => $step['label_fr'] ?? null,
+                    'label_en' => $step['label_en'] ?? null,
                     'duration_min' => (int) $step['duration_min'],
                     'offset_min' => $offset,
                     'staff_per_person' => OnboardingService::staffFor($step['kind'], $step['staff'] ?? null),
@@ -246,6 +247,7 @@ class ImportSpaCatalogue extends Command
                     'name_en' => $e['name_en'] ?? null,
                     'price' => $e['price'],
                     'extra_min' => (int) ($e['extra_min'] ?? 0),
+                    'applies_to' => $e['applies_to'] ?? null,
                     'per_person' => (bool) ($e['per_person'] ?? true),
                     'max_qty' => (int) ($e['max_qty'] ?? 1),
                     'status' => 'active',

@@ -39,10 +39,17 @@ class SendBookingNotification implements ShouldQueue
             Mail::to($n->recipient)->sendNow($this->mailable($n)->locale($locale));
         } catch (Throwable $e) {
             $n->update(['status' => 'failed', 'attempts' => $n->attempts + 1, 'failed_at' => now(), 'error' => mb_substr($e->getMessage(), 0, 500)]);
+            if (! $booking->events()->where('type', 'notification_failed:'.$n->event)->exists()) {
+                $booking->log('notification_failed:'.$n->event, 'system');
+            }
             throw $e;
         }
 
         $n->update(['status' => 'sent', 'attempts' => $n->attempts + 1, 'sent_at' => now(), 'error' => null]);
+        // L'historique n'indique « e-mail envoyé » qu'après remise effective au serveur d'envoi.
+        if (! $booking->events()->where('type', 'notified:'.$n->event)->exists()) {
+            $booking->log('notified:'.$n->event, 'system');
+        }
     }
 
     private function mailable(BookingNotification $n): BookingMail|ReviewInviteMail

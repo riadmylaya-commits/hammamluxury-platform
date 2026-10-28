@@ -76,10 +76,16 @@ class ImportSpaCatalogueTest extends TestCase
 
         $day = CarbonImmutable::now()->addDays(7)->next(CarbonImmutable::WEDNESDAY);
         $spa->update(['status' => 'published', 'published_at' => now()]);
-        $booking = app(BookingService::class)->book($spa, $day->setTime(10, 0), [['treatment' => $hmsv1->id, 'party' => 2, 'extras' => []]],
+        $rh = $hmsv1->extras()->where('name_fr', 'like', 'Purification%')->firstOrFail();
+        $this->assertSame('hammam', $rh->applies_to);
+        $booking = app(BookingService::class)->book($spa, $day->setTime(10, 0), [['treatment' => $hmsv1->id, 'party' => 2, 'extras' => [$rh->id => 1]]],
             ['first_name' => 'Test', 'last_name' => 'Import', 'email' => 'import@example.test', 'phone' => '+212600000000']);
         $this->assertSame('waiting', $booking->status);
-        $this->assertSame(3040.0, (float) $booking->total);
+        $this->assertSame(3240.0, (float) $booking->total);
+        $hammam = $booking->allocations()->whereHas('resourceType', fn ($q) => $q->where('slug', 'hammam'))->firstOrFail();
+        $cabin = $booking->allocations()->whereHas('resourceType', fn ($q) => $q->where('slug', 'massage'))->firstOrFail();
+        $this->assertSame(['10:00', '10:50'], [$hammam->start_at->format('H:i'), $hammam->end_at->format('H:i')], 'Le rhassoul (+15 min) prolonge le hammam');
+        $this->assertSame(['10:50', '13:10'], [$cabin->start_at->format('H:i'), $cabin->end_at->format('H:i')], 'La cabine commence après le hammam prolongé');
         $this->assertSame(['hammam', 'massage', 'praticien'], $booking->allocations()->with('resourceType')->get()->map(fn ($a) => $a->resourceType->slug)->unique()->sort()->values()->all(),
             'Hammam puis cabine + praticien(ne) alloués');
     }

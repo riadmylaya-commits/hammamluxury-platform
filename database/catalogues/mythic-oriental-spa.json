@@ -46,7 +46,8 @@
    "children": "ask",
    "pregnant": "yes",
    "accessible": "ask",
-   "bring": "Rien : sous-vêtements jetables et serviettes fournis"
+   "bring": "Rien : sous-vêtements jetables et serviettes fournis",
+   "bring_en": "Nothing: disposable underwear and towels provided"
   },
   "hours": [
    {
@@ -104,7 +105,7 @@
    "extra_min": 15,
    "per_person": true,
    "max_qty": 1,
-   "in_hammam": true
+   "applies_to": "hammam"
   },
   {
    "code": "BA",
@@ -116,7 +117,7 @@
    "extra_min": 15,
    "per_person": true,
    "max_qty": 1,
-   "in_hammam": true
+   "applies_to": "hammam"
   },
   {
    "code": "15CD1",
@@ -128,7 +129,7 @@
    "extra_min": 15,
    "per_person": true,
    "max_qty": 1,
-   "in_hammam": false
+   "applies_to": null
   },
   {
    "code": "15CD2",
@@ -140,7 +141,7 @@
    "extra_min": 15,
    "per_person": true,
    "max_qty": 1,
-   "in_hammam": false
+   "applies_to": null
   },
   {
    "code": "30PD1",
@@ -152,7 +153,7 @@
    "extra_min": 30,
    "per_person": true,
    "max_qty": 1,
-   "in_hammam": false
+   "applies_to": null
   },
   {
    "code": "30PD2",
@@ -164,7 +165,7 @@
    "extra_min": 30,
    "per_person": true,
    "max_qty": 1,
-   "in_hammam": false
+   "applies_to": null
   },
   {
    "code": "ML",
@@ -176,7 +177,7 @@
    "extra_min": 30,
    "per_person": true,
    "max_qty": 1,
-   "in_hammam": false
+   "applies_to": null
   }
  ],
  "treatments": [
