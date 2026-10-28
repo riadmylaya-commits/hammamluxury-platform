@@ -69,7 +69,7 @@ class ImportSpaCatalogueTest extends TestCase
         $this->artisan('hl:import-spa', ['file' => base_path(self::FILE)])->assertSuccessful();
         $spa->refresh();
         $this->assertSame(55, $spa->treatments()->count(), 'Relance : aucun doublon de soin');
-        $this->assertSame(1, User::where('email', 'no-reply@hammamluxury.com')->count());
+        $this->assertSame(1, User::where('email', 'mythic-pilote@hammamluxury.com')->count());
         $this->assertSame($password, $spa->partner->user->fresh()->password, 'Relance : compte existant inchangé');
         $this->assertSame(3, $spa->resourceTypes()->count(), 'Relance : types de ressources (hammam, cabine, praticien) non dupliqués');
         $this->assertSame(7, $spa->hours()->count());
@@ -105,6 +105,26 @@ class ImportSpaCatalogueTest extends TestCase
         $this->artisan('hl:import-spa', ['file' => base_path(self::FILE), '--photos-dir' => $dir])->assertSuccessful();
         $this->assertSame(1, $spa->photos()->count(), 'Relance : photos existantes conservées, pas de doublon');
         $this->assertSame('published', $spa->fresh()->status, 'Relance sans --publish : statut conservé');
+    }
+
+    public function test_email_of_another_partner_or_non_partner_account_is_refused(): void
+    {
+        $admin = User::factory()->create(['email' => 'admin@example.test', 'role' => 'admin']);
+        $file = tempnam(sys_get_temp_dir(), 'hl');
+        $spec = json_decode(file_get_contents(base_path(self::FILE)), true);
+        $spec['partner']['email'] = 'admin@example.test';
+        file_put_contents($file, json_encode($spec));
+        $this->artisan('hl:import-spa', ['file' => $file])->expectsOutputToContain('pas à un partenaire')->assertFailed();
+        $this->assertSame(0, Spa::count());
+
+        $other = User::factory()->create(['email' => 'autre@example.test', 'role' => 'partner']);
+        $other->partner()->create(['company_name' => 'Autre Spa', 'status' => 'approved']);
+        $spec['partner']['email'] = 'autre@example.test';
+        file_put_contents($file, json_encode($spec));
+        $this->artisan('hl:import-spa', ['file' => $file])->expectsOutputToContain('déjà utilisé par le partenaire « Autre Spa »')->assertFailed();
+        $this->assertSame(0, Spa::count());
+        $this->assertSame('Autre Spa', $other->partner->fresh()->company_name, 'Partenaire existant intact');
+        $this->assertSame($admin->password, $admin->fresh()->password);
     }
 
     public function test_invalid_file_is_rejected_without_side_effects(): void

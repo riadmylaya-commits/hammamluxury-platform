@@ -108,10 +108,23 @@ class ImportSpaCatalogue extends Command
         }
     }
 
-    /** Compte partenaire approuvé ; un compte existant n'est jamais modifié (ni mot de passe, ni nom). */
+    /**
+     * Compte partenaire approuvé. Un compte existant n'est jamais modifié (ni mot de passe, ni nom) et un e-mail
+     * déjà rattaché à un autre partenaire ou à un compte non partenaire est refusé : l'import ne reprend jamais un compte.
+     */
     private function partner(array $p): Partner
     {
         $user = User::where('email', $p['email'])->first();
+        if ($user && $user->role !== 'partner') {
+            throw new InvalidArgumentException('L’e-mail '.$p['email'].' appartient à un compte « '.$user->role.' », pas à un partenaire.');
+        }
+        $existing = $user ? Partner::where('user_id', $user->id)->first() : null;
+        if ($existing && $existing->company_name !== $p['company_name']) {
+            throw new InvalidArgumentException('L’e-mail '.$p['email'].' est déjà utilisé par le partenaire « '.$existing->company_name.' ».');
+        }
+        if ($existing) {
+            return $existing;
+        }
         if (! $user) {
             $user = User::create([
                 'name' => trim(($p['first_name'] ?? '').' '.($p['last_name'] ?? '')) ?: $p['company_name'],
@@ -126,7 +139,8 @@ class ImportSpaCatalogue extends Command
             ]);
         }
 
-        return Partner::updateOrCreate(['user_id' => $user->id], [
+        return Partner::create([
+            'user_id' => $user->id,
             'company_name' => $p['company_name'],
             'contact_phone' => $p['phone'] ?? null,
             'status' => 'approved',

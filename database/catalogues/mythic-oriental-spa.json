@@ -1,7 +1,7 @@
 {
  "_source": "https://mythicoriental-spa.com (référence) — carte codée FR/EN relevée le 2026-10-28",
  "_a_confirmer": [
-  "partner.email : adresse réelle du responsable Mythic (no-reply@hammamluxury.com provisoire)",
+  "partner.email : adresse réelle du responsable Mythic (mythic-pilote@hammamluxury.com provisoire, boîte à créer ou à remplacer)",
   "spa.capacity : nombre exact de cabines et de praticiens (3/3 provisoires), capacité hammam 6 (site)",
   "spa.lat/lng : position lue sur la carte intégrée du site, à vérifier",
   "party_max : 6 au hammam, 4 en cabine (site) ; prix par personne",
@@ -10,7 +10,7 @@
  ],
  "partner": {
   "company_name": "Mythic Oriental Spa",
-  "email": "no-reply@hammamluxury.com",
+  "email": "mythic-pilote@hammamluxury.com",
   "first_name": "Mythic",
   "last_name": "Oriental Spa",
   "phone": "+212666947278",
