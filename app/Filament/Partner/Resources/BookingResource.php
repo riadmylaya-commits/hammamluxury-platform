@@ -90,8 +90,8 @@ class BookingResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([Tables\Actions\ViewAction::make(), ...BookingActions::all('partner')])->extraAttributes(['class' => 'hl-mobile-only']),
-                Tables\Actions\ViewAction::make()->visibleFrom('md'),
-                ...array_map(fn ($a) => $a->visibleFrom('md'), BookingActions::all('partner')),
+                Tables\Actions\ViewAction::make()->extraAttributes(['class' => 'hl-desktop-only']),
+                ...array_map(fn ($a) => $a->extraAttributes(['class' => 'hl-desktop-only']), BookingActions::all('partner')),
             ])
             ->emptyStateHeading(__('partner.no_bookings'));
     }
