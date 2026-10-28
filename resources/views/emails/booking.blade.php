@@ -20,7 +20,7 @@
 </x-mail::button>
 @endif
 @if($audience === 'partner' && $event === 'created')
-{{ __('emails.created.partner.deadline', ['hours' => config('hl.waiting_ttl_hours')]) }}
+{{ __('emails.created.partner.deadline', ['hours' => $booking->spa->waitingTtlHours()]) }}
 @endif
 
 {{ config('app.name') }}

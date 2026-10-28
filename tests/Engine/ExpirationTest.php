@@ -60,6 +60,10 @@ class ExpirationTest extends BookingFlowTestCase
         $delta = $b->expires_at->diffInMinutes(now(), true);
         $this->assertTrue($delta > 718 && $delta < 722, 'Délai propre à l’établissement : 12 h → '.round($delta).' min');
 
+        $mail = (new BookingMail($b, 'created', 'partner'))->render();
+        $this->assertStringContainsString('12', $mail, 'E-mail « nouvelle demande » : délai propre à l’établissement');
+        $this->assertStringNotContainsString(' 2 h', $mail);
+
         $this->spa->update(['waiting_ttl_hours' => null]);
         $b = $this->submit($this->intent('18:00', ['treatment' => $this->h->id, 'party' => 1]))['booking'];
         $delta = $b->expires_at->diffInMinutes(now(), true);
