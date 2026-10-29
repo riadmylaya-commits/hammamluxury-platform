@@ -12,6 +12,7 @@ use App\Filament\Admin\Resources\SpaResource\RelationManagers;
 use App\Filament\Forms\Components\PhoneField;
 use App\Filament\Partner\Forms\SpaForm;
 use App\Models\Spa;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -20,6 +21,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 class SpaResource extends Resource
 {
@@ -193,7 +195,13 @@ class SpaResource extends Resource
                             Forms\Components\TextInput::make('first_name')->label(__('partner.first_name'))->required()->maxLength(100),
                             Forms\Components\TextInput::make('last_name')->label(__('partner.last_name'))->required()->maxLength(100),
                         ]),
-                        Forms\Components\TextInput::make('email')->label('E-mail')->email()->required()->maxLength(190),
+                        Forms\Components\TextInput::make('email')->label('E-mail')->email()->required()->maxLength(190)
+                            ->rules([fn () => function (string $attribute, mixed $value, \Closure $fail) {
+                                $user = User::where('email', Str::lower(trim((string) $value)))->first();
+                                if ($user && ! $user->isPartner()) {
+                                    $fail(__('admin.assign_owner_email_not_partner', ['role' => $user->role]));
+                                }
+                            }]),
                         PhoneField::make('phone', __('partner.phone'), required: true),
                         Forms\Components\TextInput::make('company_name')->label(__('admin.assign_owner_company'))->required()->maxLength(190),
                         Forms\Components\Toggle::make('invite')->label(__('admin.assign_owner_invite'))->default(true),

@@ -107,6 +107,18 @@ class OwnerAssignmentTest extends TestCase
         Mail::assertNothingQueued();
     }
 
+    public function test_the_modal_shows_the_error_when_the_email_belongs_to_an_admin(): void
+    {
+        Mail::fake();
+        $spa = $this->draftSpa();
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        Livewire::test(ListSpas::class)
+            ->callTableAction('assign_owner', $spa, ['first_name' => 'X', 'last_name' => 'Y', 'email' => 'admin@example.test', 'phone' => '0600000000', 'company_name' => 'X', 'invite' => true])
+            ->assertHasTableActionErrors(['email']);
+        $this->assertSame(Partner::where('user_id', $this->admin->id)->value('id'), $spa->fresh()->partner_id);
+        Mail::assertNothingQueued();
+    }
+
     public function test_admin_keeps_full_access_after_assignment(): void
     {
         $spa = $this->draftSpa();
