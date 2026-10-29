@@ -26,7 +26,7 @@ class ListSpas extends ListRecords
                     Forms\Components\Grid::make(2)->schema([
                         ...SpaForm::identity(),
                         Forms\Components\TextInput::make('address')->label(__('partner.address'))->maxLength(255)->columnSpanFull(),
-                        PhoneField::make('phone', __('partner.spa_phone'))->columnSpanFull(),
+                        PhoneField::make('phone', __('partner.spa_phone'), nativeCountry: true)->columnSpanFull(),
                         Forms\Components\TextInput::make('email')->label(__('partner.spa_email'))->email()->maxLength(190)->columnSpanFull(),
                     ]),
                 ])

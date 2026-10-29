@@ -202,7 +202,7 @@ class SpaResource extends Resource
                                     $fail(__('admin.assign_owner_email_not_partner', ['role' => $user->role]));
                                 }
                             }]),
-                        PhoneField::make('phone', __('partner.phone'), required: true),
+                        PhoneField::make('phone', __('partner.phone'), required: true, nativeCountry: true),
                         Forms\Components\TextInput::make('company_name')->label(__('admin.assign_owner_company'))->required()->maxLength(190),
                         Forms\Components\Toggle::make('invite')->label(__('admin.assign_owner_invite'))->default(true),
                     ])
