@@ -236,4 +236,16 @@ return [
     'instant_booking_at' => 'Activée le',
     'waiting_ttl' => 'Délai de réponse aux demandes',
     'waiting_ttl_help' => 'Heures laissées au partenaire pour accepter une demande avant son expiration automatique (vide = valeur globale : :default h).',
+
+    'create_spa' => 'Nouvel établissement',
+    'create_spa_help' => 'La fiche est créée en brouillon dans votre portefeuille HammamLuxury ; vous la configurez ensuite comme un partenaire (photos, soins, horaires), puis vous l’attribuez à son propriétaire.',
+    'create_spa_ok' => 'Fiche créée : configurez-la comme partenaire.',
+    'assign_owner' => 'Attribuer au propriétaire',
+    'assign_owner_help' => 'Le propriétaire reçoit un e-mail pour définir son mot de passe et n’accède qu’aux établissements de son compte. Vous conservez tous vos droits d’administrateur.',
+    'assign_owner_company' => 'Société / nom du compte partenaire',
+    'assign_owner_invite' => 'Envoyer l’invitation par e-mail',
+    'assign_owner_current' => 'Compte actuel',
+    'assign_owner_ok' => 'Fiche attribuée à :email.',
+    'assign_owner_email_not_partner' => 'Cet e-mail appartient à un compte « :role », pas à un partenaire.',
+    'holding_badge' => 'Portefeuille HammamLuxury',
 ];

@@ -236,4 +236,16 @@ return [
     'instant_booking_at' => 'Enabled on',
     'waiting_ttl' => 'Response time for requests',
     'waiting_ttl_help' => 'Hours the partner has to accept a request before it expires automatically (empty = global value: :default h).',
+
+    'create_spa' => 'New establishment',
+    'create_spa_help' => 'The listing is created as a draft in your HammamLuxury portfolio; configure it as a partner (photos, treatments, hours), then assign it to its owner.',
+    'create_spa_ok' => 'Listing created: configure it as a partner.',
+    'assign_owner' => 'Assign to owner',
+    'assign_owner_help' => 'The owner receives an e-mail to set their password and only accesses the establishments of their own account. You keep all your administrator rights.',
+    'assign_owner_company' => 'Company / partner account name',
+    'assign_owner_invite' => 'Send the invitation by e-mail',
+    'assign_owner_current' => 'Current account',
+    'assign_owner_ok' => 'Listing assigned to :email.',
+    'assign_owner_email_not_partner' => 'This e-mail belongs to a ":role" account, not a partner.',
+    'holding_badge' => 'HammamLuxury portfolio',
 ];

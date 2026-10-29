@@ -22,6 +22,15 @@ return [
         'partner' => ['subject' => 'Demande :ref expirée', 'title' => 'Demande :ref expirée sans réponse', 'intro' => 'La demande de :name pour :spa a expiré faute de réponse. Le créneau est libéré. Pensez à traiter vos demandes plus rapidement pour ne pas perdre de clients.'],
     ],
 
+    'partner_invite' => [
+        'subject' => 'Votre accès à l’espace partenaire HammamLuxury — :spa',
+        'title' => 'Bienvenue sur HammamLuxury',
+        'intro' => 'Bonjour :name, la fiche « :spa » vous a été attribuée. Définissez votre mot de passe pour accéder à votre espace partenaire : réservations, calendrier, soins et disponibilités.',
+        'button' => 'Définir mon mot de passe',
+        'expires' => 'Ce lien est valable :hours heures. Passé ce délai, demandez un nouveau lien depuis la page « Mot de passe oublié » : :url',
+        'scope' => 'Votre identifiant est l’adresse e-mail à laquelle ce message a été envoyé. Vous n’avez accès qu’aux établissements de votre compte.',
+    ],
+
     'spa' => [
         'reason' => 'Motif',
         'submitted' => ['subject' => 'Nouvelle fiche à valider : :spa', 'title' => 'Nouvelle fiche à valider', 'intro' => 'Le partenaire :partner a envoyé la fiche « :spa » (:city) pour validation.', 'button' => 'Ouvrir dans l’administration'],

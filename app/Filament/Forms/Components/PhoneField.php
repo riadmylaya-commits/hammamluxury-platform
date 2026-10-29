@@ -15,7 +15,8 @@ use Filament\Forms\Get;
  */
 final class PhoneField
 {
-    public static function make(string $name, string $label, bool $required = false): Group
+    /** @param  bool  $nativeCountry  liste de pays native (sans recherche) : à utiliser dans les modales d'action, dont la liste enrichie provoque une erreur JS à la fermeture */
+    public static function make(string $name, string $label, bool $required = false, bool $nativeCountry = false): Group
     {
         $countryField = $name.'_country';
 
@@ -25,11 +26,11 @@ final class PhoneField
                 ->options(fn () => PhoneNumber::options())
                 ->default(fn () => PhoneNumber::detectCountry())
                 ->selectablePlaceholder(false)
-                ->native(false)
-                ->searchable()
+                ->native($nativeCountry)
+                ->searchable(! $nativeCountry)
                 ->live()
                 ->dehydrated(false)
-                ->columnSpan(1),
+                ->columnSpan(['default' => 1, 'sm' => 1]),
             TextInput::make($name)
                 ->label($label)
                 ->tel()
@@ -50,7 +51,7 @@ final class PhoneField
                 })
                 ->rules(fn (Get $get): array => [new PhoneRule((string) ($get($countryField) ?: PhoneNumber::DEFAULT_COUNTRY))])
                 ->dehydrateStateUsing(fn (?string $state, Get $get) => PhoneNumber::normalize($state, (string) ($get($countryField) ?: PhoneNumber::DEFAULT_COUNTRY)))
-                ->columnSpan(2),
-        ])->columns(['default' => 3]);
+                ->columnSpan(['default' => 1, 'sm' => 2]),
+        ])->columns(['default' => 1, 'sm' => 3]);
     }
 }
