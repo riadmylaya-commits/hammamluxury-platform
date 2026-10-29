@@ -6,6 +6,7 @@ use App\Domain\Booking\BookingMutation;
 use App\Domain\Catalogue\PublicationChecklist;
 use App\Domain\Media\PhotoProcessor;
 use App\Domain\Partner\OnboardingService;
+use App\Domain\Partner\OwnerAssignmentService;
 use App\Models\Amenity;
 use App\Models\Category;
 use App\Models\City;
@@ -31,7 +32,8 @@ class ImportSpaCatalogue extends Command
     protected $signature = 'hl:import-spa {file : fichier JSON du catalogue}
         {--photos-dir= : dossier contenant les photos listées dans le fichier (importées seulement si la fiche n’a encore aucune photo)}
         {--publish : publie la fiche (sinon elle reste « à valider » par l’Admin)}
-        {--password= : mot de passe initial du compte partenaire s’il est créé (aléatoire sinon)}';
+        {--password= : mot de passe initial du compte partenaire s’il est créé (aléatoire sinon)}
+        {--portfolio= : e-mail d’un administrateur : la fiche est importée dans son portefeuille (aucun compte propriétaire créé, aucune invitation) ; le bloc « partner » du fichier est ignoré}';
 
     protected $description = 'Importe ou met à jour un établissement et son catalogue depuis un fichier JSON (idempotent)';
 
@@ -47,7 +49,9 @@ class ImportSpaCatalogue extends Command
 
         try {
             $this->validate($spec);
-            $partner = $this->partner($spec['partner']);
+            $partner = $this->option('portfolio')
+                ? $this->portfolio((string) $this->option('portfolio'))
+                : $this->partner($spec['partner']);
             $spa = $this->spa($partner, $spec['spa']);
             $onboarding->saveHours($spa, $this->hours($spec['spa']['hours'] ?? []), $spec['spa']['capacity'] ?? []);
             $extras = collect($spec['extras'] ?? [])->keyBy('code');
@@ -79,9 +83,10 @@ class ImportSpaCatalogue extends Command
 
     private function validate(mixed $spec): void
     {
-        if (! is_array($spec) || ! isset($spec['partner']['email'], $spec['partner']['company_name'], $spec['spa']['slug'], $spec['spa']['name'], $spec['spa']['city'])
-            || ! is_array($spec['treatments'] ?? null) || $spec['treatments'] === []) {
-            throw new InvalidArgumentException('Fichier invalide : partner.email, partner.company_name, spa.slug, spa.name, spa.city et au moins un soin sont requis.');
+        $partnerOk = $this->option('portfolio') || isset($spec['partner']['email'], $spec['partner']['company_name']);
+        if (! is_array($spec) || ! $partnerOk || ! isset($spec['spa']['slug'], $spec['spa']['name'], $spec['spa']['city'])
+            || empty($spec['treatments']) || ! is_array($spec['treatments'])) {
+            throw new InvalidArgumentException('Fichier invalide : partner.email, partner.company_name (sauf --portfolio), spa.slug, spa.name, spa.city et au moins un soin sont requis.');
         }
         if (! City::where('name_fr', $spec['spa']['city'])->exists()) {
             throw new InvalidArgumentException('Ville inconnue : '.$spec['spa']['city']);
@@ -112,6 +117,17 @@ class ImportSpaCatalogue extends Command
      * Compte partenaire approuvé. Un compte existant n'est jamais modifié (ni mot de passe, ni nom) et un e-mail
      * déjà rattaché à un autre partenaire ou à un compte non partenaire est refusé : l'import ne reprend jamais un compte.
      */
+    /** Portefeuille d'un administrateur : la fiche lui est rattachée, à attribuer ensuite au propriétaire depuis l'Admin. */
+    private function portfolio(string $email): Partner
+    {
+        $admin = User::where('email', Str::lower(trim($email)))->first();
+        if (! $admin || ! $admin->isAdmin()) {
+            throw new InvalidArgumentException('--portfolio : '.$email.' n’est pas un compte administrateur.');
+        }
+
+        return app(OwnerAssignmentService::class)->holdingPartner($admin);
+    }
+
     private function partner(array $p): Partner
     {
         $user = User::where('email', $p['email'])->first();
