@@ -29,7 +29,7 @@ final class PhoneField
                 ->searchable()
                 ->live()
                 ->dehydrated(false)
-                ->columnSpan(1),
+                ->columnSpan(['default' => 1, 'sm' => 1]),
             TextInput::make($name)
                 ->label($label)
                 ->tel()
@@ -50,7 +50,7 @@ final class PhoneField
                 })
                 ->rules(fn (Get $get): array => [new PhoneRule((string) ($get($countryField) ?: PhoneNumber::DEFAULT_COUNTRY))])
                 ->dehydrateStateUsing(fn (?string $state, Get $get) => PhoneNumber::normalize($state, (string) ($get($countryField) ?: PhoneNumber::DEFAULT_COUNTRY)))
-                ->columnSpan(2),
-        ])->columns(['default' => 3]);
+                ->columnSpan(['default' => 1, 'sm' => 2]),
+        ])->columns(['default' => 1, 'sm' => 3]);
     }
 }
