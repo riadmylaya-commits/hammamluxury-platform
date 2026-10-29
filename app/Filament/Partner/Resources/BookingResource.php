@@ -75,13 +75,13 @@ class BookingResource extends Resource
                     ->wrap()->visibleFrom('md'),
                 Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->sortable()->visibleFrom('md'),
                 Tables\Columns\TextColumn::make('source')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')->visibleFrom('md')
-                    ->formatStateUsing(fn ($state, Booking $b) => $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : __('partner.sources')[$state] ?? $state),
+                    ->formatStateUsing(fn ($state, Booking $b) => $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : __('partner.sources')[$state] ?? $state)->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()->visibleFrom('md')
                     ->formatStateUsing(fn ($state) => __('ui.status')[$state] ?? $state)
                     ->color(fn ($state) => BookingActions::statusColor($state)),
                 Tables\Columns\TextColumn::make('unread_count')->label('')->badge()->color('danger')->icon('heroicon-o-chat-bubble-left-right')->visibleFrom('md')
                     ->formatStateUsing(fn ($state) => $state ?: null)->tooltip(__('partner.unread_messages')),
-                Tables\Columns\TextColumn::make('reference')->label(__('partner.reference'))->searchable()->toggleable()->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('reference')->label(__('partner.reference'))->searchable()->toggleable(isToggledHiddenByDefault: true)->visibleFrom('md'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('source')->label(__('partner.source'))->options(__('partner.sources')),
@@ -91,7 +91,7 @@ class BookingResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([Tables\Actions\ViewAction::make(), ...BookingActions::all('partner')])->extraAttributes(['class' => 'hl-mobile-only']),
                 Tables\Actions\ViewAction::make()->extraAttributes(['class' => 'hl-desktop-only']),
-                ...array_map(fn ($a) => $a->extraAttributes(['class' => 'hl-desktop-only']), BookingActions::all('partner')),
+                Tables\Actions\ActionGroup::make(BookingActions::all('partner'))->extraAttributes(['class' => 'hl-desktop-only']),
             ])
             ->emptyStateHeading(__('partner.no_bookings'));
     }
