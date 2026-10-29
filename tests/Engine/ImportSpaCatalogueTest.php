@@ -5,6 +5,8 @@ namespace Tests\Engine;
 use App\Domain\Booking\BookingService;
 use App\Domain\Booking\QuoteBuilder;
 use App\Domain\Catalogue\PublicationChecklist;
+use App\Domain\Partner\OwnerAssignmentService;
+use App\Models\Partner;
 use App\Models\Spa;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -142,5 +144,40 @@ class ImportSpaCatalogueTest extends TestCase
         $this->assertSame(0, Spa::count());
         $this->assertSame(0, User::count());
         $this->artisan('hl:import-spa', ['file' => '/nulle/part.json'])->assertFailed();
+    }
+
+    public function test_portfolio_option_imports_into_the_admin_portfolio_without_owner_account_then_assignment_keeps_public_email_separate(): void
+    {
+        $admin = User::create(['name' => 'Admin', 'email' => 'admin@example.test', 'password' => 'secret-test', 'role' => 'admin', 'email_verified_at' => now()]);
+
+        $this->artisan('hl:import-spa', ['file' => base_path(self::FILE), '--portfolio' => 'Admin@Example.test'])->assertSuccessful();
+
+        $spa = Spa::where('slug', 'mythic-oriental-spa-marrakech')->firstOrFail();
+        $holding = Partner::where('user_id', $admin->id)->firstOrFail();
+        $this->assertSame($holding->id, $spa->partner_id);
+        $this->assertSame(OwnerAssignmentService::HOLDING_COMPANY, $holding->company_name);
+        $this->assertNull(User::where('email', 'mythic-pilote@hammamluxury.com')->first(), 'aucun compte propriétaire ne doit être créé');
+        $this->assertSame('info@mythicoriental-spa.com', $spa->email);
+        $this->assertSame(55, $spa->treatments()->count());
+        $this->assertTrue($admin->canAccessTenant($spa));
+
+        // Rejouer l'import dans le portefeuille ne crée rien de plus.
+        $this->artisan('hl:import-spa', ['file' => base_path(self::FILE), '--portfolio' => 'admin@example.test'])->assertSuccessful();
+        $this->assertSame(1, Partner::count());
+        $this->assertSame(1, Spa::count());
+
+        // Attribution ultérieure : l'e-mail de connexion du propriétaire est indépendant de l'e-mail public de la fiche.
+        Mail::fake();
+        app(OwnerAssignmentService::class)->assign($spa, ['first_name' => 'Y', 'last_name' => 'A', 'email' => 'proprietaire@gmail.test', 'phone' => '+212666947278', 'company_name' => 'Mythic SARL'], invite: false);
+        $spa->refresh();
+        $owner = User::where('email', 'proprietaire@gmail.test')->firstOrFail();
+        $this->assertSame($owner->partner->id, $spa->partner_id);
+        $this->assertSame('info@mythicoriental-spa.com', $spa->email);
+        $this->assertNotSame($spa->email, $owner->email);
+        $this->assertTrue($owner->canAccessTenant($spa));
+        Mail::assertNothingQueued();
+
+        // --portfolio exige un compte administrateur.
+        $this->artisan('hl:import-spa', ['file' => base_path(self::FILE), '--portfolio' => 'proprietaire@gmail.test'])->expectsOutputToContain('n’est pas un compte administrateur')->assertFailed();
     }
 }
