@@ -22,6 +22,15 @@ return [
         'partner' => ['subject' => 'Request :ref expired', 'title' => 'Request :ref expired without reply', 'intro' => ':name’s request for :spa expired without a reply. The slot has been released. Please handle requests faster to avoid losing customers.'],
     ],
 
+    'partner_invite' => [
+        'subject' => 'Your HammamLuxury partner access — :spa',
+        'title' => 'Welcome to HammamLuxury',
+        'intro' => 'Hello :name, the listing “:spa” has been assigned to you. Set your password to access your partner area: bookings, calendar, treatments and availability.',
+        'button' => 'Set my password',
+        'expires' => 'This link is valid for :hours hours. After that, request a new one from the “Forgot password” page: :url',
+        'scope' => 'Your login is the e-mail address this message was sent to. You only have access to the establishments of your own account.',
+    ],
+
     'spa' => [
         'reason' => 'Reason',
         'submitted' => ['subject' => 'New listing to review: :spa', 'title' => 'New listing to review', 'intro' => 'Partner :partner submitted the listing ":spa" (:city) for review.', 'button' => 'Open in admin'],

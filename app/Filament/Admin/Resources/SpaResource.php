@@ -6,8 +6,10 @@ use App\Domain\Booking\CancellationService;
 use App\Domain\Catalogue\CapacityReadiness;
 use App\Domain\Catalogue\PublicationChecklist;
 use App\Domain\Partner\OnboardingService;
+use App\Domain\Partner\OwnerAssignmentService;
 use App\Filament\Admin\Resources\SpaResource\Pages;
 use App\Filament\Admin\Resources\SpaResource\RelationManagers;
+use App\Filament\Forms\Components\PhoneField;
 use App\Filament\Partner\Forms\SpaForm;
 use App\Models\Spa;
 use Filament\Forms;
@@ -181,6 +183,25 @@ class SpaResource extends Resource
                     ->visible(fn (Spa $s) => $s->status === 'published'),
                 Tables\Actions\Action::make('manage')->label(__('admin.manage'))->icon('heroicon-o-wrench-screwdriver')
                     ->url(fn (Spa $s) => url("/partenaire/{$s->slug}")),
+                Tables\Actions\Action::make('assign_owner')->label(__('admin.assign_owner'))->icon('heroicon-o-user-plus')->color('warning')
+                    ->modalDescription(__('admin.assign_owner_help'))
+                    ->fillForm(fn (Spa $s) => ['company_name' => $s->partner?->user?->isAdmin() ? $s->name : $s->partner?->company_name, 'invite' => true])
+                    ->form([
+                        Forms\Components\Placeholder::make('current')->label(__('admin.assign_owner_current'))
+                            ->content(fn (Spa $s) => ($s->partner?->user?->isAdmin() ? __('admin.holding_badge') : $s->partner?->company_name).' — '.$s->partner?->user?->email),
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('first_name')->label(__('partner.first_name'))->required()->maxLength(100),
+                            Forms\Components\TextInput::make('last_name')->label(__('partner.last_name'))->required()->maxLength(100),
+                        ]),
+                        Forms\Components\TextInput::make('email')->label('E-mail')->email()->required()->maxLength(190),
+                        PhoneField::make('phone', __('partner.phone'), required: true),
+                        Forms\Components\TextInput::make('company_name')->label(__('admin.assign_owner_company'))->required()->maxLength(190),
+                        Forms\Components\Toggle::make('invite')->label(__('admin.assign_owner_invite'))->default(true),
+                    ])
+                    ->action(function (Spa $s, array $data) {
+                        app(OwnerAssignmentService::class)->assign($s, $data, (bool) ($data['invite'] ?? true));
+                        Notification::make()->title(__('admin.assign_owner_ok', ['email' => $data['email']]))->success()->send();
+                    }),
                 Tables\Actions\EditAction::make(),
             ]);
     }

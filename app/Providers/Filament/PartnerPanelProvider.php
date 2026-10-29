@@ -46,6 +46,7 @@ class PartnerPanelProvider extends PanelProvider
             ->login()
             ->registration(RegisterPartner::class)
             ->passwordReset()
+            ->authPasswordBroker('partners')
             ->emailVerification()
             ->brandName('HammamLuxury · Partenaires')
             ->colors(['primary' => Color::hex('#1f4d3f')])
