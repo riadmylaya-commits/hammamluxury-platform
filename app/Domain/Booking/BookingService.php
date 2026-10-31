@@ -253,8 +253,18 @@ class BookingService
 
     /* ------------------------------------------------------------------ Transitions */
 
+    /** En mode « géré par HammamLuxury », seul l'administrateur décide des demandes. */
+    private function assertMayDecide(Booking $booking, string $actor): void
+    {
+        if ($actor === 'partner' && $booking->spa?->managed_by === 'admin') {
+            throw BookingException::make('managed_by_admin', 'managed_by_admin', [], 403);
+        }
+    }
+
     public function accept(Booking $booking, string $actor = 'partner', ?string $note = null): Booking
     {
+        $this->assertMayDecide($booking, $actor);
+
         return $this->mutations->forBooking($booking, function (Booking $current) use ($actor, $note): Booking {
             if (! $current->isWaiting()) {
                 throw BookingException::make('status', 'not_waiting', [], 409);
@@ -278,6 +288,7 @@ class BookingService
      */
     public function decline(Booking $booking, string $actor = 'partner', ?string $reason = null, ?string $note = null, ?int $userId = null): Booking
     {
+        $this->assertMayDecide($booking, $actor);
         if (! in_array($reason, BookingDecline::REASONS, true)) {
             throw BookingException::make('decline_reason', 'reason_required', [], 422);
         }

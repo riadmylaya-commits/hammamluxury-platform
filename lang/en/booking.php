@@ -20,6 +20,7 @@ return [
     'intent_replayed' => 'This booking request has already been recorded.',
     'price_changed' => 'The price or duration of this treatment has changed, please review your selection.',
     'catalogue_changed' => 'A selected treatment or extra has changed or is no longer available. Please make a new selection.',
+    'managed_by_admin' => 'This establishment is currently managed by HammamLuxury: requests are handled by the administrator.',
     'waiting_expired' => 'The response deadline has passed. This request can no longer be confirmed.',
     'start_passed' => 'The appointment start time has been reached or passed. Please choose a new time.',
     'not_finished' => 'This treatment cannot be completed before its scheduled end time.',

@@ -41,7 +41,7 @@ class SendBookingNotifications
     {
         $recipients = array_filter([
             'client' => $booking->email,
-            'partner' => $booking->spa->partner?->user?->email,
+            'partner' => $booking->spa->decisionUser()?->email,
         ]);
 
         foreach ($recipients as $audience => $recipient) {

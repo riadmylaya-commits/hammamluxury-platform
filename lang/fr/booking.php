@@ -20,6 +20,7 @@ return [
     'intent_replayed' => 'Cette demande de réservation a déjà été enregistrée.',
     'price_changed' => 'Le tarif ou la durée de cette prestation a changé, merci de vérifier à nouveau votre sélection.',
     'catalogue_changed' => 'Une prestation ou une option sélectionnée a changé ou n’est plus disponible. Merci de refaire votre sélection.',
+    'managed_by_admin' => 'Cet établissement est actuellement géré par HammamLuxury : les demandes sont traitées par l’administrateur.',
     'waiting_expired' => 'Le délai de réponse de cette demande est dépassé. Elle ne peut plus être confirmée.',
     'start_passed' => 'L’heure du rendez-vous est atteinte ou dépassée. Choisissez un nouveau créneau.',
     'not_finished' => 'Cette prestation ne peut pas être clôturée avant son heure de fin.',

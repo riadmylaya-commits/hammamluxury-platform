@@ -33,7 +33,7 @@ class SendBookingNotification implements ShouldQueue
             return;
         }
         $booking = $n->booking;
-        $locale = $n->audience === 'partner' ? ($booking->spa->partner?->user?->locale ?: 'fr') : ($booking->locale ?: 'fr');
+        $locale = $n->audience === 'partner' ? ($booking->spa->decisionUser()?->locale ?: 'fr') : ($booking->locale ?: 'fr');
 
         try {
             Mail::to($n->recipient)->sendNow($this->mailable($n)->locale($locale));
