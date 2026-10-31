@@ -106,6 +106,107 @@ class OwnerAssignmentService
     {
         $token = Password::broker('partners')->createToken($user);
         Mail::to($user->email)->queue(new PartnerInviteMail($user, $spa, $token));
+        $spa->update(['owner_invited_at' => now()]);
         ActivityLog::record('spa.owner_invited', $spa, ['email' => $user->email]);
+    }
+
+    /** Propriétaire d'une fiche (null si elle est dans un portefeuille administrateur). */
+    public function ownerOf(Spa $spa): ?User
+    {
+        $user = $spa->partner?->user;
+
+        return $user && $user->isPartner() ? $user : null;
+    }
+
+    public function resendInvite(Spa $spa): void
+    {
+        $owner = $this->ownerOf($spa);
+        if (! $owner) {
+            throw ValidationException::withMessages(['email' => __('admin.mgmt_no_owner')]);
+        }
+        $this->invite($owner, $spa);
+    }
+
+    /** @param  array<string, mixed>  $data  first_name, last_name, email, phone */
+    public function updateOwner(Spa $spa, array $data): User
+    {
+        $owner = $this->ownerOf($spa);
+        if (! $owner) {
+            throw ValidationException::withMessages(['email' => __('admin.mgmt_no_owner')]);
+        }
+        $email = Str::lower(trim((string) $data['email']));
+        if ($email !== $owner->email && User::where('email', $email)->where('id', '!=', $owner->id)->exists()) {
+            throw ValidationException::withMessages(['email' => __('admin.mgmt_email_taken')]);
+        }
+        $before = $owner->only(['name', 'email', 'phone']);
+        $owner->update([
+            'first_name' => $data['first_name'] ?? $owner->first_name,
+            'last_name' => $data['last_name'] ?? $owner->last_name,
+            'name' => trim(($data['first_name'] ?? $owner->first_name).' '.($data['last_name'] ?? $owner->last_name)) ?: $owner->name,
+            'email' => $email,
+            'phone' => $data['phone'] ?? $owner->phone,
+        ]);
+        if ($owner->partner && ! empty($data['phone'])) {
+            $owner->partner->update(['contact_phone' => $data['phone']]);
+        }
+        ActivityLog::record('spa.owner_updated', $spa, ['before' => $before, 'after' => $owner->only(['name', 'email', 'phone'])]);
+
+        return $owner;
+    }
+
+    /** Connexion du propriétaire refusée (fiche, réservations et historique intacts). */
+    public function suspendAccess(Spa $spa, ?string $note = null): User
+    {
+        $owner = $this->ownerOf($spa);
+        if (! $owner) {
+            throw ValidationException::withMessages(['email' => __('admin.mgmt_no_owner')]);
+        }
+        $owner->update(['access_suspended_at' => now()]);
+        ActivityLog::record('spa.owner_access_suspended', $spa, array_filter(['email' => $owner->email, 'note' => $note]));
+
+        return $owner;
+    }
+
+    public function reactivateAccess(Spa $spa): User
+    {
+        $owner = $this->ownerOf($spa);
+        if (! $owner) {
+            throw ValidationException::withMessages(['email' => __('admin.mgmt_no_owner')]);
+        }
+        $owner->update(['access_suspended_at' => null]);
+        ActivityLog::record('spa.owner_access_reactivated', $spa, ['email' => $owner->email]);
+
+        return $owner;
+    }
+
+    /** Reprise temporaire : les demandes sont adressées à l'administrateur et décidées par lui ; la fiche reste au propriétaire. */
+    public function takeOver(Spa $spa, User $admin, ?string $note = null): void
+    {
+        abort_unless($admin->isAdmin(), 403);
+        $spa->update(['managed_by' => 'admin', 'manager_user_id' => $admin->id]);
+        ActivityLog::record('spa.management_taken_over', $spa, array_filter(['manager' => $admin->email, 'note' => $note]));
+    }
+
+    public function handBack(Spa $spa): void
+    {
+        $spa->update(['managed_by' => 'partner', 'manager_user_id' => null]);
+        ActivityLog::record('spa.management_handed_back', $spa, ['owner' => $this->ownerOf($spa)?->email]);
+    }
+
+    /** État lisible pour l'Admin : portfolio | taken_over | suspended | invited | partner. */
+    public function state(Spa $spa): string
+    {
+        $owner = $this->ownerOf($spa);
+        if (! $owner) {
+            return 'portfolio';
+        }
+        if ($spa->managed_by === 'admin') {
+            return 'taken_over';
+        }
+        if ($owner->accessSuspended()) {
+            return 'suspended';
+        }
+
+        return 'partner';
     }
 }

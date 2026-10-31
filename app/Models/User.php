@@ -21,7 +21,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
 
     public const ROLES = ['admin', 'partner', 'client'];
 
-    protected $fillable = ['name', 'first_name', 'last_name', 'email', 'password', 'role', 'phone', 'whatsapp', 'locale', 'email_verified_at'];
+    protected $fillable = ['name', 'first_name', 'last_name', 'email', 'password', 'role', 'phone', 'whatsapp', 'locale', 'email_verified_at', 'access_suspended_at'];
 
     protected static function booted(): void
     {
@@ -43,6 +43,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     {
         return [
             'email_verified_at' => 'datetime',
+            'access_suspended_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_secret' => 'encrypted',
             'two_factor_recovery_codes' => 'encrypted:array',
@@ -70,6 +71,11 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         return $this->role === 'partner';
     }
 
+    public function accessSuspended(): bool
+    {
+        return $this->access_suspended_at !== null;
+    }
+
     public function hasTwoFactor(): bool
     {
         return $this->two_factor_confirmed_at !== null && $this->two_factor_secret !== null;
@@ -85,7 +91,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     {
         return match ($panel->getId()) {
             'admin' => $this->isAdmin(),
-            'partner' => $this->isPartner() || $this->isAdmin(),
+            'partner' => $this->isAdmin() || ($this->isPartner() && ! $this->accessSuspended()),
             default => false,
         };
     }
@@ -102,7 +108,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
 
     public function canAccessTenant(Model $tenant): bool
     {
-        return $this->isAdmin() || ($tenant instanceof Spa && $tenant->partner_id === $this->partner?->id);
+        return $this->isAdmin() || (! $this->accessSuspended() && $tenant instanceof Spa && $tenant->partner_id === $this->partner?->id);
     }
 
     public function preferredLocale(): ?string

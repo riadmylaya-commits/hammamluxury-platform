@@ -122,6 +122,13 @@ class SpaResource extends Resource
                 Tables\Columns\TextColumn::make('name')->label(__('admin.spa'))->searchable()->weight('bold')
                     ->description(fn (Spa $s) => $s->area ? "$s->area · $s->city" : $s->city),
                 Tables\Columns\TextColumn::make('partner.company_name')->label(__('admin.partner'))->searchable(),
+                Tables\Columns\TextColumn::make('management')->label(__('admin.mgmt_section'))->badge()
+                    ->state(fn (Spa $s) => app(OwnerAssignmentService::class)->state($s))
+                    ->formatStateUsing(fn (string $state) => __('admin.mgmt_state_'.$state))
+                    ->color(fn (string $state) => match ($state) {
+                        'portfolio' => 'info', 'taken_over' => 'warning', 'suspended' => 'danger', default => 'success'
+                    })
+                    ->description(fn (Spa $s) => $s->owner_invited_at && app(OwnerAssignmentService::class)->ownerOf($s) ? __('admin.mgmt_invited_on', ['date' => $s->owner_invited_at->format('d/m/Y')]) : null),
                 Tables\Columns\TextColumn::make('treatments_count')->counts('treatments')->label(__('partner.treatments')),
                 Tables\Columns\TextColumn::make('bookings_count')->counts('bookings')->label(__('partner.bookings')),
                 Tables\Columns\TextColumn::make('cancellation_requests_count')->counts('cancellationRequests')->label(__('admin.cancellation_col'))->sortable()
@@ -185,31 +192,85 @@ class SpaResource extends Resource
                     ->visible(fn (Spa $s) => $s->status === 'published'),
                 Tables\Actions\Action::make('manage')->label(__('admin.manage'))->icon('heroicon-o-wrench-screwdriver')
                     ->url(fn (Spa $s) => url("/partenaire/{$s->slug}")),
-                Tables\Actions\Action::make('assign_owner')->label(__('admin.assign_owner'))->icon('heroicon-o-user-plus')->color('warning')
-                    ->modalDescription(__('admin.assign_owner_help'))
-                    ->fillForm(fn (Spa $s) => ['company_name' => $s->partner?->user?->isAdmin() ? $s->name : $s->partner?->company_name, 'invite' => true])
-                    ->form([
-                        Forms\Components\Placeholder::make('current')->label(__('admin.assign_owner_current'))
-                            ->content(fn (Spa $s) => ($s->partner?->user?->isAdmin() ? __('admin.holding_badge') : $s->partner?->company_name).' — '.$s->partner?->user?->email),
-                        Forms\Components\Grid::make(2)->schema([
-                            Forms\Components\TextInput::make('first_name')->label(__('partner.first_name'))->required()->maxLength(100),
-                            Forms\Components\TextInput::make('last_name')->label(__('partner.last_name'))->required()->maxLength(100),
-                        ]),
-                        Forms\Components\TextInput::make('email')->label('E-mail')->email()->required()->maxLength(190)
-                            ->rules([fn () => function (string $attribute, mixed $value, \Closure $fail) {
-                                $user = User::where('email', Str::lower(trim((string) $value)))->first();
-                                if ($user && ! $user->isPartner()) {
-                                    $fail(__('admin.assign_owner_email_not_partner', ['role' => $user->role]));
-                                }
-                            }]),
-                        PhoneField::make('phone', __('partner.phone'), required: true, nativeCountry: true),
-                        Forms\Components\TextInput::make('company_name')->label(__('admin.assign_owner_company'))->required()->maxLength(190),
-                        Forms\Components\Toggle::make('invite')->label(__('admin.assign_owner_invite'))->default(true),
-                    ])
-                    ->action(function (Spa $s, array $data) {
-                        app(OwnerAssignmentService::class)->assign($s, $data, (bool) ($data['invite'] ?? true));
-                        Notification::make()->title(__('admin.assign_owner_ok', ['email' => $data['email']]))->success()->send();
-                    }),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('assign_owner')->label(fn (Spa $s) => app(OwnerAssignmentService::class)->ownerOf($s) ? __('admin.assign_owner') : __('admin.mgmt_invite_owner'))->icon('heroicon-o-user-plus')->color('warning')
+                        ->modalDescription(__('admin.assign_owner_help'))
+                        ->fillForm(fn (Spa $s) => ['company_name' => $s->partner?->user?->isAdmin() ? $s->name : $s->partner?->company_name, 'invite' => true])
+                        ->form([
+                            Forms\Components\Placeholder::make('current')->label(__('admin.assign_owner_current'))
+                                ->content(fn (Spa $s) => ($s->partner?->user?->isAdmin() ? __('admin.holding_badge') : $s->partner?->company_name).' — '.$s->partner?->user?->email),
+                            Forms\Components\Grid::make(2)->schema([
+                                Forms\Components\TextInput::make('first_name')->label(__('partner.first_name'))->required()->maxLength(100),
+                                Forms\Components\TextInput::make('last_name')->label(__('partner.last_name'))->required()->maxLength(100),
+                            ]),
+                            Forms\Components\TextInput::make('email')->label('E-mail')->email()->required()->maxLength(190)
+                                ->rules([fn () => function (string $attribute, mixed $value, \Closure $fail) {
+                                    $user = User::where('email', Str::lower(trim((string) $value)))->first();
+                                    if ($user && ! $user->isPartner()) {
+                                        $fail(__('admin.assign_owner_email_not_partner', ['role' => $user->role]));
+                                    }
+                                }]),
+                            PhoneField::make('phone', __('partner.phone'), nativeCountry: true),
+                            Forms\Components\TextInput::make('company_name')->label(__('admin.assign_owner_company'))->required()->maxLength(190),
+                            Forms\Components\Toggle::make('invite')->label(__('admin.assign_owner_invite'))->default(true),
+                        ])
+                        ->action(function (Spa $s, array $data) {
+                            app(OwnerAssignmentService::class)->assign($s, $data, (bool) ($data['invite'] ?? true));
+                            Notification::make()->title(__('admin.assign_owner_ok', ['email' => $data['email']]))->success()->send();
+                        }),
+                    Tables\Actions\Action::make('resend_invite')->label(__('admin.mgmt_resend_invite'))->icon('heroicon-o-envelope')
+                        ->visible(fn (Spa $s) => (bool) app(OwnerAssignmentService::class)->ownerOf($s))
+                        ->requiresConfirmation()->modalDescription(__('admin.mgmt_resend_invite_help'))
+                        ->action(function (Spa $s) {
+                            app(OwnerAssignmentService::class)->resendInvite($s);
+                            Notification::make()->title(__('admin.mgmt_done'))->success()->send();
+                        }),
+                    Tables\Actions\Action::make('edit_owner')->label(__('admin.mgmt_edit_owner'))->icon('heroicon-o-pencil-square')
+                        ->visible(fn (Spa $s) => (bool) app(OwnerAssignmentService::class)->ownerOf($s))
+                        ->fillForm(fn (Spa $s) => ['first_name' => app(OwnerAssignmentService::class)->ownerOf($s)?->first_name, 'last_name' => app(OwnerAssignmentService::class)->ownerOf($s)?->last_name, 'email' => app(OwnerAssignmentService::class)->ownerOf($s)?->email, 'phone' => app(OwnerAssignmentService::class)->ownerOf($s)?->phone])
+                        ->form([
+                            Forms\Components\Grid::make(2)->schema([
+                                Forms\Components\TextInput::make('first_name')->label(__('partner.first_name'))->required()->maxLength(100),
+                                Forms\Components\TextInput::make('last_name')->label(__('partner.last_name'))->required()->maxLength(100),
+                            ]),
+                            Forms\Components\TextInput::make('email')->label('E-mail')->email()->required()->maxLength(190),
+                            PhoneField::make('phone', __('partner.phone'), nativeCountry: true),
+                        ])
+                        ->action(function (Spa $s, array $data) {
+                            app(OwnerAssignmentService::class)->updateOwner($s, $data);
+                            Notification::make()->title(__('admin.mgmt_done'))->success()->send();
+                        }),
+                    Tables\Actions\Action::make('suspend_access')->label(__('admin.mgmt_suspend'))->icon('heroicon-o-lock-closed')->color('danger')
+                        ->visible(fn (Spa $s) => (app(OwnerAssignmentService::class)->ownerOf($s)?->accessSuspended() === false))
+                        ->form([Forms\Components\Textarea::make('note')->label(__('admin.mgmt_note'))->rows(2)->maxLength(500)])
+                        ->requiresConfirmation()->modalDescription(__('admin.mgmt_suspend_help'))
+                        ->action(function (Spa $s, array $data) {
+                            app(OwnerAssignmentService::class)->suspendAccess($s, $data['note'] ?? null);
+                            Notification::make()->title(__('admin.mgmt_done'))->success()->send();
+                        }),
+                    Tables\Actions\Action::make('reactivate_access')->label(__('admin.mgmt_reactivate'))->icon('heroicon-o-lock-open')->color('success')
+                        ->visible(fn (Spa $s) => (app(OwnerAssignmentService::class)->ownerOf($s)?->accessSuspended() === true))
+                        ->requiresConfirmation()
+                        ->action(function (Spa $s) {
+                            app(OwnerAssignmentService::class)->reactivateAccess($s);
+                            Notification::make()->title(__('admin.mgmt_done'))->success()->send();
+                        }),
+                    Tables\Actions\Action::make('take_over')->label(__('admin.mgmt_take_over'))->icon('heroicon-o-hand-raised')->color('warning')
+                        ->visible(fn (Spa $s) => app(OwnerAssignmentService::class)->ownerOf($s) && $s->managed_by !== 'admin')
+                        ->form([Forms\Components\Textarea::make('note')->label(__('admin.mgmt_note'))->rows(2)->maxLength(500)])
+                        ->requiresConfirmation()->modalDescription(__('admin.mgmt_take_over_help'))
+                        ->action(function (Spa $s, array $data) {
+                            app(OwnerAssignmentService::class)->takeOver($s, auth()->user(), $data['note'] ?? null);
+                            Notification::make()->title(__('admin.mgmt_done'))->success()->send();
+                        }),
+                    Tables\Actions\Action::make('hand_back')->label(__('admin.mgmt_hand_back'))->icon('heroicon-o-arrow-uturn-left')->color('success')
+                        ->visible(fn (Spa $s) => $s->managed_by === 'admin')
+                        ->requiresConfirmation()
+                        ->action(function (Spa $s) {
+                            app(OwnerAssignmentService::class)->handBack($s);
+                            Notification::make()->title(__('admin.mgmt_done'))->success()->send();
+                        }),
+                ])->label(__('admin.mgmt_section'))->icon('heroicon-o-users')->button()->color('gray'),
                 Tables\Actions\EditAction::make(),
             ]);
     }
