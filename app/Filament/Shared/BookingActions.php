@@ -62,13 +62,11 @@ class BookingActions
 
         return [
             $class::make('accept')->label(__('partner.accept'))->icon('heroicon-o-check')->color('success')
-                ->visible(fn (Booking $b) => $actor !== 'partner' || $b->spa->managed_by !== 'admin')
-                ->visible(fn (Booking $b) => $b->isWaiting())
+                ->visible(fn (Booking $b) => $b->isWaiting() && ($actor !== 'partner' || $b->spa->managed_by !== 'admin'))
                 ->requiresConfirmation()->modalDescription(__('partner.accept_help'))
                 ->action(fn (Booking $b) => $run($b, 'accept')),
             $class::make('decline')->label(__('partner.decline'))->icon('heroicon-o-x-mark')->color('danger')
-                ->visible(fn (Booking $b) => $actor !== 'partner' || $b->spa->managed_by !== 'admin')
-                ->visible(fn (Booking $b) => $b->isWaiting())
+                ->visible(fn (Booking $b) => $b->isWaiting() && ($actor !== 'partner' || $b->spa->managed_by !== 'admin'))
                 ->form([
                     Select::make('reason')->label(__('partner.decline_reason'))->options(__('partner.decline_reasons'))->required()->native(false)->live()
                         ->helperText(fn (Get $get) => $get('reason') === 'full' ? __('partner.decline_full_help') : null),

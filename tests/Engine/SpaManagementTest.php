@@ -7,6 +7,8 @@ use App\Domain\Booking\BookingService;
 use App\Domain\Partner\OwnerAssignmentService;
 use App\Events\BookingCreated;
 use App\Filament\Admin\Resources\SpaResource\Pages\ListSpas;
+use App\Filament\Partner\Resources\BookingResource\Pages\ListBookings;
+use App\Filament\Partner\Resources\BookingResource\Pages\ViewBooking;
 use App\Mail\PartnerInviteMail;
 use App\Models\ActivityLog;
 use App\Models\Booking;
@@ -80,8 +82,14 @@ class SpaManagementTest extends TestCase
         }
         $this->assertSame('waiting', $booking->fresh()->status);
 
-        // Le propriétaire garde l'accès en lecture à sa fiche.
+        // Le propriétaire garde l'accès en lecture à sa fiche, sans décider.
         $this->actingAs($this->owner)->get('/partenaire/'.$this->spa->slug)->assertOk();
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+        Livewire::test(ViewBooking::class, ['record' => $booking->id])
+            ->assertActionHidden('accept')->assertActionHidden('decline');
+        Livewire::test(ListBookings::class)
+            ->assertTableActionHidden('accept', $booking)->assertTableActionHidden('decline', $booking);
 
         $this->actingAs($this->admin);
         $svc->handBack($this->spa);
