@@ -6,6 +6,7 @@ use App\Domain\Booking\BookingException;
 use App\Domain\Booking\BookingService;
 use App\Domain\Partner\OwnerAssignmentService;
 use App\Events\BookingCreated;
+use App\Events\BookingStatusChanged;
 use App\Filament\Admin\Resources\SpaResource\Pages\ListSpas;
 use App\Filament\Partner\Resources\BookingResource\Pages\ListBookings;
 use App\Filament\Partner\Resources\BookingResource\Pages\ViewBooking;
@@ -109,15 +110,64 @@ class SpaManagementTest extends TestCase
         $this->assertNotNull($partnerSide);
         $this->assertSame('admin@example.test', $partnerSide->recipient);
         $this->assertSame(0, BookingNotification::where('booking_id', $booking->id)->where('recipient', 'owner@example.test')->count());
+
+        // Confirmation par l'Admin pendant la reprise : la copie « établissement » part aussi au gestionnaire, pas au propriétaire.
+        $booking->update(['status' => 'confirmed', 'confirmed_at' => now()]);
+        event(new BookingStatusChanged($booking->fresh(), 'waiting'));
+        $this->assertSame(0, BookingNotification::where('booking_id', $booking->id)->where('recipient', 'owner@example.test')->count());
+        $this->assertGreaterThanOrEqual(2, BookingNotification::where('booking_id', $booking->id)->where('recipient', 'admin@example.test')->count());
+
+        // Restitution : une nouvelle demande revient au propriétaire, plus rien au gestionnaire.
+        app(OwnerAssignmentService::class)->handBack($this->spa->fresh());
+        $again = Booking::create(['spa_id' => $this->spa->id, 'reference' => 'HLTESTA3', 'status' => 'waiting', 'source' => 'online', 'start_at' => now()->addDays(3), 'end_at' => now()->addDays(3)->addHour(), 'party' => 1, 'duration_min' => 60, 'total' => 100, 'first_name' => 'C', 'last_name' => 'L', 'email' => 'client@example.test', 'phone' => '+212600000009', 'locale' => 'fr', 'quote' => ['lines' => []], 'manage_token' => str_repeat('a3', 32), 'expires_at' => now()->addHours(2)]);
+        event(new BookingCreated($again));
+        $this->assertSame('owner@example.test', BookingNotification::where('booking_id', $again->id)->where('audience', 'partner')->value('recipient'));
+        $this->assertSame(0, BookingNotification::where('booking_id', $again->id)->where('recipient', 'admin@example.test')->count());
+    }
+
+    public function test_suspension_and_take_over_are_scoped_to_one_spa_of_a_multi_spa_owner(): void
+    {
+        $svc = app(OwnerAssignmentService::class);
+        $second = $svc->createSpa($this->admin, ['name' => 'Second Spa', 'category' => 'spa', 'city_id' => City::first()->id]);
+        $svc->assign($second, ['first_name' => 'P', 'last_name' => 'O', 'email' => 'owner@example.test', 'company_name' => 'Owner SARL'], invite: false);
+        $second->refresh();
+        $this->assertSame($this->spa->partner_id, $second->partner_id, 'même propriétaire pour les deux fiches');
+
+        $svc->suspendAccess($this->spa);
+        $this->owner->refresh();
+        $panel = Filament::getPanel('partner');
+        $this->assertTrue($this->owner->canAccessPanel($panel), 'l’espace partenaire reste ouvert pour l’autre fiche');
+        $this->assertFalse($this->owner->canAccessTenant($this->spa->fresh()));
+        $this->assertTrue($this->owner->canAccessTenant($second));
+        $this->assertSame([$second->id], $this->owner->getTenants($panel)->pluck('id')->all());
+        $this->assertSame('partner', $svc->state($second));
+        $this->actingAs($this->owner)->get('/partenaire/'.$second->slug)->assertOk();
+        $this->assertContains($this->actingAs($this->owner)->get('/partenaire/'.$this->spa->slug)->status(), [403, 404], 'fiche suspendue inaccessible');
+
+        $this->actingAs($this->admin);
+        $svc->reactivateAccess($this->spa);
+        $svc->takeOver($second, $this->admin);
+        $this->assertSame('owner@example.test', $this->spa->fresh()->decisionUser()->email, 'la reprise de l’autre fiche ne change rien ici');
+        $this->assertSame('admin@example.test', $second->fresh()->decisionUser()->email);
+        $this->assertSame('partner', $svc->state($this->spa->fresh()));
+        $this->assertSame('taken_over', $svc->state($second->fresh()));
+
+        // Toutes les fiches suspendues → plus d'accès du tout ; un compte sans fiche garde l'accès (inscription).
+        $svc->handBack($second);
+        $svc->suspendAccess($this->spa);
+        $svc->suspendAccess($second);
+        $this->assertFalse($this->owner->fresh()->canAccessPanel($panel));
+        $fresh = User::create(['name' => 'Nouveau', 'email' => 'nouveau@example.test', 'password' => 'secret-test', 'role' => 'partner']);
+        $this->assertTrue($fresh->canAccessPanel($panel));
     }
 
     public function test_suspending_access_blocks_the_owner_login_and_keeps_data_until_reactivation(): void
     {
         $svc = app(OwnerAssignmentService::class);
         $svc->suspendAccess($this->spa, 'impayé');
-        $this->owner->refresh();
-        $this->assertTrue($this->owner->accessSuspended());
-        $this->assertSame('suspended', $svc->state($this->spa->fresh()));
+        $this->spa->refresh();
+        $this->assertTrue($this->spa->ownerAccessSuspended());
+        $this->assertSame('suspended', $svc->state($this->spa));
         $this->assertFalse($this->owner->canAccessPanel(Filament::getPanel('partner')));
         $this->assertFalse($this->owner->canAccessTenant($this->spa));
         $this->assertSame($this->owner->partner->id, $this->spa->fresh()->partner_id, 'la fiche reste au propriétaire');
@@ -127,8 +177,8 @@ class SpaManagementTest extends TestCase
 
         $this->actingAs($this->admin);
         $svc->reactivateAccess($this->spa);
-        $this->owner->refresh();
-        $this->assertFalse($this->owner->accessSuspended());
+        $this->spa->refresh();
+        $this->assertFalse($this->spa->ownerAccessSuspended());
         $this->assertTrue($this->owner->canAccessPanel(Filament::getPanel('partner')));
         $this->assertTrue($this->admin->canAccessPanel(Filament::getPanel('partner')));
     }
@@ -175,7 +225,7 @@ class SpaManagementTest extends TestCase
         Livewire::test(ListSpas::class)
             ->callTableAction('suspend_access', $this->spa->fresh(), ['note' => ''])
             ->assertHasNoTableActionErrors();
-        $this->assertTrue($this->owner->fresh()->accessSuspended());
+        $this->assertTrue($this->spa->fresh()->ownerAccessSuspended());
         Livewire::test(ListSpas::class)
             ->callTableAction('edit_owner', $this->spa->fresh(), ['first_name' => 'P', 'last_name' => 'O', 'email' => 'admin@example.test', 'phone' => null])
             ->assertHasTableActionErrors(['email']);

@@ -261,7 +261,7 @@ return [
     'mgmt_resend_invite_help' => 'A new “Set my password” link (valid 24 h) is sent to the owner.',
     'mgmt_edit_owner' => 'Edit contact details',
     'mgmt_suspend' => 'Disable access',
-    'mgmt_suspend_help' => 'The owner can no longer log in. Listing, bookings and history are kept; can be reactivated at any time.',
+    'mgmt_suspend_help' => 'The owner can no longer access this establishment (their other establishments are not affected). Listing, bookings and history are kept; can be reactivated at any time.',
     'mgmt_reactivate' => 'Reactivate access',
     'mgmt_take_over' => 'Take over management',
     'mgmt_take_over_help' => 'New requests are sent to you and only you accept or decline them. The listing stays with the owner (read access).',

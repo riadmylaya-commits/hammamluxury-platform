@@ -251,7 +251,7 @@ class SpaResource extends Resource
                             Notification::make()->title(__('admin.mgmt_done'))->success()->send();
                         }),
                     Tables\Actions\Action::make('suspend_access')->label(__('admin.mgmt_suspend'))->icon('heroicon-o-lock-closed')->color('danger')
-                        ->visible(fn (Spa $s) => (app(OwnerAssignmentService::class)->ownerOf($s)?->accessSuspended() === false))
+                        ->visible(fn (Spa $s) => app(OwnerAssignmentService::class)->ownerOf($s) && ! $s->ownerAccessSuspended())
                         ->form([Forms\Components\Textarea::make('note')->label(__('admin.mgmt_note'))->rows(2)->maxLength(500)])
                         ->requiresConfirmation()->modalDescription(__('admin.mgmt_suspend_help'))
                         ->action(function (Spa $s, array $data) {
@@ -259,7 +259,7 @@ class SpaResource extends Resource
                             Notification::make()->title(__('admin.mgmt_done'))->success()->send();
                         }),
                     Tables\Actions\Action::make('reactivate_access')->label(__('admin.mgmt_reactivate'))->icon('heroicon-o-lock-open')->color('success')
-                        ->visible(fn (Spa $s) => (app(OwnerAssignmentService::class)->ownerOf($s)?->accessSuspended() === true))
+                        ->visible(fn (Spa $s) => app(OwnerAssignmentService::class)->ownerOf($s) && $s->ownerAccessSuspended())
                         ->requiresConfirmation()
                         ->action(function (Spa $s) {
                             app(OwnerAssignmentService::class)->reactivateAccess($s);

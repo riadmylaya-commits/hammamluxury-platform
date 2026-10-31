@@ -154,14 +154,14 @@ class OwnerAssignmentService
         return $owner;
     }
 
-    /** Connexion du propriétaire refusée (fiche, réservations et historique intacts). */
+    /** Accès du propriétaire à cet établissement refusé (ses autres fiches, les réservations et l'historique restent intacts). */
     public function suspendAccess(Spa $spa, ?string $note = null): User
     {
         $owner = $this->ownerOf($spa);
         if (! $owner) {
             throw ValidationException::withMessages(['email' => __('admin.mgmt_no_owner')]);
         }
-        $owner->update(['access_suspended_at' => now()]);
+        $spa->update(['owner_access_suspended_at' => now()]);
         ActivityLog::record('spa.owner_access_suspended', $spa, array_filter(['email' => $owner->email, 'note' => $note]));
 
         return $owner;
@@ -173,7 +173,7 @@ class OwnerAssignmentService
         if (! $owner) {
             throw ValidationException::withMessages(['email' => __('admin.mgmt_no_owner')]);
         }
-        $owner->update(['access_suspended_at' => null]);
+        $spa->update(['owner_access_suspended_at' => null]);
         ActivityLog::record('spa.owner_access_reactivated', $spa, ['email' => $owner->email]);
 
         return $owner;
@@ -203,7 +203,7 @@ class OwnerAssignmentService
         if ($spa->managed_by === 'admin') {
             return 'taken_over';
         }
-        if ($owner->accessSuspended()) {
+        if ($spa->ownerAccessSuspended()) {
             return 'suspended';
         }
 

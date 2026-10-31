@@ -69,7 +69,7 @@ class MessageService
         }
 
         if ($message->sender === 'client') {
-            $user = $booking->spa->partner?->user;
+            $user = $booking->spa->decisionUser();
             if ($user?->email) {
                 Mail::to($user->email)->queue((new BookingMessageMail($message, 'partner'))->locale($user->locale ?: 'fr'));
                 $message->update(['notified_at' => now()]);

@@ -261,7 +261,7 @@ return [
     'mgmt_resend_invite_help' => 'Un nouveau lien « Définir mon mot de passe » (valable 24 h) est envoyé au propriétaire.',
     'mgmt_edit_owner' => 'Corriger les coordonnées',
     'mgmt_suspend' => 'Désactiver l’accès',
-    'mgmt_suspend_help' => 'Le propriétaire ne peut plus se connecter. La fiche, les réservations et l’historique sont conservés ; réactivable à tout moment.',
+    'mgmt_suspend_help' => 'Le propriétaire ne peut plus accéder à cet établissement (ses autres établissements ne sont pas concernés). La fiche, les réservations et l’historique sont conservés ; réactivable à tout moment.',
     'mgmt_reactivate' => 'Réactiver l’accès',
     'mgmt_take_over' => 'Reprendre la gestion',
     'mgmt_take_over_help' => 'Les nouvelles demandes vous sont adressées et vous seul les acceptez ou refusez. La fiche reste au propriétaire (consultation).',

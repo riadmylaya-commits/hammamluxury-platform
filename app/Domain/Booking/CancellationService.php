@@ -296,7 +296,7 @@ class CancellationService
 
     private function notifyPartner(CancellationRequest $request, string $event): void
     {
-        $user = $request->booking->spa->partner?->user;
+        $user = $request->booking->spa->decisionUser();
         if ($user?->email) {
             $this->mail($user->email, $request, $event, 'partner', $user->locale);
         }

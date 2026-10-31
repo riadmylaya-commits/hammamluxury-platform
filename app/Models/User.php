@@ -21,7 +21,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
 
     public const ROLES = ['admin', 'partner', 'client'];
 
-    protected $fillable = ['name', 'first_name', 'last_name', 'email', 'password', 'role', 'phone', 'whatsapp', 'locale', 'email_verified_at', 'access_suspended_at'];
+    protected $fillable = ['name', 'first_name', 'last_name', 'email', 'password', 'role', 'phone', 'whatsapp', 'locale', 'email_verified_at'];
 
     protected static function booted(): void
     {
@@ -43,7 +43,6 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     {
         return [
             'email_verified_at' => 'datetime',
-            'access_suspended_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_secret' => 'encrypted',
             'two_factor_recovery_codes' => 'encrypted:array',
@@ -71,9 +70,12 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         return $this->role === 'partner';
     }
 
-    public function accessSuspended(): bool
+    /** Propriétaire dont toutes les fiches sont suspendues : plus aucun accès à l'espace partenaire (un compte sans fiche garde l'accès). */
+    public function allSpasSuspended(): bool
     {
-        return $this->access_suspended_at !== null;
+        $spas = $this->partner?->spas();
+
+        return $spas !== null && $spas->exists() && ! (clone $spas)->whereNull('owner_access_suspended_at')->exists();
     }
 
     public function hasTwoFactor(): bool
@@ -91,7 +93,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     {
         return match ($panel->getId()) {
             'admin' => $this->isAdmin(),
-            'partner' => $this->isAdmin() || ($this->isPartner() && ! $this->accessSuspended()),
+            'partner' => $this->isAdmin() || ($this->isPartner() && ! $this->allSpasSuspended()),
             default => false,
         };
     }
@@ -103,12 +105,12 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
             return Spa::orderBy('name')->get();
         }
 
-        return $this->partner?->spas()->orderBy('name')->get() ?? new Collection;
+        return $this->partner?->spas()->whereNull('owner_access_suspended_at')->orderBy('name')->get() ?? new Collection;
     }
 
     public function canAccessTenant(Model $tenant): bool
     {
-        return $this->isAdmin() || (! $this->accessSuspended() && $tenant instanceof Spa && $tenant->partner_id === $this->partner?->id);
+        return $this->isAdmin() || ($tenant instanceof Spa && ! $tenant->ownerAccessSuspended() && $tenant->partner_id === $this->partner?->id);
     }
 
     public function preferredLocale(): ?string
