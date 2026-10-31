@@ -176,6 +176,10 @@ class SpaManagementTest extends TestCase
             ->callTableAction('suspend_access', $this->spa->fresh(), ['note' => ''])
             ->assertHasNoTableActionErrors();
         $this->assertTrue($this->owner->fresh()->accessSuspended());
+        Livewire::test(ListSpas::class)
+            ->callTableAction('edit_owner', $this->spa->fresh(), ['first_name' => 'P', 'last_name' => 'O', 'email' => 'admin@example.test', 'phone' => null])
+            ->assertHasTableActionErrors(['email']);
+        $this->assertSame('owner@example.test', $this->owner->fresh()->email);
         auth()->logout();
         $this->get('/partenaire/register')->assertOk();
     }

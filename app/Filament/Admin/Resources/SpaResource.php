@@ -233,7 +233,17 @@ class SpaResource extends Resource
                                 Forms\Components\TextInput::make('first_name')->label(__('partner.first_name'))->required()->maxLength(100),
                                 Forms\Components\TextInput::make('last_name')->label(__('partner.last_name'))->required()->maxLength(100),
                             ]),
-                            Forms\Components\TextInput::make('email')->label('E-mail')->email()->required()->maxLength(190),
+                            Forms\Components\TextInput::make('email')->label('E-mail')->email()->required()->maxLength(190)
+                                ->rules([
+                                    fn (Spa $s) => function (string $attribute, mixed $value, \Closure $fail) use ($s) {
+                                        $owner = app(OwnerAssignmentService::class)->ownerOf($s);
+                                        $taken = User::where('email', Str::lower(trim((string) $value)))
+                                            ->when($owner, fn ($q) => $q->where('id', '!=', $owner->id))->exists();
+                                        if ($taken) {
+                                            $fail(__('admin.mgmt_email_taken'));
+                                        }
+                                    },
+                                ]),
                             PhoneField::make('phone', __('partner.phone'), nativeCountry: true),
                         ])
                         ->action(function (Spa $s, array $data) {
