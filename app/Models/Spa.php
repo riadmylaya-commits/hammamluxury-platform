@@ -28,7 +28,8 @@ class Spa extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['instant_booking' => 'bool', 'instant_booking_at' => 'datetime', 'submitted_at' => 'datetime', 'published_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array', 'cancellation_hours' => 'int', 'waiting_ttl_hours' => 'float'];
+    protected $casts = ['instant_booking' => 'bool', 'instant_booking_at' => 'datetime', 'submitted_at' => 'datetime', 'published_at' => 'datetime',
+        'owner_invited_at' => 'datetime', 'owner_access_suspended_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array', 'cancellation_hours' => 'int', 'waiting_ttl_hours' => 'float'];
 
     /** Position sur la carte : `['lat' => ?, 'lng' => ?]`, éditable comme un seul champ de formulaire. */
     protected function location(): Attribute
@@ -98,6 +99,32 @@ class Spa extends Model
             'other' => $this->license_authority_other ?: __('partner.license_authority_other'),
             default => __('partner.license_authority_'.$this->license_authority),
         };
+    }
+
+    /** Fiche dont les demandes sont décidées par HammamLuxury (portefeuille Admin ou reprise temporaire). */
+    public function managedByAdmin(): bool
+    {
+        return $this->managed_by === 'admin' || (bool) $this->partner?->user?->isAdmin();
+    }
+
+    public function ownerAccessSuspended(): bool
+    {
+        return $this->owner_access_suspended_at !== null;
+    }
+
+    public function manager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'manager_user_id');
+    }
+
+    /** Destinataire des demandes « côté établissement » : le gestionnaire HammamLuxury en mode admin, sinon le propriétaire. */
+    public function decisionUser(): ?User
+    {
+        if ($this->managed_by === 'admin') {
+            return $this->manager ?? User::where('role', 'admin')->orderBy('id')->first();
+        }
+
+        return $this->partner?->user;
     }
 
     public function partner(): BelongsTo

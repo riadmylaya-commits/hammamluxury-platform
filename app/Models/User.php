@@ -70,6 +70,14 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         return $this->role === 'partner';
     }
 
+    /** Propriétaire dont toutes les fiches sont suspendues : plus aucun accès à l'espace partenaire (un compte sans fiche garde l'accès). */
+    public function allSpasSuspended(): bool
+    {
+        $spas = $this->partner?->spas();
+
+        return $spas !== null && $spas->exists() && ! (clone $spas)->whereNull('owner_access_suspended_at')->exists();
+    }
+
     public function hasTwoFactor(): bool
     {
         return $this->two_factor_confirmed_at !== null && $this->two_factor_secret !== null;
@@ -85,7 +93,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     {
         return match ($panel->getId()) {
             'admin' => $this->isAdmin(),
-            'partner' => $this->isPartner() || $this->isAdmin(),
+            'partner' => $this->isAdmin() || ($this->isPartner() && ! $this->allSpasSuspended()),
             default => false,
         };
     }
@@ -97,12 +105,12 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
             return Spa::orderBy('name')->get();
         }
 
-        return $this->partner?->spas()->orderBy('name')->get() ?? new Collection;
+        return $this->partner?->spas()->whereNull('owner_access_suspended_at')->orderBy('name')->get() ?? new Collection;
     }
 
     public function canAccessTenant(Model $tenant): bool
     {
-        return $this->isAdmin() || ($tenant instanceof Spa && $tenant->partner_id === $this->partner?->id);
+        return $this->isAdmin() || ($tenant instanceof Spa && ! $tenant->ownerAccessSuspended() && $tenant->partner_id === $this->partner?->id);
     }
 
     public function preferredLocale(): ?string
