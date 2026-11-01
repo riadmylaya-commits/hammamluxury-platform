@@ -130,6 +130,8 @@ return [
     'footer_legal' => 'Mentions légales',
     'location' => 'Localisation',
     'directions' => 'Itinéraire Google Maps',
+    'preview_private_title' => 'Prévisualisation privée',
+    'preview_private_body' => 'fiche « :status », non publiée : visible uniquement par les administrateurs connectés, aucune réservation possible.',
     'open_in_maps' => 'Ouvrir dans Google Maps',
     // Présentation des formules
     'total_duration' => 'Durée totale',

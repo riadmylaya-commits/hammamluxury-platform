@@ -233,4 +233,17 @@ class SpaManagementTest extends TestCase
         auth()->logout();
         $this->get('/partenaire/register')->assertOk();
     }
+
+    public function test_unpublished_spa_is_previewable_only_by_a_logged_in_admin(): void
+    {
+        $svc = app(OwnerAssignmentService::class);
+        $draft = $svc->createSpa($this->admin, ['name' => 'Fiche en préparation', 'category' => 'hammam', 'city_id' => City::first()->id]);
+        $this->assertNotSame('published', $draft->status);
+
+        auth()->logout();
+        $this->get('/fr/spa/'.$draft->slug)->assertNotFound();
+        $this->actingAs($this->owner)->get('/fr/spa/'.$draft->slug)->assertNotFound();
+
+        $this->actingAs($this->admin)->get('/fr/spa/'.$draft->slug)->assertOk()->assertSee(__('ui.preview_private_title'));
+    }
 }

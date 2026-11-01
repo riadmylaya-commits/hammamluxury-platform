@@ -187,9 +187,8 @@ class SpaResource extends Resource
                         OnboardingService::notifyDecision($s, 'refused');
                         Notification::make()->title(__('admin.refused_ok'))->success()->send();
                     }),
-                Tables\Actions\Action::make('preview')->label(__('admin.preview'))->icon('heroicon-o-arrow-top-right-on-square')
-                    ->url(fn (Spa $s) => route('spa.show', ['locale' => 'fr', 'spa' => $s]), shouldOpenInNewTab: true)
-                    ->visible(fn (Spa $s) => $s->status === 'published'),
+                Tables\Actions\Action::make('preview')->label(fn (Spa $s) => $s->status === 'published' ? __('admin.preview') : __('admin.preview_private'))->icon('heroicon-o-arrow-top-right-on-square')
+                    ->url(fn (Spa $s) => route('spa.show', ['locale' => 'fr', 'spa' => $s]), shouldOpenInNewTab: true),
                 Tables\Actions\Action::make('manage')->label(__('admin.manage'))->icon('heroicon-o-wrench-screwdriver')
                     ->url(fn (Spa $s) => url("/partenaire/{$s->slug}")),
                 Tables\Actions\ActionGroup::make([

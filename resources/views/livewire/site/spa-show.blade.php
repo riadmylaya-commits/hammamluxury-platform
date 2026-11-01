@@ -1,4 +1,9 @@
 <div>
+    @if ($preview)
+        <div class="card" role="status" style="margin:12px 0;padding:12px 14px;border:2px dashed #b45309;background:#fffbeb;color:#78350f">
+            <strong>{{ __('ui.preview_private_title') }}</strong> — {{ __('ui.preview_private_body', ['status' => __('partner.spa_status_'.$spa->status)]) }}
+        </div>
+    @endif
 @php($photos = $card['photos'])
 <div class="gallery" style="margin-top:6px" @if ($photos) id="hl-gallery" data-photos='@json($photos)' data-i18n='@json($galleryI18n)' @endif>
     @forelse (array_slice($photos, 0, 5) as $i => $p)

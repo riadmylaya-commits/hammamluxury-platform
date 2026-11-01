@@ -17,9 +17,14 @@ class SpaShow extends Component
     #[Url]
     public string $date = '';
 
+    /** Prévisualisation privée : fiche non publiée affichée « comme un client » à un administrateur connecté, jamais indexée. */
+    public bool $preview = false;
+
     public function mount(Spa $spa, CatalogueService $catalogue): void
     {
-        abort_unless($catalogue->bookableSpas()->whereKey($spa->id)->exists(), 404);
+        $public = $catalogue->bookableSpas()->whereKey($spa->id)->exists();
+        $this->preview = ! $public && (bool) auth()->user()?->isAdmin();
+        abort_unless($public || $this->preview, 404);
         $this->spa = $spa->load(['photos', 'hours', 'categories', 'amenities']);
     }
 
@@ -30,7 +35,8 @@ class SpaShow extends Component
         $treatments = $catalogue->treatments($this->spa);
         $reviews = $this->spa->reviews()->published()->with('photos')->latest('published_at')->limit(30)->get();
 
-        return view('livewire.site.spa-show', ['card' => $card, 'treatments' => $treatments, 'reviews' => $reviews, 'bookParams' => array_filter(['date' => $this->date]),
+        return view('livewire.site.spa-show', [
+            'preview' => $this->preview, 'card' => $card, 'treatments' => $treatments, 'reviews' => $reviews, 'bookParams' => array_filter(['date' => $this->date]),
             'galleryI18n' => ['of' => __('ui.photo_of'), 'close' => __('ui.close'), 'prev' => __('ui.prev'), 'next' => __('ui.next')]])
             ->title($this->spa->name.' · '.$this->spa->city);
     }
