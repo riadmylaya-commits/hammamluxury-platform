@@ -208,4 +208,25 @@ class ImportSpaCatalogueTest extends TestCase
         file_put_contents($file, json_encode($spec));
         $this->artisan('hl:import-spa', ['file' => $file])->assertFailed();
     }
+
+    public function test_google_listing_fields_are_imported_and_cleared_when_absent(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'hl');
+        $spec = ['partner' => ['email' => 'g@example.test', 'company_name' => 'G'], 'spa' => ['slug' => 'g', 'name' => 'G', 'city' => 'Marrakech', 'lat' => 31.1, 'lng' => -7.9,
+            'google_maps_url' => 'https://maps.app.goo.gl/abc', 'google_place_id' => 'ChIJabc'],
+            'treatments' => [['code' => 'A1', 'name_fr' => 'A', 'category' => 'massage', 'price_per_person' => 100, 'steps' => [['kind' => 'massage', 'duration_min' => 60]]]]];
+        file_put_contents($file, json_encode($spec));
+        $this->artisan('hl:import-spa', ['file' => $file])->assertSuccessful();
+        $spa = Spa::where('slug', 'g')->firstOrFail();
+        $this->assertSame('https://maps.app.goo.gl/abc', $spa->google_maps_url);
+        $this->assertSame('ChIJabc', $spa->google_place_id);
+        $this->assertStringContainsString('destination_place_id=ChIJabc', $spa->directionsUrl());
+
+        unset($spec['spa']['google_maps_url'], $spec['spa']['google_place_id']);
+        file_put_contents($file, json_encode($spec));
+        $this->artisan('hl:import-spa', ['file' => $file])->assertSuccessful();
+        $spa->refresh();
+        $this->assertNull($spa->google_place_id);
+        $this->assertSame('https://www.google.com/maps/dir/?api=1&destination=31.1%2C-7.9&travelmode=walking', $spa->directionsUrl());
+    }
 }

@@ -39,6 +39,7 @@ return [
     'rating' => 'Note',
     'publish' => 'Publier',
     'published_ok' => 'Fiche publiée.',
+    'preview_private' => 'Prévisualiser (privé)',
     'preview' => 'Voir la fiche',
     'manage' => 'Gérer comme partenaire',
     'promotion' => 'Promotion',

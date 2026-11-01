@@ -1,4 +1,9 @@
 <div>
+    @if ($preview)
+        <div class="card" role="status" style="margin:12px 0;padding:12px 14px;border:2px dashed #b45309;background:#fffbeb;color:#78350f">
+            <strong>{{ __('ui.preview_private_title') }}</strong> — {{ __('ui.preview_private_body', ['status' => __('partner.spa_status_'.$spa->status)]) }}
+        </div>
+    @endif
 @php($photos = $card['photos'])
 <div class="gallery" style="margin-top:6px" @if ($photos) id="hl-gallery" data-photos='@json($photos)' data-i18n='@json($galleryI18n)' @endif>
     @forelse (array_slice($photos, 0, 5) as $i => $p)
@@ -50,10 +55,10 @@
                             @if ($t['price_group'])<div class="xs muted" style="margin-top:6px">{{ __('ui.formula.group') }} {{ number_format($t['price_group'], 0, ',', ' ') }} {{ $cur }}{{ __('ui.per_person') }}</div>@endif
                         </div>
                         <div class="r">
-                            <div class="solo"><b>{{ number_format($t['price_from'], 0, ',', ' ') }} {{ $cur }}</b><span class="xs muted">{{ __('ui.per_person_solo') }}</span></div>
+                            <div class="solo"><b>{{ number_format($t['price_from'], 0, ',', ' ') }} {{ $cur }}</b> <span class="xs muted">{{ __('ui.per_person_solo') }}</span></div>
                             @if ($t['price_couple'])<div class="duo"><span class="xs">{{ __('ui.for_two') }}</span><b>{{ number_format($t['price_couple'], 0, ',', ' ') }} {{ $cur }}</b></div>@endif
                             @if ($t['nr_discount_pct'])<div class="xs" style="color:var(--brand);font-weight:600">{{ __('ui.policy.nr_from', ['price' => number_format($t['nr_price_from'], fmod($t['nr_price_from'], 1) ? 2 : 0, ',', ' ').' '.$cur, 'pct' => $t['nr_discount_pct']]) }}</div>@endif
-                            <a class="btn sm" href="{{ route('spa.book', [$spa->slug, 'soin' => $t['id']] + $bookParams) }}">{{ __('ui.book') }}</a>
+                            @if ($preview)<span class="btn sm" aria-disabled="true" style="opacity:.55;pointer-events:none">{{ __('ui.preview_no_booking') }}</span>@else<a class="btn sm" href="{{ route('spa.book', [$spa->slug, 'soin' => $t['id']] + $bookParams) }}">{{ __('ui.book') }}</a>@endif
                         </div>
                     </div>
                 @endforeach
@@ -64,8 +69,8 @@
             <div class="card" style="padding:0;overflow:hidden" wire:ignore>
                 <div id="spa-map" data-lat="{{ $card['lat'] }}" data-lng="{{ $card['lng'] }}" data-title="{{ $spa->name }}" style="height:240px;z-index:0"></div>
             </div>
-            <p class="muted small" style="margin-top:8px">{{ $card['area'] ? $card['area'].' · ' : '' }}{{ $card['city'] }} · <a href="https://www.google.com/maps/search/?api=1&query={{ $card['lat'] }},{{ $card['lng'] }}" target="_blank" rel="noopener">{{ __('ui.open_in_maps') }}</a></p>
-            <p style="margin-top:10px"><a class="btn btn-outline" href="https://www.google.com/maps/dir/?api=1&destination={{ $card['lat'] }},{{ $card['lng'] }}&travelmode=walking" target="_blank" rel="noopener" data-directions>{{ __('ui.directions') }}</a></p>
+            <p class="muted small" style="margin-top:8px">{{ $card['area'] ? $card['area'].' · ' : '' }}{{ $card['city'] }} · <a href="{{ $card['maps_url'] }}" target="_blank" rel="noopener">{{ __('ui.open_in_maps') }}</a></p>
+            <p style="margin-top:10px"><a class="btn btn-outline" href="{{ $card['directions_url'] }}" target="_blank" rel="noopener" data-directions>{{ __('ui.directions') }}</a></p>
         </section>
         @endif
         @if ($card['practical'])
@@ -109,13 +114,13 @@
     <aside class="side card">
         <div class="xs muted">{{ __('ui.from') }}</div>
         <div style="font-size:26px;font-weight:700">{{ $card['price_from'] ? number_format($card['price_from'], 0, ',', ' ').' '.config('hl.currency') : '—' }} <span class="small muted">{{ __('ui.per_person') }}</span></div>
-        <a class="btn full" style="margin-top:12px" href="{{ route('spa.book', [$spa->slug] + $bookParams) }}">{{ __('ui.book') }}</a>
+        @if ($preview)<span class="btn full" aria-disabled="true" style="margin-top:12px;opacity:.55;pointer-events:none">{{ __('ui.preview_no_booking') }}</span>@else<a class="btn full" style="margin-top:12px" href="{{ route('spa.book', [$spa->slug] + $bookParams) }}">{{ __('ui.book') }}</a>@endif
         <div class="divider"></div>
         <div class="small muted">{{ __('ui.no_account') }}</div>
     </aside>
 </div>
 <div class="mbar">
-    <div class="sp"><span class="xs muted">{{ __('ui.from') }}</span><br><b>{{ $card['price_from'] ? number_format($card['price_from'], 0, ',', ' ').' '.config('hl.currency') : '—' }}</b></div>
-    <a class="btn" href="{{ route('spa.book', [$spa->slug] + $bookParams) }}">{{ __('ui.book') }}</a>
+    <div class="sp"><span class="xs muted">{{ __('ui.from') }}</span> <b>{{ $card['price_from'] ? number_format($card['price_from'], 0, ',', ' ').' '.config('hl.currency') : '—' }}</b></div>
+    @if ($preview)<span class="btn" aria-disabled="true" style="opacity:.55;pointer-events:none">{{ __('ui.preview_no_booking') }}</span>@else<a class="btn" href="{{ route('spa.book', [$spa->slug] + $bookParams) }}">{{ __('ui.book') }}</a>@endif
 </div>
 </div>

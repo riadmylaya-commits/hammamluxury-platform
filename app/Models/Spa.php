@@ -48,6 +48,39 @@ class Spa extends Model
         return Attribute::set(fn (?string $value) => WebsiteUrl::normalize($value));
     }
 
+    /** Lien « Ouvrir dans Google Maps » : la fiche Google officielle si elle est connue, sinon la position enregistrée. */
+    public function mapsUrl(): ?string
+    {
+        if (filled($this->google_maps_url)) {
+            return $this->google_maps_url;
+        }
+        if ($this->lat === null || $this->lng === null) {
+            return null;
+        }
+        $q = ['api' => 1, 'query' => $this->lat.','.$this->lng];
+        if (filled($this->google_place_id)) {
+            $q['query_place_id'] = $this->google_place_id;
+        }
+
+        return 'https://www.google.com/maps/search/?'.http_build_query($q);
+    }
+
+    /**
+     * Itinéraire Google Maps vers l'établissement lui-même : avec un Place ID, la destination est la fiche Google
+     * (nom affiché), jamais le commerce voisin le plus proche des coordonnées ; sans Place ID, repli sur la position.
+     */
+    public function directionsUrl(): ?string
+    {
+        if (filled($this->google_place_id)) {
+            return 'https://www.google.com/maps/dir/?'.http_build_query(['api' => 1, 'destination' => $this->name, 'destination_place_id' => $this->google_place_id, 'travelmode' => 'walking']);
+        }
+        if ($this->lat === null || $this->lng === null) {
+            return null;
+        }
+
+        return 'https://www.google.com/maps/dir/?'.http_build_query(['api' => 1, 'destination' => $this->lat.','.$this->lng, 'travelmode' => 'walking']);
+    }
+
     /** Vrai si les 7 jours ont exactement une même plage horaire (mode « tous les jours » de l'assistant). */
     public function hasSameHoursEveryDay(): bool
     {

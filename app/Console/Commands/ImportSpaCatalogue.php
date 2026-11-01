@@ -189,6 +189,8 @@ class ImportSpaCatalogue extends Command
             'address' => $s['address'] ?? null,
             'lat' => $s['lat'] ?? null,
             'lng' => $s['lng'] ?? null,
+            'google_maps_url' => $s['google_maps_url'] ?? null,
+            'google_place_id' => $s['google_place_id'] ?? null,
             'phone' => $s['phone'] ?? null,
             'email' => $s['email'] ?? null,
             'website' => $s['website'] ?? null,

@@ -208,6 +208,8 @@ class SpaForm
             Section::make(__('partner.section_address'))->schema([
                 TextInput::make('address')->label(__('partner.address'))->maxLength(255)->columnSpanFull()->helperText(__('partner.address_help')),
                 self::map()->columnSpanFull(),
+                TextInput::make('google_maps_url')->label(__('partner.google_maps_url'))->url()->maxLength(255)->placeholder('https://maps.app.goo.gl/…')->helperText(__('partner.google_maps_url_help'))->columnSpan(2),
+                TextInput::make('google_place_id')->label(__('partner.google_place_id'))->maxLength(64)->placeholder('ChIJ…')->regex('/^[A-Za-z0-9_-]{10,64}$/')->helperText(__('partner.google_place_id_help')),
                 PhoneField::make('phone', __('partner.phone'))->columnSpanFull(),
                 PhoneField::make('whatsapp', __('partner.whatsapp'))->columnSpanFull(),
                 TextInput::make('email')->label('E-mail')->email()->maxLength(190),

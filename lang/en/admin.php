@@ -39,6 +39,7 @@ return [
     'rating' => 'Rating',
     'publish' => 'Publish',
     'published_ok' => 'Profile published.',
+    'preview_private' => 'Preview (private)',
     'preview' => 'View page',
     'manage' => 'Manage as partner',
     'promotion' => 'Promotion',
