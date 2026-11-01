@@ -94,7 +94,7 @@ class ImportSpaCatalogueTest extends TestCase
 
     public function test_photos_are_imported_once_and_processed(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $dir = sys_get_temp_dir().'/hl-import-'.uniqid();
         mkdir($dir);
         $img = imagecreatetruecolor(900, 700);
@@ -107,7 +107,7 @@ class ImportSpaCatalogueTest extends TestCase
         $photo = $spa->photos()->first();
         $this->assertTrue($photo->is_cover);
         $this->assertMatchesRegularExpression('#^spas/'.$spa->id.'/[0-9a-f-]+\.jpg$#', $photo->path);
-        Storage::disk('public')->assertExists($photo->path);
+        Storage::disk('local')->assertExists($photo->path);
         $this->assertSame('published', $spa->status);
 
         $this->artisan('hl:import-spa', ['file' => base_path(self::FILE), '--photos-dir' => $dir])->assertSuccessful();

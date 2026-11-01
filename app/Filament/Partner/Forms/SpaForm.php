@@ -15,6 +15,7 @@ use App\Models\Category;
 use App\Models\City;
 use App\Models\Spa;
 use App\Models\SpaHour;
+use App\Models\SpaPhoto;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\Actions\Action;
@@ -47,7 +48,7 @@ class SpaForm
     /** Upload photo sécurisé : types réels, 12 Mo max, 800×600 min, ré-encodage JPEG 1600 px côté serveur (PhotoProcessor). */
     public static function photoUpload(string $name, bool $multiple = false): FileUpload
     {
-        $upload = FileUpload::make($name)->label('')->image()->disk('public')->directory('spas')
+        $upload = FileUpload::make($name)->label('')->image()->disk(SpaPhoto::DISK)->visibility('private')->directory('spas')
             ->acceptedFileTypes(PhotoProcessor::MIMES)->maxSize((int) (PhotoProcessor::MAX_BYTES / 1024))
             ->rules(PhotoProcessor::rules())
             ->helperText(__('partner.photo_rules', ['w' => PhotoProcessor::MIN_WIDTH, 'h' => PhotoProcessor::MIN_HEIGHT, 'mb' => (int) (PhotoProcessor::MAX_BYTES / 1024 / 1024)]))
@@ -67,7 +68,10 @@ class SpaForm
                     return null;
                 }
 
-                return ['name' => basename($file), 'size' => $disk->size($file), 'type' => $disk->mimeType($file), 'url' => $disk->url($file)];
+                $photo = SpaPhoto::query()->where('path', $file)->first();
+                $url = $photo ? $photo->url() : $disk->temporaryUrl($file, now()->addMinutes(30));
+
+                return ['name' => basename($file), 'size' => $disk->size($file), 'type' => $disk->mimeType($file), 'url' => $url];
             });
 
         return $multiple ? $upload->multiple()->reorderable()->appendFiles()->panelLayout('grid') : $upload;

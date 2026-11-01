@@ -13,6 +13,7 @@ use App\Models\City;
 use App\Models\Partner;
 use App\Models\ResourceType;
 use App\Models\Spa;
+use App\Models\SpaPhoto;
 use App\Models\Treatment;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -320,7 +321,7 @@ class ImportSpaCatalogue extends Command
                 continue;
             }
             $path = 'spas/'.$spa->id.'/'.Str::uuid().'.jpg';
-            Storage::disk('public')->put($path, $image, 'public');
+            Storage::disk(SpaPhoto::DISK)->put($path, $image);
             $spa->photos()->create(['path' => $path, 'sort_order' => $n, 'is_cover' => $n === 0, 'caption_fr' => $spa->name, 'caption_en' => $spa->name]);
             $n++;
         }
