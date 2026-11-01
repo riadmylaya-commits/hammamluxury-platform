@@ -31,11 +31,14 @@ class TrustPagesAndSearchTest extends BookingFlowTestCase
         $this->get('/en/faq')->assertOk()->assertSee('Do I need an account');
         $this->get('/fr/contact')->assertOk()->assertSee('Votre message');
         $this->get('/en/contact')->assertOk()->assertSee('Your message');
+        $this->get('/fr/mentions-legales')->assertOk()->assertSee('Mentions légales')->assertSee('Éditeur du site')->assertSee('Hébergement');
+        $this->get('/en/mentions-legales')->assertOk()->assertSee('Legal notice')->assertSee('Publisher');
         $this->get('/fr/inconnue')->assertNotFound();
 
         $this->get('/fr')->assertOk()
             ->assertSee('href="'.url('/fr/faq').'"', false)
             ->assertSee('href="'.url('/fr/contact').'"', false)
+            ->assertSee('href="'.url('/fr/mentions-legales').'"', false)
             ->assertSee('href="'.url('/fr/cgu').'"', false)
             ->assertSee('href="'.url('/fr/confidentialite').'"', false)
             ->assertDontSee('href="#"', false);

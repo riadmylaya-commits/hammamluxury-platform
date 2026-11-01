@@ -128,6 +128,14 @@ class BookingSheetTest extends BookingFlowTestCase
             ->assertSee('Chiffre d’affaires acquis ce mois')->assertSee('dont net partenaire')
             ->assertSee('/partenaire/'.$this->spa->slug.'/bookings?tableFilters', false)
             ->assertSee('/partenaire/'.$this->spa->slug.'/commission-statement?period='.now(config('hl.timezone'))->format('Y-m'), false)
-            ->assertSee('/partenaire/'.$this->spa->slug.'/profile', false);
+            ->assertSee('/partenaire/'.$this->spa->slug.'/profile', false)
+            ->assertSee('Réponse attendue sous 2 h');
+
+        $this->spa->update(['waiting_ttl_hours' => 12]);
+        Livewire::test(StatsOverview::class)->assertSee('Réponse attendue sous 12 h')->assertDontSee('sous 2 h');
+        $this->spa->update(['waiting_ttl_hours' => 1.5]);
+        $this->assertSame('1 h 30', $this->spa->fresh()->waitingTtlLabel());
+        $this->spa->update(['waiting_ttl_hours' => 0.5]);
+        $this->assertSame('30 min', $this->spa->fresh()->waitingTtlLabel());
     }
 }

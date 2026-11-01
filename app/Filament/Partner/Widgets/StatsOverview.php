@@ -29,7 +29,7 @@ class StatsOverview extends BaseWidget
         $bookings = fn (array $filters) => BookingResource::getUrl('index', ['tableFilters' => $filters]);
 
         return [
-            Stat::make(__('partner.stat_waiting'), $q()->where('status', 'waiting')->count())->color('warning')->description(__('partner.stat_waiting_help'))
+            Stat::make(__('partner.stat_waiting'), $q()->where('status', 'waiting')->count())->color('warning')->description(__('partner.stat_waiting_help', ['delay' => $spa->waitingTtlLabel()]))
                 ->url($bookings(['status' => ['values' => ['waiting']]]))->extraAttributes($clickable),
             Stat::make(__('partner.stat_upcoming'), $q()->where('status', 'confirmed')->where('start_at', '>=', now())->count())->color('success')
                 ->url($bookings(['status' => ['values' => ['confirmed']], 'upcoming' => ['isActive' => true]]))->extraAttributes($clickable),
