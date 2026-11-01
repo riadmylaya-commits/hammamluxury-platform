@@ -128,7 +128,7 @@ return [
     'footer_legal' => 'Legal notice',
     'location' => 'Location',
     'directions' => 'Directions on Google Maps',
-    'preview_no_booking' => 'Booking unavailable (preview)',
+    'preview_no_booking' => 'Preview — booking disabled',
     'preview_private_title' => 'Private preview',
     'preview_private_body' => 'listing “:status”, not published: visible only to logged-in administrators, no booking possible.',
     'open_in_maps' => 'Open in Google Maps',

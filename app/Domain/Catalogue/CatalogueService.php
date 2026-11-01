@@ -124,6 +124,8 @@ class CatalogueService
             'area' => $spa->area,
             'lat' => $spa->lat,
             'lng' => $spa->lng,
+            'maps_url' => $spa->mapsUrl(),
+            'directions_url' => $spa->directionsUrl(),
             'category' => $spa->category,
             'category_label' => Category::labelsBySlug()[$spa->category] ?? $spa->category,
             'rating' => $spa->rating !== null ? (float) $spa->rating : null,

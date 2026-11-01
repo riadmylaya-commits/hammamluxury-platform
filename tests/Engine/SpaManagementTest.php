@@ -248,4 +248,29 @@ class SpaManagementTest extends TestCase
             ->assertDontSee('/spa/'.$draft->slug.'/reserver')->assertSee(__('ui.preview_no_booking'));
         $this->actingAs($this->admin)->get('/fr/spa/'.$draft->slug.'/reserver')->assertNotFound();
     }
+
+    public function test_directions_button_targets_the_google_listing_when_a_place_id_is_known(): void
+    {
+        $svc = app(OwnerAssignmentService::class);
+        $spa = $svc->createSpa($this->admin, ['name' => 'Isis Spa', 'category' => 'hammam', 'city_id' => City::first()->id]);
+        $spa->update(['lat' => 31.6267716, 'lng' => -7.9841938]);
+
+        $this->assertSame('https://www.google.com/maps/dir/?api=1&destination=31.6267716%2C-7.9841938&travelmode=walking', $spa->fresh()->directionsUrl());
+        $this->assertSame('https://www.google.com/maps/search/?api=1&query=31.6267716%2C-7.9841938', $spa->fresh()->mapsUrl());
+
+        $spa->update(['google_maps_url' => 'https://maps.app.goo.gl/WNpXLEEMiEWq7Z2x7', 'google_place_id' => 'ChIJG-_M9WDurw0RzaspL7K95Ss']);
+        $spa->refresh();
+        $this->assertSame('https://www.google.com/maps/dir/?api=1&destination=Isis+Spa&destination_place_id=ChIJG-_M9WDurw0RzaspL7K95Ss&travelmode=walking', $spa->directionsUrl());
+        $this->assertSame('https://maps.app.goo.gl/WNpXLEEMiEWq7Z2x7', $spa->mapsUrl());
+
+        $html = $this->actingAs($this->admin)->get('/fr/spa/'.$spa->slug)->assertOk()->getContent();
+        $this->assertStringContainsString('destination_place_id=ChIJG-_M9WDurw0RzaspL7K95Ss', $html);
+        $this->assertStringContainsString('https://maps.app.goo.gl/WNpXLEEMiEWq7Z2x7', $html);
+        $this->assertStringContainsString('data-lat="31.6267716"', $html, 'le marqueur de la carte intégrée reste sur la position enregistrée');
+        $this->assertStringNotContainsString('destination=31.6267716', $html);
+
+        $spa->update(['google_place_id' => null, 'google_maps_url' => null, 'lat' => null, 'lng' => null]);
+        $this->assertNull($spa->fresh()->directionsUrl());
+        $this->assertNull($spa->fresh()->mapsUrl());
+    }
 }
