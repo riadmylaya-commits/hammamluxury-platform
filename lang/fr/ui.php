@@ -129,6 +129,7 @@ return [
     'footer_help' => 'Aide',
     'footer_legal' => 'Mentions légales',
     'location' => 'Localisation',
+    'directions' => 'Itinéraire Google Maps',
     'open_in_maps' => 'Ouvrir dans Google Maps',
     // Présentation des formules
     'total_duration' => 'Durée totale',

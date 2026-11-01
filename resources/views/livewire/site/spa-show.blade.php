@@ -65,6 +65,7 @@
                 <div id="spa-map" data-lat="{{ $card['lat'] }}" data-lng="{{ $card['lng'] }}" data-title="{{ $spa->name }}" style="height:240px;z-index:0"></div>
             </div>
             <p class="muted small" style="margin-top:8px">{{ $card['area'] ? $card['area'].' · ' : '' }}{{ $card['city'] }} · <a href="https://www.google.com/maps/search/?api=1&query={{ $card['lat'] }},{{ $card['lng'] }}" target="_blank" rel="noopener">{{ __('ui.open_in_maps') }}</a></p>
+            <p style="margin-top:10px"><a class="btn btn-outline" href="https://www.google.com/maps/dir/?api=1&destination={{ $card['lat'] }},{{ $card['lng'] }}&travelmode=walking" target="_blank" rel="noopener" data-directions>{{ __('ui.directions') }}</a></p>
         </section>
         @endif
         @if ($card['practical'])
