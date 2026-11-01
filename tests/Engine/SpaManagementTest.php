@@ -244,6 +244,8 @@ class SpaManagementTest extends TestCase
         $this->get('/fr/spa/'.$draft->slug)->assertNotFound();
         $this->actingAs($this->owner)->get('/fr/spa/'.$draft->slug)->assertNotFound();
 
-        $this->actingAs($this->admin)->get('/fr/spa/'.$draft->slug)->assertOk()->assertSee(__('ui.preview_private_title'));
+        $this->actingAs($this->admin)->get('/fr/spa/'.$draft->slug)->assertOk()->assertSee(__('ui.preview_private_title'))
+            ->assertDontSee('/spa/'.$draft->slug.'/reserver')->assertSee(__('ui.preview_no_booking'));
+        $this->actingAs($this->admin)->get('/fr/spa/'.$draft->slug.'/reserver')->assertNotFound();
     }
 }
