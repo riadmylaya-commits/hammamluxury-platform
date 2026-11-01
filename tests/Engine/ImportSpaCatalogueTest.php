@@ -180,4 +180,32 @@ class ImportSpaCatalogueTest extends TestCase
         // --portfolio exige un compte administrateur.
         $this->artisan('hl:import-spa', ['file' => base_path(self::FILE), '--portfolio' => 'proprietaire@gmail.test'])->expectsOutputToContain('n’est pas un compte administrateur')->assertFailed();
     }
+
+    public function test_treatment_without_published_duration_is_kept_as_hidden_draft_to_confirm(): void
+    {
+        $spec = json_decode(file_get_contents(base_path(self::FILE)), true);
+        $spec['treatments'][] = ['code' => 'W1', 'section' => 'BEAUTÉ', 'category' => 'other', 'name_fr' => 'Épilation jambes', 'name_en' => 'Leg waxing',
+            'price_per_person' => 150, 'duration_to_confirm' => true, 'steps' => []];
+        $file = tempnam(sys_get_temp_dir(), 'hl').'.json';
+        file_put_contents($file, json_encode($spec));
+
+        $this->artisan('hl:import-spa', ['file' => $file])->assertSuccessful();
+        $spa = Spa::where('slug', 'mythic-oriental-spa-marrakech')->firstOrFail();
+        $this->assertSame(55, $spa->treatments()->where('status', 'active')->count());
+        $draft = $spa->treatments()->where('slug', 'like', 'w1-%')->firstOrFail();
+        $this->assertSame('inactive', $draft->status, 'masqué : non réservable, non publié');
+        $this->assertSame(0, $draft->duration_min);
+        $this->assertSame(150.0, $draft->price_solo);
+        $this->assertSame('Durée à confirmer', $draft->conditions_fr);
+        $this->assertSame(0, $draft->steps()->count());
+        $this->assertSame(450.0, $spa->fresh()->price_from, 'le brouillon n’influence pas le prix « à partir de »');
+
+        // Rejoué : idempotent, toujours un seul brouillon.
+        $this->artisan('hl:import-spa', ['file' => $file])->assertSuccessful();
+        $this->assertSame(1, $spa->treatments()->where('status', 'inactive')->count());
+
+        $spec['treatments'][count($spec['treatments']) - 1]['steps'] = [['kind' => 'soin', 'duration_min' => 20]];
+        file_put_contents($file, json_encode($spec));
+        $this->artisan('hl:import-spa', ['file' => $file])->assertFailed();
+    }
 }

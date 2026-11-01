@@ -127,6 +127,7 @@ return [
     'footer_help' => 'Help',
     'footer_legal' => 'Legal notice',
     'location' => 'Location',
+    'directions' => 'Directions on Google Maps',
     'open_in_maps' => 'Open in Google Maps',
     // Treatment presentation
     'total_duration' => 'Total duration',

@@ -29,6 +29,11 @@ use InvalidArgumentException;
  */
 class ImportSpaCatalogue extends Command
 {
+    /** Soin relevé sans durée publiée : enregistré masqué (brouillon), non réservable, à compléter par l'Admin. */
+    public const DURATION_TO_CONFIRM_FR = 'Durée à confirmer';
+
+    public const DURATION_TO_CONFIRM_EN = 'Duration to be confirmed';
+
     protected $signature = 'hl:import-spa {file : fichier JSON du catalogue}
         {--photos-dir= : dossier contenant les photos listées dans le fichier (importées seulement si la fiche n’a encore aucune photo)}
         {--publish : publie la fiche (sinon elle reste « à valider » par l’Admin)}
@@ -97,8 +102,15 @@ class ImportSpaCatalogue extends Command
             if (! isset($t['code'], $t['name_fr'], $t['price_per_person']) || ! in_array($t['category'] ?? null, Treatment::CATEGORIES, true)) {
                 throw new InvalidArgumentException("Soin $label : code, name_fr, category (".implode('/', Treatment::CATEGORIES).') et price_per_person sont requis.');
             }
+            if (! empty($t['duration_to_confirm'])) {
+                if (! empty($t['steps'])) {
+                    throw new InvalidArgumentException("Soin $label : duration_to_confirm exclut les étapes.");
+                }
+
+                continue;
+            }
             if (! is_array($t['steps'] ?? null) || $t['steps'] === []) {
-                throw new InvalidArgumentException("Soin $label : au moins une étape (kind, duration_min) est requise.");
+                throw new InvalidArgumentException("Soin $label : au moins une étape (kind, duration_min) est requise, ou duration_to_confirm=true (brouillon masqué).");
             }
             foreach ($t['steps'] as $s) {
                 if (! isset(OnboardingService::RESOURCE_TYPES[$s['kind'] ?? '']) || ($s['kind'] ?? null) === 'praticien' || (int) ($s['duration_min'] ?? 0) <= 0) {
@@ -223,7 +235,8 @@ class ImportSpaCatalogue extends Command
         foreach (array_values($rows) as $i => $row) {
             $slug = $row['slug'] ?? Str::slug($row['code'].' '.$row['name_fr']);
             $keep[] = $slug;
-            $duration = array_sum(array_map(fn ($s) => (int) $s['duration_min'], $row['steps']));
+            $toConfirm = ! empty($row['duration_to_confirm']);
+            $duration = $toConfirm ? 0 : array_sum(array_map(fn ($s) => (int) $s['duration_min'], $row['steps']));
             $t = $spa->treatments()->updateOrCreate(['slug' => $slug], [
                 'category' => $row['category'],
                 'name_fr' => $row['name_fr'],
@@ -237,12 +250,14 @@ class ImportSpaCatalogue extends Command
                 'party_min' => (int) ($row['party_min'] ?? 1),
                 'party_max' => (int) ($row['party_max'] ?? 4),
                 'included' => $row['included'] ?? null,
+                'conditions_fr' => $toConfirm ? self::DURATION_TO_CONFIRM_FR : ($row['conditions_fr'] ?? null),
+                'conditions_en' => $toConfirm ? self::DURATION_TO_CONFIRM_EN : ($row['conditions_en'] ?? null),
                 'sort_order' => $i,
-                'status' => 'active',
+                'status' => $toConfirm ? 'inactive' : 'active',
             ]);
             $t->steps()->delete();
             $offset = 0;
-            foreach (array_values($row['steps']) as $k => $step) {
+            foreach (array_values($toConfirm ? [] : $row['steps']) as $k => $step) {
                 $t->steps()->create([
                     'resource_type_id' => $this->resourceType($spa, $step['kind'])->id,
                     'label' => $step['label_fr'] ?? null,
@@ -272,8 +287,9 @@ class ImportSpaCatalogue extends Command
             }
         }
         $deactivated = $spa->treatments()->whereNotIn('slug', $keep)->where('status', 'active')->update(['status' => 'inactive']);
+        $toConfirm = count(array_filter($rows, fn ($r) => ! empty($r['duration_to_confirm'])));
 
-        return ['treatments' => count($keep), 'extras' => $nExtras, 'deactivated' => $deactivated];
+        return ['treatments' => count($keep) - $toConfirm, 'duration_to_confirm' => $toConfirm, 'extras' => $nExtras, 'deactivated' => $deactivated];
     }
 
     private function resourceType(Spa $spa, string $kind): ResourceType
