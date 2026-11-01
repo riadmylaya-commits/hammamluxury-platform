@@ -120,7 +120,7 @@
     </aside>
 </div>
 <div class="mbar">
-    <div class="sp"><span class="xs muted">{{ __('ui.from') }}</span><br><b>{{ $card['price_from'] ? number_format($card['price_from'], 0, ',', ' ').' '.config('hl.currency') : '—' }}</b></div>
+    <div class="sp"><span class="xs muted">{{ __('ui.from') }}</span> <b>{{ $card['price_from'] ? number_format($card['price_from'], 0, ',', ' ').' '.config('hl.currency') : '—' }}</b></div>
     @if ($preview)<span class="btn" aria-disabled="true" style="opacity:.55;pointer-events:none">{{ __('ui.preview_no_booking') }}</span>@else<a class="btn" href="{{ route('spa.book', [$spa->slug] + $bookParams) }}">{{ __('ui.book') }}</a>@endif
 </div>
 </div>
