@@ -36,6 +36,7 @@ class SpaPhotoAccessTest extends EngineTestCase
         $this->assertSame(url('/photos/'.$photo->id), $photo->url());
         $this->assertStringNotContainsString('/storage/', $photo->url());
 
+        config(['hl.noindex' => true]);
         $this->get($photo->url())->assertOk()->assertHeader('Cache-Control', 'immutable, max-age=31536000, public')
             ->assertHeader('Content-Type', 'image/jpeg');
         $this->assertContains($this->get('/storage/'.$photo->path)->status(), [403, 404], 'plus aucun accès direct au fichier');
