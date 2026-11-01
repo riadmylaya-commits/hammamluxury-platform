@@ -305,6 +305,19 @@ class Spa extends Model
         return $this->waiting_ttl_hours > 0 ? (float) $this->waiting_ttl_hours : (float) config('hl.waiting_ttl_hours');
     }
 
+    /** Délai de réponse lisible : « 2 h », « 1 h 30 », « 30 min ». */
+    public function waitingTtlLabel(): string
+    {
+        $minutes = (int) round($this->waitingTtlHours() * 60);
+        $h = intdiv($minutes, 60);
+        $m = $minutes % 60;
+        if ($h === 0) {
+            return $m.' min';
+        }
+
+        return $m === 0 ? $h.' h' : sprintf('%d h %02d', $h, $m);
+    }
+
     public function refreshPriceFrom(): void
     {
         $this->price_from = $this->treatments()->where('status', 'active')->min('price_solo');

@@ -6,6 +6,7 @@ return [
     'terms' => ['title' => 'Terms of use', 'nav' => 'Terms'],
     'privacy' => ['title' => 'Privacy policy', 'nav' => 'Privacy'],
     'faq' => ['title' => 'Frequently asked questions', 'nav' => 'FAQ'],
+    'legal' => ['title' => 'Legal notice', 'nav' => 'Legal notice'],
     'contact' => [
         'title' => 'Contact',
         'nav' => 'Contact',

@@ -206,7 +206,7 @@ return [
     'view' => 'Details',
 
     'stat_waiting' => 'Requests to handle',
-    'stat_waiting_help' => 'Reply expected within 2 h',
+    'stat_waiting_help' => 'Reply expected within :delay',
     'stat_upcoming' => 'Upcoming confirmed bookings',
     'stat_month' => 'Revenue this month',
     'stat_spa' => 'Profile visibility',

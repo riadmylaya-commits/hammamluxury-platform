@@ -213,7 +213,7 @@ return [
 
     // Tableau de bord
     'stat_waiting' => 'Demandes à traiter',
-    'stat_waiting_help' => 'Réponse attendue sous 2 h',
+    'stat_waiting_help' => 'Réponse attendue sous :delay',
     'stat_upcoming' => 'Réservations confirmées à venir',
     'stat_month' => 'Chiffre d’affaires du mois',
     'stat_spa' => 'Visibilité de la fiche',

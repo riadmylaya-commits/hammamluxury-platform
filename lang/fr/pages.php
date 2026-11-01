@@ -6,6 +6,7 @@ return [
     'terms' => ['title' => 'Conditions générales d’utilisation', 'nav' => 'CGU'],
     'privacy' => ['title' => 'Politique de confidentialité', 'nav' => 'Confidentialité'],
     'faq' => ['title' => 'Questions fréquentes', 'nav' => 'FAQ'],
+    'legal' => ['title' => 'Mentions légales', 'nav' => 'Mentions légales'],
     'contact' => [
         'title' => 'Contact',
         'nav' => 'Contact',

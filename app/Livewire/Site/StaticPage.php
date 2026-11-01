@@ -11,7 +11,7 @@ use Livewire\Component;
 class StaticPage extends Component
 {
     /** slug de route => vue de contenu */
-    public const PAGES = ['cgu' => 'terms', 'confidentialite' => 'privacy', 'faq' => 'faq'];
+    public const PAGES = ['cgu' => 'terms', 'confidentialite' => 'privacy', 'faq' => 'faq', 'mentions-legales' => 'legal'];
 
     public string $page = '';
 
