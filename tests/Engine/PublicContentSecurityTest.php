@@ -24,6 +24,7 @@ class PublicContentSecurityTest extends EngineTestCase
         $this->spa();
         $this->actingAs($this->spa->partner->user);
         Storage::fake('public');
+        Storage::fake('local');
     }
 
     public function test_processed_upload_is_bound_to_spa_and_can_be_attached(): void

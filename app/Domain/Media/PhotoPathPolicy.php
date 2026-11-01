@@ -56,7 +56,7 @@ final class PhotoPathPolicy
 
         if (self::isExternal($path)
             || ! DB::table('spa_photo_uploads')->where('spa_id', $spa->id)->where('path', $path)->exists()
-            || ! Storage::disk('public')->exists($path)) {
+            || (! Storage::disk(SpaPhoto::DISK)->exists($path) && ! Storage::disk('public')->exists($path))) {
             throw ValidationException::withMessages([$field => __('partner.photo_owner_error')]);
         }
     }

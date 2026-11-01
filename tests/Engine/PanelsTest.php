@@ -264,10 +264,10 @@ class PanelsTest extends BookingFlowTestCase
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         $spa = $this->spa;
         $spa->update(['status' => 'pending', 'published_at' => null, 'category' => 'hammam', 'description_fr' => 'Description démo', 'address' => '1 rue Test', 'phone' => '+212600000000']);
-        Storage::fake('public');
+        Storage::fake('local');
         $fixturePhoto = function (int $i) use ($spa): void {
             $path = "spas/test/p-$i.jpg";
-            Storage::disk('public')->put($path, 'fixture');
+            Storage::disk('local')->put($path, 'fixture');
             DB::table('spa_photo_uploads')->insert(['spa_id' => $spa->id, 'uploader_id' => $this->admin->id, 'path' => $path, 'created_at' => now(), 'updated_at' => now()]);
             $spa->photos()->create(['path' => $path, 'sort_order' => $i, 'is_cover' => $i === 1]);
         };

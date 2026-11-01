@@ -3,6 +3,7 @@
 namespace App\Domain\Media;
 
 use App\Models\Spa;
+use App\Models\SpaPhoto;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -39,11 +40,11 @@ final class PhotoProcessor
     }
 
     /** Enregistre la version traitée sur le disque public et retourne son chemin relatif. */
-    public static function store(UploadedFile $file, string $directory = 'spas', string $disk = 'public'): string
+    public static function store(UploadedFile $file, string $directory = 'spas', ?string $disk = null): string
     {
         $image = self::process($file->getRealPath());
         $path = trim($directory, '/').'/'.Str::uuid().'.jpg';
-        Storage::disk($disk)->put($path, $image, 'public');
+        Storage::disk($disk ?? SpaPhoto::DISK)->put($path, $image);
 
         return $path;
     }
@@ -63,7 +64,7 @@ final class PhotoProcessor
                 'updated_at' => now(),
             ]);
         } catch (\Throwable $exception) {
-            Storage::disk('public')->delete($path);
+            Storage::disk(SpaPhoto::DISK)->delete($path);
             throw $exception;
         }
 
