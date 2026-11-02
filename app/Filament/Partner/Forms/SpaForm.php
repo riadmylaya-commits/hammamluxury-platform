@@ -268,7 +268,7 @@ class SpaForm
             Section::make(__('partner.section_rules'))->schema([
                 Select::make('slot_step_minutes')->label(__('partner.slot_step'))->options([15 => '15 min', 30 => '30 min', 60 => '60 min'])->placeholder(__('partner.default_value', ['v' => config('hl.slot_step_minutes').' min'])),
                 TextInput::make('min_lead_minutes')->label(__('partner.min_lead'))->numeric()->minValue(0)->suffix('min')->placeholder((string) config('hl.min_lead_minutes')),
-                Select::make('cancellation_hours')->label(__('partner.cancellation_hours'))->options(CancellationPolicy::options())->default(CancellationPolicy::DEFAULT_HOURS)->required()->native(false)
+                Select::make('cancellation_hours')->label(__('partner.cancellation_hours'))->options(CancellationPolicy::options())->placeholder(__('ui.policy.spa_policy_to_confirm'))->nullable()->native(false)
                     ->helperText(__('partner.cancellation_policy_help')),
             ])->columns(3),
         ];
