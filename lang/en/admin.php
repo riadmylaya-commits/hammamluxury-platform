@@ -271,4 +271,10 @@ return [
     'mgmt_done' => 'Change saved.',
     'mgmt_no_owner' => 'This listing has no owner yet: use “Invite the owner”.',
     'mgmt_email_taken' => 'This e-mail is already used by another account.',
+    'listing_type' => 'Listing type',
+    'listing_partner' => 'Partner (signed agreement)',
+    'listing_referenced' => 'Listed (public information, no agreement)',
+    'listing_type_help' => 'Listed: venue presented from its public information; requests forwarded subject to availability and decided by HammamLuxury, no instant booking, time slots from opening hours, zero commission. Resources and therapists not required to publish.',
+    'info_verified_at' => 'Information collected on',
+    'info_verified_at_help' => 'Date of the last check of public information, shown on the listed venue page.',
 ];

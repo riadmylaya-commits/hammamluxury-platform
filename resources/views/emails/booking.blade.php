@@ -1,14 +1,14 @@
 <x-mail::message>
-# {{ __('emails.'.$event.'.'.$audience.'.title', ['ref' => $booking->reference]) }}
+# {{ __('emails.'.$event.'.'.$textAudience.'.title', ['ref' => $booking->reference]) }}
 
-{{ __('emails.'.$event.'.'.$audience.'.intro', ['spa' => $booking->spa->name, 'name' => $booking->customerName()]) }}
+{{ __('emails.'.$event.'.'.$textAudience.'.intro', ['spa' => $booking->spa->name, 'name' => $booking->customerName(), 'phone' => $booking->spa->phone, 'whatsapp' => $booking->spa->whatsapp ?: $booking->spa->phone]) }}
 
 **{{ __('booking.reference') }} :** {{ $booking->reference }}
 **{{ __('booking.spa') }} :** {{ $booking->spa->name }}
 **{{ __('booking.date') }} :** {{ $booking->start_at->translatedFormat('l j F Y') }} · {{ $booking->start_at->format('H:i') }} → {{ $booking->end_at->format('H:i') }}
 **{{ __('booking.people') }} :** {{ $booking->party }}
 **{{ __('booking.total') }} :** {{ number_format($booking->total, 0, ',', ' ') }} {{ $booking->currency }}
-**{{ __('booking.conditions') }} :** @if($booking->isNonRefundable()){{ __('ui.policy.nr_booking', ['pct' => $booking->nr_discount_pct, 'amount' => number_format($booking->total, 0, ',', ' ').' '.$booking->currency]) }}@else{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($booking->cancellationHours())]) }} {{ __('ui.policy.free_until', ['date' => $booking->freeCancellationUntil()->translatedFormat('l j F Y H\hi')]) }}@endif
+**{{ __('booking.conditions') }} :** @if($booking->isNonRefundable()){{ __('ui.policy.nr_booking', ['pct' => $booking->nr_discount_pct, 'amount' => number_format($booking->total, 0, ',', ' ').' '.$booking->currency]) }}@elseif($booking->cancellationToConfirm()){{ __('ui.policy.standard_desc_to_confirm') }}@else{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($booking->cancellationHours())]) }} {{ __('ui.policy.free_until', ['date' => $booking->freeCancellationUntil()->translatedFormat('l j F Y H\hi')]) }}@endif
 
 @foreach($booking->quote['lines'] as $line)
 - {{ $line['party'] }} × {{ $line['treatment_name'] }}@if($line['extras']) (+ {{ implode(', ', array_map(fn($e) => $e['name'], $line['extras'])) }})@endif
@@ -20,7 +20,7 @@
 </x-mail::button>
 @endif
 @if($audience === 'partner' && $event === 'created')
-{{ __('emails.created.partner.deadline', ['hours' => $booking->spa->waitingTtlHours()]) }}
+{{ __('emails.created.'.$textAudience.'.deadline', ['hours' => $booking->spa->waitingTtlHours(), 'until' => $booking->expires_at?->translatedFormat('l j F Y H\hi')]) }}
 @endif
 
 {{ config('app.name') }}

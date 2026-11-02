@@ -21,7 +21,7 @@
 
 <h2>4. Destinataires</h2>
 <ul>
-    <li><b>L’Établissement réservé</b> reçoit les informations nécessaires à l’accueil : nom, prénom, téléphone, langue, hôtel, remarques et détail de la prestation. <b>Votre adresse e-mail personnelle ne lui est pas communiquée</b> : les échanges passent par la messagerie de la Plateforme.</li>
+    <li><b>L’Établissement réservé</b> reçoit les informations nécessaires à l’accueil : nom, prénom, téléphone, langue, hôtel, remarques et détail de la prestation. <b>Votre adresse e-mail personnelle ne lui est pas communiquée</b> : les échanges passent par la messagerie de la Plateforme. Pour un établissement référencé, ces informations lui sont transmises par téléphone ou WhatsApp par l’équipe HammamLuxury, uniquement pour vérifier et confirmer votre demande.</li>
     <li>Nos prestataires techniques (hébergement du serveur en Union européenne, envoi d’e-mails), qui agissent sur nos instructions.</li>
     <li>Les autorités, uniquement sur demande légale.</li>
 </ul>

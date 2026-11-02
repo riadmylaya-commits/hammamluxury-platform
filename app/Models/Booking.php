@@ -251,15 +251,23 @@ class Booking extends Model
         return $this->rate_type === 'non_refundable';
     }
 
-    public function cancellationHours(): int
+    /** null = conditions d'annulation non confirmées : aucun frais d'annulation n'est appliqué. */
+    public function cancellationHours(): ?int
     {
-        return (int) ($this->cancellation_hours ?? $this->spa?->cancellation_hours ?? CancellationPolicy::DEFAULT_HOURS);
+        $h = $this->cancellation_hours ?? $this->spa?->cancellation_hours;
+
+        return $h === null ? null : (int) $h;
+    }
+
+    public function cancellationToConfirm(): bool
+    {
+        return ! $this->isNonRefundable() && $this->cancellationHours() === null;
     }
 
     /** Date limite d'annulation gratuite (tarif standard uniquement). */
     public function freeCancellationUntil(): ?CarbonInterface
     {
-        return $this->isNonRefundable() ? null : CancellationPolicy::deadline($this->start_at, $this->cancellationHours());
+        return $this->isNonRefundable() || $this->cancellationHours() === null ? null : CancellationPolicy::deadline($this->start_at, $this->cancellationHours());
     }
 
     /** Une annulation client maintenant est-elle gratuite ? */
@@ -273,7 +281,7 @@ class Booking extends Model
     /** Frais qu'entraînerait une annulation client maintenant (0 ou 100 % du montant). */
     public function cancelFeeNow(?CarbonInterface $now = null): float
     {
-        return $this->freeCancellationOpen($now) ? 0.0 : round((float) $this->total, 2);
+        return $this->cancellationToConfirm() || $this->freeCancellationOpen($now) ? 0.0 : round((float) $this->total, 2);
     }
 
     /** Économie réalisée avec le tarif non remboursable. */

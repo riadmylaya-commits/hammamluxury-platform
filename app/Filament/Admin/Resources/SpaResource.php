@@ -48,6 +48,11 @@ class SpaResource extends Resource
         return $n ? (string) $n : null;
     }
 
+    public static function listingTypes(): array
+    {
+        return ['partner' => __('admin.listing_partner'), 'referenced' => __('admin.listing_referenced')];
+    }
+
     public static function statuses(): array
     {
         return collect(Spa::STATUSES)->mapWithKeys(fn ($s) => [$s => __("partner.spa_status_$s")])->all();
@@ -74,6 +79,8 @@ class SpaResource extends Resource
                 Forms\Components\Placeholder::make('checks')->label('')->content(fn (Spa $s) => self::checklist($s)),
             ]),
             Forms\Components\Section::make(__('admin.readiness'))->description(__('admin.readiness_help'))->schema([
+                Forms\Components\Select::make('listing_type')->label(__('admin.listing_type'))->options(self::listingTypes())->required()->native(false)->helperText(__('admin.listing_type_help')),
+                Forms\Components\DatePicker::make('info_verified_at')->label(__('admin.info_verified_at'))->native(false)->displayFormat('d/m/Y')->helperText(__('admin.info_verified_at_help')),
                 Forms\Components\Placeholder::make('readiness')->label('')->content(fn (Spa $s) => self::readiness($s)),
                 Forms\Components\Toggle::make('instant_booking')->label(__('admin.instant_booking'))->helperText(__('admin.instant_booking_help'))
                     ->disabled(fn (Spa $s) => ! CapacityReadiness::passes($s) && ! $s->instant_booking),
@@ -150,6 +157,9 @@ class SpaResource extends Resource
                     ->getStateUsing(fn (Spa $s) => $s->license_number ?: ($s->licenseExpected() ? __('admin.license_missing') : null))->placeholder('—')
                     ->color(fn (Spa $s) => blank($s->license_number) ? 'warning' : 'gray')
                     ->description(fn (Spa $s) => $s->licenseAuthorityLabel()),
+                Tables\Columns\TextColumn::make('listing_type')->label(__('admin.listing_type'))->badge()
+                    ->formatStateUsing(fn ($state) => self::listingTypes()[$state] ?? $state)
+                    ->color(fn ($state) => $state === 'referenced' ? 'info' : 'gray'),
                 Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => self::statuses()[$state] ?? $state)
                     ->color(fn ($state) => match ($state) {
@@ -158,6 +168,7 @@ class SpaResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(self::statuses()),
+                Tables\Filters\SelectFilter::make('listing_type')->label(__('admin.listing_type'))->options(self::listingTypes()),
                 Tables\Filters\Filter::make('without_license')->label(__('admin.filter_without_license'))->toggle()
                     ->query(fn (Builder $query) => $query->whereNull('license_number')),
                 Tables\Filters\Filter::make('hammam_without_license')->label(__('admin.filter_hammam_without_license'))->toggle()

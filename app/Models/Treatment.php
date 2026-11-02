@@ -63,9 +63,11 @@ class Treatment extends Model
     }
 
     /** Délai d'annulation applicable : surcharge de la prestation, sinon celui de l'établissement. */
-    public function cancellationHours(): int
+    public function cancellationHours(): ?int
     {
-        return (int) ($this->cancellation_hours ?? $this->spa?->cancellation_hours ?? CancellationPolicy::DEFAULT_HOURS);
+        $h = $this->cancellation_hours ?? $this->spa?->cancellation_hours;
+
+        return $h === null ? null : (int) $h; // null = conditions non confirmées par l'établissement
     }
 
     public function hasNonRefundable(): bool

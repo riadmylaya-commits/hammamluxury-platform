@@ -4,6 +4,9 @@
             <strong>{{ __('ui.preview_private_title') }}</strong> — {{ __('ui.preview_private_body', ['status' => __('partner.spa_status_'.$spa->status)]) }}
         </div>
     @endif
+    @if ($spa->isReferenced())
+        <div class="notice info" role="note" style="margin:12px 0"><b>{{ __('ui.referenced_banner_title') }}</b> — {{ __('ui.referenced_banner_body', ['date' => $spa->info_verified_at ? __('ui.referenced_banner_date', ['date' => $spa->info_verified_at->locale(app()->getLocale())->isoFormat('LL')]) : '']) }}</div>
+    @endif
 @php($photos = $card['photos'])
 <div class="gallery" style="margin-top:6px" @if ($photos) id="hl-gallery" data-photos='@json($photos)' data-i18n='@json($galleryI18n)' @endif>
     @forelse (array_slice($photos, 0, 5) as $i => $p)

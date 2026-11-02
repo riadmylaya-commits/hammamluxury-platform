@@ -16,12 +16,12 @@
 <div class="book-layout" style="margin-top:14px">
 <div>
     <div class="card" style="padding:16px">
-        <div class="row"><span class="chip {{ $tone }}">{{ __('ui.status.'.$b->status) }}</span><span class="sp"></span><span class="muted small">{{ $b->reference }}</span></div>
-        <p class="small" style="margin:10px 0 0">{{ __('ui.status_hint.'.$b->status, ['deadline' => $b->expires_at?->locale(app()->getLocale())->isoFormat('LLL')]) }}</p>
+        <div class="row"><span class="chip {{ $tone }}">{{ $b->spa->isReferenced() && in_array($b->status, ['waiting', 'declined'], true) ? __('ui.status_referenced.'.$b->status) : __('ui.status.'.$b->status) }}</span><span class="sp"></span><span class="muted small">{{ $b->reference }}</span></div>
+        <p class="small" style="margin:10px 0 0">{{ __(($b->spa->isReferenced() && in_array($b->status, ['waiting', 'declined'], true) ? 'ui.status_hint_referenced.' : 'ui.status_hint.').$b->status, ['deadline' => $b->expires_at?->locale(app()->getLocale())->isoFormat('LLL')]) }}</p>
         @if ($b->isWaiting() || $b->isConfirmed())
         <ul class="tl">
             <li data-on><i></i>{{ $b->instantConfirmed() ? __('ui.timeline_instant.sent') : __('ui.timeline.sent') }} · {{ $b->created_at->locale(app()->getLocale())->isoFormat('LLL') }}</li>
-            <li @if ($b->isConfirmed()) data-on @endif><i></i>{{ $b->instantConfirmed() ? __('ui.timeline_instant.confirm') : __('ui.timeline.confirm') }}@if ($b->confirmed_at) · {{ $b->confirmed_at->locale(app()->getLocale())->isoFormat('LLL') }}@endif</li>
+            <li @if ($b->isConfirmed()) data-on @endif><i></i>{{ $b->instantConfirmed() ? __('ui.timeline_instant.confirm') : ($b->spa->isReferenced() ? __('ui.timeline_referenced.confirm') : __('ui.timeline.confirm')) }}@if ($b->confirmed_at) · {{ $b->confirmed_at->locale(app()->getLocale())->isoFormat('LLL') }}@endif</li>
             <li><i></i>{{ __('ui.timeline.visit') }} · {{ $b->start_at->locale(app()->getLocale())->isoFormat('LLLL') }}</li>
         </ul>
         @endif
@@ -58,6 +58,7 @@
             <b class="small">{{ __('ui.policy.title') }}</b>
             <p class="small" style="margin:6px 0">
                 @if ($b->isNonRefundable())<span class="chip acc xs">{{ __('ui.policy.summary_nr', ['pct' => $b->nr_discount_pct]) }}</span> {{ $b->status === 'cancelled' && ! $b->cancel_fee ? __('ui.policy.nr_booking_waived') : __('ui.policy.nr_booking', ['pct' => $b->nr_discount_pct, 'amount' => $fmt($b->total)]) }}
+                @elseif ($b->cancellationToConfirm()){{ __('ui.policy.standard_desc_to_confirm') }}
                 @else{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($b->cancellationHours())]) }} @if ($b->isActive()){{ $b->freeCancellationOpen() ? __('ui.policy.free_until', ['date' => $b->freeCancellationUntil()->locale(app()->getLocale())->isoFormat('LLL')]) : __('ui.policy.late_now', ['amount' => $fmt($b->total)]) }}@endif
                 @endif
             </p>

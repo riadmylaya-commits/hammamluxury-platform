@@ -181,7 +181,7 @@ class BookingService
             throw new BookingException('unavailable', implode(' ', $plan['errors']), 409);
         }
         $offline = ($meta['source'] ?? 'online') === 'partner';
-        $pct = $offline ? 0.0 : $spa->partner->commissionPct();
+        $pct = $offline || $spa->isReferenced() ? 0.0 : $spa->partner->commissionPct();
         $commissionable = $offline ? 0.0 : round((float) ($quote['commissionable'] ?? $quote['total']), 2);
 
         $booking = DB::transaction(function () use ($spa, $start, $quote, $customer, $status, $intentId, $locale, $plan, $pct, $commissionable, $meta, $actor) {
@@ -597,8 +597,32 @@ class BookingService
     public function waitingDeadline(?CarbonImmutable $from = null, ?Spa $spa = null): CarbonImmutable
     {
         $hours = $spa?->waitingTtlHours() ?? (float) config('hl.waiting_ttl_hours');
+        $from ??= CarbonImmutable::now();
+        $minutes = (int) round(60 * $hours);
+        if (! $spa?->managedByAdmin()) {
+            return $from->addMinutes($minutes);
+        }
 
-        return ($from ?? CarbonImmutable::now())->addMinutes((int) round(60 * $hours));
+        // Demandes décidées par HammamLuxury : le délai ne court que pendant les heures de service (config hl.admin_hours).
+        [$open, $close] = config('hl.admin_hours');
+        $t = $from;
+        while ($minutes > 0) {
+            $dayOpen = $t->setTime($open, 0);
+            $dayClose = $t->setTime($close, 0);
+            if ($t < $dayOpen) {
+                $t = $dayOpen;
+            } elseif ($t >= $dayClose) {
+                $t = $t->addDay()->setTime($open, 0);
+
+                continue;
+            }
+            $avail = (int) $t->diffInMinutes($dayClose, false);
+            $use = min($avail, $minutes);
+            $t = $t->addMinutes($use);
+            $minutes -= $use;
+        }
+
+        return $t;
     }
 
     /**

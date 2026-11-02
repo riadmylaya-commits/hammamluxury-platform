@@ -10,6 +10,8 @@ return [
 
     // Délai avant expiration automatique d'une demande en attente non traitée par le partenaire.
     'waiting_ttl_hours' => (float) env('HL_WAITING_TTL_HOURS', 2),
+    // Heures de service HammamLuxury (demandes décidées par l'Admin) : le délai de réponse ne court qu'entre ces heures.
+    'admin_hours' => [(int) env('HL_ADMIN_HOURS_OPEN', 9), (int) env('HL_ADMIN_HOURS_CLOSE', 21)],
     // Délai (minutes) après l'heure de fin avant passage automatique en « terminée ».
     // Durée de validité du lien de suivi client après la fin de la prestation (jours).
     'manage_link_days' => (int) env('HL_MANAGE_LINK_DAYS', 30),
