@@ -28,6 +28,7 @@ return [
     'caption' => 'Légende',
     'is_cover' => 'Photo de couverture',
     'add_photo' => 'Ajouter une photo',
+    'photo_rights_pending' => 'Droits à vérifier — photo isolée, non publiée',
     'section_address' => 'Adresse & contact',
     'address' => 'Adresse complète',
     'website' => 'Site web',

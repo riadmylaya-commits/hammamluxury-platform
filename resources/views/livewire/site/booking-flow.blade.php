@@ -20,7 +20,7 @@
                 <div>@if ($t['badge'])<span class="chip badge xs" style="margin-bottom:4px">★ {{ $t['badge'] }}</span><br>@endif<b>{{ $t['name'] }}</b> @if ($t['is_package'])<span class="chip acc">{{ __('ui.package') }}</span>@endif
                     <div class="muted small">@if ($t['components']){{ $t['components'] }} · {{ __('ui.total_duration') }} {{ $t['duration_label'] }}@else{{ $t['duration_label'] }} · {{ __('ui.cat.'.$t['category']) }}@endif</div>
                     @if ($t['included'])<div class="xs muted" style="margin-top:3px">{{ __('ui.included_title') }} : {{ implode(', ', $t['included']) }}</div>@endif</div>
-                <div class="r"><b>{{ $fmt($t['price_from']) }}</b><span class="xs muted">{{ __('ui.per_person') }}</span>@if ($t['price_couple'])<span class="xs" style="display:block;color:var(--brand);font-weight:600">{{ __('ui.for_two_short') }} : {{ $fmt($t['price_couple']) }}</span>@endif</div>
+                <div class="r">@if ($t['fixed_party'])<b>{{ $fmt($t['fixed_party_total']) }}</b><span class="xs muted" style="display:block">{{ __('ui.for_party', ['n' => $t['fixed_party']]) }}</span>@else<b>{{ $fmt($t['price_from']) }}</b><span class="xs muted">{{ __('ui.per_person') }}</span>@if ($t['price_couple'])<span class="xs" style="display:block;color:var(--brand);font-weight:600">{{ __('ui.for_two_short') }} : {{ $fmt($t['price_couple']) }}</span>@endif@endif</div>
             </button>
         @endforeach
     @endif

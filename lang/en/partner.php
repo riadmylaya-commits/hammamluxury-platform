@@ -27,6 +27,7 @@ return [
     'caption' => 'Caption',
     'is_cover' => 'Cover photo',
     'add_photo' => 'Add a photo',
+    'photo_rights_pending' => 'Rights to be verified — isolated photo, not published',
     'section_address' => 'Address & contact',
     'address' => 'Full address',
     'website' => 'Website',

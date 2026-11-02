@@ -96,7 +96,7 @@ class OnboardingService
                 PhotoPathPolicy::assertCanAttach($spa, $path, 'data.photos');
             }
             $paths = array_values(array_unique($paths));
-            $spa->photos()->whereNotIn('path', $paths)->delete();
+            $spa->photos()->whereNull('hidden_at')->whereNotIn('path', $paths)->delete();
             foreach ($paths as $i => $path) {
                 $spa->photos()->updateOrCreate(['path' => $path], ['sort_order' => $i, 'is_cover' => $i === 0]);
             }

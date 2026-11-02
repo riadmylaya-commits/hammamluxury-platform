@@ -89,4 +89,44 @@ class SpaPhotoAccessTest extends EngineTestCase
 
         $this->artisan('hl:photos-privatize')->expectsOutputToContain('0 déplacée(s), 1 déjà privée(s)')->assertSuccessful();
     }
+
+    public function test_hidden_photo_is_never_public_but_stays_for_admin_and_owner(): void
+    {
+        $visible = $this->photo($this->spa);
+        $hidden = $this->photo($this->spa);
+        $hidden->update(['hidden_at' => now(), 'hidden_reason' => 'provenance à confirmer']);
+
+        $this->get($visible->url())->assertOk();
+        $this->get($hidden->url())->assertNotFound();
+        $page = $this->get('/fr/spa/'.$this->spa->slug)->assertOk();
+        $page->assertSee($visible->url(), false)->assertDontSee($hidden->url(), false);
+        $this->assertSame([$visible->id], $this->spa->fresh()->visiblePhotos()->pluck('id')->all(), 'spaCard : la photo isolée est exclue');
+
+        $this->actingAs($this->spa->partner->user)->get($hidden->url())->assertOk()->assertHeader('Cache-Control', 'no-store, private');
+        auth()->logout();
+        $admin = User::create(['name' => 'Admin', 'email' => 'admin2@example.test', 'password' => 'secret-test', 'role' => 'admin', 'email_verified_at' => now()]);
+        $this->actingAs($admin)->get($hidden->url())->assertOk();
+        auth()->logout();
+
+        $this->assertDatabaseHas('spa_photos', ['id' => $hidden->id]);
+        $this->assertTrue(Storage::disk('local')->exists($hidden->path));
+    }
+
+    public function test_hidden_cover_falls_back_to_first_visible_photo(): void
+    {
+        $cover = $this->photo($this->spa);
+        $cover->update(['is_cover' => true, 'hidden_at' => now()]);
+        $other = $this->photo($this->spa);
+
+        $this->assertSame($other->id, $this->spa->fresh()->coverPhoto()?->id);
+    }
+
+    public function test_spa_without_confirmed_cancellation_policy_shows_to_confirm(): void
+    {
+        $this->spa->update(['cancellation_hours' => 48]);
+        $this->get('/fr/spa/'.$this->spa->slug)->assertOk()->assertSee('48 h')->assertDontSee('Conditions d’annulation à confirmer');
+        $this->spa->update(['cancellation_hours' => null]);
+        $this->get('/fr/spa/'.$this->spa->slug)->assertOk()->assertSee('Conditions d’annulation à confirmer')->assertDontSee('0 h');
+        $this->get('/en/spa/'.$this->spa->slug)->assertOk()->assertSee('Cancellation terms to be confirmed.');
+    }
 }
