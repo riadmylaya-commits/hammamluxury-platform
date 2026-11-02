@@ -26,8 +26,11 @@ class SecurityHeaders
 
         if (self::isPrivatePage($request) || config('hl.noindex')) {
             $h->set('X-Robots-Tag', 'noindex, nofollow, noarchive');
-            $h->set('Cache-Control', 'no-store, private');
-            $h->set('Pragma', 'no-cache');
+            // Une réponse explicitement publique et mise en cache (photo d'une fiche publiée) garde son en-tête.
+            if (! str_contains((string) $h->get('Cache-Control'), 'public')) {
+                $h->set('Cache-Control', 'no-store, private');
+                $h->set('Pragma', 'no-cache');
+            }
         }
 
         if ($request->isSecure() && config('hl.hsts', true)) {

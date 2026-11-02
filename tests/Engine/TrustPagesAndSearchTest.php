@@ -117,7 +117,7 @@ class TrustPagesAndSearchTest extends BookingFlowTestCase
             $this->spa->photos()->create(['path' => "spas/test/photo-$i.jpg", 'sort_order' => $i, 'caption_fr' => "Photo $i", 'caption_en' => "Picture $i"]);
         }
         $this->get('/fr/spa/'.$this->spa->slug)->assertOk()
-            ->assertSee('id="hl-gallery"', false)->assertSee('Voir les 7 photos')->assertSee('photo-7.jpg')->assertSee('data-index="4"', false)->assertDontSee('data-index="5"', false)
+            ->assertSee('id="hl-gallery"', false)->assertSee('Voir les 7 photos')->assertSee($this->spa->photos()->orderByDesc('sort_order')->first()->url(), false)->assertSee('data-index="4"', false)->assertDontSee('data-index="5"', false)
             ->assertSee('hl-gallery.js');
         $this->get('/en/spa/'.$this->spa->slug)->assertOk()->assertSee('See all 7 photos')->assertSee('Picture 7');
     }

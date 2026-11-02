@@ -6,11 +6,15 @@ use App\Domain\Media\PhotoPathPolicy;
 use App\Models\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class SpaPhoto extends Model
 {
     use Translatable;
+
+    /** Disque privé (hors dossier public) : les fichiers ne sont servis que par la route `spa.photo`. */
+    public const DISK = 'local';
 
     protected $guarded = [];
 
@@ -44,6 +48,26 @@ class SpaPhoto extends Model
             return '';
         }
 
-        return PhotoPathPolicy::isExternal($this->path) ? $this->path : asset('storage/'.$this->path);
+        return PhotoPathPolicy::isExternal($this->path) ? $this->path : route('spa.photo', $this);
+    }
+
+    /** Visible de tous dès que la fiche est publiée (partenaire approuvé) ; sinon réservée à l'Admin et au propriétaire. */
+    public function isPubliclyVisible(): bool
+    {
+        $spa = $this->spa;
+
+        return $spa !== null && $spa->status === 'published' && $spa->partner?->status === 'approved';
+    }
+
+    /** Disque qui contient réellement le fichier : privé, ou public pour un fichier non encore migré. */
+    public function storedDisk(): ?string
+    {
+        foreach ([self::DISK, 'public'] as $disk) {
+            if (Storage::disk($disk)->exists($this->path)) {
+                return $disk;
+            }
+        }
+
+        return null;
     }
 }

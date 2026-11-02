@@ -13,13 +13,13 @@ class PhotoProcessorTest extends TestCase
 {
     public function test_large_png_is_resized_and_reencoded_as_jpeg(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         $file = UploadedFile::fake()->image('grande.png', 3000, 2000);
         $path = PhotoProcessor::store($file);
 
         $this->assertStringEndsWith('.jpg', $path);
-        Storage::disk('public')->assertExists($path);
-        [$w, $h, $type] = getimagesize(Storage::disk('public')->path($path));
+        Storage::disk('local')->assertExists($path);
+        [$w, $h, $type] = getimagesize(Storage::disk('local')->path($path));
         $this->assertSame(PhotoProcessor::MAX_EDGE, $w);
         $this->assertSame((int) round(PhotoProcessor::MAX_EDGE * 2 / 3), $h);
         $this->assertSame(IMAGETYPE_JPEG, $type);
