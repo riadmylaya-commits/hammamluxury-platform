@@ -2,7 +2,8 @@
   "spa": "les-bains-de-l-alhambra-marrakech",
   "_source": "Audit documentaire du 2026-11-02 (fiche Google Business Profile + site officiel) — /home/ubuntu/spa5/audit2/<slug>/audit-<slug>.md",
   "fields": {
-    "whatsapp": "+212639579687"
+    "whatsapp": "+212639579687",
+    "cancellation_hours": null
   },
   "treatments": {
     "ham-01-hammam-decouverte-hammam-marocain-traditionnel": {
@@ -14,7 +15,6 @@
   },
   "_non_appliques": [
     "for-05/for-06 : durée publiée 105 min mais composition des étapes (40 + 50 = 90) non publiée → à confirmer avec l'établissement",
-    "cancellation_hours 24 : aucune source → décision Admin",
     "Hammam Plaisir (ham-07) : absent du PDF 2025 → à confirmer"
   ]
 }

@@ -21,6 +21,7 @@ use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
@@ -200,7 +201,9 @@ class SpaForm
                         ->label('')
                         ->orderColumn('sort_order')
                         ->grid(3)
+                        ->itemLabel(fn (array $state): ?string => filled($state['hidden_at'] ?? null) ? '⚠ '.__('partner.photo_rights_pending') : null)
                         ->schema([
+                            Hidden::make('hidden_at')->dehydrated(false),
                             self::photoUpload('path')->required(),
                             TextInput::make('caption_fr')->label(__('partner.caption'))->maxLength(190),
                             Toggle::make('is_cover')->label(__('partner.is_cover')),

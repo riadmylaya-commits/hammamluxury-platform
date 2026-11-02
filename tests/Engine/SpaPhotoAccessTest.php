@@ -120,4 +120,13 @@ class SpaPhotoAccessTest extends EngineTestCase
 
         $this->assertSame($other->id, $this->spa->fresh()->coverPhoto()?->id);
     }
+
+    public function test_spa_without_confirmed_cancellation_policy_shows_to_confirm(): void
+    {
+        $this->spa->update(['cancellation_hours' => 48]);
+        $this->get('/fr/spa/'.$this->spa->slug)->assertOk()->assertSee('48 h')->assertDontSee('Conditions d’annulation à confirmer');
+        $this->spa->update(['cancellation_hours' => null]);
+        $this->get('/fr/spa/'.$this->spa->slug)->assertOk()->assertSee('Conditions d’annulation à confirmer')->assertDontSee('0 h');
+        $this->get('/en/spa/'.$this->spa->slug)->assertOk()->assertSee('Cancellation terms to be confirmed.');
+    }
 }

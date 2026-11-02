@@ -1,6 +1,9 @@
 {
   "spa": "les-bains-du-lotus-marrakech",
   "_source": "Audit documentaire du 2026-11-02 (fiche Google Business Profile + site officiel) — /home/ubuntu/spa5/audit2/<slug>/audit-<slug>.md",
+  "fields": {
+    "cancellation_hours": null
+  },
   "hide_photos": [
     {
       "path_ends_with": "1abf28ab-3fd4-4b0c-a3ae-00daee047369.jpg",
@@ -25,7 +28,6 @@
   ],
   "_non_appliques": [
     "Aucune correction de soin : 43 confirmés, durées R2/R3 non publiées → à confirmer",
-    "Entrée réelle côté Derb Zemrane ? → épingle inchangée, question au propriétaire",
-    "cancellation_hours 24 : aucune source"
+    "Entrée réelle côté Derb Zemrane ? → épingle inchangée, question au propriétaire"
   ]
 }

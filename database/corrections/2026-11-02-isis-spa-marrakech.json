@@ -2,7 +2,8 @@
   "spa": "isis-spa-marrakech",
   "_source": "Audit documentaire du 2026-11-02 (fiche Google Business Profile + site officiel) — /home/ubuntu/spa5/audit2/<slug>/audit-<slug>.md",
   "fields": {
-    "whatsapp": "+212614037478"
+    "whatsapp": "+212614037478",
+    "cancellation_hours": null
   },
   "treatments": {
     "c1-massage-duo-relaxant-1h": {
@@ -71,7 +72,6 @@
     "e1/e2 : durée 2h publiée mais soins inactifs sans étapes → à confirmer, pas d'activation automatique",
     "e3 : 990 MAD/2 pers. et 1490 MAD/3 pers. non représentables (prix groupe par personne non entier) → limite technique",
     "v4 : durée 45 min (FR) vs 1h (EN) → contradictoire, inchangé",
-    "horaires site 9-20 h vs Google 10-21 h → contradictoire, inchangé",
-    "cancellation_hours 24 : aucune source"
+    "horaires site 9-20 h vs Google 10-21 h → contradictoire, inchangé"
   ]
 }

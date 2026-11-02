@@ -2,7 +2,8 @@
   "spa": "marajah-spa-marrakech",
   "_source": "Audit documentaire du 2026-11-02 (fiche Google Business Profile + site officiel) — /home/ubuntu/spa5/audit2/<slug>/audit-<slug>.md",
   "fields": {
-    "whatsapp": "+212646698946"
+    "whatsapp": "+212646698946",
+    "cancellation_hours": null
   },
   "hide_photos": [
     {
@@ -20,7 +21,6 @@
     "Prix visage FR ≠ EN (argan-rose 520/470, figue de barbarie 570/520) → contradictoire, inchangé",
     "Second numéro +212638893071 et réseaux sociaux : aucun champ dédié → limite technique",
     "Équipements (4 hammams privatifs, 7 cabines, salle de relaxation) : capacité à confirmer avant saisie",
-    "Horaires 9h-minuit (Google, footer) vs 10h-22h (bloc horaires) → contradictoire, inchangé",
-    "cancellation_hours 24 : aucune source"
+    "Horaires 9h-minuit (Google, footer) vs 10h-22h (bloc horaires) → contradictoire, inchangé"
   ]
 }
