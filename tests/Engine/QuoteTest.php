@@ -100,4 +100,25 @@ class QuoteTest extends BookingFlowTestCase
         $this->spa->partner->update(['status' => 'pending']);
         $this->assertNull($cat->bookableSpas()->find($this->spa->id), 'Partenaire non validé → établissement absent du catalogue');
     }
+
+    public function test_fixed_party_formulas_are_priced_once_for_the_whole_party(): void
+    {
+        $duo = $this->treatment('duo', 'Massage duo', [['type' => 'massage', 'duration' => 60]], 2, ['price_solo' => null, 'price_couple' => 900]);
+        $duo->update(['party_min' => 2]);
+        $family = $this->treatment('famille', 'Soin famille 4 pers.', [['type' => 'hammam', 'duration' => 45]], 4, ['price_solo' => null, 'price_group' => 450]);
+        $family->update(['party_min' => 4]);
+        $this->reload();
+
+        $q = $this->quote(['treatment' => $duo->id, 'party' => 2]);
+        $this->assertTrue($q['ok'] && $q['total'] === 900.0 && $q['lines'][0]['formula'] === 'couple', 'Formule duo 900 MAD pour 2 : total 900, pas 1 800');
+        $q = $this->quote(['treatment' => $family->id, 'party' => 4]);
+        $this->assertTrue($q['ok'] && $q['total'] === 1800.0 && $q['lines'][0]['formula'] === 'group', 'Formule famille 1 800 MAD pour 4 : total 1 800');
+        $this->assertFalse($this->quote(['treatment' => $duo->id, 'party' => 1])['ok'], 'Formule duo refusée pour 1 personne');
+        $this->assertFalse($this->quote(['treatment' => $family->id, 'party' => 3])['ok'], 'Formule famille refusée pour 3 personnes');
+
+        $cards = app(CatalogueService::class)->treatments($this->spa->fresh())->keyBy('id');
+        $this->assertSame([2, 900.0, 450.0], [$cards[$duo->id]['fixed_party'], $cards[$duo->id]['fixed_party_total'], $cards[$duo->id]['price_from']], 'Fiche : « 900 MAD pour 2 personnes », soit 450 / pers.');
+        $this->assertSame([4, 1800.0, 450.0], [$cards[$family->id]['fixed_party'], $cards[$family->id]['fixed_party_total'], $cards[$family->id]['price_from']]);
+        $this->assertNull($cards[$this->h->id]['fixed_party'], 'Soin 1 à 6 personnes : pas de formule à effectif fixe');
+    }
 }

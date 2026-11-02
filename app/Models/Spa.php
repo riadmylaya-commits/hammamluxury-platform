@@ -8,6 +8,7 @@ use App\Domain\Geo\WebsiteUrl;
 use App\Models\Concerns\Translatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -278,9 +279,17 @@ class Spa extends Model
         return $this->instant_booking && CapacityReadiness::passes($this);
     }
 
+    /** Photos servies au public : les photos isolées (hidden_at) en sont exclues. */
+    public function visiblePhotos(): Collection
+    {
+        return $this->photos->filter(fn (SpaPhoto $p) => ! $p->isHidden())->values();
+    }
+
     public function coverPhoto(): ?SpaPhoto
     {
-        return $this->photos->firstWhere('is_cover', true) ?? $this->photos->first();
+        $visible = $this->visiblePhotos();
+
+        return $visible->firstWhere('is_cover', true) ?? $visible->first();
     }
 
     public function slotStep(): int

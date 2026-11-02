@@ -52,11 +52,16 @@
                             @if ($t['extras'])
                                 <div class="incl"><span class="xs muted">{{ __('ui.add_to_ritual') }}</span>@foreach ($t['extras'] as $e)<span class="chip grey">+ {{ $e['name'] }} · {{ number_format($e['price'], 0, ',', ' ') }} {{ $cur }}@if ($e['extra_min']) · +{{ $e['extra_min'] }} {{ __('ui.min') }}@endif</span>@endforeach</div>
                             @endif
-                            @if ($t['price_group'])<div class="xs muted" style="margin-top:6px">{{ __('ui.formula.group') }} {{ number_format($t['price_group'], 0, ',', ' ') }} {{ $cur }}{{ __('ui.per_person') }}</div>@endif
+                            @if ($t['price_group'] && ! $t['fixed_party'])<div class="xs muted" style="margin-top:6px">{{ __('ui.formula.group') }} {{ number_format($t['price_group'], 0, ',', ' ') }} {{ $cur }}{{ __('ui.per_person') }}</div>@endif
                         </div>
                         <div class="r">
+                            @if ($t['fixed_party'])
+                                <div class="solo"><b>{{ number_format($t['fixed_party_total'], 0, ',', ' ') }} {{ $cur }}</b> <span class="xs muted">{{ __('ui.for_party', ['n' => $t['fixed_party']]) }}</span></div>
+                                <div class="xs muted">{{ __('ui.per_person_short', ['price' => number_format($t['price_from'], fmod($t['price_from'], 1) ? 2 : 0, ',', ' ').' '.$cur]) }}</div>
+                            @else
                             <div class="solo"><b>{{ number_format($t['price_from'], 0, ',', ' ') }} {{ $cur }}</b> <span class="xs muted">{{ __('ui.per_person_solo') }}</span></div>
                             @if ($t['price_couple'])<div class="duo"><span class="xs">{{ __('ui.for_two') }}</span><b>{{ number_format($t['price_couple'], 0, ',', ' ') }} {{ $cur }}</b></div>@endif
+                            @endif
                             @if ($t['nr_discount_pct'])<div class="xs" style="color:var(--brand);font-weight:600">{{ __('ui.policy.nr_from', ['price' => number_format($t['nr_price_from'], fmod($t['nr_price_from'], 1) ? 2 : 0, ',', ' ').' '.$cur, 'pct' => $t['nr_discount_pct']]) }}</div>@endif
                             @if ($preview)<span class="btn sm" aria-disabled="true" style="opacity:.55;pointer-events:none">{{ __('ui.preview_no_booking') }}</span>@else<a class="btn sm" href="{{ route('spa.book', [$spa->slug, 'soin' => $t['id']] + $bookParams) }}">{{ __('ui.book') }}</a>@endif
                         </div>

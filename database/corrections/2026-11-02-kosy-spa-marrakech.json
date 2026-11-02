@@ -1,0 +1,35 @@
+{
+  "spa": "kosy-spa-marrakech",
+  "_source": "Audit documentaire du 2026-11-02 (fiche Google Business Profile + site officiel) — /home/ubuntu/spa5/audit2/<slug>/audit-<slug>.md",
+  "treatments": {
+    "p5-rituel-kosy-a-deux": {
+      "price_solo": null,
+      "price_couple": 2000,
+      "party_min": 2,
+      "party_max": 2
+    }
+  },
+  "hide_photos": [
+    {
+      "path_ends_with": "acb9cc0f-e750-4504-b4cd-39f74db25e73.jpg",
+      "source": "kosy-spa-marrakech-17.jpg",
+      "reason": "Visuel type banque d'images (modèle, décor sans lien avec le lieu) : ne pas publier"
+    },
+    {
+      "path_ends_with": "e55c63ca-8d7c-4b9a-9439-b6b3267a4a4d.jpg",
+      "source": "kosy-spa-marrakech-18.jpg",
+      "reason": "Visuel type banque d'images : ne pas publier"
+    },
+    {
+      "path_ends_with": "c861257a-c800-4cfb-a01c-c7deb18ec86d.jpg",
+      "source": "kosy-spa-marrakech-19.jpg",
+      "reason": "Visuel type banque d'images : ne pas publier"
+    }
+  ],
+  "_non_appliques": [
+    "p1-p4 : durées publiées (120/140/140/165) ≠ somme des étapes enregistrées ; le site est lui-même incohérent (p3, p4) → composition à confirmer",
+    "h5 Aqua sensoriel : 45 min publiées, soin inactif sans étape (type de ressource inconnu) → à confirmer, pas d'activation",
+    "p5 : reste inactif (étapes non publiées), seul le prix duo publié est enregistré",
+    "cancellation_hours 24 : aucune source"
+  ]
+}

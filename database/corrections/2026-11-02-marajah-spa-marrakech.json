@@ -1,0 +1,26 @@
+{
+  "spa": "marajah-spa-marrakech",
+  "_source": "Audit documentaire du 2026-11-02 (fiche Google Business Profile + site officiel) — /home/ubuntu/spa5/audit2/<slug>/audit-<slug>.md",
+  "fields": {
+    "whatsapp": "+212646698946"
+  },
+  "hide_photos": [
+    {
+      "path_ends_with": "694613cd-8ed8-4351-9604-473cb8dfd846.jpg",
+      "source": "marajah-spa-marrakech-29.jpg",
+      "reason": "Nom de fichier au format Facebook : provenance à confirmer"
+    },
+    {
+      "path_ends_with": "b6909836-a56e-44da-9e72-75ff771b8db7.jpg",
+      "source": "marajah-spa-marrakech-30.jpg",
+      "reason": "Photo de couverture de la fiche Google Maps : auteur à confirmer"
+    }
+  ],
+  "_non_appliques": [
+    "Prix visage FR ≠ EN (argan-rose 520/470, figue de barbarie 570/520) → contradictoire, inchangé",
+    "Second numéro +212638893071 et réseaux sociaux : aucun champ dédié → limite technique",
+    "Équipements (4 hammams privatifs, 7 cabines, salle de relaxation) : capacité à confirmer avant saisie",
+    "Horaires 9h-minuit (Google, footer) vs 10h-22h (bloc horaires) → contradictoire, inchangé",
+    "cancellation_hours 24 : aucune source"
+  ]
+}

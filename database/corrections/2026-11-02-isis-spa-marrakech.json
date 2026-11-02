@@ -1,0 +1,77 @@
+{
+  "spa": "isis-spa-marrakech",
+  "_source": "Audit documentaire du 2026-11-02 (fiche Google Business Profile + site officiel) — /home/ubuntu/spa5/audit2/<slug>/audit-<slug>.md",
+  "fields": {
+    "whatsapp": "+212614037478"
+  },
+  "treatments": {
+    "c1-massage-duo-relaxant-1h": {
+      "price_solo": null,
+      "price_couple": 900,
+      "party_min": 2,
+      "party_max": 2
+    },
+    "c2-massage-duo-tonique-1h": {
+      "price_solo": null,
+      "price_couple": 980,
+      "party_min": 2,
+      "party_max": 2
+    },
+    "c3-soin-couple-1h45": {
+      "price_solo": null,
+      "price_couple": 1200,
+      "party_min": 2,
+      "party_max": 2
+    },
+    "c4-soin-amour-eternel-1h45": {
+      "price_solo": null,
+      "price_couple": 1150,
+      "party_min": 2,
+      "party_max": 2
+    },
+    "c5-soin-nouveau-marie-4h": {
+      "price_solo": null,
+      "price_couple": 3200,
+      "party_min": 2,
+      "party_max": 2
+    },
+    "f1-soin-famille-decouverte-1h15-4-pers": {
+      "price_solo": null,
+      "price_group": 450,
+      "party_min": 4,
+      "party_max": 4
+    },
+    "f2-soin-je-fais-plaisir-a-mes-petits-anges-1h30-4-pers": {
+      "price_solo": null,
+      "price_group": 497.5,
+      "party_min": 4,
+      "party_max": 4
+    },
+    "f3-soin-isis-famille-2h15-4-pers": {
+      "price_solo": null,
+      "price_group": 875,
+      "party_min": 4,
+      "party_max": 4
+    }
+  },
+  "hide_photos": [
+    {
+      "path_ends_with": "0a7ceaed-d7d1-4a75-a5ff-0307a6ab8459.jpg",
+      "source": "isis-spa-marrakech-08.jpg",
+      "reason": "Photo Google Maps : attribution au compte propriétaire non recontrôlée"
+    },
+    {
+      "path_ends_with": "6d84817c-34ba-4458-914b-8fa962dbc161.jpg",
+      "source": "isis-spa-marrakech-09.jpg",
+      "reason": "Photo Google Maps : attribution au compte propriétaire non recontrôlée"
+    }
+  ],
+  "_non_appliques": [
+    "c5 : durée publiée 4h00 (240 min) mais étapes = 210 min, composition non publiée → à confirmer",
+    "e1/e2 : durée 2h publiée mais soins inactifs sans étapes → à confirmer, pas d'activation automatique",
+    "e3 : 990 MAD/2 pers. et 1490 MAD/3 pers. non représentables (prix groupe par personne non entier) → limite technique",
+    "v4 : durée 45 min (FR) vs 1h (EN) → contradictoire, inchangé",
+    "horaires site 9-20 h vs Google 10-21 h → contradictoire, inchangé",
+    "cancellation_hours 24 : aucune source"
+  ]
+}

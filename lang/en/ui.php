@@ -136,6 +136,8 @@ return [
     'total_duration' => 'Total duration',
     'for_two' => 'For 2 people',
     'for_two_short' => 'For 2',
+    'for_party' => 'For :n people',
+    'per_person_short' => 'i.e. :price / pers.',
     'per_person_solo' => 'per person',
     'included_title' => 'Included',
     'included' => ['tea' => 'Mint tea', 'pastries' => 'Pastries', 'pool' => 'Pool access', 'robe' => 'Bathrobe', 'towels' => 'Towels', 'slippers' => 'Slippers', 'rest_room' => 'Relaxation room', 'terrace' => 'Terrace', 'products' => 'Traditional products', 'hammam_kit' => 'Hammam kit (glove, black soap)'],

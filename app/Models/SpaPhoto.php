@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Domain\Media\PhotoPathPolicy;
 use App\Models\Concerns\Translatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +19,7 @@ class SpaPhoto extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['is_cover' => 'bool'];
+    protected $casts = ['is_cover' => 'bool', 'hidden_at' => 'datetime'];
 
     protected static function booted(): void
     {
@@ -56,7 +57,18 @@ class SpaPhoto extends Model
     {
         $spa = $this->spa;
 
-        return $spa !== null && $spa->status === 'published' && $spa->partner?->status === 'approved';
+        return ! $this->isHidden() && $spa !== null && $spa->status === 'published' && $spa->partner?->status === 'approved';
+    }
+
+    /** Isolée (provenance ou droits à confirmer) : visible de l'Admin et du propriétaire seulement. */
+    public function isHidden(): bool
+    {
+        return $this->hidden_at !== null;
+    }
+
+    public function scopeVisible(Builder $query): Builder
+    {
+        return $query->whereNull('hidden_at');
     }
 
     /** Disque qui contient réellement le fichier : privé, ou public pour un fichier non encore migré. */
