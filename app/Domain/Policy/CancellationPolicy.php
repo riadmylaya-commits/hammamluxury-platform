@@ -55,8 +55,12 @@ class CancellationPolicy
     }
 
     /** Libellé court d'un délai (« 48 h », « 7 jours », « 8 h — dernière minute »). */
-    public static function label(int $hours): string
+    public static function label(?int $hours): string
     {
+        if ($hours === null) {
+            return __('ui.policy.to_confirm_label');
+        }
+
         return __('ui.policy.hours.'.$hours) ?: $hours.' h';
     }
 

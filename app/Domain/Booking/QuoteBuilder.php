@@ -133,7 +133,7 @@ class QuoteBuilder
             'ok' => true, 'errors' => [], 'spa_id' => $spa->id, 'party' => 0, 'duration_min' => 0,
             'total' => 0.0, 'commissionable' => 0.0, 'currency' => config('hl.currency'), 'lines' => [], 'items' => [],
             'rate' => $nr ? 'non_refundable' : 'standard', 'standard_total' => 0.0, 'nr_discount_pct' => null, 'nr_available' => true,
-            'cancellation_hours' => (int) $spa->cancellation_hours,
+            'cancellation_hours' => $spa->cancellation_hours === null ? null : (int) $spa->cancellation_hours,
         ];
         $pcts = [];
 
@@ -169,7 +169,9 @@ class QuoteBuilder
                 $price['unit'] = $party > 0 ? $price['total'] / $party : $price['total'];
                 $pcts[] = (int) $t->nr_discount_pct;
             }
-            $quote['cancellation_hours'] = max($quote['cancellation_hours'], $t->cancellationHours());
+            if (($th = $t->cancellationHours()) !== null) {
+                $quote['cancellation_hours'] = max((int) $quote['cancellation_hours'], $th);
+            }
             $extras = $t->extras->keyBy('id');
             $exLines = [];
             $exTotal = 0.0;

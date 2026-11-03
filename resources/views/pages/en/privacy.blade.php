@@ -21,7 +21,7 @@
 
 <h2>4. Recipients</h2>
 <ul>
-    <li><b>The booked Venue</b> receives the information needed to welcome you: name, phone, language, hotel, remarks and treatment details. <b>Your personal e-mail address is not shared with the Venue</b>: exchanges go through the Platform’s messaging.</li>
+    <li><b>The booked Venue</b> receives the information needed to welcome you: name, phone, language, hotel, remarks and treatment details. <b>Your personal e-mail address is not shared with the Venue</b>: exchanges go through the Platform’s messaging. For a listed venue, this information is passed on by phone or WhatsApp by the HammamLuxury team, solely to check and confirm your request.</li>
     <li>Our technical providers (server hosting in the European Union, e-mail delivery), acting on our instructions.</li>
     <li>Authorities, only upon legal request.</li>
 </ul>

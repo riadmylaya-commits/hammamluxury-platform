@@ -12,6 +12,7 @@ use App\Models\BookingParticipant;
 use App\Models\CancellationRequest;
 use App\Models\ClientIncident;
 use Filament\Actions\Action as PageAction;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
@@ -45,6 +46,24 @@ class BookingActions
             ->helperText(__('partner.evidence_help'));
     }
 
+    /** Aide de l'action Accepter ; fiche référencée : rappel de la vérification et des réservations déjà confirmées sur le créneau. */
+    public static function acceptHelp(Booking $b): string
+    {
+        if (! $b->spa->isReferenced()) {
+            return __('partner.accept_help');
+        }
+        $overlaps = app(BookingService::class)->confirmedOverlaps($b);
+        $text = __('partner.accept_help_referenced');
+        if ($overlaps->isNotEmpty()) {
+            $text .= ' '.__('partner.accept_overlap_warning', [
+                'count' => $overlaps->count(),
+                'refs' => $overlaps->map(fn (Booking $o) => $o->reference.' ('.$o->start_at->format('H:i').'–'.$o->end_at->format('H:i').')')->implode(', '),
+            ]);
+        }
+
+        return $text;
+    }
+
     /**
      * @param  class-string<Action|PageAction>  $class
      * @return array<Action|PageAction>
@@ -63,8 +82,14 @@ class BookingActions
         return [
             $class::make('accept')->label(__('partner.accept'))->icon('heroicon-o-check')->color('success')
                 ->visible(fn (Booking $b) => $b->isWaiting() && ($actor !== 'partner' || $b->spa->managed_by !== 'admin'))
-                ->requiresConfirmation()->modalDescription(__('partner.accept_help'))
-                ->action(fn (Booking $b) => $run($b, 'accept')),
+                ->requiresConfirmation()
+                ->modalDescription(fn (Booking $b) => self::acceptHelp($b))
+                ->form(fn (Booking $b) => $b->spa->isReferenced() ? [
+                    Textarea::make('spa_check')->label(__('partner.spa_check'))->rows(2)->required()->minLength(5)->maxLength(300)
+                        ->placeholder(__('partner.spa_check_placeholder'))->helperText(__('partner.spa_check_help')),
+                    Checkbox::make('spa_verified')->label(__('partner.spa_verified'))->accepted()->required(),
+                ] : [])
+                ->action(fn (Booking $b, array $data) => $run($b, 'accept', [null, $data['spa_check'] ?? null])),
             $class::make('decline')->label(__('partner.decline'))->icon('heroicon-o-x-mark')->color('danger')
                 ->visible(fn (Booking $b) => $b->isWaiting() && ($actor !== 'partner' || $b->spa->managed_by !== 'admin'))
                 ->form([

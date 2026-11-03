@@ -30,7 +30,7 @@
         <h3 style="font-size:16px;margin-bottom:8px">{{ __('ui.policy.rate_title') }}</h3>
         <div class="rates">
             <button type="button" class="opt rate" aria-pressed="{{ $rate !== 'non_refundable' ? 'true' : 'false' }}" wire:click="setRate('standard')">
-                <div><b>{{ __('ui.policy.standard') }}</b><div class="xs muted">{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($quote['cancellation_hours'])]) }}</div></div>
+                <div><b>{{ __('ui.policy.standard') }}</b><div class="xs muted">{{ $quote['cancellation_hours'] === null ? __('ui.policy.standard_desc_to_confirm') : __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($quote['cancellation_hours'])]) }}</div></div>
                 <div class="r"><b>{{ $fmt($quote['standard_total']) }}</b></div>
             </button>
             @if ($this->nrAvailable())
@@ -137,12 +137,12 @@
         </div>
         <div class="fld"><label>{{ __('ui.hotel') }}</label><input class="inp" wire:model="hotel"></div>
         <div class="fld"><label>{{ __('ui.note') }}</label><textarea class="inp" rows="2" wire:model="note"></textarea><span class="xs muted">{{ __('ui.note_privacy') }}</span></div>
-        <div class="notice {{ ($quote['rate'] ?? 'standard') === 'non_refundable' ? 'warn' : 'info' }}" id="policy"><b>{{ __('ui.policy.title') }}</b> — @if (($quote['rate'] ?? 'standard') === 'non_refundable'){{ __('ui.policy.nr_booking', ['pct' => $quote['nr_discount_pct'], 'amount' => $fmt($quote['total'])]) }}@else{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($quote['cancellation_hours'] ?? 24)]) }} {{ __('ui.policy.free_until', ['date' => \Carbon\CarbonImmutable::parse("$date $time")->subHours($quote['cancellation_hours'] ?? 24)->locale(app()->getLocale())->isoFormat('LLL')]) }}@endif</div>
+        <div class="notice {{ ($quote['rate'] ?? 'standard') === 'non_refundable' ? 'warn' : 'info' }}" id="policy"><b>{{ __('ui.policy.title') }}</b> — @if (($quote['rate'] ?? 'standard') === 'non_refundable'){{ __('ui.policy.nr_booking', ['pct' => $quote['nr_discount_pct'], 'amount' => $fmt($quote['total'])]) }}@else{{ ($quote['cancellation_hours'] ?? null) === null ? __('ui.policy.standard_desc_to_confirm') : __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($quote['cancellation_hours'])]) }} @if (($quote['cancellation_hours'] ?? null) !== null) {{ __('ui.policy.free_until', ['date' => \Carbon\CarbonImmutable::parse("$date $time")->subHours($quote['cancellation_hours'])->locale(app()->getLocale())->isoFormat('LLL')]) }}@endif @endif</div>
         <label class="small row" style="align-items:flex-start"><input type="checkbox" wire:model="terms" style="margin-top:3px"> <span>{!! __('ui.accept_terms', ['url' => route('page', 'cgu')]) !!}</span></label>@error('terms')<span class="ferr">{{ $message }}</span>@enderror
         @if ($spa->instantBookingActive())
             <div class="notice info"><b>{{ __('ui.instant_title') }}</b> {{ __('ui.instant_help') }} {{ __('ui.no_account') }}</div>
         @else
-            <div class="notice info">{{ __('ui.no_payment', ['hours' => $spa->waitingTtlHours()]) }} {{ __('ui.no_account') }}</div>
+            <div class="notice info">{{ $spa->isReferenced() ? __('ui.no_payment_referenced', ['hours' => $spa->waitingTtlHours(), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1]]) : __('ui.no_payment', ['hours' => $spa->waitingTtlHours()]) }} {{ __('ui.no_account') }}</div>
         @endif
         <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" wire:loading.attr="disabled"><span wire:loading.remove wire:target="submit">{{ $spa->instantBookingActive() ? __('ui.submit_instant') : __('ui.submit') }}</span><span wire:loading wire:target="submit">{{ __('ui.submitting') }}</span></button></div>
     </form>

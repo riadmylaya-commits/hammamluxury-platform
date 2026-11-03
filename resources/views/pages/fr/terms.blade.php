@@ -1,6 +1,6 @@
 <h2>1. Objet</h2>
 <p>HammamLuxury (« la Plateforme ») met en relation des clients avec des hammams, spas et centres de bien-être indépendants (« les Établissements ») afin de réserver des soins, rituels et formules à un créneau donné. HammamLuxury n’est pas le prestataire des soins : la prestation est réalisée sous la seule responsabilité de l’Établissement choisi.</p>
-<p>Les présentes conditions s’appliquent à toute utilisation du site et à toute réservation effectuée par son intermédiaire. Elles sont complétées, pour les Établissements, par le contrat de partenariat accepté lors de leur inscription.</p>
+<p>Les présentes conditions s’appliquent à toute utilisation du site et à toute réservation effectuée par son intermédiaire. Elles sont complétées, pour les Établissements partenaires, par le contrat de partenariat accepté lors de leur inscription. Les Établissements référencés sont présentés à partir de leurs informations publiques, sans accord signé : leur fiche le mentionne et toute demande leur est transmise sous réserve de confirmation de disponibilité.</p>
 
 <h2>2. Éditeur</h2>
 <p>La Plateforme est éditée par HammamLuxury <em>[forme juridique, capital, RC/ICE et adresse du siège à compléter]</em>. Contact : <a href="{{ route('contact') }}">formulaire de contact</a>.</p>

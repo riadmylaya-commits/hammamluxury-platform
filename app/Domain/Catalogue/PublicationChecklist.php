@@ -19,10 +19,10 @@ class PublicationChecklist
             __('admin.chk_address') => filled($spa->address) && filled($spa->phone),
             __('admin.chk_hours') => $spa->hours()->exists(),
             __('admin.chk_treatments') => $treatments->clone()->where('price_solo', '>', 0)->exists(),
-            __('admin.chk_resources') => $spa->resources()->where('status', 'active')->exists()
+            __('admin.chk_resources') => $spa->isReferenced() || $spa->resources()->where('status', 'active')->exists()
                 && ! $treatments->clone()->whereDoesntHave('steps')->exists()
                 && ! $treatments->clone()->whereHas('steps.resourceType', fn ($q) => $q->whereDoesntHave('resources', fn ($r) => $r->where('status', 'active')))->exists(),
-            __('admin.chk_staff') => self::staffCovered($spa),
+            __('admin.chk_staff') => $spa->isReferenced() || self::staffCovered($spa),
             __('admin.chk_partner') => $spa->partner?->isApproved() ?? false,
         ];
     }

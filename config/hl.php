@@ -10,6 +10,8 @@ return [
 
     // Délai avant expiration automatique d'une demande en attente non traitée par le partenaire.
     'waiting_ttl_hours' => (float) env('HL_WAITING_TTL_HOURS', 2),
+    // Heures de service HammamLuxury (demandes décidées par l'Admin) : le délai de réponse ne court qu'entre ces heures.
+    'admin_hours' => [(int) env('HL_ADMIN_HOURS_OPEN', 9), (int) env('HL_ADMIN_HOURS_CLOSE', 21)],
     // Délai (minutes) après l'heure de fin avant passage automatique en « terminée ».
     // Durée de validité du lien de suivi client après la fin de la prestation (jours).
     'manage_link_days' => (int) env('HL_MANAGE_LINK_DAYS', 30),
@@ -18,6 +20,8 @@ return [
     // Pas de la grille de créneaux et délai minimum avant le début d'une prestation.
     'slot_step_minutes' => (int) env('HL_SLOT_STEP_MINUTES', 30),
     'min_lead_minutes' => (int) env('HL_MIN_LEAD_MINUTES', 60),
+    // Fiche référencée : marge ajoutée au délai de réponse pour que la vérification tienne avant le rendez-vous.
+    'referenced_lead_margin_minutes' => (int) env('HL_REFERENCED_LEAD_MARGIN_MINUTES', 30),
 
     // Nombre maximal de participants par réservation.
     'max_participants' => 20,

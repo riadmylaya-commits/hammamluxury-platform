@@ -61,7 +61,7 @@ abstract class EngineTestCase extends TestCase
     {
         $user = User::create(['name' => 'Partenaire test', 'email' => $slug.'@example.test', 'password' => 'secret-test', 'role' => 'partner', 'email_verified_at' => now()]);
         $partner = Partner::create(['user_id' => $user->id, 'company_name' => $name.' SARL', 'status' => 'approved']);
-        $spa = Spa::create(['partner_id' => $partner->id, 'slug' => $slug, 'name' => $name, 'city' => 'Marrakech', 'status' => 'published', 'published_at' => now(), 'min_lead_minutes' => 0]);
+        $spa = Spa::create(['partner_id' => $partner->id, 'slug' => $slug, 'name' => $name, 'city' => 'Marrakech', 'status' => 'published', 'published_at' => now(), 'min_lead_minutes' => 0, 'cancellation_hours' => 24]);
         foreach ([0, 1, 3, 4, 5] as $wd) {
             $spa->hours()->create(['weekday' => $wd, 'opens_min' => 9 * 60, 'closes_min' => 23 * 60]);
         }

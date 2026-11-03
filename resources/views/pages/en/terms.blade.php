@@ -1,6 +1,6 @@
 <h2>1. Purpose</h2>
 <p>HammamLuxury (“the Platform”) connects clients with independent hammams, spas and wellness centres (“the Venues”) to book treatments, rituals and packages at a given time slot. HammamLuxury does not provide the treatments: the service is performed under the sole responsibility of the chosen Venue.</p>
-<p>These terms apply to any use of the website and any booking made through it. For Venues, they are supplemented by the partnership agreement accepted upon registration.</p>
+<p>These terms apply to any use of the website and any booking made through it. For partner Venues, they are supplemented by the partnership agreement accepted upon registration. Listed Venues are presented from their public information, without a signed agreement: their listing says so and any request is forwarded to them subject to availability.</p>
 
 <h2>2. Publisher</h2>
 <p>The Platform is published by HammamLuxury <em>[legal form, capital, registration number and registered office to be completed]</em>. Contact: <a href="{{ route('contact') }}">contact form</a>.</p>

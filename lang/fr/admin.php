@@ -271,4 +271,10 @@ return [
     'mgmt_done' => 'Modification enregistrée.',
     'mgmt_no_owner' => 'Cette fiche n’a pas encore de propriétaire : utilisez « Inviter le propriétaire ».',
     'mgmt_email_taken' => 'Cet e-mail est déjà utilisé par un autre compte.',
+    'listing_type' => 'Type de fiche',
+    'listing_partner' => 'Partenaire (accord signé)',
+    'listing_referenced' => 'Référencé (informations publiques, sans accord)',
+    'listing_type_help' => 'Référencé : fiche présentée à partir des informations publiques de l’établissement ; demandes transmises sous réserve et décidées par HammamLuxury, aucune réservation instantanée, créneaux d’après les horaires d’ouverture, commission nulle. Ressources et praticiens non requis pour publier.',
+    'info_verified_at' => 'Informations relevées le',
+    'info_verified_at_help' => 'Date du dernier relevé des informations publiques, affichée sur la fiche référencée.',
 ];

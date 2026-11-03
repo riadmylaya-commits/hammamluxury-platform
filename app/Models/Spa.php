@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Domain\Booking\BookingService;
 use App\Domain\Catalogue\CapacityReadiness;
 use App\Domain\Catalogue\Presentation;
 use App\Domain\Geo\WebsiteUrl;
 use App\Models\Concerns\Translatable;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
@@ -20,6 +22,8 @@ class Spa extends Model
 
     public const STATUSES = ['draft', 'pending', 'published', 'suspended'];
 
+    public const LISTING_TYPES = ['partner', 'referenced'];
+
     public const LICENSE_AUTHORITIES = ['commune', 'arrondissement', 'other'];
 
     /** Catégories principales soumises à l'autorisation d'exploitation des hammams. */
@@ -30,7 +34,7 @@ class Spa extends Model
     protected $guarded = [];
 
     protected $casts = ['instant_booking' => 'bool', 'instant_booking_at' => 'datetime', 'submitted_at' => 'datetime', 'published_at' => 'datetime',
-        'owner_invited_at' => 'datetime', 'owner_access_suspended_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array', 'cancellation_hours' => 'int', 'waiting_ttl_hours' => 'float'];
+        'owner_invited_at' => 'datetime', 'owner_access_suspended_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array', 'cancellation_hours' => 'int', 'waiting_ttl_hours' => 'float', 'info_verified_at' => 'date'];
 
     /** Position sur la carte : `['lat' => ?, 'lng' => ?]`, éditable comme un seul champ de formulaire. */
     protected function location(): Attribute
@@ -133,6 +137,12 @@ class Spa extends Model
             'other' => $this->license_authority_other ?: __('partner.license_authority_other'),
             default => __('partner.license_authority_'.$this->license_authority),
         };
+    }
+
+    /** Établissement référencé (informations publiques, sans accord signé) : demandes sous réserve, aucune capacité modélisée. */
+    public function isReferenced(): bool
+    {
+        return $this->listing_type === 'referenced';
     }
 
     /** Fiche dont les demandes sont décidées par HammamLuxury (portefeuille Admin ou reprise temporaire). */
@@ -276,7 +286,7 @@ class Spa extends Model
     /** Réservation instantanée effective : activée par l'Admin ET configuration toujours complète (sinon retour au circuit demande → confirmation). */
     public function instantBookingActive(): bool
     {
-        return $this->instant_booking && CapacityReadiness::passes($this);
+        return ! $this->isReferenced() && $this->instant_booking && CapacityReadiness::passes($this);
     }
 
     /** Photos servies au public : les photos isolées (hidden_at) en sont exclues. */
@@ -297,9 +307,21 @@ class Spa extends Model
         return $this->slot_step_minutes ?: (int) config('hl.slot_step_minutes');
     }
 
+    /**
+     * Délai minimal avant le début d'une prestation. Pour une fiche référencée, le créneau doit laisser le temps de la
+     * vérification avec l'établissement : jamais avant l'échéance de réponse (heures de service) + marge.
+     */
     public function minLead(): int
     {
-        return $this->min_lead_minutes ?? (int) config('hl.min_lead_minutes');
+        $lead = $this->min_lead_minutes ?? (int) config('hl.min_lead_minutes');
+        if ($this->isReferenced()) {
+            $now = CarbonImmutable::now();
+            $deadline = app(BookingService::class)->waitingDeadline($now, $this)
+                ->addMinutes((int) config('hl.referenced_lead_margin_minutes'));
+            $lead = max($lead, (int) ceil($now->diffInMinutes($deadline, false)));
+        }
+
+        return $lead;
     }
 
     /** Plages d'ouverture d'un jour donné, en minutes depuis minuit : [[opens, closes], …]. */

@@ -21,7 +21,7 @@
 
 <h2>Reviews and trust</h2>
 <details><summary>Who can leave a review?</summary><p>Only clients whose treatment actually took place, upon an invitation received the next day. Reviews are checked before publication and marked as verified.</p></details>
-<details><summary>How are venues selected?</summary><p>Each partner provides its legal information, permits and at least ten photos; its listing is checked by our team before publication.</p></details>
+<details><summary>How are venues selected?</summary><p>There are two cases. <b>Partner venues</b> have signed an agreement with HammamLuxury: they provide their information and photos and manage their availability. <b>Listed venues</b> are presented from their public information (official website, Google listing), flagged as such on the listing: HammamLuxury checks every request directly with the venue before confirming it. In both cases the listing is checked by our team before publication.</p></details>
 
 <h2>Partners</h2>
 <details><summary>I run a hammam or spa: how do I join HammamLuxury?</summary><p>Go to <a href="{{ route('filament.partner.auth.register') }}">List my venue</a>. Describe your venue, treatments, resources and opening hours; once approved, you manage bookings from a simple, free dashboard. HammamLuxury earns a commission on completed bookings.</p></details>

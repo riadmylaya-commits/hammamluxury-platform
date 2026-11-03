@@ -15,6 +15,7 @@ use App\Models\BookingDecline;
 use App\Models\CancellationRequest;
 use App\Models\Spa;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -45,7 +46,7 @@ class BookingService
             throw new BookingException('quote', implode(' ', $quote['errors']));
         }
         $start = $this->parseStart($req['date'] ?? '', $req['time'] ?? '');
-        if ($start < CarbonImmutable::now()->addMinutes($spa->minLead())) {
+        if ($start < CarbonImmutable::now()->addMinutes($spa->minLead())->floorMinute()) {
             throw BookingException::make('too_soon', 'too_soon', ['minutes' => $spa->minLead()]);
         }
         $plan = $this->engine->check($spa, $start, $quote['items']);
@@ -149,6 +150,10 @@ class BookingService
             if (! $quote['ok']) {
                 throw new BookingException('quote', implode(' ', $quote['errors']));
             }
+            if ($current->isReferenced()) {
+                // La vérification avec l'établissement doit tenir avant le rendez-vous : l'échéance de réponse précède toujours le début.
+                $this->assertFutureStart($current, $start, enforceLead: true);
+            }
 
             return $this->insert($current, $start, $quote, $customer, $status, meta: $meta, actor: $actor);
         });
@@ -181,7 +186,7 @@ class BookingService
             throw new BookingException('unavailable', implode(' ', $plan['errors']), 409);
         }
         $offline = ($meta['source'] ?? 'online') === 'partner';
-        $pct = $offline ? 0.0 : $spa->partner->commissionPct();
+        $pct = $offline || $spa->isReferenced() ? 0.0 : $spa->partner->commissionPct();
         $commissionable = $offline ? 0.0 : round((float) ($quote['commissionable'] ?? $quote['total']), 2);
 
         $booking = DB::transaction(function () use ($spa, $start, $quote, $customer, $status, $intentId, $locale, $plan, $pct, $commissionable, $meta, $actor) {
@@ -261,24 +266,44 @@ class BookingService
         }
     }
 
-    public function accept(Booking $booking, string $actor = 'partner', ?string $note = null): Booking
+    /**
+     * @param  string|null  $spaCheck  Fiche référencée : attestation obligatoire de la vérification faite auprès de
+     *                                 l'établissement (interlocuteur, heure) ; journalisée avec les réservations déjà
+     *                                 confirmées sur le même créneau.
+     */
+    public function accept(Booking $booking, string $actor = 'partner', ?string $note = null, ?string $spaCheck = null): Booking
     {
         $this->assertMayDecide($booking, $actor);
+        $spaCheck = trim((string) $spaCheck) !== '' ? trim($spaCheck) : null;
 
-        return $this->mutations->forBooking($booking, function (Booking $current) use ($actor, $note): Booking {
+        return $this->mutations->forBooking($booking, function (Booking $current) use ($actor, $note, $spaCheck): Booking {
             if (! $current->isWaiting()) {
                 throw BookingException::make('status', 'not_waiting', [], 409);
             }
             if ($current->expires_at && $current->expires_at->lte(now())) {
                 throw BookingException::make('waiting_expired', 'waiting_expired', [], 409);
             }
+            if ($current->spa->isReferenced() && $spaCheck === null) {
+                throw BookingException::make('spa_check', 'spa_check_required', [], 422);
+            }
             $this->assertFutureStart($current->spa, CarbonImmutable::instance($current->start_at));
             $this->assertAllocationsIntact($current);
+            $overlaps = $current->spa->isReferenced() ? $this->confirmedOverlaps($current)->pluck('reference')->all() : [];
             $this->transition($current, 'confirmed', $actor, ['confirmed_at' => now(), 'expires_at' => null, 'partner_note' => $note, 'contact_revealed_at' => now()]);
             $current->log('contact:revealed', 'system', ['fields' => ['phone', 'whatsapp']]);
+            if ($spaCheck !== null) {
+                $current->log('spa:verified', $actor, ['note' => $spaCheck, 'overlaps' => $overlaps]);
+            }
 
             return $current;
         });
+    }
+
+    /** Réservations déjà confirmées du même établissement qui chevauchent celle-ci (fiche référencée : à vérifier avec le spa). */
+    public function confirmedOverlaps(Booking $booking): Collection
+    {
+        return Booking::where('spa_id', $booking->spa_id)->where('id', '!=', $booking->id)->where('status', 'confirmed')
+            ->where('start_at', '<', $booking->end_at)->where('end_at', '>', $booking->start_at)->orderBy('start_at')->get();
     }
 
     /**
@@ -597,8 +622,32 @@ class BookingService
     public function waitingDeadline(?CarbonImmutable $from = null, ?Spa $spa = null): CarbonImmutable
     {
         $hours = $spa?->waitingTtlHours() ?? (float) config('hl.waiting_ttl_hours');
+        $from ??= CarbonImmutable::now();
+        $minutes = (int) round(60 * $hours);
+        if (! $spa?->managedByAdmin()) {
+            return $from->addMinutes($minutes);
+        }
 
-        return ($from ?? CarbonImmutable::now())->addMinutes((int) round(60 * $hours));
+        // Demandes décidées par HammamLuxury : le délai ne court que pendant les heures de service (config hl.admin_hours).
+        [$open, $close] = config('hl.admin_hours');
+        $t = $from;
+        while ($minutes > 0) {
+            $dayOpen = $t->setTime($open, 0);
+            $dayClose = $t->setTime($close, 0);
+            if ($t < $dayOpen) {
+                $t = $dayOpen;
+            } elseif ($t >= $dayClose) {
+                $t = $t->addDay()->setTime($open, 0);
+
+                continue;
+            }
+            $avail = (int) $t->diffInMinutes($dayClose, false);
+            $use = min($avail, $minutes);
+            $t = $t->addMinutes($use);
+            $minutes -= $use;
+        }
+
+        return $t;
     }
 
     /**
@@ -641,7 +690,7 @@ class BookingService
         if ($start <= $now) {
             throw BookingException::make('too_soon', 'start_passed', [], 409);
         }
-        if ($enforceLead && $start < $now->addMinutes($spa->minLead())) {
+        if ($enforceLead && $start < $now->addMinutes($spa->minLead())->floorMinute()) {
             throw BookingException::make('too_soon', 'too_soon', ['minutes' => $spa->minLead()], 409);
         }
     }
@@ -678,6 +727,10 @@ class BookingService
     /** Une réservation en attente doit conserver l'ensemble de ses allocations, pas seulement une ligne. */
     private function assertAllocationsIntact(Booking $booking): void
     {
+        if ($booking->spa->isReferenced()) {
+            return; // aucune ressource modélisée : la disponibilité est vérifiée avec l'établissement
+        }
+
         $expected = [];
         $actual = [];
         $needs = $this->needsForQuote($booking->spa, CarbonImmutable::instance($booking->start_at), $booking->quote ?? []);

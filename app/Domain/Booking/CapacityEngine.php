@@ -50,6 +50,12 @@ class CapacityEngine
             }
             $steps = $treatment->steps->values();
             if ($steps->isEmpty()) {
+                if ($spa->isReferenced() && (int) $treatment->duration_min > 0) {
+                    $end = $start->addMinutes((int) $treatment->duration_min);
+                    $needs[] = ['start' => $start, 'end' => $end, 'treatment_id' => $treatment->id, 'label' => $treatment->tr('name'), 'participant_no' => (int) ($item['participant_no'] ?? 0), 'type_id' => 0, 'type_slug' => 'referenced', 'mode' => 'unit', 'party' => $party];
+
+                    continue;
+                }
                 throw BookingException::make('no_steps', 'treatment_no_resources', ['name' => $treatment->tr('name')]);
             }
             // Minutes d'extras : rattachées à l'étape de leur type de ressource (ex. rhassoul dans le hammam), sinon à la dernière étape.
@@ -311,6 +317,10 @@ class CapacityEngine
             return ['ok' => false, 'allocations' => [], 'errors' => [__($spa->hours->isEmpty() ? 'booking.not_configured' : 'booking.closed')]];
         }
 
+        if ($spa->isReferenced()) {
+            return $result; // demande simple : horaires d'ouverture seulement, disponibilité vérifiée avec l'établissement
+        }
+
         $blocks = $this->blocksBetween($spa, $winS, $winE);
         $buffers = $this->bufferByResource($spa);
         $allocs = $this->activeAllocations($spa, $winS, $winE, $excludeBooking);
@@ -409,7 +419,7 @@ class CapacityEngine
     public function availability(Spa $spa, string $day, array $items, ?int $step = null, ?CarbonImmutable $notBefore = null): array
     {
         $step = $step ?: $spa->slotStep();
-        $notBefore ??= CarbonImmutable::now()->addMinutes($spa->minLead());
+        $notBefore ??= CarbonImmutable::now()->addMinutes($spa->minLead())->floorMinute();
         $d0 = CarbonImmutable::parse($day)->startOfDay();
         if ($spa->hours->isEmpty()) {
             return ['times' => [], 'reason' => __('booking.not_configured')];

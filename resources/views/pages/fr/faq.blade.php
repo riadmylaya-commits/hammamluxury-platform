@@ -21,7 +21,7 @@
 
 <h2>Avis et confiance</h2>
 <details><summary>Qui peut laisser un avis ?</summary><p>Uniquement les clients dont la prestation a réellement eu lieu, sur invitation reçue le lendemain. Les avis sont relus avant publication et signalés comme vérifiés.</p></details>
-<details><summary>Comment les établissements sont-ils sélectionnés ?</summary><p>Chaque partenaire fournit ses informations légales, ses autorisations et au moins dix photos ; sa fiche est vérifiée par notre équipe avant d’être publiée.</p></details>
+<details><summary>Comment les établissements sont-ils sélectionnés ?</summary><p>Deux cas existent. Les <b>établissements partenaires</b> ont signé un accord avec HammamLuxury : ils fournissent leurs informations, leurs photos et gèrent leurs disponibilités. Les <b>établissements référencés</b> sont présentés à partir de leurs informations publiques (site officiel, fiche Google), signalées comme telles sur la fiche : HammamLuxury vérifie chaque demande directement auprès de l’établissement avant de la confirmer. Dans les deux cas, la fiche est contrôlée par notre équipe avant publication.</p></details>
 
 <h2>Partenaires</h2>
 <details><summary>Je gère un hammam ou un spa : comment rejoindre HammamLuxury ?</summary><p>Rendez-vous sur <a href="{{ route('filament.partner.auth.register') }}">Référencer mon établissement</a>. Vous décrivez votre établissement, vos soins, vos ressources et vos horaires ; après validation, vous gérez vos réservations depuis un espace simple et gratuit. HammamLuxury se rémunère par une commission sur les réservations réalisées.</p></details>

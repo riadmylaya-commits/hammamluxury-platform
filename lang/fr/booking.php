@@ -13,6 +13,7 @@ return [
     'first_checked' => 'Premier horaire contrôlé : :errors',
     'no_slot_today' => 'Aucun horaire ne permet de terminer cette prestation pendant les heures d’ouverture ce jour-là. Choisissez une autre date, moins de personnes ou une prestation plus courte.',
     'busy' => 'L’établissement traite une autre demande, merci de réessayer dans quelques secondes.',
+    'spa_check_required' => 'Indiquez la vérification faite auprès de l’établissement (interlocuteur, heure) avant de confirmer une demande sur une fiche référencée.',
     'too_soon' => 'Ce créneau est trop proche : réservez au moins :minutes minutes à l’avance.',
     'invalid_datetime' => 'Date ou heure invalide.',
     'intent_expired' => 'Votre sélection a expiré, merci de choisir à nouveau votre créneau.',

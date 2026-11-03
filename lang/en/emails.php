@@ -2,22 +2,30 @@
 
 return [
     'created' => [
+        'admin' => ['subject' => 'New request :ref to check', 'title' => 'New request :ref to check with :spa', 'intro' => 'A new request has arrived for :spa (listing managed by HammamLuxury). Call the venue (:phone · WhatsApp :whatsapp) to check availability, treatment and price, then accept or decline the request in the admin panel.', 'deadline' => 'Without a decision before :until (:hours h during service hours), the request will expire automatically and the customer will be notified.'],
+        'client_referenced' => ['subject' => 'Booking request :ref — :spa', 'title' => 'Your request :ref has been received', 'intro' => 'Thank you :name. HammamLuxury is checking availability with :spa and will confirm by e-mail as soon as possible. Nothing is due before confirmation.'],
         'client' => ['subject' => 'Booking request :ref — :spa', 'title' => 'Your request :ref is recorded', 'intro' => 'Thank you :name. :spa will confirm your request shortly. You will receive an e-mail as soon as they reply.'],
         'partner' => ['subject' => 'New request :ref', 'title' => 'New booking request :ref', 'intro' => 'A new request has arrived for :spa. Log in to your partner area to accept or decline it.', 'deadline' => 'Without a reply within :hours h, the request will expire automatically and the slot will be released.'],
     ],
     'confirmed' => [
+        'admin' => ['subject' => 'Booking :ref confirmed', 'title' => 'Booking :ref confirmed', 'intro' => 'You confirmed this booking for :spa after checking with the venue.'],
         'client' => ['subject' => 'Booking confirmed :ref — :spa', 'title' => 'Your booking :ref is confirmed', 'intro' => 'Good news :name, :spa has confirmed your booking. The venue contact details are available on your tracking page.'],
         'partner' => ['subject' => 'Booking :ref confirmed', 'title' => 'Booking :ref confirmed', 'intro' => 'You confirmed this booking for :spa.'],
     ],
     'declined' => [
+        'admin' => ['subject' => 'Request :ref not confirmed', 'title' => 'Request :ref not confirmed', 'intro' => 'You declined this request for :spa. The customer has been notified.'],
+        'client_referenced' => ['subject' => 'Request :ref not confirmed — :spa', 'title' => 'Your request :ref could not be confirmed', 'intro' => 'We are sorry :name, :spa could not confirm this request. Nothing is due; you can choose another time or another venue on HammamLuxury.'],
         'client' => ['subject' => 'Booking :ref declined — :spa', 'title' => 'Your request :ref could not be accepted', 'intro' => 'We are sorry :name, :spa cannot honour this request. You can pick another time or another venue.'],
         'partner' => ['subject' => 'Booking :ref declined', 'title' => 'Booking :ref declined', 'intro' => 'You declined this request for :spa. The slot has been released.'],
     ],
     'cancelled' => [
+        'admin' => ['subject' => 'Booking :ref cancelled', 'title' => 'Booking :ref cancelled', 'intro' => 'Booking :ref for :spa has been cancelled. Remember to inform the venue if you had confirmed it by phone.'],
         'client' => ['subject' => 'Booking :ref cancelled — :spa', 'title' => 'Booking :ref cancelled', 'intro' => 'Your booking at :spa is cancelled.'],
         'partner' => ['subject' => 'Booking :ref cancelled', 'title' => 'Booking :ref cancelled', 'intro' => ':name’s booking at :spa is cancelled. The slot has been released.'],
     ],
     'expired' => [
+        'admin' => ['subject' => 'Request :ref expired', 'title' => 'Request :ref expired without a decision', 'intro' => 'The request from :name for :spa expired without a decision in the admin panel. The customer has been notified.'],
+        'client_referenced' => ['subject' => 'Request :ref expired — :spa', 'title' => 'Your request :ref has expired', 'intro' => 'Sorry :name, we could not confirm your request for :spa within the expected time. Nothing is due; you can submit a new request or choose another venue.'],
         'client' => ['subject' => 'Request :ref expired — :spa', 'title' => 'Your request :ref has expired', 'intro' => 'Sorry :name, :spa did not reply in time. Nothing is due; you can renew your request or choose another venue.'],
         'partner' => ['subject' => 'Request :ref expired', 'title' => 'Request :ref expired without reply', 'intro' => ':name’s request for :spa expired without a reply. The slot has been released. Please handle requests faster to avoid losing customers.'],
     ],
