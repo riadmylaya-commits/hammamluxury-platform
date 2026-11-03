@@ -1,5 +1,5 @@
 <x-mail::message>
-# {{ __('emails.'.$event.'.'.$textAudience.'.title', ['ref' => $booking->reference]) }}
+# {{ __('emails.'.$event.'.'.$textAudience.'.title', ['ref' => $booking->reference, 'spa' => $booking->spa->name]) }}
 
 {{ __('emails.'.$event.'.'.$textAudience.'.intro', ['spa' => $booking->spa->name, 'name' => $booking->customerName(), 'phone' => $booking->spa->phone, 'whatsapp' => $booking->spa->whatsapp ?: $booking->spa->phone]) }}
 

@@ -702,6 +702,10 @@ class BookingService
     /** Une réservation en attente doit conserver l'ensemble de ses allocations, pas seulement une ligne. */
     private function assertAllocationsIntact(Booking $booking): void
     {
+        if ($booking->spa->isReferenced()) {
+            return; // aucune ressource modélisée : la disponibilité est vérifiée avec l'établissement
+        }
+
         $expected = [];
         $actual = [];
         $needs = $this->needsForQuote($booking->spa, CarbonImmutable::instance($booking->start_at), $booking->quote ?? []);

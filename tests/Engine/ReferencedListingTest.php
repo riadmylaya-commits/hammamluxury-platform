@@ -37,6 +37,10 @@ class ReferencedListingTest extends BookingFlowTestCase
 
         $b2 = $this->book('référencé 2', '10:00', [[$this->hm->slug, 2]], true, 'waiting');
         $this->assertSame('waiting', $b2->status, 'Pas de blocage de capacité : une 2e demande au même créneau est acceptée (vérification avec l’établissement)');
+
+        $svc = app(BookingService::class);
+        $this->assertSame('confirmed', $svc->accept($b->fresh(), 'admin')->status, 'Acceptation Admin sans ressources modélisées');
+        $this->assertSame('declined', $svc->decline($b2->fresh(), 'admin', 'treatment_unavailable')->status, 'Refus Admin sans ressources modélisées');
     }
 
     public function test_checklist_ignores_resources_and_staff(): void
