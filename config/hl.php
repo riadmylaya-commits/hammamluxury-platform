@@ -20,6 +20,8 @@ return [
     // Pas de la grille de créneaux et délai minimum avant le début d'une prestation.
     'slot_step_minutes' => (int) env('HL_SLOT_STEP_MINUTES', 30),
     'min_lead_minutes' => (int) env('HL_MIN_LEAD_MINUTES', 60),
+    // Fiche référencée : marge ajoutée au délai de réponse pour que la vérification tienne avant le rendez-vous.
+    'referenced_lead_margin_minutes' => (int) env('HL_REFERENCED_LEAD_MARGIN_MINUTES', 30),
 
     // Nombre maximal de participants par réservation.
     'max_participants' => 20,

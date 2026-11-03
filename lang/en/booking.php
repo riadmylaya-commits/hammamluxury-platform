@@ -13,6 +13,7 @@ return [
     'first_checked' => 'First time checked: :errors',
     'no_slot_today' => 'No time allows this treatment to finish within opening hours that day. Choose another date, fewer people or a shorter treatment.',
     'busy' => 'The venue is processing another request, please retry in a few seconds.',
+    'spa_check_required' => 'Record the check made with the establishment (contact person, time) before confirming a request on a referenced listing.',
     'too_soon' => 'This time is too close: book at least :minutes minutes ahead.',
     'invalid_datetime' => 'Invalid date or time.',
     'intent_expired' => 'Your selection has expired, please choose your time again.',

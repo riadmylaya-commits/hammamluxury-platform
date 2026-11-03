@@ -15,6 +15,7 @@ use App\Models\BookingDecline;
 use App\Models\CancellationRequest;
 use App\Models\Spa;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -149,6 +150,10 @@ class BookingService
             if (! $quote['ok']) {
                 throw new BookingException('quote', implode(' ', $quote['errors']));
             }
+            if ($current->isReferenced()) {
+                // La vérification avec l'établissement doit tenir avant le rendez-vous : l'échéance de réponse précède toujours le début.
+                $this->assertFutureStart($current, $start, enforceLead: true);
+            }
 
             return $this->insert($current, $start, $quote, $customer, $status, meta: $meta, actor: $actor);
         });
@@ -261,24 +266,44 @@ class BookingService
         }
     }
 
-    public function accept(Booking $booking, string $actor = 'partner', ?string $note = null): Booking
+    /**
+     * @param  string|null  $spaCheck  Fiche référencée : attestation obligatoire de la vérification faite auprès de
+     *                                 l'établissement (interlocuteur, heure) ; journalisée avec les réservations déjà
+     *                                 confirmées sur le même créneau.
+     */
+    public function accept(Booking $booking, string $actor = 'partner', ?string $note = null, ?string $spaCheck = null): Booking
     {
         $this->assertMayDecide($booking, $actor);
+        $spaCheck = trim((string) $spaCheck) !== '' ? trim($spaCheck) : null;
 
-        return $this->mutations->forBooking($booking, function (Booking $current) use ($actor, $note): Booking {
+        return $this->mutations->forBooking($booking, function (Booking $current) use ($actor, $note, $spaCheck): Booking {
             if (! $current->isWaiting()) {
                 throw BookingException::make('status', 'not_waiting', [], 409);
             }
             if ($current->expires_at && $current->expires_at->lte(now())) {
                 throw BookingException::make('waiting_expired', 'waiting_expired', [], 409);
             }
+            if ($current->spa->isReferenced() && $spaCheck === null) {
+                throw BookingException::make('spa_check', 'spa_check_required', [], 422);
+            }
             $this->assertFutureStart($current->spa, CarbonImmutable::instance($current->start_at));
             $this->assertAllocationsIntact($current);
+            $overlaps = $current->spa->isReferenced() ? $this->confirmedOverlaps($current)->pluck('reference')->all() : [];
             $this->transition($current, 'confirmed', $actor, ['confirmed_at' => now(), 'expires_at' => null, 'partner_note' => $note, 'contact_revealed_at' => now()]);
             $current->log('contact:revealed', 'system', ['fields' => ['phone', 'whatsapp']]);
+            if ($spaCheck !== null) {
+                $current->log('spa:verified', $actor, ['note' => $spaCheck, 'overlaps' => $overlaps]);
+            }
 
             return $current;
         });
+    }
+
+    /** Réservations déjà confirmées du même établissement qui chevauchent celle-ci (fiche référencée : à vérifier avec le spa). */
+    public function confirmedOverlaps(Booking $booking): Collection
+    {
+        return Booking::where('spa_id', $booking->spa_id)->where('id', '!=', $booking->id)->where('status', 'confirmed')
+            ->where('start_at', '<', $booking->end_at)->where('end_at', '>', $booking->start_at)->orderBy('start_at')->get();
     }
 
     /**

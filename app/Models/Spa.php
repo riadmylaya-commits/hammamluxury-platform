@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Domain\Booking\BookingService;
 use App\Domain\Catalogue\CapacityReadiness;
 use App\Domain\Catalogue\Presentation;
 use App\Domain\Geo\WebsiteUrl;
 use App\Models\Concerns\Translatable;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
@@ -305,9 +307,21 @@ class Spa extends Model
         return $this->slot_step_minutes ?: (int) config('hl.slot_step_minutes');
     }
 
+    /**
+     * Délai minimal avant le début d'une prestation. Pour une fiche référencée, le créneau doit laisser le temps de la
+     * vérification avec l'établissement : jamais avant l'échéance de réponse (heures de service) + marge.
+     */
     public function minLead(): int
     {
-        return $this->min_lead_minutes ?? (int) config('hl.min_lead_minutes');
+        $lead = $this->min_lead_minutes ?? (int) config('hl.min_lead_minutes');
+        if ($this->isReferenced()) {
+            $now = CarbonImmutable::now();
+            $deadline = app(BookingService::class)->waitingDeadline($now, $this)
+                ->addMinutes((int) config('hl.referenced_lead_margin_minutes'));
+            $lead = max($lead, (int) ceil($now->diffInMinutes($deadline, false)));
+        }
+
+        return $lead;
     }
 
     /** Plages d'ouverture d'un jour donné, en minutes depuis minuit : [[opens, closes], …]. */

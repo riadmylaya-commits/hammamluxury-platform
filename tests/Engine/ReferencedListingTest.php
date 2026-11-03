@@ -2,9 +2,11 @@
 
 namespace Tests\Engine;
 
+use App\Domain\Booking\BookingException;
 use App\Domain\Booking\BookingService;
 use App\Domain\Booking\CapacityEngine;
 use App\Domain\Catalogue\PublicationChecklist;
+use App\Filament\Shared\BookingActions;
 use Carbon\CarbonImmutable;
 
 /** Établissement référencé : demandes sans ressources modélisées, commission nulle, délai en heures de service, annulation « à confirmer ». */
@@ -39,7 +41,16 @@ class ReferencedListingTest extends BookingFlowTestCase
         $this->assertSame('waiting', $b2->status, 'Pas de blocage de capacité : une 2e demande au même créneau est acceptée (vérification avec l’établissement)');
 
         $svc = app(BookingService::class);
-        $this->assertSame('confirmed', $svc->accept($b->fresh(), 'admin')->status, 'Acceptation Admin sans ressources modélisées');
+        try {
+            $svc->accept($b->fresh(), 'admin');
+            $this->fail('Fiche référencée : aucune confirmation sans attestation de vérification auprès de l’établissement');
+        } catch (BookingException $e) {
+            $this->assertSame(__('booking.spa_check_required'), $e->getMessage());
+        }
+        $this->assertSame('confirmed', $svc->accept($b->fresh(), 'admin', null, 'Appel 14 h 20, accueil : OK 2 pers.')->status, 'Acceptation Admin sans ressources modélisées');
+        $this->assertSame(1, $b->fresh()->events()->where('type', 'spa:verified')->count(), 'Vérification journalisée');
+        $this->assertSame([$b->reference], $svc->confirmedOverlaps($b2->fresh())->pluck('reference')->all(), 'La 2e demande voit la 1re déjà confirmée sur le créneau');
+        $this->assertStringContainsString($b->reference, BookingActions::acceptHelp($b2->fresh()), 'Avertissement double confirmation dans l’Admin');
         $this->assertSame('declined', $svc->decline($b2->fresh(), 'admin', 'treatment_unavailable')->status, 'Refus Admin sans ressources modélisées');
     }
 
@@ -74,5 +85,23 @@ class ReferencedListingTest extends BookingFlowTestCase
         $this->spa->update(['listing_type' => 'partner']);
         $av = app(CapacityEngine::class)->availability($this->reload(), $this->day, [['treatment' => $this->hm->id, 'party' => 2]]);
         $this->assertSame([], $av['times'], 'Sans ressources, une fiche partenaire n’a aucun créneau');
+    }
+
+    public function test_last_minute_requests_leave_time_for_verification(): void
+    {
+        config(['hl.admin_hours' => [9, 21], 'hl.referenced_lead_margin_minutes' => 30]);
+        CarbonImmutable::setTestNow(CarbonImmutable::parse($this->day)->subDay()->setTime(23, 15));
+        try {
+            $spa = $this->reload();
+            $this->assertSame(735, $spa->minLead(), 'Nuit : échéance 11 h le lendemain + 30 min de marge');
+            $this->book('dernière minute', '10:00', [[$this->hm->slug, 1]], false);
+            $b = $this->book('après vérification', '11:30', [[$this->hm->slug, 1]], true, 'waiting');
+            $this->assertSame($this->day.' 11:00', $b->expires_at->format('Y-m-d H:i'), 'Expiration = échéance de réponse, toujours avant le rendez-vous');
+            $this->assertTrue($b->expires_at->lt($b->start_at));
+            $spa->update(['listing_type' => 'partner']);
+            $this->assertLessThan(735, $this->reload()->minLead(), 'Fiche partenaire : délai minimal inchangé (pas de délai de vérification)');
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
     }
 }
