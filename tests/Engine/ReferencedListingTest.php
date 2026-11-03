@@ -90,10 +90,12 @@ class ReferencedListingTest extends BookingFlowTestCase
     public function test_last_minute_requests_leave_time_for_verification(): void
     {
         config(['hl.admin_hours' => [9, 21], 'hl.referenced_lead_margin_minutes' => 30]);
-        CarbonImmutable::setTestNow(CarbonImmutable::parse($this->day)->subDay()->setTime(23, 15));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse($this->day)->subDay()->setTime(23, 15, 42));
         try {
             $spa = $this->reload();
             $this->assertSame(735, $spa->minLead(), 'Nuit : échéance 11 h le lendemain + 30 min de marge');
+            $av = $this->engine->availability($spa, $this->day, $this->quotes->fromRequest($spa, ['participants' => [['participant_no' => 1, 'treatment' => $this->hm->slug, 'party' => 1]]])['items']);
+            $this->assertSame('11:30', $av['times'][0] ?? null, 'Premier créneau proposé = échéance + marge, à la minute près (secondes ignorées) : '.$av['reason']);
             $this->book('dernière minute', '10:00', [[$this->hm->slug, 1]], false);
             $b = $this->book('après vérification', '11:30', [[$this->hm->slug, 1]], true, 'waiting');
             $this->assertSame($this->day.' 11:00', $b->expires_at->format('Y-m-d H:i'), 'Expiration = échéance de réponse, toujours avant le rendez-vous');

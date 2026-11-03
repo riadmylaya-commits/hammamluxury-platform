@@ -419,7 +419,7 @@ class CapacityEngine
     public function availability(Spa $spa, string $day, array $items, ?int $step = null, ?CarbonImmutable $notBefore = null): array
     {
         $step = $step ?: $spa->slotStep();
-        $notBefore ??= CarbonImmutable::now()->addMinutes($spa->minLead());
+        $notBefore ??= CarbonImmutable::now()->addMinutes($spa->minLead())->floorMinute();
         $d0 = CarbonImmutable::parse($day)->startOfDay();
         if ($spa->hours->isEmpty()) {
             return ['times' => [], 'reason' => __('booking.not_configured')];

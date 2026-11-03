@@ -46,7 +46,7 @@ class BookingService
             throw new BookingException('quote', implode(' ', $quote['errors']));
         }
         $start = $this->parseStart($req['date'] ?? '', $req['time'] ?? '');
-        if ($start < CarbonImmutable::now()->addMinutes($spa->minLead())) {
+        if ($start < CarbonImmutable::now()->addMinutes($spa->minLead())->floorMinute()) {
             throw BookingException::make('too_soon', 'too_soon', ['minutes' => $spa->minLead()]);
         }
         $plan = $this->engine->check($spa, $start, $quote['items']);
@@ -690,7 +690,7 @@ class BookingService
         if ($start <= $now) {
             throw BookingException::make('too_soon', 'start_passed', [], 409);
         }
-        if ($enforceLead && $start < $now->addMinutes($spa->minLead())) {
+        if ($enforceLead && $start < $now->addMinutes($spa->minLead())->floorMinute()) {
             throw BookingException::make('too_soon', 'too_soon', ['minutes' => $spa->minLead()], 409);
         }
     }
