@@ -212,7 +212,7 @@ class BookingFlow extends Component
 
             return;
         }
-        $av = app(CapacityEngine::class)->availability($this->spa, $this->date, $quote['items'], null, CarbonImmutable::now()->addMinutes($this->spa->minLead()));
+        $av = app(CapacityEngine::class)->availability($this->spa, $this->date, $quote['items']);
         $this->slots = $av['times'];
         $this->slotsReason = $av['reason'];
     }
