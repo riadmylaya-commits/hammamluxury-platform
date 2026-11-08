@@ -122,7 +122,7 @@ return [
     'done_title' => 'Request sent!',
     'done_title_instant' => 'Booking confirmed!',
     'timeline_instant' => ['sent' => 'Booking recorded', 'confirm' => 'Instant confirmation'],
-    'done_sub' => 'A confirmation e-mail has been sent to :email.',
+    'done_sub' => 'You will receive a confirmation e-mail at :email. Please also check your spam folder.',
     'timeline' => ['sent' => 'Request sent', 'confirm' => 'Confirmation by the venue', 'visit' => 'Your treatment'],
     'spa_contact' => 'Address & contact',
     'cancel_booking' => 'Cancel my booking',
@@ -192,7 +192,7 @@ return [
     'proposal_refuse' => 'I refuse, I keep my date',
     'proposal_note' => 'If you accept, your booking is moved immediately. If you refuse, HammamLuxury will take the final decision on the venue’s request.',
     'proposal_refused_answer' => 'you refused the proposed new date',
-    'proposal_accepted_ok' => 'Your booking has been moved to the new date. A confirmation e-mail has been sent to you.',
+    'proposal_accepted_ok' => 'Your booking has been moved to the new date. You will receive a confirmation e-mail.',
 
     // Step C — messaging
     'messages_title' => 'Messages with the establishment',

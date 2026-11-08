@@ -124,7 +124,7 @@ return [
     'done_title' => 'Demande envoyée !',
     'done_title_instant' => 'Réservation confirmée !',
     'timeline_instant' => ['sent' => 'Réservation enregistrée', 'confirm' => 'Confirmation immédiate'],
-    'done_sub' => 'Un e-mail de confirmation a été envoyé à :email.',
+    'done_sub' => 'Vous recevrez un e-mail de confirmation à :email. Pensez à vérifier vos courriers indésirables.',
     'timeline' => ['sent' => 'Demande envoyée', 'confirm' => 'Confirmation par l’établissement', 'visit' => 'Votre soin'],
     'spa_contact' => 'Adresse & contact',
     'cancel_booking' => 'Annuler ma réservation',
@@ -194,7 +194,7 @@ return [
     'proposal_refuse' => 'Je refuse, je conserve ma date',
     'proposal_note' => 'Si vous acceptez, votre réservation est déplacée immédiatement. Si vous refusez, HammamLuxury prendra la décision finale sur la demande de l’établissement.',
     'proposal_refused_answer' => 'vous avez refusé la nouvelle date proposée',
-    'proposal_accepted_ok' => 'Votre réservation a été déplacée à la nouvelle date. Un e-mail de confirmation vous a été envoyé.',
+    'proposal_accepted_ok' => 'Votre réservation a été déplacée à la nouvelle date. Vous recevrez un e-mail de confirmation.',
 
     // Étape C — messagerie
     'messages_title' => 'Messagerie avec l’établissement',
