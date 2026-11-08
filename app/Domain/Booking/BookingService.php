@@ -641,7 +641,8 @@ class BookingService
 
                 continue;
             }
-            $avail = (int) $t->diffInMinutes($dayClose, false);
+            // Carbon renvoie une durée fractionnaire : arrondir au supérieur, sinon la dernière minute avant la fermeture donne 0 et la boucle ne progresse plus.
+            $avail = max(1, (int) ceil($t->diffInMinutes($dayClose, false)));
             $use = min($avail, $minutes);
             $t = $t->addMinutes($use);
             $minutes -= $use;
