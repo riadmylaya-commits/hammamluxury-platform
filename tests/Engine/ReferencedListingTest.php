@@ -106,4 +106,13 @@ class ReferencedListingTest extends BookingFlowTestCase
             CarbonImmutable::setTestNow();
         }
     }
+
+    public function test_waiting_deadline_terminates_in_last_minute_before_close(): void
+    {
+        config(['hl.admin_hours' => [9, 21]]);
+        $from = CarbonImmutable::parse($this->day)->setTime(20, 59, 30);
+        $deadline = app(BookingService::class)->waitingDeadline($from, $this->reload());
+        $next = CarbonImmutable::parse($this->day)->addDay();
+        $this->assertTrue($deadline->between($next->setTime(10, 59), $next->setTime(11, 0)), 'Dernière minute avant la fermeture : le délai se termine (pas de boucle) et reporte au lendemain ('.$deadline.')');
+    }
 }
