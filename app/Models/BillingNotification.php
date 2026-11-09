@@ -22,6 +22,7 @@ class BillingNotification extends Model
         'queued_at' => 'datetime',
         'sent_at' => 'datetime',
         'failed_at' => 'datetime',
+        'alerted_at' => 'datetime',
     ];
 
     public function notifiable(): MorphTo
