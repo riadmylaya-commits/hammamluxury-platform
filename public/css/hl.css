@@ -167,3 +167,5 @@ body.lb-open{overflow:hidden}
 .cat-h{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b6257;margin:18px 0 8px}
 .cat-h:first-child,#treatment-list h2+.cat-h{margin-top:4px}
 .card>.cat-h{padding:14px 16px 0}.card>.cat-h+.treat{border-top:0}
+/* Étape 1 : le total mobile reste dans le flux (sous « Continuer ») pour ne jamais masquer le bouton ni les extras ; collant aux étapes 2 et 3. */
+.stickytot.inflow{position:static;margin:14px 0 0;border:1px solid var(--line);border-radius:12px}
