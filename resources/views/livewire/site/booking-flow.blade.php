@@ -144,7 +144,7 @@
         <div class="mini-recap">
             <div class="mini-h"><b>{{ __('ui.mini_recap') }}</b><span class="chip grey">{{ trans_choice('ui.persons', $quote['party'], ['n' => $quote['party']]) }}</span></div>
             @foreach ($sum as $i => $st)
-                @if ($st)<div class="mini-l"><span>@if ($advanced){{ $i + 1 }}. @endif{{ $st['short_name'] }}@if (! $advanced && $quote['party'] > 1) ×{{ $quote['party'] }}@endif</span><b>{{ $st['duration_label'] }}</b></div>@endif
+                @if ($st)<div class="mini-l"><span>@if ($advanced){{ $i + 1 }}. @endif{{ $st['short_name'] }}@if (! $advanced && $quote['party'] > 1) <span class="xs muted">{{ $st['fixed_party'] ? __('ui.for_party', ['n' => $quote['party']]) : '×'.$quote['party'] }}</span>@endif</span><b>{{ $st['duration_label'] }}</b></div>@endif
             @endforeach
             <div class="mini-t"><span>{{ __('ui.recap_total') }}</span><b>{{ $fmt($quote['total']) }}</b></div>
         </div>
