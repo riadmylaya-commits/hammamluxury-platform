@@ -3,7 +3,8 @@
     <dt>{{ __('ui.recap_spa') }}</dt><dd>{{ $spa->name }}</dd>
     @foreach ($quote['lines'] as $l)
         <dt>{{ count($quote['lines']) > 1 ? __('ui.person_n', ['n' => $l['participant_no']]) : __('ui.recap_treatment') }}</dt>
-        <dd>{{ $l['treatment_name'] }}@if ($l['party'] > 1) ×{{ $l['party'] }}@endif<br><span class="xs muted">{{ __('ui.formula.'.$l['formula']) }} · {{ $fmt($l['base_price']) }}</span>
+        @php($fx = ($treatments ?? collect())->firstWhere('id', $l['treatment_id'])['fixed_party'] ?? null)
+        <dd>{{ $l['treatment_name'] }}@if ($l['party'] > 1) <span class="xs muted">{{ $fx ? __('ui.for_party', ['n' => $l['party']]) : '×'.$l['party'] }}</span>@endif<br><span class="xs muted">{{ __('ui.formula.'.$l['formula']) }} · {{ $fmt($l['base_price']) }}</span>
             @foreach ($l['extras'] as $e)<br><span class="xs muted">+ {{ $e['name'] }}@if ($e['qty'] > 1) ×{{ $e['qty'] }}@endif · {{ $fmt($e['price']) }}</span>@endforeach</dd>
     @endforeach
     @if ($date)<dt>{{ __('ui.recap_date') }}</dt><dd>{{ \Carbon\CarbonImmutable::parse($date)->locale(app()->getLocale())->isoFormat('ddd D MMM YYYY') }}</dd>@endif

@@ -219,7 +219,7 @@
 
 {{-- ===== Récapitulatif ===== --}}
 @if ($quote['ok'])
-@php($recap = view('livewire.site._recap', ['quote' => $quote, 'spa' => $spa, 'date' => $date, 'time' => $time, 'fmt' => $fmt])->render())
+@php($recap = view('livewire.site._recap', ['quote' => $quote, 'spa' => $spa, 'date' => $date, 'time' => $time, 'fmt' => $fmt, 'treatments' => $treatments])->render())
 <aside class="card recap desk">{!! $recap !!}</aside>
 <div @class(['stickytot', 'mobile-only', 'inflow' => $step === 1])>
     <details><summary class="row" style="list-style:none;cursor:pointer"><div class="sp"><b>{{ $fmt($quote['total']) }}</b> <span class="muted small">· {{ $quote['party'] }} pers. · {{ $quote['duration_min'] }} {{ __('ui.min') }}</span></div><span class="chip grey">{{ __('ui.recap') }}</span></summary>

@@ -93,7 +93,9 @@ class TreatmentOrderAndSelectionTest extends BookingFlowTestCase
         $duo->update(['party_min' => 2, 'party_max' => 2, 'price_solo' => null]);
 
         // Arrivée depuis la fiche (?soin=) : le nombre de personnes se cale d'emblée sur le forfait.
-        Livewire::withQueryParams(['soin' => $duo->id])->test(BookingFlow::class, ['spa' => $this->spa->fresh()])->assertSet('party', 2)->assertSee('900 MAD');
+        // Récapitulatifs (mini et latéral) : « Pour 2 personnes », jamais « ×2 » qui laisserait croire à deux forfaits.
+        Livewire::withQueryParams(['soin' => $duo->id])->test(BookingFlow::class, ['spa' => $this->spa->fresh()])->assertSet('party', 2)->assertSee('900 MAD')
+            ->assertSee('Pour 2 personnes')->assertDontSee('×2');
 
         $c = Livewire::test(BookingFlow::class, ['spa' => $this->spa->fresh()])
             ->call('selectTreatment', $duo->id)->assertSet('party', 2)->assertSee('900 MAD')->assertSeeHtml('<b style="font-size:17px">Massage Duo</b>')
