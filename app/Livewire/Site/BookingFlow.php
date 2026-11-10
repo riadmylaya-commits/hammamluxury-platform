@@ -159,7 +159,7 @@ class BookingFlow extends Component
             }
         } else {
             $this->treatment = $this->participants[0]['treatment'] ?? $this->treatment;
-            $this->extras = [];
+            $this->extras = $this->participants[0]['extras'] ?? [];
             $this->clampParty();
         }
     }

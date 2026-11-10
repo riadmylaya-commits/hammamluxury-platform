@@ -59,10 +59,11 @@ class TreatmentOrderAndSelectionTest extends BookingFlowTestCase
         // Un identifiant inconnu est ignoré.
         $c->call('selectTreatment', 999999)->assertSet('treatment', $this->hm->id);
 
-        // Plusieurs personnes avec soins différents : toujours possible, listes groupées par catégorie.
+        // Plusieurs personnes avec soins différents : toujours possible, listes groupées par catégorie ; les extras de la personne 1 sont repris au retour en mode simple.
         $c->call('changeParty', 1)->assertSet('party', 2)->assertSee('Choisir un soin différent pour chaque personne')
             ->call('toggleAdvanced')->assertSet('advanced', true)->assertSee('<optgroup label="Rituels &amp; Packages">', false)->assertSee('Personne 2')->assertSee('Soin de la personne 2')->assertSee('Revenir à un seul soin pour tout le groupe')
-            ->call('toggleAdvanced')->assertSet('advanced', false);
+            ->call('toggleExtra', $this->cr->id, 0)->assertSet('participants.0.extras.'.$this->cr->id, 1)
+            ->call('toggleAdvanced')->assertSet('advanced', false)->assertSet('extras.'.$this->cr->id, 1)->assertSet('party', 2);
 
         // Retour depuis l'étape 2 : sélection conservée, liste toujours repliée.
         $c->call('next')->assertSet('step', 2)->assertSet('error', '')
