@@ -80,8 +80,9 @@ class TreatmentOrderAndSelectionTest extends BookingFlowTestCase
 
         Livewire::test(BookingFlow::class, ['spa' => $this->spa->fresh()])
             ->call('selectTreatment', $solo->id)->assertSet('party', 1)
-            ->call('changeParty', 1)->assertSet('party', 1)
-            ->call('setMode', 'each')->assertSet('advanced', true)->assertSet('party', 2)->assertSee('Personne 2')
+            // « + » sur un soin individuel : passage automatique en « un soin par personne », ce soin pour chacun.
+            ->call('changeParty', 1)->assertSet('party', 2)->assertSet('advanced', true)->assertSet('participants.1.treatment', $solo->id)->assertSee('Personne 2')->assertSee('700 MAD')
+            ->call('changeParty', 1)->assertSet('party', 3)->assertSet('participants.2.treatment', $solo->id)
             ->call('setMode', 'same')->assertSet('advanced', false)->assertSet('party', 1)->assertSet('treatment', $solo->id)
             ->assertSee('350 MAD')->assertSeeHtml('wire:click="next"')->assertDontSeeHtml('wire:click="next" disabled');
     }

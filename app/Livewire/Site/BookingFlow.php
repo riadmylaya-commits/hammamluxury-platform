@@ -146,7 +146,16 @@ class BookingFlow extends Component
 
     public function changeParty(int $delta): void
     {
-        $this->party = max(1, min(config('hl.max_participants'), $this->party + $delta));
+        $wanted = max(1, min(config('hl.max_participants'), $this->party + $delta));
+        $t = $this->advanced ? null : $this->catalogue()->firstWhere('id', $this->treatment);
+        if ($t && $delta > 0 && $wanted > $t['party_max'] && $t['party_min'] <= 1) {
+            // Soin individuel : au-delà de sa capacité, on passe en « un soin par personne » (ce soin pour chacun) au lieu de bloquer le « + ».
+            $this->party = $wanted;
+            $this->toggleAdvanced();
+
+            return;
+        }
+        $this->party = $wanted;
         $this->clampParty();
         $this->syncParticipants();
     }
