@@ -108,6 +108,19 @@ class Presentation
     }
 
     /** 105 → « 1h45 », 60 → « 1h », 45 → « 45 min ». */
+    /** Nom d'affichage sans la durée répétée en fin de libellé (« Rituel 1h45 » → « Rituel ») lorsqu'elle correspond à la durée réelle. */
+    public static function nameWithoutDuration(string $name, int $minutes): string
+    {
+        $stripped = preg_replace_callback('/\s*[-–—(]?\s*(?:(\d{1,2})\s?h\s?(\d{2})?|(\d{1,3})\s?(?:mn|min|minutes))\s*\)?(?=$|\s*\()/iu', function (array $m) use ($minutes): string {
+            $found = isset($m[3]) && $m[3] !== '' ? (int) $m[3] : ((int) $m[1] * 60 + (int) ($m[2] ?? 0));
+
+            return $found === $minutes ? '' : $m[0];
+        }, trim($name), 1);
+        $stripped = trim((string) preg_replace('/\s*\(/', ' (', (string) $stripped), " \t-–—·");
+
+        return $stripped !== '' ? $stripped : $name;
+    }
+
     public static function duration(int $minutes): string
     {
         if ($minutes < 60) {
