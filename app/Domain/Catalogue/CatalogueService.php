@@ -73,9 +73,23 @@ class CatalogueService
     }
 
     /** @return Collection<int, array> prestations actives d'un spa avec formules, étapes et extras */
+    /** Ordre d'affichage des catégories : formules complètes d'abord, puis hammams, massages, visage/corps, autres. */
+    public const CATEGORY_ORDER = ['ritual', 'hammam', 'massage', 'face', 'other'];
+
+    public static function categoryRank(?string $category): int
+    {
+        $rank = array_search((string) $category, self::CATEGORY_ORDER, true);
+
+        return $rank === false ? count(self::CATEGORY_ORDER) : $rank;
+    }
+
+    /** Soins actifs, groupés par catégorie (CATEGORY_ORDER) puis dans l'ordre du catalogue de l'établissement. */
     public function treatments(Spa $spa): Collection
     {
-        return $spa->treatments()->where('status', 'active')->with(['steps.resourceType', 'extras' => fn ($q) => $q->where('status', 'active')->orderBy('id')])->orderBy('sort_order')->get()->map(fn (Treatment $t) => $this->treatment($t));
+        return $spa->treatments()->where('status', 'active')->with(['steps.resourceType', 'extras' => fn ($q) => $q->where('status', 'active')->orderBy('id')])->orderBy('sort_order')->orderBy('id')->get()
+            ->sortBy(fn (Treatment $t) => self::categoryRank($t->category) * 1000000 + (int) $t->sort_order * 100 + $t->id % 100)
+            ->values()
+            ->map(fn (Treatment $t) => $this->treatment($t));
     }
 
     public function treatment(Treatment $t): array

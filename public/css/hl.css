@@ -158,3 +158,12 @@ body.lb-open{overflow:hidden}
 @media (max-width:599px){.rv-crit-sum{grid-template-columns:1fr}}
 
 .rates{display:grid;gap:8px}.opt.rate{align-items:center}.opt.rate .chip.acc{font-weight:700}.notice.warn{background:#fff8ec;border-color:#f1d9a8;color:#6a4a08}@media(min-width:700px){.rates{grid-template-columns:1fr 1fr}}
+
+/* Étape 1 : soin sélectionné, liste repliée, titres de catégories */
+.sel-treat{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1.5px solid var(--brand);border-radius:14px;background:var(--soft)}
+.sel-treat .r{margin-left:auto;text-align:right;flex:none}.sel-treat .r b{display:block;font-size:18px}
+.sel-msg{margin:10px 0 6px;font-size:14px;line-height:1.45}
+.lnk-btn{background:none;border:0;padding:0;color:var(--brand);text-decoration:underline;cursor:pointer;font:inherit}
+.cat-h{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b6257;margin:18px 0 8px}
+.cat-h:first-child,#treatment-list h2+.cat-h{margin-top:4px}
+.card>.cat-h{padding:14px 16px 0}.card>.cat-h+.treat{border-top:0}

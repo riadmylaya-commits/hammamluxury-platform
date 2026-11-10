@@ -35,7 +35,12 @@
             <h2>{{ __('ui.treatments') }}</h2>
             <div class="card">
                 @php($cur = config('hl.currency'))
+                @php($prevCat = null)
                 @foreach ($treatments as $t)
+                    @if ($t['category'] !== $prevCat)
+                        @php($prevCat = $t['category'])
+                        <h3 class="cat-h">{{ __('ui.cat_group.'.$t['category']) }}</h3>
+                    @endif
                     <div @class(['treat', 'featured' => (bool) $t['badge']])>
                         <div class="sp">
                             @if ($t['badge'])<span class="chip badge">★ {{ $t['badge'] }}</span>@endif

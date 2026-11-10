@@ -58,6 +58,12 @@ return [
     'book' => 'Réserver',
     'book_this' => 'Réserver ce soin',
     'choose_treatment' => 'Choisissez un soin',
+    'cat_group' => ['ritual' => 'Rituels & Packages', 'hammam' => 'Hammams & gommages', 'massage' => 'Massages', 'face' => 'Soins du visage et du corps', 'other' => 'Autres prestations'],
+    'selected_msg' => 'Votre soin a bien été sélectionné. Vous pouvez poursuivre votre réservation ou modifier votre choix à tout moment.',
+    'change_treatment_q' => 'Vous souhaitez choisir un autre soin ?',
+    'show_all_treatments' => 'Voir toutes les prestations',
+    'hide_all_treatments' => 'Masquer la liste des prestations',
+    'selected_treatment' => 'Soin sélectionné',
     'contact_after' => 'Adresse exacte et coordonnées de l’établissement communiquées après confirmation.',
     'features' => ['private_hammam' => 'Hammam privatif', 'couples' => 'Espace couples', 'women_only' => 'Réservé aux femmes (créneaux)', 'pool' => 'Piscine', 'parking' => 'Parking', 'tea' => 'Thé offert', 'rooftop' => 'Terrasse', 'hotel_pickup' => 'Navette hôtel'],
     // Flux de réservation

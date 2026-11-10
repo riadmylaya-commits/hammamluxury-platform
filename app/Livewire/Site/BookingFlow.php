@@ -39,6 +39,9 @@ class BookingFlow extends Component
 
     public bool $advanced = false;
 
+    /** Étape 1 : après sélection, la liste des prestations est repliée ; ce drapeau la redéploie à la demande du client. */
+    public bool $showAll = false;
+
     /** @var array<int, array{treatment:int|null, extras:array<int,int>}> mode avancé : un soin par personne */
     public array $participants = [];
 
@@ -95,10 +98,19 @@ class BookingFlow extends Component
 
     public function selectTreatment(int $id): void
     {
+        if (! $this->catalogue()->firstWhere('id', $id)) {
+            return;
+        }
         $this->treatment = $id;
+        $this->showAll = false;
         $this->extras = [];
         $this->clampParty();
         $this->syncRate();
+    }
+
+    public function toggleList(): void
+    {
+        $this->showAll = ! $this->showAll;
     }
 
     public function setRate(string $rate): void
