@@ -83,7 +83,10 @@
                     @foreach ($treatments->groupBy('category') as $cat => $group)<optgroup label="{{ __('ui.cat_group.'.$cat) }}">@foreach ($group as $t)<option value="{{ $t['id'] }}" @selected($p['treatment'] === $t['id'])>{{ $t['name'] }} — {{ $fmt($t['price_from']) }} · {{ $t['duration_label'] }}</option>@endforeach</optgroup>@endforeach
                 </select>
                 @if ($pt)
-                    <div class="person-sum"><span>@if ($pt['is_package'])<span class="chip acc xs">{{ __('ui.package') }}</span> @endif{{ $pt['components'] ?: __('ui.cat.'.$pt['category']) }}</span><b>{{ $pt['duration_label'] }} · {{ $fmt($pt['price_from']) }}</b></div>
+                    <div class="person-sum">
+                        <div class="person-name">{{ $pt['name'] }} @if ($pt['is_package'])<span class="chip acc xs">{{ __('ui.package') }}</span>@endif</div>
+                        <div class="person-meta"><span>{{ $pt['components'] ?: __('ui.cat.'.$pt['category']) }}</span><b>{{ $pt['duration_label'] }} · {{ $fmt($pt['price_from']) }}</b></div>
+                    </div>
                 @endif
                 @if ($pt && $pt['extras'])
                     <div class="muted xs" style="margin:8px 0 4px">{{ __('ui.add_to_ritual') }}</div>
