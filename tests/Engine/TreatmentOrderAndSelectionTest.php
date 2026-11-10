@@ -60,10 +60,13 @@ class TreatmentOrderAndSelectionTest extends BookingFlowTestCase
         $c->call('selectTreatment', 999999)->assertSet('treatment', $this->hm->id);
 
         // Plusieurs personnes avec soins différents : toujours possible, listes groupées par catégorie ; les extras de la personne 1 sont repris au retour en mode simple.
-        $c->call('changeParty', 1)->assertSet('party', 2)->assertSee('Choisir un soin différent pour chaque personne')
-            ->call('toggleAdvanced')->assertSet('advanced', true)->assertSee('<optgroup label="Rituels &amp; Packages">', false)->assertSee('Personne 2')->assertSee('Soin de la personne 2')->assertSee('Revenir à un seul soin pour tout le groupe')
+        $c->call('changeParty', 1)->assertSet('party', 2)->assertSee('Même soin pour tout le groupe')->assertSee('Un soin différent pour chaque personne')->assertSee('Votre sélection')->assertSee('2 personnes')
+            ->call('setMode', 'each')->assertSet('advanced', true)->assertSee('Personne 2')->assertSee('Modifier le soin')->assertDontSee('<optgroup', false)
+            ->call('openPicker', 1)->assertSet('picker', 1)->assertSee('Choisissez le soin de la personne 2')->assertSee('Rituels &amp; Packages', false)->assertSee('Valider ce soin')
+            ->call('pickTreatment', 1, $this->m->id)->assertSet('participants.1.treatment', $this->m->id)
+            ->call('closePicker')->assertSet('picker', null)->assertSee('Massage relaxant')->assertSee('1 000 MAD')
             ->call('toggleExtra', $this->cr->id, 0)->assertSet('participants.0.extras.'.$this->cr->id, 1)
-            ->call('toggleAdvanced')->assertSet('advanced', false)->assertSet('extras.'.$this->cr->id, 1)->assertSet('party', 2);
+            ->call('setMode', 'same')->assertSet('advanced', false)->assertSet('extras.'.$this->cr->id, 1)->assertSet('party', 2)->assertSet('treatment', $this->hm->id);
 
         // Retour depuis l'étape 2 : sélection conservée, liste toujours repliée.
         $c->call('next')->assertSet('step', 2)->assertSet('error', '')
@@ -78,9 +81,23 @@ class TreatmentOrderAndSelectionTest extends BookingFlowTestCase
         Livewire::test(BookingFlow::class, ['spa' => $this->spa->fresh()])
             ->call('selectTreatment', $solo->id)->assertSet('party', 1)
             ->call('changeParty', 1)->assertSet('party', 1)
-            ->call('toggleAdvanced')->assertSet('advanced', true)->assertSet('party', 2)->assertSee('Personne 2')
-            ->call('toggleAdvanced')->assertSet('advanced', false)->assertSet('party', 1)->assertSet('treatment', $solo->id)
+            ->call('setMode', 'each')->assertSet('advanced', true)->assertSet('party', 2)->assertSee('Personne 2')
+            ->call('setMode', 'same')->assertSet('advanced', false)->assertSet('party', 1)->assertSet('treatment', $solo->id)
             ->assertSee('350 MAD')->assertSeeHtml('wire:click="next"')->assertDontSeeHtml('wire:click="next" disabled');
+    }
+
+    public function test_fixed_party_packages_are_only_bookable_as_shared_treatment(): void
+    {
+        $duo = $this->treatment('duo-massage', 'Massage Duo 1h', [['type' => 'massage', 'duration' => 60]], 2, ['price_couple' => 900]);
+        $duo->update(['party_min' => 2, 'party_max' => 2, 'price_solo' => null]);
+
+        $c = Livewire::test(BookingFlow::class, ['spa' => $this->spa->fresh()])
+            ->call('selectTreatment', $duo->id)->assertSet('party', 2)->assertSee('900 MAD')->assertSeeHtml('<b style="font-size:17px">Massage Duo</b>')
+            ->call('setMode', 'each')->assertSet('advanced', true)->assertSet('participants.0.treatment', null)->assertSee('Soin à choisir')->assertSee('Choisissez un soin pour chaque personne.')
+            ->call('openPicker', 0)->assertDontSee('Massage Duo')->assertSee('forfaits duo et famille')
+            ->call('pickTreatment', 0, $duo->id)->assertSet('participants.0.treatment', null)
+            ->call('pickTreatment', 0, $this->m->id)->call('pickTreatment', 1, $this->m->id)->call('closePicker')->assertSee('800 MAD')
+            ->call('setMode', 'same')->assertSet('treatment', $this->m->id)->assertSet('party', 2)->assertSee('800 MAD');
     }
 
     public function test_step_one_texts_in_english(): void

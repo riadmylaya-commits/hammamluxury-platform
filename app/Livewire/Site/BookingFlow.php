@@ -42,6 +42,9 @@ class BookingFlow extends Component
     /** Étape 1 : après sélection, la liste des prestations est repliée ; ce drapeau la redéploie à la demande du client. */
     public bool $showAll = false;
 
+    /** Mode « un soin par personne » : index de la personne dont on choisit le soin dans la fenêtre de sélection (null = fermée). */
+    public ?int $picker = null;
+
     /** @var array<int, array{treatment:int|null, extras:array<int,int>}> mode avancé : un soin par personne */
     public array $participants = [];
 
@@ -148,14 +151,50 @@ class BookingFlow extends Component
         $this->syncParticipants();
     }
 
+    /** « Même soin pour tout le groupe » (same) ou « Un soin différent pour chaque personne » (each). */
+    public function setMode(string $mode): void
+    {
+        if (($mode === 'each') !== $this->advanced) {
+            $this->toggleAdvanced();
+        }
+    }
+
+    public function openPicker(int $i): void
+    {
+        $this->picker = $this->advanced && isset($this->participants[$i]) ? $i : null;
+    }
+
+    public function closePicker(): void
+    {
+        $this->picker = null;
+    }
+
+    public function pickTreatment(int $i, int $id): void
+    {
+        $t = $this->catalogue()->firstWhere('id', $id);
+        if ($t && $t['party_min'] <= 1) {
+            $this->setParticipantTreatment($i, $id);
+        }
+    }
+
+    /** Un soin « par personne » ne peut pas être un forfait duo/famille à effectif imposé (réservé en mode « même soin »). */
+    private function perPersonTreatment(?int $id): ?int
+    {
+        $t = $id ? $this->catalogue()->firstWhere('id', $id) : null;
+
+        return $t && $t['party_min'] <= 1 ? $id : null;
+    }
+
     public function toggleAdvanced(): void
     {
         $this->advanced = ! $this->advanced;
+        $this->picker = null;
         if ($this->advanced) {
             $this->party = max(2, $this->party);
             $this->participants = [];
+            $shared = $this->perPersonTreatment($this->treatment);
             for ($i = 0; $i < $this->party; $i++) {
-                $this->participants[$i] = ['treatment' => $this->treatment, 'extras' => $this->extras];
+                $this->participants[$i] = ['treatment' => $shared, 'extras' => $shared ? $this->extras : []];
             }
         } else {
             $this->treatment = $this->participants[0]['treatment'] ?? $this->treatment;
@@ -332,6 +371,9 @@ class BookingFlow extends Component
         if (! $this->treatment && ! $this->advanced) {
             return ['ok' => false, 'errors' => [], 'total' => 0, 'duration_min' => 0, 'lines' => [], 'party' => $this->party];
         }
+        if ($this->advanced && in_array(null, array_column($this->participants, 'treatment'), true)) {
+            return ['ok' => false, 'errors' => [__('ui.choose_treatment_each')], 'total' => 0, 'duration_min' => 0, 'lines' => [], 'party' => $this->party];
+        }
         try {
             return app(QuoteBuilder::class)->fromRequest($this->spa, $this->request());
         } catch (BookingException $e) {
@@ -376,7 +418,10 @@ class BookingFlow extends Component
         }
         $this->participants = array_slice($this->participants, 0, $this->party);
         while (count($this->participants) < $this->party) {
-            $this->participants[] = ['treatment' => $this->treatment, 'extras' => []];
+            $this->participants[] = ['treatment' => $this->perPersonTreatment($this->participants[0]['treatment'] ?? $this->treatment), 'extras' => []];
+        }
+        if ($this->picker !== null && ! isset($this->participants[$this->picker])) {
+            $this->picker = null;
         }
         if ($this->party < 2) {
             $this->advanced = false;

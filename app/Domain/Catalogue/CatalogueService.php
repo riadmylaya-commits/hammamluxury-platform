@@ -100,6 +100,7 @@ class CatalogueService
             'id' => $t->id,
             'slug' => $t->slug,
             'name' => $t->tr('name'),
+            'short_name' => Presentation::nameWithoutDuration($t->tr('name'), $t->computedDuration()),
             'category' => $t->category,
             'description' => $t->tr('description'),
             'duration_min' => $t->computedDuration(),
