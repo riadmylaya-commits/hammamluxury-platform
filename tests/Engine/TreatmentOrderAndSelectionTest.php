@@ -92,6 +92,9 @@ class TreatmentOrderAndSelectionTest extends BookingFlowTestCase
         $duo = $this->treatment('duo-massage', 'Massage Duo 1h', [['type' => 'massage', 'duration' => 60]], 2, ['price_couple' => 900]);
         $duo->update(['party_min' => 2, 'party_max' => 2, 'price_solo' => null]);
 
+        // Arrivée depuis la fiche (?soin=) : le nombre de personnes se cale d'emblée sur le forfait.
+        Livewire::withQueryParams(['soin' => $duo->id])->test(BookingFlow::class, ['spa' => $this->spa->fresh()])->assertSet('party', 2)->assertSee('900 MAD');
+
         $c = Livewire::test(BookingFlow::class, ['spa' => $this->spa->fresh()])
             ->call('selectTreatment', $duo->id)->assertSet('party', 2)->assertSee('900 MAD')->assertSeeHtml('<b style="font-size:17px">Massage Duo</b>')
             ->call('setMode', 'each')->assertSet('advanced', true)->assertSet('participants.0.treatment', null)->assertSee('Soin à choisir')->assertSee('Choisissez un soin pour chaque personne.')

@@ -95,6 +95,7 @@ class BookingFlow extends Component
         if ($this->treatment && ! $this->catalogue()->firstWhere('id', $this->treatment)) {
             $this->treatment = null;
         }
+        $this->clampParty();
     }
 
     // ---------- Étape 1 : soin, personnes, extras ----------
