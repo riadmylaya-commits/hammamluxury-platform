@@ -169,3 +169,16 @@ body.lb-open{overflow:hidden}
 .card>.cat-h{padding:14px 16px 0}.card>.cat-h+.treat{border-top:0}
 /* Étape 1 : le total mobile reste dans le flux (sous « Continuer ») pour ne jamais masquer le bouton ni les extras ; collant aux étapes 2 et 3. */
 .stickytot.inflow{position:static;margin:14px 0 0;border:1px solid var(--line);border-radius:12px}
+/* Liens d'action toujours contrastés (vert foncé), zone tactile ≥ 44 px ; bouton « Découvrir les autres soins et forfaits » ; cartes par personne */
+.act-link{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:6px 0;margin:2px 0;background:none;border:0;cursor:pointer;font-family:inherit;font-size:15px;font-weight:700;color:var(--brand);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;text-align:left}
+.act-link:hover,.act-link:focus-visible{color:#143629;outline:none}
+.btn.discover{background:#fff;color:var(--brand);border:2px solid var(--brand);min-height:50px;font-size:15.5px;font-weight:700;margin-top:12px;box-shadow:none}
+.btn.discover:hover,.btn.discover:focus-visible{background:var(--soft)}
+.person{padding:14px;margin-top:12px;border-left:4px solid var(--brand)}
+.person-h{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:16px}
+.person-no{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;font-weight:700;font-size:14px;flex:none}
+.person label{display:block;margin:4px 0 6px}
+.person-select{font-size:16px;line-height:1.3;padding:12px 40px 12px 13px;appearance:none;-webkit-appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231f4d3f' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center;border:1.5px solid var(--brand);color:var(--ink);text-overflow:ellipsis}
+.person-sum{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:8px;font-size:13px;color:var(--muted)}
+.person-sum b{color:var(--ink);white-space:nowrap}
+.sel-treat+.btn.discover{margin-top:12px}

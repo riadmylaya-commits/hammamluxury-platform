@@ -22,10 +22,11 @@
                     <b style="font-size:17px">{{ $sel['name'] }}</b> @if ($sel['is_package'])<span class="chip acc">{{ __('ui.package') }}</span>@endif
                     <div class="muted small" style="margin-top:2px">@if ($sel['components']){{ $sel['components'] }} · {{ __('ui.total_duration') }} {{ $sel['duration_label'] }}@else{{ $sel['duration_label'] }} · {{ __('ui.cat.'.$sel['category']) }}@endif</div>
                     <p class="sel-msg">{{ __('ui.selected_msg') }}</p>
-                    <div class="small muted">{{ __('ui.change_treatment_q') }} <button type="button" class="lnk-btn" wire:click="toggleList" aria-expanded="{{ $showAll ? 'true' : 'false' }}" aria-controls="treatment-list">{{ $showAll ? __('ui.hide_all_treatments') : __('ui.show_all_treatments') }}</button></div>
                 </div>
                 <div class="r">@if ($sel['fixed_party'])<b>{{ $fmt($sel['fixed_party_total']) }}</b><span class="xs muted" style="display:block">{{ __('ui.for_party', ['n' => $sel['fixed_party']]) }}</span>@else<b>{{ $fmt($sel['price_from']) }}</b><span class="xs muted">{{ __('ui.per_person') }}</span>@if ($sel['price_couple'])<span class="xs" style="display:block;color:var(--brand);font-weight:600">{{ __('ui.for_two_short') }} : {{ $fmt($sel['price_couple']) }}</span>@endif@endif</div>
             </div>
+            <button type="button" class="btn discover full" wire:click="toggleList" aria-expanded="{{ $showAll ? 'true' : 'false' }}" aria-controls="treatment-list">{{ $showAll ? '▲ '.__('ui.hide_all_treatments') : '▼ '.__('ui.show_all_treatments') }}</button>
+            @if (! $showAll)<div class="xs muted" style="margin-top:6px;text-align:center">{{ __('ui.keep_booking_hint') }}</div>@endif
         @endif
         @if (! $sel || $showAll)
         <div id="treatment-list" @if ($sel) style="margin-top:16px" @endif>
@@ -69,17 +70,21 @@
     <div class="row"><b>{{ __('ui.party') }}</b><span class="sp"></span>
         <div class="qty"><button type="button" wire:click="changeParty(-1)" @disabled($party <= 1)>−</button><b>{{ $party }}</b><button type="button" wire:click="changeParty(1)">+</button></div></div>
     @if ($treatment || $advanced)
-        <button type="button" class="lnk small" style="background:none;border:0;color:var(--brand);text-decoration:underline;padding:8px 0;cursor:pointer" wire:click="toggleAdvanced">{{ $advanced ? __('ui.simple_toggle') : __('ui.advanced_toggle') }}</button>
+        <button type="button" class="act-link" wire:click="toggleAdvanced">{{ $advanced ? '↩ '.__('ui.simple_toggle') : '👥 '.__('ui.advanced_toggle') }}</button>
     @endif
 
     @if ($advanced)
         @foreach ($participants as $i => $p)
-            <div class="card" style="padding:12px;margin-top:10px">
-                <b>{{ __('ui.person_n', ['n' => $i + 1]) }}</b>
-                <select class="inp" style="margin-top:6px" wire:change="setParticipantTreatment({{ $i }}, $event.target.value)">
-                    @foreach ($treatments->groupBy('category') as $cat => $group)<optgroup label="{{ __('ui.cat_group.'.$cat) }}">@foreach ($group as $t)<option value="{{ $t['id'] }}" @selected($p['treatment'] === $t['id'])>{{ $t['name'] }} — {{ $fmt($t['price_from']) }} · {{ $t['duration_min'] }} {{ __('ui.min') }}</option>@endforeach</optgroup>@endforeach
+            @php($pt = $treatments->firstWhere('id', $p['treatment']))
+            <div class="card person">
+                <div class="person-h"><span class="person-no">{{ $i + 1 }}</span><b>{{ __('ui.person_n', ['n' => $i + 1]) }}</b></div>
+                <label class="xs muted" for="person-treatment-{{ $i }}">{{ __('ui.person_treatment', ['n' => $i + 1]) }}</label>
+                <select id="person-treatment-{{ $i }}" class="inp person-select" wire:change="setParticipantTreatment({{ $i }}, $event.target.value)">
+                    @foreach ($treatments->groupBy('category') as $cat => $group)<optgroup label="{{ __('ui.cat_group.'.$cat) }}">@foreach ($group as $t)<option value="{{ $t['id'] }}" @selected($p['treatment'] === $t['id'])>{{ $t['name'] }} — {{ $fmt($t['price_from']) }} · {{ $t['duration_label'] }}</option>@endforeach</optgroup>@endforeach
                 </select>
-                @php($pt = $treatments->firstWhere('id', $p['treatment']))
+                @if ($pt)
+                    <div class="person-sum"><span>@if ($pt['is_package'])<span class="chip acc xs">{{ __('ui.package') }}</span> @endif{{ $pt['components'] ?: __('ui.cat.'.$pt['category']) }}</span><b>{{ $pt['duration_label'] }} · {{ $fmt($pt['price_from']) }}</b></div>
+                @endif
                 @if ($pt && $pt['extras'])
                     <div class="muted xs" style="margin:8px 0 4px">{{ __('ui.add_to_ritual') }}</div>
                     @foreach ($pt['extras'] as $e)

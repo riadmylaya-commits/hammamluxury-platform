@@ -48,11 +48,11 @@ class TreatmentOrderAndSelectionTest extends BookingFlowTestCase
         // Sélection : la liste se replie, l'encadré apparaît avec nom, durée, prix et lien de modification.
         $c->call('selectTreatment', $this->m->id)->assertSet('treatment', $this->m->id)->assertSet('showAll', false)
             ->assertSee('Votre soin a bien été sélectionné')->assertSee('Massage relaxant')->assertSee('400 MAD')->assertSee('1h')
-            ->assertSee('Voir toutes les prestations')->assertSee('Nombre de personnes')->assertSee('Continuer')
+            ->assertSee('Découvrir les autres soins et forfaits')->assertSee('Nombre de personnes')->assertSee('Continuer')
             ->assertDontSee('Hammam + Massage')->assertDontSee('Choisissez un soin');
 
         // Redéploiement puis nouveau choix : la liste se referme et le récapitulatif suit.
-        $c->call('toggleList')->assertSet('showAll', true)->assertSee('Hammam + Massage')->assertSee('Masquer la liste')
+        $c->call('toggleList')->assertSet('showAll', true)->assertSee('Hammam + Massage')->assertSee('Masquer les autres soins et forfaits')
             ->call('selectTreatment', $this->hm->id)->assertSet('treatment', $this->hm->id)->assertSet('showAll', false)
             ->assertSee('Hammam + Massage')->assertSee('600 MAD')->assertDontSee('Massage relaxant');
 
@@ -61,7 +61,7 @@ class TreatmentOrderAndSelectionTest extends BookingFlowTestCase
 
         // Plusieurs personnes avec soins différents : toujours possible, listes groupées par catégorie.
         $c->call('changeParty', 1)->assertSet('party', 2)->assertSee('Choisir un soin différent pour chaque personne')
-            ->call('toggleAdvanced')->assertSet('advanced', true)->assertSee('<optgroup label="Rituels &amp; Packages">', false)->assertSee('Personne 2')
+            ->call('toggleAdvanced')->assertSet('advanced', true)->assertSee('<optgroup label="Rituels &amp; Packages">', false)->assertSee('Personne 2')->assertSee('Soin de la personne 2')->assertSee('Revenir à un seul soin pour tout le groupe')
             ->call('toggleAdvanced')->assertSet('advanced', false);
 
         // Retour depuis l'étape 2 : sélection conservée, liste toujours repliée.
@@ -87,7 +87,7 @@ class TreatmentOrderAndSelectionTest extends BookingFlowTestCase
         URL::defaults(['locale' => 'en']);
         app()->setLocale('en');
         Livewire::withQueryParams(['soin' => $this->hm->id])->test(BookingFlow::class, ['spa' => $this->spa])
-            ->assertSee('Your treatment has been selected')->assertSee('See all treatments')->assertDontSee('Massage relaxant')
+            ->assertSee('Your treatment has been selected')->assertSee('Discover the other treatments and packages')->assertDontSee('Massage relaxant')
             ->call('toggleList')->assertSee('Rituals &amp; Packages', false)->assertSee('Massage relaxant');
     }
 }
