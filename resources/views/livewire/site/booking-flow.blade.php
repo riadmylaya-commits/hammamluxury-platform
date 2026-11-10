@@ -106,6 +106,9 @@
         @endforelse
     @endif
 
+    @if (($treatment || $advanced) && ! $quote['ok'] && ! empty($quote['errors']))
+        <div class="notice bad small" style="margin-top:14px" role="alert">{{ implode(' ', $quote['errors']) }}</div>
+    @endif
     <div style="margin-top:18px"><button type="button" class="btn full" wire:click="next" @disabled(! $quote['ok'])>{{ __('ui.continue') }} → {{ __('ui.step_datetime') }}</button></div>
 
 {{-- ===== Étape 2 ===== --}}

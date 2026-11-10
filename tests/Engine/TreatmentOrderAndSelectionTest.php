@@ -70,6 +70,18 @@ class TreatmentOrderAndSelectionTest extends BookingFlowTestCase
             ->assertSee('Votre soin a bien été sélectionné')->assertDontSee('Massage relaxant');
     }
 
+    public function test_back_to_single_treatment_mode_clamps_party_to_treatment_limit(): void
+    {
+        $solo = $this->treatment('massage-solo', 'Massage solo', [['type' => 'massage', 'duration' => 30]], 1, ['price_solo' => 350]);
+
+        Livewire::test(BookingFlow::class, ['spa' => $this->spa->fresh()])
+            ->call('selectTreatment', $solo->id)->assertSet('party', 1)
+            ->call('changeParty', 1)->assertSet('party', 1)
+            ->call('toggleAdvanced')->assertSet('advanced', true)->assertSet('party', 2)->assertSee('Personne 2')
+            ->call('toggleAdvanced')->assertSet('advanced', false)->assertSet('party', 1)->assertSet('treatment', $solo->id)
+            ->assertSee('350 MAD')->assertSeeHtml('wire:click="next"')->assertDontSeeHtml('wire:click="next" disabled');
+    }
+
     public function test_step_one_texts_in_english(): void
     {
         URL::defaults(['locale' => 'en']);
