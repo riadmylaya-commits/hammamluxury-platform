@@ -7,6 +7,7 @@ use App\Models\Booking;
 /** API JSON /api/v1 : catalogue, devis, disponibilité, intention signée, réservation invitée, suivi et annulation — mêmes services que le front. */
 class ApiV1Test extends BookingFlowTestCase
 {
+    /** Ordre des soins = CatalogueService::CATEGORY_ORDER : packages (hm, hs) puis hammam (h) puis massage (m). */
     public function test_catalogue_hides_unpublished_and_contact_details(): void
     {
         $this->getJson('/api/v1/spas?q=marrakech')->assertOk()
@@ -15,9 +16,9 @@ class ApiV1Test extends BookingFlowTestCase
         $this->getJson('/api/v1/spas/'.$this->spa->slug)->assertOk()
             ->assertJsonPath('data.name', $this->spa->name)
             ->assertJsonCount(4, 'data.treatments')
-            ->assertJsonPath('data.treatments.2.extras.0.extra_min', 15)
+            ->assertJsonPath('data.treatments.0.extras.0.extra_min', 15)
             ->assertJsonMissingPath('data.phone')->assertJsonMissingPath('data.address');
-        $this->getJson('/api/v1/spas/'.$this->spa->slug.'?locale=en')->assertOk()->assertJsonPath('data.treatments.0.name', 'Hammam traditionnel');
+        $this->getJson('/api/v1/spas/'.$this->spa->slug.'?locale=en')->assertOk()->assertJsonPath('data.treatments.2.name', 'Hammam traditionnel');
         $this->spa->update(['status' => 'pending']);
         $this->getJson('/api/v1/spas/'.$this->spa->slug)->assertNotFound();
         $this->getJson('/api/v1/spas')->assertOk()->assertJsonPath('meta.total', 0);
