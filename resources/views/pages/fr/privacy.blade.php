@@ -1,5 +1,5 @@
 <h2>1. Responsable du traitement</h2>
-<p>HammamLuxury <em>[forme juridique et adresse à compléter]</em> est responsable des traitements décrits ci-dessous, conformément à la loi marocaine n° 09-08 relative à la protection des personnes physiques à l’égard du traitement des données à caractère personnel et, pour les résidents de l’Union européenne, au RGPD.</p>
+<p>@php($legal = \App\Support\LegalIdentity::values()){!! $legal['company_name'] !!} ({!! $legal['legal_form'] !!}, {!! $legal['address'] !!}, Maroc — nom commercial HammamLuxury ; contact : {!! $legal['email'] !!}) est responsable des traitements décrits ci-dessous, conformément à la loi marocaine n° 09-08 relative à la protection des personnes physiques à l’égard du traitement des données à caractère personnel et, pour les résidents de l’Union européenne, au RGPD.</p>
 
 <h2>2. Données collectées</h2>
 <ul>
@@ -29,7 +29,7 @@
 
 <h2>5. Durée de conservation</h2>
 <ul>
-    <li>Données de réservation et de messagerie : durée nécessaire au suivi, puis archivage limité aux obligations comptables et de preuve <em>[durée à préciser, par ex. 5 ans]</em>.</li>
+    <li>Données de réservation et de messagerie : durée nécessaire au suivi, puis archivage limité aux obligations comptables et de preuve ({!! $legal['retention'] !!}).</li>
     <li>Demandes de contact : 12 mois après la dernière réponse.</li>
     <li>Journaux techniques : 12 mois maximum.</li>
 </ul>

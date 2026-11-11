@@ -3,7 +3,7 @@
 <p>These terms apply to any use of the website and any booking made through it. For partner Venues, they are supplemented by the partnership agreement accepted upon registration. Listed Venues are presented from their public information, without a signed agreement: their listing says so and any request is forwarded to them subject to availability.</p>
 
 <h2>2. Publisher</h2>
-<p>The Platform is published by HammamLuxury <em>[legal form, capital, registration number and registered office to be completed]</em>. Contact: <a href="{{ route('contact') }}">contact form</a>.</p>
+<p>The Platform is @php($legal = \App\Support\LegalIdentity::values())published by {!! $legal['company_name'] !!}, {!! $legal['legal_form'] !!}, Trade Register of {!! $legal['rc_city'] !!} no. {!! $legal['rc_number'] !!}, ICE {!! $legal['ice'] !!}, registered office: {!! $legal['address'] !!}, Morocco (see the <a href="{{ route('page', 'mentions-legales') }}">legal notice</a>). Contact: <a href="{{ route('contact') }}">contact form</a>.</p>
 
 <h2>3. Booking</h2>
 <ul>
@@ -37,10 +37,10 @@
 <p>HammamLuxury strives to ensure the accuracy of published information, which is provided by the Venues and checked upon their approval. HammamLuxury cannot be held liable for the performance of treatments, damage occurring at the Venue, or temporary unavailability of the website. Should HammamLuxury’s liability be established, it would be limited to the amount of the treatment concerned.</p>
 
 <h2>9. Intellectual property</h2>
-<p>The HammamLuxury brand, website, texts and visual identity are protected. Venue photos and descriptions remain their property; Venues authorise their publication on the Platform.</p>
+<p>The HammamLuxury brand, website, texts and visual identity are protected. Venue photos and descriptions remain the property of their rights holders. For partner Venues, their publication is authorised by the partnership agreement; for referenced Venues, they come from the Venue’s public communication materials and are reproduced solely to present the Venue, which may request their modification or removal at any time (handled within 48 business hours).</p>
 
 <h2>10. Personal data</h2>
 <p>The processing of your data is described in the <a href="{{ route('page', 'confidentialite') }}">privacy policy</a>.</p>
 
 <h2>11. Changes and governing law</h2>
-<p>HammamLuxury may update these terms; the applicable version is the one online at the time of booking. These terms are governed by Moroccan law. In case of dispute, an amicable solution will be sought before any action before the competent courts <em>[city of registered office to be completed]</em>.</p>
+<p>HammamLuxury may update these terms; the applicable version is the one online at the time of booking. These terms are governed by Moroccan law. In case of dispute, an amicable solution will be sought before any action before the competent courts of {!! $legal['court_city'] !!}.</p>
