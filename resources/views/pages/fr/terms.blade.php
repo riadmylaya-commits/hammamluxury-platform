@@ -3,7 +3,7 @@
 <p>Les présentes conditions s’appliquent à toute utilisation du site et à toute réservation effectuée par son intermédiaire. Elles sont complétées, pour les Établissements partenaires, par le contrat de partenariat accepté lors de leur inscription. Les Établissements référencés sont présentés à partir de leurs informations publiques, sans accord signé : leur fiche le mentionne et toute demande leur est transmise sous réserve de confirmation de disponibilité.</p>
 
 <h2>2. Éditeur</h2>
-<p>La Plateforme est éditée par HammamLuxury <em>[forme juridique, capital, RC/ICE et adresse du siège à compléter]</em>. Contact : <a href="{{ route('contact') }}">formulaire de contact</a>.</p>
+<p>La Plateforme est @php($legal = \App\Support\LegalIdentity::values())éditée par {!! $legal['company_name'] !!}, {!! $legal['legal_form'] !!}, RC {!! $legal['rc_city'] !!} n° {!! $legal['rc_number'] !!}, ICE {!! $legal['ice'] !!}, siège : {!! $legal['address'] !!}, Maroc (voir les <a href="{{ route('page', 'mentions-legales') }}">mentions légales</a>). Contact : <a href="{{ route('contact') }}">formulaire de contact</a>.</p>
 
 <h2>3. Réservation</h2>
 <ul>
@@ -37,10 +37,10 @@
 <p>HammamLuxury s’efforce d’assurer l’exactitude des informations publiées, qui sont fournies par les Établissements et vérifiées lors de leur validation. HammamLuxury ne saurait être tenue responsable de l’exécution des soins, des dommages survenus dans l’Établissement ni d’une indisponibilité temporaire du site. La responsabilité de HammamLuxury, si elle était engagée, serait limitée au montant de la prestation concernée.</p>
 
 <h2>9. Propriété intellectuelle</h2>
-<p>La marque HammamLuxury, le site, ses textes et sa charte graphique sont protégés. Les photos et descriptions des Établissements restent la propriété de ceux-ci, qui autorisent leur diffusion sur la Plateforme.</p>
+<p>La marque HammamLuxury, le site, ses textes et sa charte graphique sont protégés. Les photos et descriptions des Établissements restent la propriété de leurs titulaires. Pour les Établissements partenaires, leur diffusion est autorisée par le contrat de partenariat ; pour les Établissements référencés, ils proviennent de leurs supports de communication publics et sont reproduits dans le seul but de présenter l’Établissement, qui peut en demander la modification ou le retrait à tout moment (traitement sous 48 heures ouvrées).</p>
 
 <h2>10. Données personnelles</h2>
 <p>Le traitement de vos données est décrit dans la <a href="{{ route('page', 'confidentialite') }}">politique de confidentialité</a>.</p>
 
 <h2>11. Modification et droit applicable</h2>
-<p>HammamLuxury peut faire évoluer ces conditions ; la version applicable est celle en ligne au moment de la réservation. Les présentes sont soumises au droit marocain. En cas de litige, une solution amiable sera recherchée avant toute action devant les tribunaux compétents <em>[ville du siège à compléter]</em>.</p>
+<p>HammamLuxury peut faire évoluer ces conditions ; la version applicable est celle en ligne au moment de la réservation. Les présentes sont soumises au droit marocain. En cas de litige, une solution amiable sera recherchée avant toute action devant les tribunaux compétents de {!! $legal['court_city'] !!}.</p>
