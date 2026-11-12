@@ -11,4 +11,4 @@ Ces scripts ne modifient pas l'application par eux-mêmes : chacun s'arrête si 
 | `phase2-code-et-base.sh` | 2 | redémarrage noyau, code `main`, migrations sur base vide, `.env` complété, release | DNS, WordPress, e-mails, HL_NOINDEX, HL_BILLING_* |
 | `phase3-import-donnees.sh` | 3 | import des 6 fiches depuis l'export, sommes de contrôle | écrasement d'une base non vide |
 
-Utilisateur d'intervention recommandé : `hl-devin` (clé SSH restreinte, expiration), `sudo` limité à `/root/hl-ops/*` ; journal dans `/var/log/auth.log` et `/root/phase-<n>-<date>.log`.
+Utilisateur d'intervention recommandé : `hl-devin` (clé SSH restreinte, expiration), `sudo` limité à des scripts **nommés individuellement** dans `/etc/sudoers.d/hl-devin` (un par phase, ajouté par la propriétaire après accord écrit) ; journal dans `/var/log/auth.log` et `/root/phase-<n>-<date>.log`.
