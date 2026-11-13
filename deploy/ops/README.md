@@ -4,7 +4,8 @@ Ces scripts ne modifient pas l'application par eux-mêmes : chacun s'arrête si 
 
 | Script | Phase | Effet | Interdits codés |
 |---|---|---|---|
-| `etat-lecture-seule.sh` | — | relevé de l'état du serveur, aucune écriture | — |
+| `diagnostic-sans-root.sh` | — | relevé sans privilèges (compte d'intervention) : charge, disque, services, site | — |
+| `diagnostic-root-minimal.sh` | — | quatre lectures root : commit déployé, comptes de 4 tables, présence des dossiers de sauvegarde, version restic ; aucun secret | — |
 | `phase1-sauvegarde-externe.sh` | 1 | sauvegarde locale complète, dépôt restic chiffré sur le sous-compte Storage Box `hl-prod`, première sauvegarde, vérification | migrate, git dans /var/www, redémarrage, écriture en base, DNS |
 | `phase1-test-restauration.sh` | 1 (staging) | restauration dans une base isolée puis suppression ; staging contrôlée identique | — |
 | `export-staging-nettoye.sh` | 3 (staging) | export des 6 fiches sans demandes de test ni jobs | — |
@@ -12,3 +13,6 @@ Ces scripts ne modifient pas l'application par eux-mêmes : chacun s'arrête si 
 | `phase3-import-donnees.sh` | 3 | import des 6 fiches depuis l'export, sommes de contrôle | écrasement d'une base non vide |
 
 Utilisateur d'intervention recommandé : `hl-devin` (clé SSH restreinte, expiration), `sudo` limité à des scripts **nommés individuellement** dans `/etc/sudoers.d/hl-devin` (un par phase, ajouté par la propriétaire après accord écrit) ; journal dans `/var/log/auth.log` et `/root/phase-<n>-<date>.log`.
+
+
+Installation d'un script : téléchargement, **vérification SHA-256 bloquante** (`sha256sum -c`), copie en `0500` dans `/root/hl-ops/`, puis `chattr +i` (immuable : toute modification exige `chattr -i` par root = nouvelle validation).
