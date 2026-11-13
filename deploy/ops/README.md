@@ -1,6 +1,6 @@
 # deploy/ops — scripts d'intervention sur la production (exécution uniquement sur accord écrit par phase)
 
-Ces scripts ne modifient pas l'application par eux-mêmes : chacun s'arrête si le fichier d'accord `/root/ACCORD-PHASE-<n>` est absent. Ils sont destinés à être copiés par la propriétaire dans `/root/hl-ops/` (dossier root, non modifiable par l'utilisateur d'intervention) : la présence d'un script dans ce dossier vaut accord pour la phase correspondante.
+Ces scripts ne modifient pas l'application par eux-mêmes : chacun s'arrête si le fichier d'accord `/root/ACCORD-PHASE-<n>` est absent. Ils sont destinés à être copiés par la propriétaire dans `/opt/hl-ops/` (dossier root, non modifiable par l'utilisateur d'intervention) : la présence d'un script dans ce dossier vaut accord pour la phase correspondante.
 
 | Script | Phase | Effet | Interdits codés |
 |---|---|---|---|
@@ -15,4 +15,4 @@ Ces scripts ne modifient pas l'application par eux-mêmes : chacun s'arrête si 
 Utilisateur d'intervention recommandé : `hl-devin` (clé SSH restreinte, expiration), `sudo` limité à des scripts **nommés individuellement** dans `/etc/sudoers.d/hl-devin` (un par phase, ajouté par la propriétaire après accord écrit) ; journal dans `/var/log/auth.log` et `/root/phase-<n>-<date>.log`.
 
 
-Installation d'un script : téléchargement, **vérification SHA-256 bloquante** (`sha256sum -c`), copie en `0500` dans `/root/hl-ops/`, puis `chattr +i` (immuable : toute modification exige `chattr -i` par root = nouvelle validation).
+Installation d'un script : téléchargement, **vérification SHA-256 bloquante** (`sha256sum -c`), copie en `0500` dans `/opt/hl-ops/`, puis `chattr +i` (immuable : toute modification exige `chattr -i` par root = nouvelle validation).
