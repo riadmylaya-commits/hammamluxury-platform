@@ -1,5 +1,5 @@
 <h2>1. Data controller</h2>
-<p>HammamLuxury <em>[legal form and address to be completed]</em> is the controller of the processing described below, in accordance with Moroccan Law No. 09-08 on the protection of individuals with regard to the processing of personal data and, for residents of the European Union, the GDPR.</p>
+<p>@php($legal = \App\Support\LegalIdentity::values()){!! $legal['company_name'] !!} ({!! $legal['legal_form'] !!}, {!! $legal['address'] !!}, Morocco — trade name HammamLuxury; contact: {!! $legal['email'] !!}) is the controller of the processing described below, in accordance with Moroccan Law No. 09-08 on the protection of individuals with regard to the processing of personal data and, for residents of the European Union, the GDPR.</p>
 
 <h2>2. Data we collect</h2>
 <ul>
@@ -29,7 +29,7 @@
 
 <h2>5. Retention</h2>
 <ul>
-    <li>Booking and messaging data: as long as needed for follow-up, then limited archiving for accounting and evidence obligations <em>[period to be specified, e.g. 5 years]</em>.</li>
+    <li>Booking and messaging data: as long as needed for follow-up, then limited archiving for accounting and evidence obligations ({!! $legal['retention_en'] !!}).</li>
     <li>Contact requests: 12 months after the last reply.</li>
     <li>Technical logs: 12 months maximum.</li>
 </ul>

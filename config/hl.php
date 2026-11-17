@@ -88,6 +88,27 @@ return [
             'bank_account' => null,
         ],
     ],
+    // Identité juridique de l'éditeur (Jaune et Vert SARLAU) affichée sur les pages Mentions légales / CGU /
+    // Confidentialité. Renseignée dans le .env du serveur (HL_LEGAL_*) ; tant qu'un champ obligatoire manque, la page
+    // affiche un repère entre crochets et un bandeau « à compléter » (voir App\Support\LegalIdentity).
+    'legal' => [
+        'company_name' => env('HL_LEGAL_COMPANY_NAME'),
+        'legal_form' => env('HL_LEGAL_FORM'),
+        'capital' => env('HL_LEGAL_CAPITAL'),
+        'rc_city' => env('HL_LEGAL_RC_CITY'),
+        'rc_number' => env('HL_LEGAL_RC_NUMBER'),
+        'ice' => env('HL_LEGAL_ICE'),
+        'tax_id' => env('HL_LEGAL_TAX_ID'),
+        'patente' => env('HL_LEGAL_PATENTE'),
+        'address' => env('HL_LEGAL_ADDRESS'),
+        'publication_director' => env('HL_LEGAL_PUBLICATION_DIRECTOR'),
+        'email' => env('HL_LEGAL_EMAIL', env('HL_CONTACT_EMAIL')),
+        'phone' => env('HL_LEGAL_PHONE'),
+        'cndp' => env('HL_LEGAL_CNDP'),
+        'court_city' => env('HL_LEGAL_COURT_CITY', env('HL_LEGAL_RC_CITY')),
+        'retention_years' => (int) env('HL_LEGAL_RETENTION_YEARS', 5),
+    ],
+
     'lock_timeout_seconds' => 5,
 
     // Proxys de confiance (Cloudflare). Fichier maintenu par deploy/cloudflare-ips.sh ; HL_TRUSTED_PROXIES
