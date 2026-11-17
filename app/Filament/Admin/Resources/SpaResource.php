@@ -128,7 +128,15 @@ class SpaResource extends Resource
                 Tables\Columns\ImageColumn::make('cover')->label('')->getStateUsing(fn (Spa $s) => $s->coverPhoto()?->url())->circular(),
                 Tables\Columns\TextColumn::make('name')->label(__('admin.spa'))->searchable()->weight('bold')
                     ->description(fn (Spa $s) => $s->area ? "$s->area · $s->city" : $s->city),
-                Tables\Columns\TextColumn::make('partner.company_name')->label(__('admin.partner'))->searchable(),
+                Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
+                    ->formatStateUsing(fn ($state) => self::statuses()[$state] ?? $state)
+                    ->color(fn ($state) => match ($state) {
+                        'published' => 'success', 'pending' => 'warning', 'suspended' => 'danger', default => 'gray'
+                    }),
+                Tables\Columns\TextColumn::make('listing_type')->label(__('admin.listing_type'))->badge()
+                    ->formatStateUsing(fn ($state) => self::listingTypes()[$state] ?? $state)
+                    ->color(fn ($state) => $state === 'referenced' ? 'info' : 'gray'),
+                Tables\Columns\TextColumn::make('partner.company_name')->label(__('admin.partner'))->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('management')->label(__('admin.mgmt_section'))->badge()
                     ->state(fn (Spa $s) => app(OwnerAssignmentService::class)->state($s))
                     ->formatStateUsing(fn (string $state) => __('admin.mgmt_state_'.$state))
@@ -136,8 +144,8 @@ class SpaResource extends Resource
                         'portfolio' => 'info', 'taken_over' => 'warning', 'suspended' => 'danger', default => 'success'
                     })
                     ->description(fn (Spa $s) => $s->owner_invited_at && app(OwnerAssignmentService::class)->ownerOf($s) ? __('admin.mgmt_invited_on', ['date' => $s->owner_invited_at->format('d/m/Y')]) : null),
-                Tables\Columns\TextColumn::make('treatments_count')->counts('treatments')->label(__('partner.treatments')),
-                Tables\Columns\TextColumn::make('bookings_count')->counts('bookings')->label(__('partner.bookings')),
+                Tables\Columns\TextColumn::make('treatments_count')->counts('treatments')->label(__('partner.treatments'))->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('bookings_count')->counts('bookings')->label(__('partner.bookings'))->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('cancellation_requests_count')->counts('cancellationRequests')->label(__('admin.cancellation_col'))->sortable()
                     ->formatStateUsing(function ($state, Spa $s) {
                         $rate = CancellationService::rateFor($s->id);
@@ -145,26 +153,18 @@ class SpaResource extends Resource
                         return $state ? $state.' ('.rtrim(rtrim(number_format($rate['rate'], 1, ',', ''), '0'), ',').' %)' : '0';
                     })
                     ->color(fn ($state, Spa $s) => $state && CancellationService::rateFor($s->id)['rate'] >= 20 ? 'danger' : ($state ? 'warning' : 'gray'))->badge()
-                    ->tooltip(__('admin.cancellation_col_help')),
-                Tables\Columns\TextColumn::make('full_declines_count')->label(__('admin.declines_col'))->badge()->sortable()
+                    ->tooltip(__('admin.cancellation_col_help'))->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('full_declines_count')->label(__('admin.declines_col'))->badge()->sortable()->toggleable()
                     ->counts(['declines as full_declines_count' => fn (Builder $q) => $q->where('reason', 'full')->where('created_at', '>=', now()->subDays(90))])
                     ->formatStateUsing(fn ($state, Spa $s) => $state ? $state.' ('.$s->declines()->where('reason', 'full')->where('engine_available', true)->where('created_at', '>=', now()->subDays(90))->count().')' : '0')
                     ->color(fn ($state, Spa $s) => $state && $s->declines()->where('reason', 'full')->where('engine_available', true)->where('created_at', '>=', now()->subDays(90))->exists() ? 'danger' : ($state ? 'warning' : 'gray'))
                     ->tooltip(__('admin.declines_col_help'))
                     ->url(fn (Spa $s) => BookingDeclineResource::getUrl('index', ['tableFilters' => ['spa_id' => ['value' => $s->id], 'reason' => ['value' => 'full']]])),
-                Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->placeholder('—'),
+                Tables\Columns\TextColumn::make('rating')->label(__('admin.rating'))->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('license_number')->label(__('admin.license_col'))->toggleable()->badge()
                     ->getStateUsing(fn (Spa $s) => $s->license_number ?: ($s->licenseExpected() ? __('admin.license_missing') : null))->placeholder('—')
                     ->color(fn (Spa $s) => blank($s->license_number) ? 'warning' : 'gray')
                     ->description(fn (Spa $s) => $s->licenseAuthorityLabel()),
-                Tables\Columns\TextColumn::make('listing_type')->label(__('admin.listing_type'))->badge()
-                    ->formatStateUsing(fn ($state) => self::listingTypes()[$state] ?? $state)
-                    ->color(fn ($state) => $state === 'referenced' ? 'info' : 'gray'),
-                Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
-                    ->formatStateUsing(fn ($state) => self::statuses()[$state] ?? $state)
-                    ->color(fn ($state) => match ($state) {
-                        'published' => 'success', 'pending' => 'warning', 'suspended' => 'danger', default => 'gray'
-                    }),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(self::statuses()),
@@ -198,7 +198,8 @@ class SpaResource extends Resource
                         OnboardingService::notifyDecision($s, 'refused');
                         Notification::make()->title(__('admin.refused_ok'))->success()->send();
                     }),
-                Tables\Actions\Action::make('preview')->label(fn (Spa $s) => $s->status === 'published' ? __('admin.preview') : __('admin.preview_private'))->icon('heroicon-o-arrow-top-right-on-square')
+                Tables\Actions\Action::make('preview')->label(fn (Spa $s) => $s->status === 'published' ? __('admin.preview') : __('admin.preview_private'))->icon('heroicon-o-arrow-top-right-on-square')->iconButton()
+                    ->tooltip(fn (Spa $s) => $s->status === 'published' ? __('admin.preview') : __('admin.preview_private'))
                     ->url(fn (Spa $s) => route('spa.show', ['locale' => 'fr', 'spa' => $s]), shouldOpenInNewTab: true),
                 Tables\Actions\Action::make('manage')->label(__('admin.manage'))->icon('heroicon-o-wrench-screwdriver')
                     ->url(fn (Spa $s) => url("/partenaire/{$s->slug}")),
@@ -291,7 +292,7 @@ class SpaResource extends Resource
                             Notification::make()->title(__('admin.mgmt_done'))->success()->send();
                         }),
                 ])->label(__('admin.mgmt_section'))->icon('heroicon-o-users')->button()->color('gray'),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->iconButton(),
             ]);
     }
 

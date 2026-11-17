@@ -42,28 +42,28 @@ class BookingResource extends Resource
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['spa', 'participants']))
             ->columns([
                 Tables\Columns\TextColumn::make('reference')->label(__('partner.reference'))->searchable()->weight('bold'),
+                Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
+                    ->formatStateUsing(fn ($state) => __('ui.status')[$state] ?? $state)
+                    ->color(fn ($state) => BookingActions::statusColor($state)),
                 Tables\Columns\TextColumn::make('spa.name')->label(__('admin.spa'))->searchable(),
                 Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('d/m/Y H:i')->sortable(),
                 Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName())->searchable(['first_name', 'last_name', 'email']),
                 Tables\Columns\TextColumn::make('party')->label(__('partner.party')),
                 Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->sortable(),
-                Tables\Columns\TextColumn::make('commission_amount')->label(__('partner.commission'))->getStateUsing(fn (Booking $b) => $b->commissionDue())->money(config('hl.currency'), locale: 'fr'),
-                Tables\Columns\TextColumn::make('rate_type')->label(__('partner.rate_type'))->badge()->color(fn ($state) => $state === 'non_refundable' ? 'success' : 'gray')->formatStateUsing(fn ($state) => __('partner.rate_types.'.$state))->toggleable()->visible(fn () => CancellationPolicy::nrEnabled()),
+                Tables\Columns\TextColumn::make('commission_amount')->label(__('partner.commission'))->getStateUsing(fn (Booking $b) => $b->commissionDue())->money(config('hl.currency'), locale: 'fr')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('rate_type')->label(__('partner.rate_type'))->badge()->color(fn ($state) => $state === 'non_refundable' ? 'success' : 'gray')->formatStateUsing(fn ($state) => __('partner.rate_types.'.$state))->toggleable()->visible(fn () => CancellationPolicy::nrEnabled())->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('payment_status')->label(__('partner.payment'))->badge()
                     ->formatStateUsing(fn ($state) => __('partner.payment_statuses')[$state] ?? $state)
-                    ->color(fn ($state) => BookingActions::paymentColor((string) $state))->toggleable(),
+                    ->color(fn ($state) => BookingActions::paymentColor((string) $state))->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('source')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')
-                    ->formatStateUsing(fn ($state, Booking $b) => $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : __('partner.sources')[$state] ?? $state),
-                Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
-                    ->formatStateUsing(fn ($state) => __('ui.status')[$state] ?? $state)
-                    ->color(fn ($state) => BookingActions::statusColor($state)),
+                    ->formatStateUsing(fn ($state, Booking $b) => $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : __('partner.sources')[$state] ?? $state)->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('source')->label(__('partner.source'))->options(__('partner.sources')),
                 Tables\Filters\SelectFilter::make('status')->options(__('ui.status'))->multiple(),
                 Tables\Filters\SelectFilter::make('spa_id')->label(__('admin.spa'))->relationship('spa', 'name'),
             ])
-            ->actions([Tables\Actions\ViewAction::make(), ...BookingActions::all('admin')]);
+            ->actions([Tables\Actions\ViewAction::make(), Tables\Actions\ActionGroup::make(BookingActions::all('admin'))]);
     }
 
     public static function infolist(Infolist $infolist): Infolist
