@@ -31,6 +31,7 @@ case "${1:-}" in
   import)
     SRC="${2:?dossier export requis}"; DATE=$(date +%Y%m%d-%H%M%S); W=$(mktemp -d /root/six-fiches-XXXXXX); trap 'rm -rf "$W"' EXIT
     exec > >(tee -a "/root/six-fiches-$DATE.log") 2>&1
+    install -d -o deploy -g deploy -m 700 /tmp/deploy-home
     echo "== 1 copie de l'export en zone root + intégrité"
     for f in donnees.sql photos.tar migrations.txt photos.sha256 SHA256SUMS; do [ -f "$SRC/$f" ] && [ ! -L "$SRC/$f" ]; cp "$SRC/$f" "$W/$f"; done
     ( cd "$W" && sha256sum -c SHA256SUMS )
@@ -56,11 +57,16 @@ case "${1:-}" in
     { sed '$d' "$W/donnees.sql"; echo "UPDATE spas SET status='draft' WHERE id IN ($IDS);"; echo "COMMIT;"; } > "$W/import.sql"
     mariadb --default-character-set=utf8mb4 "$DB" < "$W/import.sql"
     [ "$(q "SELECT COUNT(*) FROM spas WHERE status<>'draft'")" = 0 ] || { echo "une fiche n'est pas en brouillon — arrêt"; exit 1; }
-    echo "== 6 photos"; install -d -o deploy -g deploy -m 700 "$STORE" "$STORE/spas"
+    echo "== 6 photos"; [ -d "$STORE" ]; OWN=$(stat -c '%U:%G' "$STORE"); [ -d "$STORE/spas" ] || install -d -o "${OWN%%:*}" -g "${OWN##*:}" -m 700 "$STORE/spas"
     tar xpf "$W/photos.tar" -C "$STORE" --no-same-owner
-    for i in 31 34 35 36 37 38; do chown -R deploy:deploy "$STORE/spas/$i"; done
+    for i in 31 34 35 36 37 38; do chown -R "$OWN" "$STORE/spas/$i"; done
     echo "== 7 preuves d'identité avec la staging"
-    dump_sql | sed "/^INSERT INTO \`spas\`/s/,'draft',/,'published',/" > "$W/relu.sql"; cmp "$W/donnees.sql" "$W/relu.sql" && echo "données : identiques à la staging (seul le statut diffère : brouillon)"
+    dump_sql | sed "/^INSERT INTO \`spas\`/s/,'draft',/,'published',/" > "$W/relu.sql"
+    grep -v '^REPLACE INTO' "$W/donnees.sql" > "$W/a.sql"; grep -v '^REPLACE INTO' "$W/relu.sql" > "$W/b.sql"
+    cmp "$W/a.sql" "$W/b.sql" && echo "données des six fiches : identiques à la staging (seul le statut diffère : brouillon)"
+    grep '^REPLACE INTO' "$W/relu.sql" > "$W/ref.sql" || true
+    if grep '^REPLACE INTO' "$W/donnees.sql" | grep -F -v -x -f "$W/ref.sql" | grep -q .; then echo "tables de référence : ligne de la staging absente — arrêt"; exit 1; fi
+    echo "tables de référence (villes, équipements, catégories) : toutes les lignes de la staging présentes"
     photos_list > "$W/relu.sha256"; cmp "$W/photos.sha256" "$W/relu.sha256" && echo "photos : identiques à la staging ($(wc -l < "$W/relu.sha256") fichiers)"
     M=0; while read -r p; do [ -f "$STORE/$p" ] || { echo "photo absente : $p"; M=1; }; done < <(q "SELECT path FROM spa_photos"); [ "$M" = 0 ] && echo "chaque photo référencée existe"
     NS=$(q "SELECT COUNT(*) FROM spas"); NP=$(q "SELECT COUNT(*) FROM spas WHERE status='published'"); NT=$(q "SELECT COUNT(*) FROM treatments"); NF=$(q "SELECT COUNT(*) FROM spa_photos"); NU=$(q "SELECT COUNT(*) FROM users"); NB=$(q "SELECT COUNT(*) FROM bookings")
