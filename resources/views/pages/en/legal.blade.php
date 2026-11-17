@@ -1,7 +1,8 @@
-<p class="muted small">Items in brackets must be completed with the company’s legal details before going live.</p>
+@php($legal = \App\Support\LegalIdentity::values())
+@if($legal['incomplete'])<p class="muted small">Items in brackets must be completed with the company’s legal details before going live.</p>@endif
 
 <h2>1. Publisher</h2>
-<p>The website hammamluxury.com (“the Platform”) is published by @php($legal = \App\Support\LegalIdentity::values())<b>{!! $legal['company_name'] !!}</b>, {!! $legal['legal_form'] !!}{!! $legal['capital'] ? ' with a share capital of '.$legal['capital'].' MAD' : '' !!}, registered with the Trade Register of {!! $legal['rc_city'] !!} under no. {!! $legal['rc_number'] !!}, ICE {!! $legal['ice'] !!}, tax ID {!! $legal['tax_id'] !!}@if($legal['patente']), business tax no. {!! $legal['patente'] !!}@endif, with its registered office at {!! $legal['address'] !!}, Morocco. Trade name: HammamLuxury.</p>
+<p>The website hammamluxury.com (“the Platform”) is published by <b>{!! $legal['company_name'] !!}</b>, {!! $legal['legal_form'] !!}{!! $legal['capital'] ? ' with a share capital of '.$legal['capital'].' MAD' : '' !!}, registered with the Trade Register of {!! $legal['rc_city'] !!} under no. {!! $legal['rc_number'] !!}, ICE {!! $legal['ice'] !!}, tax ID {!! $legal['tax_id'] !!}@if($legal['patente']), business tax no. {!! $legal['patente'] !!}@endif, with its registered office at {!! $legal['address'] !!}, Morocco. Trade name: HammamLuxury.</p>
 <p>Publication director: {!! $legal['publication_director'] !!}.</p>
 <p>Contact: <a href="{{ route('contact') }}">contact form</a> · e-mail {!! $legal['email'] !!}@if($legal['phone']) · phone {!! $legal['phone'] !!}@endif.</p>
 
