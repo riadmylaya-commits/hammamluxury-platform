@@ -6,7 +6,7 @@
 #   six-fiches.sh photos-list   → empreintes des fichiers photo des six fiches (lecture seule)
 #   six-fiches.sh import <dir>  → PRODUCTION : importe <dir> (donnees.sql, photos.tar, migrations.txt, photos.sha256, SHA256SUMS)
 #                                 dans une base SANS fiche, en une transaction, prouve l'identité avec la staging,
-#                                 puis passe les six fiches en BROUILLON (invisibles du public).
+#                                 les six fiches étant écrites directement en BROUILLON dans la même transaction.
 set -euo pipefail
 DB=hl_platform; APP=/var/www/hammamluxury; IDS="31,34,35,36,37,38"; PARTNER=29; ADMIN=1
 STORE=$APP/storage/app/private
@@ -51,17 +51,18 @@ case "${1:-}" in
     echo "== 4 sauvegardes avant import"; install -d -m 700 "/root/pre-six-fiches-$DATE"
     mariadb-dump --single-transaction --routines --triggers "$DB" | gzip > "/root/pre-six-fiches-$DATE/db.sql.gz"; [ -s "/root/pre-six-fiches-$DATE/db.sql.gz" ]
     /usr/local/sbin/hl-backup.sh
-    echo "== 5 import (une transaction : tout ou rien)"
-    mariadb --default-character-set=utf8mb4 "$DB" < "$W/donnees.sql"
+    echo "== 5 import directement en brouillon (une seule transaction : aucune fiche n'est publiée, même un instant)"
+    [ "$(tail -n 1 "$W/donnees.sql")" = "COMMIT;" ] && [ "$(grep -c '^COMMIT;$' "$W/donnees.sql")" = 1 ]
+    { sed '$d' "$W/donnees.sql"; echo "UPDATE spas SET status='draft' WHERE id IN ($IDS);"; echo "COMMIT;"; } > "$W/import.sql"
+    mariadb --default-character-set=utf8mb4 "$DB" < "$W/import.sql"
+    [ "$(q "SELECT COUNT(*) FROM spas WHERE status<>'draft'")" = 0 ] || { echo "une fiche n'est pas en brouillon — arrêt"; exit 1; }
     echo "== 6 photos"; install -d -o deploy -g deploy -m 700 "$STORE" "$STORE/spas"
     tar xpf "$W/photos.tar" -C "$STORE" --no-same-owner
     for i in 31 34 35 36 37 38; do chown -R deploy:deploy "$STORE/spas/$i"; done
     echo "== 7 preuves d'identité avec la staging"
-    dump_sql > "$W/relu.sql"; cmp "$W/donnees.sql" "$W/relu.sql" && echo "données : identiques à la staging"
+    dump_sql | sed "/^INSERT INTO \`spas\`/s/,'draft',/,'published',/" > "$W/relu.sql"; cmp "$W/donnees.sql" "$W/relu.sql" && echo "données : identiques à la staging (seul le statut diffère : brouillon)"
     photos_list > "$W/relu.sha256"; cmp "$W/photos.sha256" "$W/relu.sha256" && echo "photos : identiques à la staging ($(wc -l < "$W/relu.sha256") fichiers)"
     M=0; while read -r p; do [ -f "$STORE/$p" ] || { echo "photo absente : $p"; M=1; }; done < <(q "SELECT path FROM spa_photos"); [ "$M" = 0 ] && echo "chaque photo référencée existe"
-    echo "== 8 mise en brouillon : les six fiches restent invisibles du public jusqu'à l'autorisation de publication"
-    q "UPDATE spas SET status='draft' WHERE id IN ($IDS)"
     NS=$(q "SELECT COUNT(*) FROM spas"); NP=$(q "SELECT COUNT(*) FROM spas WHERE status='published'"); NT=$(q "SELECT COUNT(*) FROM treatments"); NF=$(q "SELECT COUNT(*) FROM spa_photos"); NU=$(q "SELECT COUNT(*) FROM users"); NB=$(q "SELECT COUNT(*) FROM bookings")
     echo "fiches=$NS publiées=$NP soins=$NT photos=$NF comptes=$NU réservations=$NB"
     sudo -u deploy -H env HOME=/tmp/deploy-home php "$APP/artisan" optimize:clear -q || true
