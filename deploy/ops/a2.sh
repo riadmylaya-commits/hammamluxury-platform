@@ -14,7 +14,7 @@ while read -r h f; do
   chattr +i "/opt/hl-ops/$f"; rm -f "/tmp/$f"
 done <<'L'
 515d6a3e4a70b9bdbc37139ca74797b56e0b390b8ae88c52e1d4f355caf08bda diagnostic-root-complet.sh
-4698620d31bfaccfe485a1c1578f17b47d39e56cf2604657cad2ca060c9a8fac prep-sauvegarde.sh
+e694a096c2c34c91108b3e20b4120e108fb6118b8a98a62e0a7e40e07dbb30da prep-sauvegarde.sh
 821f8397a222f9f2e00dc454b6d7d86afa20ad220e46d39fedf31a6d6be9dc96 prep-test-restauration.sh
 L
 chattr -i /etc/sudoers.d/hl-devin 2>/dev/null || true

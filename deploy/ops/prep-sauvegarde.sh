@@ -35,8 +35,10 @@ SFTP
   rm -rf "$T"
 fi
 unset SB_PASS; ok && echo "accès SFTP par clé : OK" || { echo "accès SFTP par clé : ÉCHEC — arrêt"; exit 5; }
-echo "== 3 scripts de sauvegarde (copie du dépôt hors /var/www)"; D=/root/hl-deploy-prep
-if [ -d "$D/.git" ]; then git -C "$D" pull -q --ff-only; else git clone -q --depth 1 -b main https://github.com/riadmylaya-commits/hammamluxury-platform.git "$D"; fi
+echo "== 3 scripts de sauvegarde (copie du dépôt hors /var/www, version figée)"; D=/root/hl-deploy-prep
+PIN=d1527a64b110daef9c606fed5d568ee739926d2e
+[ -d "$D/.git" ] || git clone -q https://github.com/riadmylaya-commits/hammamluxury-platform.git "$D"
+git -C "$D" fetch -q origin; git -C "$D" checkout -q --detach "$PIN"; [ "$(git -C "$D" rev-parse HEAD)" = "$PIN" ]; [ -z "$(git -C "$D" status --porcelain)" ]
 git -C "$D" --no-pager log --oneline -1
 HL_RESTIC_REPOSITORY="sftp:hl-storagebox:hl-prod" HL_HOST_TAG=hl-prod bash "$D/deploy/backup/install.sh" | grep -v "restic.password" || true
 set -a; . /etc/hl-backup/env; set +a
