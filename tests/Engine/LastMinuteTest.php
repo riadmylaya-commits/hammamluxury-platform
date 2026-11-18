@@ -4,6 +4,8 @@ namespace Tests\Engine;
 
 use App\Domain\Booking\BookingException;
 use App\Filament\Partner\Pages\EditSpaProfile;
+use App\Filament\Partner\Widgets\PendingBookings;
+use App\Filament\Partner\Widgets\StatsOverview;
 use App\Livewire\Site\BookingFlow;
 use App\Mail\BookingMail;
 use App\Models\Allocation;
@@ -195,6 +197,19 @@ class LastMinuteTest extends BookingFlowTestCase
         Livewire::test(EditSpaProfile::class)->assertSee('Accepter les demandes de dernière minute')
             ->fillForm(['last_minute_enabled' => true])->call('save')->assertHasNoFormErrors();
         $this->assertTrue($this->reload()->acceptsLastMinute(), 'Le partenaire active lui-même l’option');
+    }
+
+    public function test_partner_dashboard_shows_the_last_minute_deadline_first(): void
+    {
+        $this->spa->update(['last_minute_enabled' => true, 'city_id' => City::first()?->id ?? City::create(['slug' => 'marrakech', 'name_fr' => 'Marrakech', 'name_en' => 'Marrakech'])->id]);
+        $this->reload();
+        $this->travelTo($this->t('10:00'));
+        $this->submit($this->intent('12:00', ['treatment' => $this->h->id, 'party' => 1]));
+        $this->actingAs($this->spa->partner->user);
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+        Livewire::test(StatsOverview::class)->assertSee('Dernière minute : répondre avant 10h30')->assertDontSee('Réponse attendue sous');
+        Livewire::test(PendingBookings::class)->assertSee('Dernière minute · avant 10h30');
     }
 
     public function test_customer_sees_the_shortened_deadline_before_sending(): void

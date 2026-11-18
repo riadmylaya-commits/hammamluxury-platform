@@ -218,6 +218,7 @@ return [
 
     'stat_waiting' => 'Requests to handle',
     'stat_waiting_help' => 'Reply expected within :delay',
+    'stat_waiting_last_minute' => 'Last minute: reply before :until',
     'stat_upcoming' => 'Upcoming confirmed bookings',
     'stat_month' => 'Revenue this month',
     'stat_spa' => 'Profile visibility',
