@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'actions_menu' => 'Actions',
     'partner' => 'Partenaire',
     'partners' => 'Partenaires',
     'company' => 'Société',
