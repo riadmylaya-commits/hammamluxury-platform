@@ -190,7 +190,12 @@
 {{-- ===== Étape 3 ===== --}}
 @else
     <h2 style="font-size:20px;margin-bottom:10px">{{ __('ui.your_details') }}</h2>
-    <form wire:submit="submit" class="card" style="padding:14px;display:grid;gap:12px">
+    <form class="card" style="padding:14px;display:grid;gap:12px"
+          x-data="{ sending: false, failed: false, timer: null,
+              stop(failed) { clearTimeout(this.timer); this.sending = false; this.failed = failed; if (failed) this.$nextTick(() => this.$refs.fail.scrollIntoView({ block: 'center' })); },
+              send() { if (this.sending) return; if (! navigator.onLine) { this.stop(true); return; } this.failed = false; this.sending = true; this.timer = setTimeout(() => this.stop(true), 25000); $wire.submit().then(() => this.stop(false)); } }"
+          x-on:hl-request-failed.window="if (sending) stop(true)"
+          x-on:submit.prevent="send()">
         <div class="grid2">
             <div class="fld"><label>{{ __('ui.first_name') }}</label><input class="inp @error('first_name') err @enderror" wire:model="first_name" autocomplete="given-name" required>@error('first_name')<span class="ferr">{{ $message }}</span>@enderror</div>
             <div class="fld"><label>{{ __('ui.last_name') }}</label><input class="inp @error('last_name') err @enderror" wire:model="last_name" autocomplete="family-name" required>@error('last_name')<span class="ferr">{{ $message }}</span>@enderror</div>
@@ -213,7 +218,8 @@
         @else
             <div class="notice info">{{ $spa->isReferenced() ? __('ui.no_payment_referenced', ['hours' => $spa->waitingTtlHours(), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1]]) : __('ui.no_payment', ['hours' => $spa->waitingTtlHours()]) }} {{ __('ui.no_account') }}</div>
         @endif
-        <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" wire:loading.attr="disabled"><span wire:loading.remove wire:target="submit">{{ $spa->instantBookingActive() ? __('ui.submit_instant') : __('ui.submit') }}</span><span wire:loading wire:target="submit">{{ __('ui.submitting') }}</span></button></div>
+        <div x-ref="fail" x-show="failed" x-cloak class="offline-note" role="alert">{{ __('ui.send_failed') }}</div>
+        <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" x-bind:disabled="sending"><span x-show="! sending">{{ $spa->instantBookingActive() ? __('ui.submit_instant') : __('ui.submit') }}</span><span x-show="sending" x-cloak>{{ __('ui.submitting') }}</span></button></div>
     </form>
 @endif
 </div>
