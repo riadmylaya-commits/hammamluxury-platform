@@ -13,8 +13,8 @@ return new class extends Migration
             $table->string('reference', 12)->unique();
             $table->string('source', 10)->index();
             $table->string('status', 12)->default('new')->index();
-            $table->string('name', 120);
-            $table->string('email', 190);
+            $table->string('name');
+            $table->string('email');
             $table->string('subject', 150);
             $table->text('body');
             $table->string('locale', 5)->default('fr');

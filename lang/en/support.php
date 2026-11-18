@@ -19,6 +19,7 @@ return [
     'sent' => 'Request :ref recorded. An acknowledgement has been sent to you by e-mail.',
     'too_many' => 'Too many requests sent in a short time. Please try again in an hour.',
     'my_requests' => 'My requests',
+    'show_more' => 'Show older requests',
     'none' => 'No requests yet.',
     'history' => 'History',
     'no_reply' => 'No reply yet.',

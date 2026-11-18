@@ -28,6 +28,8 @@ class Assistance extends Page
 
     public string $followUp = '';
 
+    public int $shown = 20;
+
     public static function getNavigationLabel(): string
     {
         return __('support.nav');
@@ -54,7 +56,17 @@ class Assistance extends Page
     /** Demandes de l'établissement courant uniquement. @return Collection<int, SupportRequest> */
     public function requests(): Collection
     {
-        return SupportRequest::with('messages')->where('source', 'partner')->where('spa_id', $this->spa()->id)->orderByDesc('id')->limit(50)->get();
+        return SupportRequest::with('messages')->where('source', 'partner')->where('spa_id', $this->spa()->id)->orderByDesc('id')->limit($this->shown)->get();
+    }
+
+    public function hasMore(): bool
+    {
+        return SupportRequest::where('source', 'partner')->where('spa_id', $this->spa()->id)->count() > $this->shown;
+    }
+
+    public function showMore(): void
+    {
+        $this->shown += 20;
     }
 
     public function select(int $id): void
@@ -88,6 +100,13 @@ class Assistance extends Page
     {
         $this->validate(['followUp' => 'required|string|min:5|max:3000'], attributes: ['followUp' => __('support.follow_up')]);
         $request = SupportRequest::where('source', 'partner')->where('spa_id', $this->spa()->id)->findOrFail($this->selected);
+        $key = 'support-follow:'.auth()->id();
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->addError('followUp', __('support.too_many'));
+
+            return;
+        }
+        RateLimiter::hit($key, 3600);
         $support->followUp($request, trim($this->followUp), auth()->user());
         $this->followUp = '';
         Notification::make()->title(__('support.follow_up_sent'))->success()->send();

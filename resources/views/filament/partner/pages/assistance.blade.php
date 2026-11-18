@@ -52,6 +52,9 @@
         @empty
             <p class="text-sm text-gray-500">{{ __('support.none') }}</p>
         @endforelse
+        @if ($this->hasMore())
+            <div style="padding-top:.6rem"><x-filament::button type="button" size="sm" color="gray" wire:click="showMore">{{ __('support.show_more') }}</x-filament::button></div>
+        @endif
     </x-filament::section>
 
     <x-filament::section :heading="__('support.faq_title')">

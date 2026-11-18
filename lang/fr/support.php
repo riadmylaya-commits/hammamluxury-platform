@@ -19,6 +19,7 @@ return [
     'sent' => 'Demande :ref enregistrée. Un accusé de réception vous a été envoyé par e-mail.',
     'too_many' => 'Trop de demandes envoyées en peu de temps. Merci de réessayer dans une heure.',
     'my_requests' => 'Mes demandes',
+    'show_more' => 'Afficher les demandes plus anciennes',
     'none' => 'Aucune demande pour le moment.',
     'history' => 'Historique des échanges',
     'no_reply' => 'Pas encore de réponse.',

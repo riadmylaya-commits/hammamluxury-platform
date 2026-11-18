@@ -75,6 +75,18 @@ class SupportTest extends BookingFlowTestCase
         $this->assertStringContainsString($this->spa->name, (new SupportMail($r, 'admin'))->render(), 'Alerte administration : établissement concerné');
 
         $page->assertSee($r->reference)->assertDontSee($foreign->reference);
+
+        $page->set('selected', $r->id);
+        for ($i = 0; $i < 10; $i++) {
+            $page->set('followUp', "Précision numéro $i")->call('sendFollowUp')->assertHasNoErrors();
+        }
+        $page->set('followUp', 'Une précision de trop')->call('sendFollowUp')->assertHasErrors(['followUp']);
+        $this->assertSame(10, $r->messages()->count(), 'Précisions limitées à 10 par heure et par compte');
+
+        for ($i = 0; $i < 25; $i++) {
+            SupportRequest::create(['reference' => 'ASOLD'.$i, 'source' => 'partner', 'name' => str_repeat('n', 200), 'email' => $this->owner->email, 'subject' => 'Autre', 'body' => 'Ancienne demande', 'spa_id' => $this->spa->id]);
+        }
+        Livewire::test(Assistance::class)->assertDontSee($r->reference)->assertSee('Afficher les demandes plus anciennes')->call('showMore')->assertSee($r->reference);
         $page->set('selected', $foreign->id)->set('followUp', 'Tentative sur la demande d’un autre établissement');
         try {
             $page->call('sendFollowUp');
