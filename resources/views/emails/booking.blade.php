@@ -19,8 +19,16 @@
 {{ __('booking.follow') }}
 </x-mail::button>
 @endif
+@if($audience === 'client' && $event === 'created' && $booking->status === 'waiting' && $booking->expires_at)
+{{ __('emails.created.client_deadline', ['until' => $booking->expires_at->locale($booking->locale)->translatedFormat(__('emails.deadline_format'))]) }}
+@endif
+@if($audience === 'client' && $event === 'expired')
+<x-mail::button :url="route('search', ['locale' => $booking->locale])">
+{{ __('emails.expired.search_other') }}
+</x-mail::button>
+@endif
 @if($audience === 'partner' && $event === 'created')
-{{ __('emails.created.'.$textAudience.'.deadline', ['hours' => $booking->spa->waitingTtlHours(), 'until' => $booking->expires_at?->translatedFormat('l j F Y H\hi')]) }}
+{{ __('emails.created.'.$textAudience.'.deadline', ['hours' => $booking->spa->waitingTtlHours(), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1], 'until' => $booking->expires_at?->translatedFormat('l j F Y H\hi')]) }}
 @endif
 
 {{ config('app.name') }}

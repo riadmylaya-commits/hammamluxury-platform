@@ -624,11 +624,7 @@ class BookingService
         $hours = $spa?->waitingTtlHours() ?? (float) config('hl.waiting_ttl_hours');
         $from ??= CarbonImmutable::now();
         $minutes = (int) round(60 * $hours);
-        if (! $spa?->managedByAdmin()) {
-            return $from->addMinutes($minutes);
-        }
-
-        // Demandes décidées par HammamLuxury : le délai ne court que pendant les heures de service (config hl.admin_hours).
+        // Pour tous les établissements, le délai ne court que pendant les heures de service (config hl.admin_hours) : rien n'expire la nuit.
         [$open, $close] = config('hl.admin_hours');
         $t = $from;
         while ($minutes > 0) {
