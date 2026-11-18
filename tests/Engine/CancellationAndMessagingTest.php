@@ -184,7 +184,7 @@ class CancellationAndMessagingTest extends BookingFlowTestCase
         $this->assertSame(0, PartnerBookingResource::unreadMessages());
 
         $page->set('messageBody', 'Bien noté, à demain !')->call('sendMessage')->assertSee('Bien noté, à demain');
-        $m3 = $b->messages()->latest('id')->first();
+        $m3 = $b->messages()->reorder()->latest('id')->first();
         $this->assertSame('partner', $m3->sender);
         $this->assertSame($this->spa->partner->user_id, $m3->user_id);
         Mail::assertQueued(BookingMessageMail::class, fn ($m) => $m->hasTo('client@example.test') && $m->audience === 'client');
