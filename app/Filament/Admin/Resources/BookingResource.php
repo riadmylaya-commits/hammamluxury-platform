@@ -57,22 +57,22 @@ class BookingResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['spa', 'participants']))
             ->columns([
-                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('md'),
-                Tables\Columns\TextColumn::make('reference')->visibleFrom('md')->label(__('partner.reference'))->searchable()->weight('bold'),
-                Tables\Columns\TextColumn::make('status')->visibleFrom('md')->label(__('partner.status'))->badge()
+                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('xl'),
+                Tables\Columns\TextColumn::make('reference')->visibleFrom('xl')->label(__('partner.reference'))->searchable()->weight('bold'),
+                Tables\Columns\TextColumn::make('status')->visibleFrom('xl')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => __('ui.status')[$state] ?? $state)
                     ->color(fn ($state) => BookingActions::statusColor($state)),
-                Tables\Columns\TextColumn::make('spa.name')->visibleFrom('md')->label(__('admin.spa'))->searchable()->wrap(),
-                Tables\Columns\TextColumn::make('start_at')->visibleFrom('md')->label(__('partner.date_time'))->dateTime('d/m/y H:i')->sortable(),
-                Tables\Columns\TextColumn::make('customer')->visibleFrom('md')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName())->searchable(['first_name', 'last_name', 'email'])->wrap(),
-                Tables\Columns\TextColumn::make('party')->visibleFrom('md')->label(__('partner.party')),
-                Tables\Columns\TextColumn::make('total')->visibleFrom('md')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->sortable(),
-                Tables\Columns\TextColumn::make('commission_amount')->visibleFrom('md')->label(__('partner.commission'))->getStateUsing(fn (Booking $b) => $b->commissionDue())->money(config('hl.currency'), locale: 'fr')->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('rate_type')->visibleFrom('md')->label(__('partner.rate_type'))->badge()->color(fn ($state) => $state === 'non_refundable' ? 'success' : 'gray')->formatStateUsing(fn ($state) => __('partner.rate_types.'.$state))->toggleable()->visible(fn () => CancellationPolicy::nrEnabled())->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('payment_status')->visibleFrom('md')->label(__('partner.payment'))->badge()
+                Tables\Columns\TextColumn::make('spa.name')->visibleFrom('xl')->label(__('admin.spa'))->searchable()->wrap(),
+                Tables\Columns\TextColumn::make('start_at')->visibleFrom('xl')->label(__('partner.date_time'))->dateTime('d/m/y H:i')->sortable(),
+                Tables\Columns\TextColumn::make('customer')->visibleFrom('xl')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName())->searchable(['first_name', 'last_name', 'email'])->wrap(),
+                Tables\Columns\TextColumn::make('party')->visibleFrom('2xl')->label(__('partner.party')),
+                Tables\Columns\TextColumn::make('total')->visibleFrom('xl')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->sortable(),
+                Tables\Columns\TextColumn::make('commission_amount')->visibleFrom('xl')->label(__('partner.commission'))->getStateUsing(fn (Booking $b) => $b->commissionDue())->money(config('hl.currency'), locale: 'fr')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('rate_type')->visibleFrom('xl')->label(__('partner.rate_type'))->badge()->color(fn ($state) => $state === 'non_refundable' ? 'success' : 'gray')->formatStateUsing(fn ($state) => __('partner.rate_types.'.$state))->toggleable()->visible(fn () => CancellationPolicy::nrEnabled())->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('payment_status')->visibleFrom('xl')->label(__('partner.payment'))->badge()
                     ->formatStateUsing(fn ($state) => __('partner.payment_statuses')[$state] ?? $state)
                     ->color(fn ($state) => BookingActions::paymentColor((string) $state))->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('source')->visibleFrom('md')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')
+                Tables\Columns\TextColumn::make('source')->visibleFrom('xl')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')
                     ->formatStateUsing(fn ($state, Booking $b) => $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : __('partner.sources')[$state] ?? $state)->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
@@ -81,9 +81,9 @@ class BookingResource extends Resource
                 Tables\Filters\SelectFilter::make('spa_id')->label(__('admin.spa'))->relationship('spa', 'name'),
             ])
             ->actions([
-                Tables\Actions\ActionGroup::make([Tables\Actions\ViewAction::make(), ...BookingActions::all('admin')])->extraAttributes(['class' => 'hl-mobile-only']),
-                Tables\Actions\ViewAction::make()->extraAttributes(['class' => 'hl-desktop-only']),
-                Tables\Actions\ActionGroup::make(BookingActions::all('admin'))->extraAttributes(['class' => 'hl-desktop-only']),
+                Tables\Actions\ActionGroup::make([Tables\Actions\ViewAction::make(), ...BookingActions::all('admin')])->label(__('admin.actions_menu'))->tooltip(__('admin.actions_menu'))->extraAttributes(['class' => 'hl-card-only', 'aria-label' => __('admin.actions_menu')]),
+                Tables\Actions\ViewAction::make()->extraAttributes(['class' => 'hl-table-only']),
+                Tables\Actions\ActionGroup::make(BookingActions::all('admin'))->label(__('admin.actions_menu'))->tooltip(__('admin.actions_menu'))->extraAttributes(['class' => 'hl-table-only', 'aria-label' => __('admin.actions_menu')]),
             ]);
     }
 

@@ -143,29 +143,29 @@ class SpaResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['partner', 'photos']))
             ->columns([
-                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Spa $s) => static::mobileCard($s))->html()->wrap()->hiddenFrom('md'),
-                Tables\Columns\ImageColumn::make('cover')->visibleFrom('md')->label('')->getStateUsing(fn (Spa $s) => $s->coverPhoto()?->url())->circular(),
-                Tables\Columns\TextColumn::make('name')->visibleFrom('md')->label(__('admin.spa'))->searchable()->weight('bold')->wrap()
+                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Spa $s) => static::mobileCard($s))->html()->wrap()->hiddenFrom('xl'),
+                Tables\Columns\ImageColumn::make('cover')->visibleFrom('2xl')->label('Photo')->toggleable(isToggledHiddenByDefault: true)->getStateUsing(fn (Spa $s) => $s->coverPhoto()?->url())->circular(),
+                Tables\Columns\TextColumn::make('name')->visibleFrom('xl')->label(__('admin.spa'))->searchable()->weight('bold')->wrap()
                     ->description(fn (Spa $s) => $s->area ? "$s->area · $s->city" : $s->city),
-                Tables\Columns\TextColumn::make('status')->visibleFrom('md')->label(__('partner.status'))->badge()
+                Tables\Columns\TextColumn::make('status')->visibleFrom('xl')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => self::statuses()[$state] ?? $state)
                     ->color(fn ($state) => match ($state) {
                         'published' => 'success', 'pending' => 'warning', 'suspended' => 'danger', default => 'gray'
                     }),
-                Tables\Columns\TextColumn::make('listing_type')->visibleFrom('md')->label(__('admin.listing_type'))->badge()
+                Tables\Columns\TextColumn::make('listing_type')->visibleFrom('xl')->label(__('admin.listing_type'))->badge()
                     ->formatStateUsing(fn ($state) => self::listingTypes()[$state] ?? $state)
                     ->color(fn ($state) => $state === 'referenced' ? 'info' : 'gray'),
-                Tables\Columns\TextColumn::make('partner.company_name')->visibleFrom('md')->label(__('admin.partner'))->searchable()->toggleable()->wrap(),
-                Tables\Columns\TextColumn::make('management')->visibleFrom('md')->label(__('admin.mgmt_section'))->badge()
+                Tables\Columns\TextColumn::make('partner.company_name')->visibleFrom('xl')->label(__('admin.partner'))->searchable()->toggleable(isToggledHiddenByDefault: true)->wrap(),
+                Tables\Columns\TextColumn::make('management')->visibleFrom('xl')->label(__('admin.mgmt_section'))->wrapHeader()->badge()
                     ->state(fn (Spa $s) => app(OwnerAssignmentService::class)->state($s))
                     ->formatStateUsing(fn (string $state) => __('admin.mgmt_state_'.$state))
                     ->color(fn (string $state) => match ($state) {
                         'portfolio' => 'info', 'taken_over' => 'warning', 'suspended' => 'danger', default => 'success'
                     })
                     ->description(fn (Spa $s) => $s->owner_invited_at && app(OwnerAssignmentService::class)->ownerOf($s) ? __('admin.mgmt_invited_on', ['date' => $s->owner_invited_at->format('d/m/Y')]) : null),
-                Tables\Columns\TextColumn::make('treatments_count')->visibleFrom('md')->counts('treatments')->label(__('partner.treatments'))->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('bookings_count')->visibleFrom('md')->counts('bookings')->label(__('partner.bookings'))->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('cancellation_requests_count')->visibleFrom('md')->counts('cancellationRequests')->label(__('admin.cancellation_col'))->sortable()
+                Tables\Columns\TextColumn::make('treatments_count')->visibleFrom('xl')->counts('treatments')->label(__('partner.treatments'))->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('bookings_count')->visibleFrom('xl')->counts('bookings')->label(__('partner.bookings'))->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('cancellation_requests_count')->visibleFrom('xl')->counts('cancellationRequests')->label(__('admin.cancellation_col'))->sortable()
                     ->formatStateUsing(function ($state, Spa $s) {
                         $rate = CancellationService::rateFor($s->id);
 
@@ -173,14 +173,14 @@ class SpaResource extends Resource
                     })
                     ->color(fn ($state, Spa $s) => $state && CancellationService::rateFor($s->id)['rate'] >= 20 ? 'danger' : ($state ? 'warning' : 'gray'))->badge()
                     ->tooltip(__('admin.cancellation_col_help'))->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('full_declines_count')->visibleFrom('md')->label(__('admin.declines_col'))->badge()->sortable()->toggleable()
+                Tables\Columns\TextColumn::make('full_declines_count')->visibleFrom('2xl')->label(__('admin.declines_col'))->wrapHeader()->badge()->sortable()->toggleable()
                     ->counts(['declines as full_declines_count' => fn (Builder $q) => $q->where('reason', 'full')->where('created_at', '>=', now()->subDays(90))])
                     ->formatStateUsing(fn ($state, Spa $s) => $state ? $state.' ('.$s->declines()->where('reason', 'full')->where('engine_available', true)->where('created_at', '>=', now()->subDays(90))->count().')' : '0')
                     ->color(fn ($state, Spa $s) => $state && $s->declines()->where('reason', 'full')->where('engine_available', true)->where('created_at', '>=', now()->subDays(90))->exists() ? 'danger' : ($state ? 'warning' : 'gray'))
                     ->tooltip(__('admin.declines_col_help'))
                     ->url(fn (Spa $s) => BookingDeclineResource::getUrl('index', ['tableFilters' => ['spa_id' => ['value' => $s->id], 'reason' => ['value' => 'full']]])),
-                Tables\Columns\TextColumn::make('rating')->visibleFrom('md')->label(__('admin.rating'))->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('license_number')->visibleFrom('md')->label(__('admin.license_col'))->toggleable()->badge()
+                Tables\Columns\TextColumn::make('rating')->visibleFrom('xl')->label(__('admin.rating'))->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('license_number')->visibleFrom('2xl')->label(__('admin.license_col'))->wrapHeader()->toggleable()->badge()
                     ->getStateUsing(fn (Spa $s) => $s->license_number ?: ($s->licenseExpected() ? __('admin.license_missing') : null))->placeholder('—')
                     ->color(fn (Spa $s) => blank($s->license_number) ? 'warning' : 'gray')
                     ->description(fn (Spa $s) => $s->licenseAuthorityLabel()),
@@ -311,7 +311,7 @@ class SpaResource extends Resource
                         }),
                 ])->dropdown(false),
                 Tables\Actions\EditAction::make(),
-            ])->label(__('admin.actions_menu'))->tooltip(__('admin.actions_menu'))]);
+            ])->label(__('admin.actions_menu'))->tooltip(__('admin.actions_menu'))->extraAttributes(['aria-label' => __('admin.actions_menu')])]);
     }
 
     public static function getRelations(): array

@@ -20,4 +20,6 @@
     /* Actions regroupées en un menu sur mobile (tableau des réservations partenaire) */
     @media (min-width: 768px) { .hl-mobile-only { display: none; } }
     @media (max-width: 767px) { .hl-desktop-only { display: none; } }
+    @media (min-width: 1280px) { .hl-card-only { display: none; } }
+    @media (max-width: 1279px) { .hl-table-only { display: none; } }
 </style>
