@@ -112,7 +112,7 @@ return [
     'note' => 'Message for the venue (optional)',
     'note_privacy' => 'For your safety, contact details (phone, e-mail, links) are hidden in messages until the booking is confirmed.',
     'no_account' => 'No account needed. You will receive a confirmation e-mail with a tracking link.',
-    'no_payment' => 'No online payment: you pay at the venue. The venue confirms your request within :hours h, otherwise it expires automatically.',
+    'no_payment' => 'No online payment: you pay at the venue. The venue confirms your request within :hours h (counted between :open:00 and :close:00, Morocco time), otherwise it expires automatically.',
     'no_payment_referenced' => 'No online payment: you pay on site. HammamLuxury checks availability with the venue and confirms by e-mail within :hours h (between :open:00 and :close:00), otherwise the request expires automatically.',
     'referenced_banner_title' => 'Venue listed by HammamLuxury',
     'referenced_banner_body' => 'Information collected from its public channels:date. Your request is forwarded to the venue subject to availability; indicative prices, confirmed before validation.',

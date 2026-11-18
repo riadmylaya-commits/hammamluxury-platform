@@ -77,7 +77,13 @@ class ReferencedListingTest extends BookingFlowTestCase
         $this->assertSame('2026-06-02 11:00', $d->format('Y-m-d H:i'), 'La nuit : délai à partir de 9 h le lendemain');
         $spa->update(['managed_by' => 'partner']);
         $d = $svc->waitingDeadline(CarbonImmutable::parse('2026-06-01 23:15'), $this->reload());
-        $this->assertSame('2026-06-02 01:15', $d->format('Y-m-d H:i'), 'Fiche gérée par le partenaire : délai continu inchangé');
+        $this->assertSame('2026-06-02 11:00', $d->format('Y-m-d H:i'), 'Fiche gérée par le partenaire : même règle, rien n’expire la nuit');
+
+        // Même règle avec une ouverture du service à 8 h.
+        config(['hl.admin_hours' => [8, 21]]);
+        foreach (['2026-06-01 23:49' => '2026-06-02 10:00', '2026-06-02 02:00' => '2026-06-02 10:00', '2026-06-02 07:30' => '2026-06-02 10:00', '2026-06-02 09:00' => '2026-06-02 11:00', '2026-06-01 20:30' => '2026-06-02 09:30'] as $from => $until) {
+            $this->assertSame($until, $svc->waitingDeadline(CarbonImmutable::parse($from), $this->reload())->format('Y-m-d H:i'), "Demande à $from");
+        }
     }
 
     public function test_partner_spa_still_needs_resources(): void

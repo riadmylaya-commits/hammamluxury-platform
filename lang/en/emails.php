@@ -1,11 +1,13 @@
 <?php
 
 return [
+    'deadline_format' => 'l j F Y \\a\\t H:i',
     'created' => [
+        'client_deadline' => 'You will receive a reply by :until (Morocco time) at the latest. After that, the request expires automatically, at no cost, and we will let you know by e-mail.',
         'admin' => ['subject' => 'New request :ref to check', 'title' => 'New request :ref to check with :spa', 'intro' => 'A new request has arrived for :spa (listing managed by HammamLuxury). Call the venue (:phone · WhatsApp :whatsapp) to check availability, treatment and price, then accept or decline the request in the admin panel.', 'deadline' => 'Without a decision before :until (:hours h during service hours), the request will expire automatically and the customer will be notified.'],
         'client_referenced' => ['subject' => 'Booking request :ref — :spa', 'title' => 'Your request :ref has been received', 'intro' => 'Thank you :name. HammamLuxury is checking availability with :spa and will confirm by e-mail as soon as possible. Nothing is due before confirmation.'],
         'client' => ['subject' => 'Booking request :ref — :spa', 'title' => 'Your request :ref is recorded', 'intro' => 'Thank you :name. :spa will confirm your request shortly. You will receive an e-mail as soon as they reply.'],
-        'partner' => ['subject' => 'New request :ref', 'title' => 'New booking request :ref', 'intro' => 'A new request has arrived for :spa. Log in to your partner area to accept or decline it.', 'deadline' => 'Without a reply within :hours h, the request will expire automatically and the slot will be released.'],
+        'partner' => ['subject' => 'New request :ref', 'title' => 'New booking request :ref', 'intro' => 'A new request has arrived for :spa. Log in to your partner area to accept or decline it.', 'deadline' => 'Without a reply before :until (:hours h, counted between :open:00 and :close:00, Morocco time), the request will expire automatically and the slot will be released.'],
     ],
     'confirmed' => [
         'admin' => ['subject' => 'Booking :ref confirmed', 'title' => 'Booking :ref confirmed', 'intro' => 'You confirmed this booking for :spa after checking with the venue.'],
@@ -24,6 +26,7 @@ return [
         'partner' => ['subject' => 'Booking :ref cancelled', 'title' => 'Booking :ref cancelled', 'intro' => ':name’s booking at :spa is cancelled. The slot has been released.'],
     ],
     'expired' => [
+        'search_other' => 'Find another spa',
         'admin' => ['subject' => 'Request :ref expired', 'title' => 'Request :ref expired without a decision', 'intro' => 'The request from :name for :spa expired without a decision in the admin panel. The customer has been notified.'],
         'client_referenced' => ['subject' => 'Request :ref expired — :spa', 'title' => 'Your request :ref has expired', 'intro' => 'Sorry :name, we could not confirm your request for :spa within the expected time. Nothing is due; you can submit a new request or choose another venue.'],
         'client' => ['subject' => 'Request :ref expired — :spa', 'title' => 'Your request :ref has expired', 'intro' => 'Sorry :name, :spa did not reply in time. Nothing is due; you can renew your request or choose another venue.'],

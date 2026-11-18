@@ -48,6 +48,8 @@ abstract class EngineTestCase extends TestCase
     {
         parent::setUp();
         Mail::fake();
+        // Service ouvert en continu par défaut : les délais relatifs testés ne dépendent pas de l'heure d'exécution.
+        config(['hl.admin_hours' => [0, 24]]);
         $this->engine = app(CapacityEngine::class);
         $this->quotes = app(QuoteBuilder::class);
         $this->bookings = app(BookingService::class);
