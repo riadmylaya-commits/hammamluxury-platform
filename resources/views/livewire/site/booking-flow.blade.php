@@ -1,7 +1,8 @@
-<div>
+<div x-data x-init="$wire.$watch('step', () => window.scrollTo({ top: 0 }))">
 @php($cur = config('hl.currency'))
 @php($fmt = fn ($n) => number_format($n, fmod((float) $n, 1) ? 2 : 0, ',', ' ').' '.$cur)
 <div class="row" style="margin-top:6px"><a class="lnk small" href="{{ route('spa.show', $spa->slug) }}">← {{ $spa->name }}</a></div>
+<div wire:offline class="offline-note" role="alert">{{ __('ui.offline_notice') }}</div>
 <div class="steps">
     @foreach ([1 => 'step_treatment', 2 => 'step_datetime', 3 => 'step_details'] as $n => $label)
         <span @if ($step === $n) data-on @elseif ($step > $n) data-done @endif><i>{{ $step > $n ? '✓' : $n }}</i><span class="desk-only" style="display:inline">{{ __('ui.'.$label) }}</span></span>@if ($n < 3)<hr>@endif
@@ -189,7 +190,12 @@
 {{-- ===== Étape 3 ===== --}}
 @else
     <h2 style="font-size:20px;margin-bottom:10px">{{ __('ui.your_details') }}</h2>
-    <form wire:submit="submit" class="card" style="padding:14px;display:grid;gap:12px">
+    <form class="card" style="padding:14px;display:grid;gap:12px"
+          x-data="{ sending: false, failed: false, timer: null,
+              stop(failed) { clearTimeout(this.timer); this.sending = false; this.failed = failed; if (failed) setTimeout(() => this.$refs.fail.scrollIntoView({ block: 'start', behavior: 'smooth' }), 150); },
+              send() { if (this.sending) return; if (! navigator.onLine) { this.stop(true); return; } this.failed = false; this.sending = true; this.timer = setTimeout(() => this.stop(true), 25000); $wire.submit().then(() => { this.stop(false); this.$nextTick(() => this.$root.querySelector('.ferr, .inp.err')?.scrollIntoView({ block: 'center' })); }); } }"
+          x-on:hl-request-failed.window="if (sending) stop(true)"
+          x-on:submit.prevent="send()">
         <div class="grid2">
             <div class="fld"><label>{{ __('ui.first_name') }}</label><input class="inp @error('first_name') err @enderror" wire:model="first_name" autocomplete="given-name" required>@error('first_name')<span class="ferr">{{ $message }}</span>@enderror</div>
             <div class="fld"><label>{{ __('ui.last_name') }}</label><input class="inp @error('last_name') err @enderror" wire:model="last_name" autocomplete="family-name" required>@error('last_name')<span class="ferr">{{ $message }}</span>@enderror</div>
@@ -212,7 +218,8 @@
         @else
             <div class="notice info">{{ $spa->isReferenced() ? __('ui.no_payment_referenced', ['hours' => $spa->waitingTtlHours(), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1]]) : __('ui.no_payment', ['hours' => $spa->waitingTtlHours()]) }} {{ __('ui.no_account') }}</div>
         @endif
-        <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" wire:loading.attr="disabled"><span wire:loading.remove wire:target="submit">{{ $spa->instantBookingActive() ? __('ui.submit_instant') : __('ui.submit') }}</span><span wire:loading wire:target="submit">{{ __('ui.submitting') }}</span></button></div>
+        <div x-ref="fail" x-show="failed" x-cloak class="offline-note" role="alert">{{ __('ui.send_failed') }}</div>
+        <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" x-bind:disabled="sending"><span x-show="! sending">{{ $spa->instantBookingActive() ? __('ui.submit_instant') : __('ui.submit') }}</span><span x-show="sending" x-cloak>{{ __('ui.submitting') }}</span></button></div>
     </form>
 @endif
 </div>
@@ -221,7 +228,7 @@
 @if ($quote['ok'])
 @php($recap = view('livewire.site._recap', ['quote' => $quote, 'spa' => $spa, 'date' => $date, 'time' => $time, 'fmt' => $fmt, 'treatments' => $treatments])->render())
 <aside class="card recap desk">{!! $recap !!}</aside>
-<div @class(['stickytot', 'mobile-only', 'inflow' => $step === 1])>
+<div class="stickytot mobile-only inflow">
     <details><summary class="row" style="list-style:none;cursor:pointer"><div class="sp"><b>{{ $fmt($quote['total']) }}</b> <span class="muted small">· {{ $quote['party'] }} pers. · {{ $quote['duration_min'] }} {{ __('ui.min') }}</span></div><span class="chip grey">{{ __('ui.recap') }}</span></summary>
     <div style="padding-top:10px">{!! $recap !!}</div></details>
 </div>
