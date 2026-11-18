@@ -102,7 +102,7 @@ class SupportRequestResource extends Resource
                 Tables\Filters\SelectFilter::make('spa_id')->label(__('support.spa'))->relationship('spa', 'name')->searchable(),
             ])
             ->actions([Tables\Actions\ActionGroup::make([Tables\Actions\ViewAction::make(), ...self::supportActions()])
-                ->label(__('admin.actions_menu'))->extraAttributes(['aria-label' => 'Actions'])]);
+                ->label(__('support.actions'))->extraAttributes(['aria-label' => __('support.actions')])]);
     }
 
     public static function infolist(Infolist $infolist): Infolist

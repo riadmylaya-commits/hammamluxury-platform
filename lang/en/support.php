@@ -6,6 +6,7 @@ return [
     'admin_nav' => 'Support requests',
     'admin_single' => 'support request',
     'intro' => 'A problem with your partner area? Describe it below: every request is recorded, you receive an acknowledgement by e-mail and we reply in writing. Support is provided in writing only.',
+    'actions' => 'Actions',
     'reference' => 'Reference',
     'subject' => 'Subject',
     'description' => 'Describe the problem',
@@ -45,10 +46,10 @@ return [
     'faq' => [
         ['q' => 'How do I accept or decline a booking request?', 'a' => 'Open “Bookings”, then the “Pending” request, and choose Accept or Decline. The customer is notified automatically by e-mail.'],
         ['q' => 'How long do I have to reply?', 'a' => 'The deadline is stated in the e-mail of each request. The time only runs during service hours; nothing expires at night. Without a reply, the request expires automatically and the slot is released.'],
-        ['q' => 'How do I change my opening hours or block a slot?', 'a' => 'Opening hours are edited in “My listing”. For a one-off closure or a slot already taken elsewhere, use “Unavailability”.'],
+        ['q' => 'How do I change my opening hours or block a slot?', 'a' => 'Opening hours are edited in “Establishment profile”. For a one-off closure or a slot already taken elsewhere, use “Closures & unavailability”.'],
         ['q' => 'A customer wants to cancel or change a booking. What should I do?', 'a' => 'The customer can cancel from their tracking page, according to your cancellation terms. You can also write to them through the booking’s messaging. Each venue remains responsible for its services and appointments.'],
         ['q' => 'I can no longer log in.', 'a' => 'Use “Forgot password?” on the login page: a link is sent to you by e-mail. If your account address has changed, write to us through the site’s contact form.'],
-        ['q' => 'How does billing work?', 'a' => 'The customer pays your venue directly. Any commission is covered by a separate written agreement; your statements and invoices, when they exist, are under “Billing”.'],
+        ['q' => 'How does billing work?', 'a' => 'The customer pays your venue directly. Any commission is covered by a separate written agreement; your statements and invoices, when they exist, are under “Finance”.'],
     ],
     'mail' => [
         'ack' => [

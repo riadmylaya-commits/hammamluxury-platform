@@ -6,6 +6,7 @@ return [
     'admin_nav' => 'Demandes d’assistance',
     'admin_single' => 'demande d’assistance',
     'intro' => 'Un problème avec votre espace partenaire ? Décrivez-le ci-dessous : chaque demande est enregistrée, vous recevez un accusé de réception par e-mail et nous vous répondons par écrit. L’assistance se fait uniquement par écrit.',
+    'actions' => 'Actions',
     'reference' => 'Référence',
     'subject' => 'Sujet',
     'description' => 'Décrivez la difficulté rencontrée',
@@ -45,10 +46,10 @@ return [
     'faq' => [
         ['q' => 'Comment accepter ou refuser une demande de réservation ?', 'a' => 'Ouvrez « Réservations », puis la demande « En attente », et choisissez Accepter ou Refuser. Le client est prévenu automatiquement par e-mail.'],
         ['q' => 'De combien de temps est-ce que je dispose pour répondre ?', 'a' => 'L’heure limite est indiquée dans l’e-mail de chaque demande. Le délai ne court que pendant les heures de service ; rien n’expire la nuit. Sans réponse, la demande expire automatiquement et le créneau est libéré.'],
-        ['q' => 'Comment modifier mes horaires ou bloquer un créneau ?', 'a' => 'Les horaires se modifient dans « Ma fiche ». Pour une fermeture ponctuelle ou un créneau déjà pris par ailleurs, utilisez « Indisponibilités ».'],
+        ['q' => 'Comment modifier mes horaires ou bloquer un créneau ?', 'a' => 'Les horaires se modifient dans « Fiche de l’établissement ». Pour une fermeture ponctuelle ou un créneau déjà pris par ailleurs, utilisez « Fermetures & indisponibilités ».'],
         ['q' => 'Un client veut annuler ou modifier sa réservation, que faire ?', 'a' => 'Le client peut annuler depuis sa page de suivi, selon vos conditions d’annulation. Vous pouvez aussi lui écrire par la messagerie de la réservation. Chaque établissement reste responsable de ses prestations et de ses rendez-vous.'],
         ['q' => 'Je n’arrive plus à me connecter.', 'a' => 'Utilisez « Mot de passe oublié ? » sur la page de connexion : un lien vous est envoyé par e-mail. Si l’adresse de votre compte a changé, écrivez-nous depuis le formulaire Contact du site.'],
-        ['q' => 'Comment fonctionne la facturation ?', 'a' => 'Le client règle directement votre établissement. Toute commission éventuelle fait l’objet d’un accord écrit distinct ; vos relevés et factures, lorsqu’ils existent, sont dans la rubrique « Facturation ».'],
+        ['q' => 'Comment fonctionne la facturation ?', 'a' => 'Le client règle directement votre établissement. Toute commission éventuelle fait l’objet d’un accord écrit distinct ; vos relevés et factures, lorsqu’ils existent, sont dans la rubrique « Finances ».'],
     ],
     'mail' => [
         'ack' => [
