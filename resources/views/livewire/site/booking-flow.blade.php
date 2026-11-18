@@ -192,7 +192,7 @@
     <h2 style="font-size:20px;margin-bottom:10px">{{ __('ui.your_details') }}</h2>
     <form class="card" style="padding:14px;display:grid;gap:12px"
           x-data="{ sending: false, failed: false, timer: null,
-              stop(failed) { clearTimeout(this.timer); this.sending = false; this.failed = failed; if (failed) this.$nextTick(() => this.$refs.fail.scrollIntoView({ block: 'start' })); },
+              stop(failed) { clearTimeout(this.timer); this.sending = false; this.failed = failed; if (failed) setTimeout(() => this.$refs.fail.scrollIntoView({ block: 'start', behavior: 'smooth' }), 150); },
               send() { if (this.sending) return; if (! navigator.onLine) { this.stop(true); return; } this.failed = false; this.sending = true; this.timer = setTimeout(() => this.stop(true), 25000); $wire.submit().then(() => { this.stop(false); this.$nextTick(() => this.$root.querySelector('.ferr, .inp.err')?.scrollIntoView({ block: 'center' })); }); } }"
           x-on:hl-request-failed.window="if (sending) stop(true)"
           x-on:submit.prevent="send()">
