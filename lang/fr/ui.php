@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'offline_notice' => 'Connexion Internet interrompue. Votre saisie est conservée : attendez le retour de la connexion avant de continuer. Si vous avez déjà envoyé votre demande, elle ne sera enregistrée qu’une seule fois.',
     'tagline' => 'Spas & hammams',
     'nav_partner' => 'Espace partenaire',
     'nav_list_hint' => 'Inscrire un nouveau hammam ou spa sur HammamLuxury',

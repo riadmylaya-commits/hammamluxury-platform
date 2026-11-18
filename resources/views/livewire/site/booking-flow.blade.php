@@ -2,6 +2,7 @@
 @php($cur = config('hl.currency'))
 @php($fmt = fn ($n) => number_format($n, fmod((float) $n, 1) ? 2 : 0, ',', ' ').' '.$cur)
 <div class="row" style="margin-top:6px"><a class="lnk small" href="{{ route('spa.show', $spa->slug) }}">← {{ $spa->name }}</a></div>
+<div wire:offline class="offline-note" role="alert">{{ __('ui.offline_notice') }}</div>
 <div class="steps">
     @foreach ([1 => 'step_treatment', 2 => 'step_datetime', 3 => 'step_details'] as $n => $label)
         <span @if ($step === $n) data-on @elseif ($step > $n) data-done @endif><i>{{ $step > $n ? '✓' : $n }}</i><span class="desk-only" style="display:inline">{{ __('ui.'.$label) }}</span></span>@if ($n < 3)<hr>@endif
@@ -221,7 +222,7 @@
 @if ($quote['ok'])
 @php($recap = view('livewire.site._recap', ['quote' => $quote, 'spa' => $spa, 'date' => $date, 'time' => $time, 'fmt' => $fmt, 'treatments' => $treatments])->render())
 <aside class="card recap desk">{!! $recap !!}</aside>
-<div @class(['stickytot', 'mobile-only', 'inflow' => $step === 1])>
+<div class="stickytot mobile-only inflow">
     <details><summary class="row" style="list-style:none;cursor:pointer"><div class="sp"><b>{{ $fmt($quote['total']) }}</b> <span class="muted small">· {{ $quote['party'] }} pers. · {{ $quote['duration_min'] }} {{ __('ui.min') }}</span></div><span class="chip grey">{{ __('ui.recap') }}</span></summary>
     <div style="padding-top:10px">{!! $recap !!}</div></details>
 </div>

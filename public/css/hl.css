@@ -215,3 +215,4 @@ body.lb-open{overflow:hidden}
 .mini-l{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:4px 0;border-top:1px dashed var(--line)}.mini-l span{overflow-wrap:anywhere}.mini-l b{white-space:nowrap;color:var(--muted);font-weight:600}
 .mini-t{display:flex;justify-content:space-between;margin-top:6px;padding-top:8px;border-top:1px solid var(--line);font-size:17px}
 @media(min-width:700px){.sheet-bg{align-items:center}.sheet{border-radius:18px;max-height:85vh}}
+.offline-note{margin:10px 0;padding:10px 12px;border:1px solid #f0c36d;border-radius:12px;background:#fff8e6;color:#7a4b00;font-size:14px}

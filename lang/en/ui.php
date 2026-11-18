@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'offline_notice' => 'Internet connection lost. Your details are kept: wait for the connection to return before continuing. If you have already sent your request, it will only be recorded once.',
     'tagline' => 'Spas & hammams',
     'nav_partner' => 'Partner area',
     'nav_list_hint' => 'List a new hammam or spa on HammamLuxury',
