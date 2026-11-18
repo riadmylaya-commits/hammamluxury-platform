@@ -2,6 +2,7 @@
 
 namespace Tests\Engine;
 
+use App\Domain\Booking\BookingException;
 use App\Events\BookingExpired;
 use App\Mail\BookingMail;
 use App\Models\Allocation;
@@ -37,8 +38,15 @@ class ExpirationTest extends BookingFlowTestCase
     {
         config(['hl.admin_hours' => [9, 21], 'hl.waiting_ttl_hours' => 2]);
         $this->travelTo(CarbonImmutable::parse($this->day)->setTime(8, 30));
-        $b = $this->submit($this->intent('10:00', ['treatment' => $this->h->id, 'party' => 1]))['booking'];
-        $this->assertSame('10:00', $b->expires_at->format('H:i'), 'Échéance ramenée à l’heure du rendez-vous');
+        try {
+            $this->intent('10:00', ['treatment' => $this->h->id, 'party' => 1]);
+            $this->fail('Parcours public : un créneau qui ne laisse pas le délai de réponse doit être refusé');
+        } catch (BookingException $e) {
+            $this->assertSame('too_soon', $e->reason);
+        }
+        [$until, $lastMinute] = $this->bookings->requestDeadline($this->spa, CarbonImmutable::parse($this->day)->setTime(10, 0));
+        $this->assertSame('10:00', $until->format('H:i'), 'Saisie hors parcours public : échéance ramenée à l’heure du rendez-vous');
+        $this->assertFalse($lastMinute);
     }
 
     public function test_waiting_expires_once_and_releases(): void

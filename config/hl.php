@@ -22,6 +22,13 @@ return [
     'min_lead_minutes' => (int) env('HL_MIN_LEAD_MINUTES', 60),
     // Fiche référencée : marge ajoutée au délai de réponse pour que la vérification tienne avant le rendez-vous.
     'referenced_lead_margin_minutes' => (int) env('HL_REFERENCED_LEAD_MARGIN_MINUTES', 30),
+    // Dernière minute (option du partenaire) : délai de réponse raccourci, compté en heures de service, et marge entre
+    // l'expiration et le début du soin. night_requests = false : seules les demandes reçues pendant les heures de service y ont droit.
+    'last_minute' => [
+        'response_minutes' => (int) env('HL_LAST_MINUTE_RESPONSE_MINUTES', 30),
+        'margin_minutes' => (int) env('HL_LAST_MINUTE_MARGIN_MINUTES', 60),
+        'night_requests' => (bool) env('HL_LAST_MINUTE_NIGHT_REQUESTS', true),
+    ],
 
     // Nombre maximal de participants par réservation.
     'max_participants' => 20,

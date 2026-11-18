@@ -27,7 +27,8 @@ class PendingBookings extends TableWidget
                 Tables\Columns\TextColumn::make('participants')->label(__('partner.treatments'))
                     ->getStateUsing(fn (Booking $b) => $b->participants->pluck('treatment_name')->unique()->implode(', '))->wrap(),
                 Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr'),
-                Tables\Columns\TextColumn::make('expires_at')->label(__('partner.expires_at'))->since()->color('warning'),
+                Tables\Columns\TextColumn::make('expires_at')->label(__('partner.expires_at'))->since()->color(fn ($record) => $record->last_minute ? 'danger' : 'warning')
+                    ->description(fn ($record) => $record->last_minute ? __('partner.last_minute_badge', ['until' => $record->expires_at?->format('H\hi')]) : null),
             ])
             ->actions([
                 Tables\Actions\Action::make('view')->label(__('partner.view'))->url(fn (Booking $b) => BookingResource::getUrl('view', ['record' => $b])),

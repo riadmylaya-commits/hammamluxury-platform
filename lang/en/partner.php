@@ -46,6 +46,10 @@ return [
     'slot_step' => 'Slot interval',
     'default_value' => 'Default: :v',
     'min_lead' => 'Minimum notice',
+    'last_minute' => 'Accept last-minute requests',
+    'last_minute_help' => 'Optional. When enabled, customers can request a treatment starting soon (at the earliest 1 h 30 after their request). You must then reply within :minutes minutes, between :open:00 and :close:00. Without a reply, the request expires and the slot is released: nothing is ever confirmed on your behalf.',
+    'last_minute_withdrawn' => 'Option withdrawn by HammamLuxury. Write to us from the Assistance page to restore it.',
+    'last_minute_badge' => 'Last minute — before :until',
     'cancellation_hours' => 'Free cancellation until',
 
     'treatment' => 'Treatment',

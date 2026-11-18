@@ -35,7 +35,7 @@ class Booking extends Model
 
     protected $casts = [
         'intent_expires_at' => 'immutable_datetime',
-        'quote' => 'array',
+        'quote' => 'array', 'last_minute' => 'bool',
         'start_at' => 'immutable_datetime', 'end_at' => 'immutable_datetime', 'expires_at' => 'immutable_datetime',
         'expiration_notified_at' => 'datetime',
         'arbitration_required_at' => 'datetime',

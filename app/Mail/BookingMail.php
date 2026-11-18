@@ -23,7 +23,12 @@ class BookingMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: __('emails.'.$this->event.'.'.$this->textAudience().'.subject', ['ref' => $this->booking->reference, 'spa' => $this->booking->spa->name]));
+        $subject = __('emails.'.$this->event.'.'.$this->textAudience().'.subject', ['ref' => $this->booking->reference, 'spa' => $this->booking->spa->name]);
+        if ($this->event === 'created' && $this->audience === 'partner' && $this->booking->last_minute) {
+            $subject = __('emails.created.last_minute_subject').$subject;
+        }
+
+        return new Envelope(subject: $subject);
     }
 
     public function content(): Content

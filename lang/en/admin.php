@@ -237,6 +237,10 @@ return [
     'instant_booking_at' => 'Enabled on',
     'waiting_ttl' => 'Response time for requests',
     'waiting_ttl_help' => 'Hours the partner has to accept a request before it expires automatically (empty = global value: :default h).',
+    'last_minute_allowed' => 'Last minute allowed',
+    'last_minute_allowed_help' => 'Untick to withdraw the option from a partner who lets requests expire. Partner’s current choice: :state. Expired last-minute requests: :expired.',
+    'last_minute_on' => 'enabled',
+    'last_minute_off' => 'disabled',
 
     'create_spa' => 'New establishment',
     'create_spa_help' => 'The listing is created as a draft in your HammamLuxury portfolio; configure it as a partner (photos, treatments, hours), then assign it to its owner.',

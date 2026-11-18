@@ -268,6 +268,10 @@ class SpaForm
             Section::make(__('partner.section_rules'))->schema([
                 Select::make('slot_step_minutes')->label(__('partner.slot_step'))->options([15 => '15 min', 30 => '30 min', 60 => '60 min'])->placeholder(__('partner.default_value', ['v' => config('hl.slot_step_minutes').' min'])),
                 TextInput::make('min_lead_minutes')->label(__('partner.min_lead'))->numeric()->minValue(0)->suffix('min')->placeholder((string) config('hl.min_lead_minutes')),
+                Toggle::make('last_minute_enabled')->label(__('partner.last_minute'))
+                    ->helperText(fn (?Spa $record) => $record && $record->last_minute_allowed === false ? __('partner.last_minute_withdrawn') : __('partner.last_minute_help', ['minutes' => config('hl.last_minute.response_minutes'), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1]]))
+                    ->disabled(fn (?Spa $record) => $record && $record->last_minute_allowed === false)
+                    ->visible(fn (?Spa $record) => ! $record || (! $record->isReferenced() && ! $record->managedByAdmin()))->columnSpanFull(),
                 Select::make('cancellation_hours')->label(__('partner.cancellation_hours'))->options(CancellationPolicy::options())->placeholder(__('ui.policy.spa_policy_to_confirm'))->nullable()->native(false)
                     ->helperText(__('partner.cancellation_policy_help')),
             ])->columns(3),

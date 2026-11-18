@@ -189,7 +189,8 @@ class BookingService
         $pct = $offline || $spa->isReferenced() ? 0.0 : $spa->partner->commissionPct();
         $commissionable = $offline ? 0.0 : round((float) ($quote['commissionable'] ?? $quote['total']), 2);
 
-        $booking = DB::transaction(function () use ($spa, $start, $quote, $customer, $status, $intentId, $locale, $plan, $pct, $commissionable, $meta, $actor) {
+        $deadline = $this->requestDeadline($spa, $start);
+        $booking = DB::transaction(function () use ($spa, $start, $quote, $customer, $status, $intentId, $locale, $plan, $pct, $commissionable, $meta, $actor, $deadline) {
             $booking = Booking::create($meta + [
                 'spa_id' => $spa->id,
                 'user_id' => $customer['user_id'] ?? null,
@@ -217,7 +218,8 @@ class BookingService
                 'locale' => $locale ?? app()->getLocale(),
                 'quote' => $quote,
                 'intent_id' => $intentId,
-                'expires_at' => $status === 'waiting' ? min($this->waitingDeadline(spa: $spa), $start) : null,
+                'expires_at' => $status === 'waiting' ? $deadline[0] : null,
+                'last_minute' => $status === 'waiting' && $deadline[1],
                 'confirmed_at' => $status === 'confirmed' ? now() : null,
             ]);
             $participantIds = [];
@@ -619,11 +621,11 @@ class BookingService
 
     /* ------------------------------------------------------------------ Expiration */
 
-    public function waitingDeadline(?CarbonImmutable $from = null, ?Spa $spa = null): CarbonImmutable
+    public function waitingDeadline(?CarbonImmutable $from = null, ?Spa $spa = null, ?int $minutes = null): CarbonImmutable
     {
         $hours = $spa?->waitingTtlHours() ?? (float) config('hl.waiting_ttl_hours');
         $from ??= CarbonImmutable::now();
-        $minutes = (int) round(60 * $hours);
+        $minutes ??= (int) round(60 * $hours);
         // Pour tous les établissements, le délai ne court que pendant les heures de service (config hl.admin_hours) : rien n'expire la nuit.
         [$open, $close] = config('hl.admin_hours');
         $t = $from;
@@ -645,6 +647,55 @@ class BookingService
         }
 
         return $t;
+    }
+
+    /** Échéance « dernière minute » d'une demande reçue à $now, ou null si l'établissement n'y a pas droit à cet instant. */
+    public function lastMinuteDeadline(Spa $spa, ?CarbonImmutable $now = null): ?CarbonImmutable
+    {
+        if (! $spa->acceptsLastMinute()) {
+            return null;
+        }
+        $now ??= CarbonImmutable::now();
+        $deadline = $this->waitingDeadline($now, $spa, (int) config('hl.last_minute.response_minutes'));
+        // Réglage strict : la demande doit arriver pendant les heures de service et recevoir sa réponse le jour même.
+        if (! config('hl.last_minute.night_requests')
+            && ($now->hour < config('hl.admin_hours')[0] || ! $deadline->isSameDay($now))) {
+            return null;
+        }
+
+        return $deadline;
+    }
+
+    /** Premier début de soin acceptable pour une demande reçue à $now (réponse de l'établissement + marge). */
+    public function earliestRequestStart(Spa $spa, ?CarbonImmutable $now = null): CarbonImmutable
+    {
+        $now ??= CarbonImmutable::now();
+        $earliest = $this->waitingDeadline($now, $spa)->addMinutes((int) config('hl.referenced_lead_margin_minutes'));
+        $fast = $this->lastMinuteDeadline($spa, $now)?->addMinutes((int) config('hl.last_minute.margin_minutes'));
+
+        return $fast && $fast < $earliest ? $fast : $earliest;
+    }
+
+    /**
+     * Échéance de réponse d'une demande pour un soin débutant à $start : délai normal si le créneau le permet,
+     * sinon délai « dernière minute » (jamais de confirmation automatique : sans réponse, la demande expire).
+     *
+     * @return array{0: CarbonImmutable, 1: bool} [échéance, dernière minute ?]
+     */
+    public function requestDeadline(Spa $spa, CarbonImmutable $start, ?CarbonImmutable $now = null): array
+    {
+        $now ??= CarbonImmutable::now();
+        $normal = $this->waitingDeadline($now, $spa);
+        if ($normal->addMinutes((int) config('hl.referenced_lead_margin_minutes')) <= $start) {
+            return [$normal, false];
+        }
+        $fast = $this->lastMinuteDeadline($spa, $now);
+        if ($fast && $fast->addMinutes((int) config('hl.last_minute.margin_minutes')) <= $start) {
+            return [$fast, true];
+        }
+
+        // Saisie hors parcours public (administration, import) : jamais en attente après le début du soin.
+        return [min($normal, $start), false];
     }
 
     /**

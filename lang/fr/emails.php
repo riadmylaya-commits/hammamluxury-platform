@@ -4,6 +4,9 @@ return [
     'deadline_format' => 'l j F Y \\à H\\hi',
     'created' => [
         'client_deadline' => 'Vous recevrez une réponse au plus tard le :until (heure du Maroc). Passé ce délai, la demande expire automatiquement, sans aucun frais, et nous vous en informons par e-mail.',
+        'client_last_minute' => 'Demande de dernière minute : l’établissement doit vous répondre sous :minutes minutes. Votre réservation n’est valable qu’après sa confirmation.',
+        'partner_last_minute' => 'DERNIÈRE MINUTE — le soin commence bientôt : merci de répondre sous :minutes minutes. Sans réponse, la demande expire et le créneau est libéré ; rien n’est confirmé automatiquement.',
+        'last_minute_subject' => 'Dernière minute — ',
         'admin' => ['subject' => 'Nouvelle demande :ref à vérifier', 'title' => 'Nouvelle demande :ref à vérifier auprès de :spa', 'intro' => 'Une nouvelle demande vient d’arriver pour :spa (fiche gérée par HammamLuxury). Appelez l’établissement (:phone · WhatsApp :whatsapp) pour vérifier la disponibilité, le soin et le tarif, puis acceptez ou refusez la demande dans l’administration.', 'deadline' => 'Sans décision avant le :until (délai de :hours h en heures de service), la demande expirera automatiquement et le client en sera informé.'],
         'client_referenced' => ['subject' => 'Demande de réservation :ref — :spa', 'title' => 'Votre demande :ref est enregistrée', 'intro' => 'Merci :name. HammamLuxury vérifie la disponibilité auprès de :spa et vous confirme par e-mail dans les meilleurs délais. Aucun montant n’est dû avant confirmation.'],
         'client' => ['subject' => 'Demande de réservation :ref — :spa', 'title' => 'Votre demande :ref est enregistrée', 'intro' => 'Merci :name. :spa va confirmer votre demande dans les meilleurs délais. Vous recevrez un e-mail dès sa réponse.'],

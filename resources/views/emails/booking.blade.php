@@ -20,6 +20,10 @@
 </x-mail::button>
 @endif
 @if($audience === 'client' && $event === 'created' && $booking->status === 'waiting' && $booking->expires_at)
+@if($booking->last_minute)
+{{ __('emails.created.client_last_minute', ['minutes' => config('hl.last_minute.response_minutes')]) }}
+
+@endif
 {{ __('emails.created.client_deadline', ['until' => $booking->expires_at->locale($booking->locale)->translatedFormat(__('emails.deadline_format'))]) }}
 @endif
 @if($audience === 'client' && $event === 'expired')
@@ -28,6 +32,10 @@
 </x-mail::button>
 @endif
 @if($audience === 'partner' && $event === 'created')
+@if($booking->last_minute)
+**{{ __('emails.created.partner_last_minute', ['minutes' => config('hl.last_minute.response_minutes')]) }}**
+
+@endif
 {{ __('emails.created.'.$textAudience.'.deadline', ['hours' => $booking->spa->waitingTtlHours(), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1], 'until' => $booking->expires_at?->translatedFormat('l j F Y H\hi')]) }}
 @endif
 

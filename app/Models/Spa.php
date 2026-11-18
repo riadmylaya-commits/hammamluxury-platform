@@ -34,7 +34,7 @@ class Spa extends Model
     protected $guarded = [];
 
     protected $casts = ['instant_booking' => 'bool', 'instant_booking_at' => 'datetime', 'submitted_at' => 'datetime', 'published_at' => 'datetime',
-        'owner_invited_at' => 'datetime', 'owner_access_suspended_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array', 'cancellation_hours' => 'int', 'waiting_ttl_hours' => 'float', 'info_verified_at' => 'date'];
+        'owner_invited_at' => 'datetime', 'owner_access_suspended_at' => 'datetime', 'lat' => 'float', 'lng' => 'float', 'rating' => 'float', 'price_from' => 'float', 'practical_info' => 'array', 'cancellation_hours' => 'int', 'last_minute_enabled' => 'bool', 'last_minute_allowed' => 'bool', 'waiting_ttl_hours' => 'float', 'info_verified_at' => 'date'];
 
     /** Position sur la carte : `['lat' => ?, 'lng' => ?]`, éditable comme un seul champ de formulaire. */
     protected function location(): Attribute
@@ -308,20 +308,26 @@ class Spa extends Model
     }
 
     /**
-     * Délai minimal avant le début d'une prestation. Pour une fiche référencée, le créneau doit laisser le temps de la
-     * vérification avec l'établissement : jamais avant l'échéance de réponse (heures de service) + marge.
+     * Délai minimal (minutes) avant le début d'une prestation. Hors réservation instantanée, le créneau doit laisser à
+     * l'établissement son délai de réponse (heures de service) + marge ; avec l'option « dernière minute », le délai raccourci suffit.
      */
     public function minLead(): int
     {
         $lead = $this->min_lead_minutes ?? (int) config('hl.min_lead_minutes');
-        if ($this->isReferenced()) {
-            $now = CarbonImmutable::now();
-            $deadline = app(BookingService::class)->waitingDeadline($now, $this)
-                ->addMinutes((int) config('hl.referenced_lead_margin_minutes'));
-            $lead = max($lead, (int) ceil($now->diffInMinutes($deadline, false)));
+        if ($this->instantBookingActive()) {
+            return $lead;
         }
+        $now = CarbonImmutable::now();
+        $earliest = app(BookingService::class)->earliestRequestStart($this, $now);
 
-        return $lead;
+        return max($lead, (int) ceil($now->diffInMinutes($earliest, false)));
+    }
+
+    /** Dernière minute : choisie par le partenaire, non retirée par l'Admin, jamais pour une fiche référencée ou gérée par HammamLuxury. */
+    public function acceptsLastMinute(): bool
+    {
+        return (bool) $this->last_minute_enabled && (bool) ($this->last_minute_allowed ?? true)
+            && ! $this->isReferenced() && ! $this->managedByAdmin() && ! $this->instantBookingActive();
     }
 
     /** Plages d'ouverture d'un jour donné, en minutes depuis minuit : [[opens, closes], …]. */

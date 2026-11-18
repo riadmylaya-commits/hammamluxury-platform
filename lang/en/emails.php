@@ -4,6 +4,9 @@ return [
     'deadline_format' => 'l j F Y \\a\\t H:i',
     'created' => [
         'client_deadline' => 'You will receive a reply by :until (Morocco time) at the latest. After that, the request expires automatically, at no cost, and we will let you know by e-mail.',
+        'client_last_minute' => 'Last-minute request: the venue must reply within :minutes minutes. Your booking is only valid once confirmed.',
+        'partner_last_minute' => 'LAST MINUTE — the treatment starts soon: please reply within :minutes minutes. Without a reply, the request expires and the slot is released; nothing is confirmed automatically.',
+        'last_minute_subject' => 'Last minute — ',
         'admin' => ['subject' => 'New request :ref to check', 'title' => 'New request :ref to check with :spa', 'intro' => 'A new request has arrived for :spa (listing managed by HammamLuxury). Call the venue (:phone · WhatsApp :whatsapp) to check availability, treatment and price, then accept or decline the request in the admin panel.', 'deadline' => 'Without a decision before :until (:hours h during service hours), the request will expire automatically and the customer will be notified.'],
         'client_referenced' => ['subject' => 'Booking request :ref — :spa', 'title' => 'Your request :ref has been received', 'intro' => 'Thank you :name. HammamLuxury is checking availability with :spa and will confirm by e-mail as soon as possible. Nothing is due before confirmation.'],
         'client' => ['subject' => 'Booking request :ref — :spa', 'title' => 'Your request :ref is recorded', 'intro' => 'Thank you :name. :spa will confirm your request shortly. You will receive an e-mail as soon as they reply.'],
