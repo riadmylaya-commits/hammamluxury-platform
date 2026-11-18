@@ -1,4 +1,4 @@
-<div>
+<div x-data x-init="$wire.$watch('step', () => window.scrollTo({ top: 0 }))">
 @php($cur = config('hl.currency'))
 @php($fmt = fn ($n) => number_format($n, fmod((float) $n, 1) ? 2 : 0, ',', ' ').' '.$cur)
 <div class="row" style="margin-top:6px"><a class="lnk small" href="{{ route('spa.show', $spa->slug) }}">← {{ $spa->name }}</a></div>
@@ -192,8 +192,8 @@
     <h2 style="font-size:20px;margin-bottom:10px">{{ __('ui.your_details') }}</h2>
     <form class="card" style="padding:14px;display:grid;gap:12px"
           x-data="{ sending: false, failed: false, timer: null,
-              stop(failed) { clearTimeout(this.timer); this.sending = false; this.failed = failed; if (failed) this.$nextTick(() => this.$refs.fail.scrollIntoView({ block: 'center' })); },
-              send() { if (this.sending) return; if (! navigator.onLine) { this.stop(true); return; } this.failed = false; this.sending = true; this.timer = setTimeout(() => this.stop(true), 25000); $wire.submit().then(() => this.stop(false)); } }"
+              stop(failed) { clearTimeout(this.timer); this.sending = false; this.failed = failed; if (failed) this.$nextTick(() => this.$refs.fail.scrollIntoView({ block: 'start' })); },
+              send() { if (this.sending) return; if (! navigator.onLine) { this.stop(true); return; } this.failed = false; this.sending = true; this.timer = setTimeout(() => this.stop(true), 25000); $wire.submit().then(() => { this.stop(false); this.$nextTick(() => this.$root.querySelector('.ferr, .inp.err')?.scrollIntoView({ block: 'center' })); }); } }"
           x-on:hl-request-failed.window="if (sending) stop(true)"
           x-on:submit.prevent="send()">
         <div class="grid2">
