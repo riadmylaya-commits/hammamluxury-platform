@@ -669,7 +669,8 @@ class BookingService
     /** Premier début de soin acceptable pour une demande reçue à $now (réponse de l'établissement + marge). */
     public function earliestRequestStart(Spa $spa, ?CarbonImmutable $now = null): CarbonImmutable
     {
-        $now ??= CarbonImmutable::now();
+        // À la minute, comme le contrôle du délai minimal : sinon un créneau accepté de justesse perdrait son échéance raccourcie.
+        $now = ($now ?? CarbonImmutable::now())->floorMinute();
         $earliest = $this->waitingDeadline($now, $spa)->addMinutes((int) config('hl.referenced_lead_margin_minutes'));
         $fast = $this->lastMinuteDeadline($spa, $now)?->addMinutes((int) config('hl.last_minute.margin_minutes'));
 
@@ -684,7 +685,8 @@ class BookingService
      */
     public function requestDeadline(Spa $spa, CarbonImmutable $start, ?CarbonImmutable $now = null): array
     {
-        $now ??= CarbonImmutable::now();
+        // À la minute, comme le contrôle du délai minimal : sinon un créneau accepté de justesse perdrait son échéance raccourcie.
+        $now = ($now ?? CarbonImmutable::now())->floorMinute();
         $normal = $this->waitingDeadline($now, $spa);
         if ($normal->addMinutes((int) config('hl.referenced_lead_margin_minutes')) <= $start) {
             return [$normal, false];

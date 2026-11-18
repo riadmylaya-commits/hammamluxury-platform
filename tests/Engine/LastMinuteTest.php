@@ -153,6 +153,16 @@ class LastMinuteTest extends BookingFlowTestCase
         $this->assertSame('confirmed', $b->fresh()->status);
     }
 
+    public function test_boundary_request_with_seconds_keeps_the_shortened_deadline(): void
+    {
+        $this->spa->update(['last_minute_enabled' => true]);
+        $this->reload();
+        $this->travelTo($this->t('10:00:20'));
+        $b = $this->submit($this->intent('11:30', ['treatment' => $this->h->id, 'party' => 1]))['booking'];
+        $this->assertTrue($b->last_minute, 'Demande à 10 h 00 min 20 s pour 11 h 30 : dernière minute');
+        $this->assertSame('10:30', $b->expires_at->format('H:i'));
+    }
+
     public function test_slot_is_rechecked_when_the_customer_sends_late(): void
     {
         $this->spa->update(['last_minute_enabled' => true]);
