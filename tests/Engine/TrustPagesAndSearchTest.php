@@ -4,7 +4,7 @@ namespace Tests\Engine;
 
 use App\Livewire\Site\BookingFlow;
 use App\Livewire\Site\Contact;
-use App\Mail\ContactMail;
+use App\Mail\SupportMail;
 use App\Models\Spa;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Mail;
@@ -58,16 +58,15 @@ class TrustPagesAndSearchTest extends BookingFlowTestCase
             ->set('hp_started_at', now()->subMinute()->timestamp)
             ->call('send')->assertHasNoErrors()->assertSet('sent', true)->assertSee('Message envoyé');
 
-        Mail::assertQueued(ContactMail::class, function (ContactMail $m) {
-            return $m->hasTo('admin@example.test') && $m->hasReplyTo('client@example.test')
-                && $m->envelope()->subject === '[Contact] Une réservation' && str_contains($m->body, 'dimanche');
-        });
+        Mail::assertQueued(SupportMail::class, fn (SupportMail $m) => $m->kind === 'admin' && $m->hasTo('admin@example.test') && $m->hasReplyTo('client@example.test')
+            && str_contains($m->envelope()->subject, 'Une réservation') && str_contains($m->request->body, 'dimanche'));
+        Mail::assertQueued(SupportMail::class, fn (SupportMail $m) => $m->kind === 'ack' && $m->hasTo('client@example.test'));
 
         Livewire::test(Contact::class)
             ->set('name', 'Robot')->set('email', 'bot@example.test')->set('subject', 'Autre')->set('message', str_repeat('spam ', 10))
             ->set('hp_website', 'http://spam.example')->set('hp_started_at', now()->subMinute()->timestamp)
             ->call('send')->assertSet('sent', true);
-        Mail::assertQueued(ContactMail::class, 1);
+        Mail::assertQueued(SupportMail::class, 2);
     }
 
     public function test_search_by_date_keeps_only_open_venues_and_supports_price_sort(): void
