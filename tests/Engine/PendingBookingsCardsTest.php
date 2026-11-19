@@ -36,8 +36,10 @@ class PendingBookingsCardsTest extends BookingFlowTestCase
         $list = Livewire::test(PendingBookings::class)->mountTableAction('decline', $d);
         $submit = fn () => $list->instance()->getMountedTableAction()->getModalSubmitAction();
         $this->assertTrue($submit()->isDisabled(), '« Confirmer » inactif tant que le motif manque');
+        $this->assertSame('true', $submit()->getExtraAttributes()['x-bind:disabled'] ?? null, 'réellement désactivé dans le navigateur, clavier compris');
         $list->setTableActionData(['reason' => 'other']);
         $this->assertFalse($submit()->isDisabled());
+        $this->assertArrayNotHasKey('x-bind:disabled', $submit()->getExtraAttributes());
 
         // Sans motif, rien n'est enregistré même si la demande est envoyée.
         $list->callTableAction('decline', $d, data: ['reason' => null])->assertHasTableActionErrors(['reason']);
