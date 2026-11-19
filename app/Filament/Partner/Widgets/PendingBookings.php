@@ -26,12 +26,14 @@ class PendingBookings extends TableWidget
                 // Téléphone et tablette : une carte par demande (aucun défilement horizontal) ; le tableau reste sur ordinateur (≥ 1280 px).
                 Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('xl'),
                 Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')->visibleFrom('xl')
-                    ->description(fn (Booking $b) => $b->last_minute ? __('partner.last_minute_badge', ['until' => $b->expires_at?->format('H\hi')]) : null),
+                    ->description(fn (Booking $b) => $b->last_minute ? __('partner.last_minute_short') : null),
                 Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName().' · '.$b->party.' '.__('partner.pers'))->wrap()->visibleFrom('xl'),
                 Tables\Columns\TextColumn::make('participants')->label(__('partner.treatments'))
                     ->getStateUsing(fn (Booking $b) => $b->participants->pluck('treatment_name')->unique()->implode(', '))->wrap()->visibleFrom('xl'),
                 Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->visibleFrom('xl'),
-                Tables\Columns\TextColumn::make('expires_at')->label(__('partner.expires_at'))->since()->color(fn ($record) => $record->last_minute ? 'danger' : 'warning')->visibleFrom('xl'),
+                Tables\Columns\TextColumn::make('expires_at')->label(__('partner.expires_at'))->color(fn ($record) => $record->last_minute ? 'danger' : 'warning')->visibleFrom('xl')
+                    // Dernière minute : heure limite exacte plutôt qu'une durée approximative.
+                    ->formatStateUsing(fn ($state, Booking $b) => $b->last_minute ? $state->format('H\hi') : $state->diffForHumans()),
             ])
             ->actions([
                 Tables\Actions\Action::make('view_m')->label(__('partner.view'))->url(fn (Booking $b) => BookingResource::getUrl('view', ['record' => $b]))->extraAttributes(['class' => 'hl-pending-card']),
