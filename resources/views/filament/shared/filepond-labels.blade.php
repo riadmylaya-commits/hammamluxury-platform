@@ -16,6 +16,13 @@
     });
 </script>
 
+{{-- Téléphone et tablette : le menu latéral est fermé à l'arrivée sur une page (par défaut il s'ouvre par-dessus le contenu à la première visite). --}}
+<script>
+    if (window.matchMedia('(max-width: 1023px)').matches) {
+        localStorage.setItem('isOpen', 'false');
+    }
+</script>
+
 <style>
     /* Actions regroupées en un menu sur mobile (tableau des réservations partenaire) */
     @media (min-width: 1280px) { .hl-pending-card { display: none; } }
@@ -34,6 +41,12 @@
     @media (max-width: 1023px), (pointer: coarse) {
         .fi-btn, .fi-dropdown-list-item { min-height: 44px; }
         .fi-btn { min-width: 44px; }
-        .fi-modal-close-btn, .hl-pending-card .fi-icon-btn { min-height: 44px; min-width: 44px; }
+        .fi-modal-close-btn, a.hl-pending-card { min-height: 44px; min-width: 44px; }
+    }
+    /* Petit téléphone : les actions passent sous le texte de la carte au lieu de l'écraser. */
+    @media (max-width: 479px) {
+        tr.fi-ta-row:has(.hl-pending-card) { display: flex; flex-direction: column; }
+        tr.fi-ta-row:has(.hl-pending-card) > td { width: 100%; }
+        tr.fi-ta-row:has(.hl-pending-card) .fi-ta-actions { justify-content: flex-start; padding-bottom: .75rem; }
     }
 </style>
