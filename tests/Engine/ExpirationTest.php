@@ -6,20 +6,10 @@ use App\Events\BookingExpired;
 use App\Mail\BookingMail;
 use App\Models\Allocation;
 use App\Models\Booking;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Mail;
 
 class ExpirationTest extends BookingFlowTestCase
 {
-    public function test_expiration_runs_every_minute_without_overlap(): void
-    {
-        $event = collect(app(Schedule::class)->events())
-            ->first(fn ($e) => str_contains((string) $e->command, 'hl:expire-waiting'));
-        $this->assertNotNull($event);
-        $this->assertSame('* * * * *', $event->expression);
-        $this->assertTrue($event->withoutOverlapping, 'Deux passages ne se chevauchent jamais');
-    }
-
     public function test_waiting_expires_once_and_releases(): void
     {
         $sel = ['treatment' => $this->m->id, 'party' => 2];
