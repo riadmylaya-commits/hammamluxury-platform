@@ -79,4 +79,15 @@ class CancellationPolicy
     {
         return $start->copy()->subHours($hours);
     }
+
+    /**
+     * Phrase sur la date limite d'annulation gratuite, identique sur le site et dans les e-mails : la date tant qu'elle
+     * est à venir, sinon le rappel que le délai est dépassé (jamais « gratuite jusqu'au » suivi d'une date passée).
+     */
+    public static function deadlineNotice(CarbonInterface $until, string $formattedDate, string $amount, ?CarbonInterface $now = null): string
+    {
+        return ($now ?? now())->lt($until)
+            ? __('ui.policy.free_until', ['date' => $formattedDate])
+            : __('ui.policy.late_now', ['amount' => $amount]);
+    }
 }
