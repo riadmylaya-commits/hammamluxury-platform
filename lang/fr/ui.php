@@ -282,6 +282,8 @@ return [
         'nr_saving' => 'Vous économisez :amount',
         'free_until' => 'Annulation gratuite jusqu’au :date.',
         'late_now' => 'Le délai d’annulation gratuite est dépassé : en cas d’annulation, 100 % du montant (:amount) reste dû.',
+        'pending_free' => 'Tant que l’établissement n’a pas confirmé votre demande, vous pouvez l’annuler sans frais ; ces conditions s’appliquent une fois la réservation confirmée.',
+        'late_once_confirmed' => 'Pour ce rendez-vous, le délai d’annulation gratuite est déjà dépassé : une fois la réservation confirmée, 100 % du montant (:amount) reste dû en cas d’annulation.',
         'nr_booking' => 'Tarif Non remboursable (−:pct %) : en cas d’annulation, 100 % du montant (:amount) reste dû.',
         'frozen' => 'Ces conditions ont été acceptées lors de la réservation et restent attachées à celle-ci.',
         'fee_due' => 'Frais d’annulation : :amount',
