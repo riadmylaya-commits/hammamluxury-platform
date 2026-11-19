@@ -96,7 +96,7 @@ return [
     'finance_confirmed' => 'Confirmed bookings — forecast',
     'finance_confirmed_help' => '{0} No confirmed booking still to be performed this month|{1} :count confirmed booking, treatment not yet performed|[2,*] :count confirmed bookings, treatments not yet performed',
     'finance_performed' => 'Treatments performed',
-    'finance_performed_help' => '{0} No treatment declared as performed this month|{1} :count treatment declared as performed by the venue|[2,*] :count treatments declared as performed by the venue',
+    'finance_performed_help' => '{0} No booking declared as performed this month|{1} :count booking declared as performed by the venue|[2,*] :count bookings declared as performed by the venue',
     'finance_fees_applied' => 'No-show or cancellation fees applied in addition: :amount.',
     'finance_commission_forecast' => 'Forecast commission',
     'finance_commission_forecast_help' => 'On confirmed bookings: not earned until the treatment is performed.',

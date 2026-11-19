@@ -96,7 +96,7 @@ return [
     'finance_confirmed' => 'Réservations confirmées — prévision',
     'finance_confirmed_help' => '{0} Aucune réservation confirmée à venir ou en cours ce mois|{1} :count réservation confirmée, prestation non encore effectuée|[2,*] :count réservations confirmées, prestations non encore effectuées',
     'finance_performed' => 'Prestations effectuées',
-    'finance_performed_help' => '{0} Aucune prestation déclarée effectuée ce mois|{1} :count prestation déclarée effectuée par l’établissement|[2,*] :count prestations déclarées effectuées par l’établissement',
+    'finance_performed_help' => '{0} Aucune réservation déclarée effectuée ce mois|{1} :count réservation déclarée effectuée par l’établissement|[2,*] :count réservations déclarées effectuées par l’établissement',
     'finance_fees_applied' => 'Frais d’absence ou d’annulation appliqués en plus : :amount.',
     'finance_commission_forecast' => 'Commission prévisionnelle',
     'finance_commission_forecast_help' => 'Sur les réservations confirmées : non acquise tant que la prestation n’est pas effectuée.',

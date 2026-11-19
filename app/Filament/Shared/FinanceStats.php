@@ -50,7 +50,7 @@ class FinanceStats
     {
         $link = ['class' => 'cursor-pointer transition hover:ring-2 hover:ring-primary-500'];
         $m = self::month($bookings, $partnerId);
-        $money = fn (float $v) => number_format($v, 0, ',', ' ').' '.config('hl.currency');
+        $money = fn (float $v) => number_format($v, fmod(round($v, 2), 1.0) === 0.0 ? 0 : 2, ',', ' ').' '.config('hl.currency');
 
         return [
             Stat::make(__('booking.finance_confirmed'), $money($m['confirmed_total']))
