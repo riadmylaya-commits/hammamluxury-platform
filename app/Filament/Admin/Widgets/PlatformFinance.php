@@ -3,30 +3,32 @@
 namespace App\Filament\Admin\Widgets;
 
 use App\Filament\Shared\FinanceStats;
+use App\Filament\Shared\HasFinanceFilters;
 use App\Models\Booking;
+use App\Models\Spa;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 
 class PlatformFinance extends BaseWidget
 {
+    use HasFinanceFilters;
+
     protected static ?int $sort = 1;
 
-    protected function getHeading(): ?string
-    {
-        return __('booking.finance_heading');
-    }
+    protected static string $view = 'filament.shared.finance-stats';
 
-    protected function getDescription(): ?string
-    {
-        return __('booking.finance_intermediary');
-    }
+    public ?string $spaId = null;
 
-    protected function getColumns(): int
+    /** @return array<int, string> */
+    public function spaOptions(): array
     {
-        return 3;
+        return Spa::query()->orderBy('name')->pluck('name', 'id')->all();
     }
 
     protected function getStats(): array
     {
-        return FinanceStats::stats(Booking::query());
+        $spa = filled($this->spaId) ? Spa::find((int) $this->spaId) : null;
+
+        // « Facturée » et « payée » sont tenues par partenaire (entité facturée), pas par établissement.
+        return FinanceStats::stats($spa ? Booking::where('spa_id', $spa->id) : Booking::query(), $spa?->partner_id, [], $this->period);
     }
 }
