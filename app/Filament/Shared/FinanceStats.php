@@ -10,7 +10,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Suivi financier du mois, commun à l'Admin et à l'espace partenaire. HammamLuxury n'encaisse rien : les montants des
+ * Suivi financier d'un mois (mois en cours par défaut), commun à l'Admin et à l'espace partenaire. HammamLuxury n'encaisse rien : les montants des
  * prestations sont ceux déclarés par l'établissement, et une commission n'est acquise qu'une fois la prestation
  * effectuée (ou des frais d'absence / d'annulation appliqués), jamais à la confirmation.
  */
@@ -20,9 +20,10 @@ class FinanceStats
      * @param  Builder<Booking>  $bookings  réservations du périmètre (un établissement, ou toute la plateforme)
      * @return array<string, float|int>
      */
-    public static function month(Builder $bookings, ?int $partnerId = null): array
+    public static function month(Builder $bookings, ?int $partnerId = null, ?string $period = null): array
     {
-        $range = [now()->startOfMonth(), now()->endOfMonth()];
+        $start = BillingPeriods::valid($period) ? now()->setDate((int) substr($period, 0, 4), (int) substr($period, 5, 2), 1) : now();
+        $range = [$start->copy()->startOfMonth(), $start->copy()->endOfMonth()];
         $month = (clone $bookings)->whereBetween('start_at', $range)->where('payment_status', '!=', 'refunded')
             ->whereIn('status', ['confirmed', 'completed', 'no_show', 'cancelled'])->get();
         $confirmed = $month->where('status', 'confirmed');
@@ -49,10 +50,10 @@ class FinanceStats
      * @param  array{confirmed?: string, accrued?: string}  $urls
      * @return list<Stat>
      */
-    public static function stats(Builder $bookings, ?int $partnerId = null, array $urls = []): array
+    public static function stats(Builder $bookings, ?int $partnerId = null, array $urls = [], ?string $period = null): array
     {
         $link = ['class' => 'cursor-pointer transition hover:ring-2 hover:ring-primary-500'];
-        $m = self::month($bookings, $partnerId);
+        $m = self::month($bookings, $partnerId, $period);
         $money = fn (float $v) => number_format($v, fmod(round($v, 2), 1.0) === 0.0 ? 0 : 2, ',', ' ').' '.config('hl.currency');
 
         return [
