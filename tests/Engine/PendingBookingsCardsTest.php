@@ -27,6 +27,33 @@ class PendingBookingsCardsTest extends BookingFlowTestCase
         Filament::setTenant($this->spa, true);
     }
 
+    public function test_decline_needs_a_reason_and_the_internal_note_never_reaches_the_client(): void
+    {
+        $d = $this->submit($this->intent('10:00', ['treatment' => $this->h->id, 'party' => 1]))['booking'];
+        $this->asOwner();
+        Mail::fake();
+
+        $list = Livewire::test(PendingBookings::class)->mountTableAction('decline', $d);
+        $submit = fn () => $list->instance()->getMountedTableAction()->getModalSubmitAction();
+        $this->assertTrue($submit()->isDisabled(), '« Confirmer » inactif tant que le motif manque');
+        $list->setTableActionData(['reason' => 'other']);
+        $this->assertFalse($submit()->isDisabled());
+
+        // Sans motif, rien n'est enregistré même si la demande est envoyée.
+        $list->callTableAction('decline', $d, data: ['reason' => null])->assertHasTableActionErrors(['reason']);
+        $this->assertSame('waiting', $d->fresh()->status);
+
+        $list->callTableAction('decline', $d, data: ['reason' => 'other', 'note' => 'NOTE-INTERNE-XYZ'])->assertHasNoTableActionErrors();
+        $this->assertSame('declined', $d->fresh()->status);
+        $this->assertSame('NOTE-INTERNE-XYZ', $d->fresh()->decline->note);
+        foreach (['fr', 'en'] as $locale) {
+            app()->setLocale($locale);
+            $html = (new BookingMail($d->fresh(), 'declined', 'client'))->render();
+            $this->assertStringNotContainsString('NOTE-INTERNE-XYZ', $html);
+            $this->assertStringNotContainsString(__('partner.decline_reasons', [], 'fr')['other'], $html);
+        }
+    }
+
     public function test_accept_and_decline_work_once_from_the_pending_list(): void
     {
         $a = $this->submit($this->intent('10:00', ['treatment' => $this->h->id, 'party' => 1]))['booking'];

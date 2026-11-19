@@ -99,6 +99,8 @@ class BookingActions
                         ->required(fn (Get $get) => $get('reason') === 'other'),
                 ])
                 ->requiresConfirmation()->modalDescription(__('partner.decline_help'))
+                // « Confirmer » reste inactif tant que le motif obligatoire n'est pas choisi.
+                ->modalSubmitAction(fn ($action, $livewire) => $action->disabled(blank($livewire->mountedTableActionsData[0]['reason'] ?? $livewire->mountedActionsData[0]['reason'] ?? null)))
                 ->action(fn (Booking $b, array $data) => $run($b, 'decline', [$data['reason'] ?? null, $data['note'] ?? null, auth()->id()])),
             $class::make('complete')->label(__('partner.complete'))->icon('heroicon-o-flag')->color('info')
                 ->visible(fn (Booking $b) => $actor === 'admin' && $b->isConfirmed() && $b->end_at->isPast())
