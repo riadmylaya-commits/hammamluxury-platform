@@ -30,12 +30,11 @@
     @media (min-width: 768px) { .hl-mobile-only { display: none; } }
     @media (max-width: 767px) { .hl-desktop-only { display: none; } }
 
-    /* Téléphone : une fenêtre (Accepter, Refuser…) ne dépasse jamais l'écran ; son contenu défile, ses boutons restent visibles. */
+    /* Téléphone : une fenêtre (Accepter, Refuser…) ne dépasse jamais l'écran ; elle défile en entier et ses boutons restent
+       collés en bas, y compris quand le clavier réduit la hauteur disponible. */
     @media (max-width: 639px) {
-        .fi-modal-window:not(.fi-modal-slide-over-window) { max-height: calc(100dvh - 2rem); }
-        .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-content { min-height: 0; overflow-y: auto; }
-        .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-header,
-        .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-footer { flex-shrink: 0; }
+        .fi-modal-window:not(.fi-modal-slide-over-window) { max-height: calc(100dvh - 2rem); overflow-y: auto; }
+        .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-footer { position: sticky; bottom: 0; z-index: 1; background: inherit; padding-top: .75rem; border-end-start-radius: inherit; border-end-end-radius: inherit; }
     }
     /* Zone tactile d'au moins 44 × 44 px pour les boutons, sur téléphone, tablette et écran tactile. */
     @media (max-width: 1023px), (pointer: coarse) {
