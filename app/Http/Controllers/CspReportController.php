@@ -5,13 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 
 /** Réception des rapports de violation CSP (navigateurs) → canal de log « csp ». */
 class CspReportController extends Controller
 {
     public function __invoke(Request $request): Response
     {
-        $raw = (string) $request->getContent();
+        // Au-delà de 30 rapports par minute et par adresse, le rapport est ignoré sans erreur : un navigateur bavard
+        // ne doit ni remplir le journal ni faire bannir un visiteur légitime.
+        if (! RateLimiter::attempt('csp-report:'.$request->ip(), 30, fn () => true, 60)) {
+            return response()->noContent();
+        }
+        $raw = mb_substr((string) $request->getContent(), 0, 8000);
         $data = json_decode($raw, true);
         $report = is_array($data) ? ($data['csp-report'] ?? $data) : ['raw' => mb_substr($raw, 0, 500)];
 

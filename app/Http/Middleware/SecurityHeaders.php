@@ -62,8 +62,9 @@ class SecurityHeaders
             "form-action 'self'",
             // Livewire/Alpine/Filament nécessitent inline + eval ; Leaflet via unpkg.
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com",
-            "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.bunny.net",
-            "font-src 'self' data: https://fonts.bunny.net",
+            "style-src 'self' 'unsafe-inline' https://unpkg.com",
+            // Police Inter servie localement (public/fonts/inter) : aucune source externe de police.
+            "font-src 'self' data:",
             "img-src 'self' data: blob: https://unpkg.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://picsum.photos https://fastly.picsum.photos https://ui-avatars.com",
             "connect-src 'self'",
             "worker-src 'self' blob:",
