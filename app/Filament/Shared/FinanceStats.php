@@ -4,6 +4,7 @@ namespace App\Filament\Shared;
 
 use App\Domain\Billing\BillingSettings;
 use App\Models\Booking;
+use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Builder;
@@ -36,6 +37,8 @@ class FinanceStats
             'fees_total' => (float) $fees->sum(fn (Booking $b) => $b->amountDue()),
             'commission_forecast' => (float) $confirmed->sum(fn (Booking $b) => $b->source === 'partner' ? 0.0 : (float) $b->commission_amount),
             'commission_accrued' => (float) $month->sum(fn (Booking $b) => $b->commissionDue()),
+            'commission_invoiced' => (float) Invoice::query()->issued()->where('status', '!=', Invoice::STATUS_CANCELLED)->whereBetween('issued_at', $range)
+                ->when($partnerId, fn (Builder $q) => $q->where('partner_id', $partnerId))->sum('total_ttc'),
             'commission_paid' => (float) InvoicePayment::query()->whereBetween('paid_on', [$range[0]->toDateString(), $range[1]->toDateString()])
                 ->where('method', '!=', InvoicePayment::METHOD_CREDIT)
                 ->when($partnerId, fn (Builder $q) => $q->where('partner_id', $partnerId))->sum('amount'),
@@ -64,6 +67,8 @@ class FinanceStats
             Stat::make(__('booking.finance_commission_accrued'), $money($m['commission_accrued']))->color('success')
                 ->description(__('booking.finance_commission_accrued_help'))
                 ->url($urls['accrued'] ?? null)->extraAttributes(isset($urls['accrued']) ? $link : []),
+            Stat::make(__('booking.finance_commission_invoiced'), $money($m['commission_invoiced']))
+                ->description(__(app(BillingSettings::class)->enabled() ? 'booking.finance_commission_invoiced_help' : 'booking.finance_commission_invoiced_off')),
             Stat::make(__('booking.finance_commission_paid'), $money($m['commission_paid']))
                 ->description(__(app(BillingSettings::class)->enabled() ? 'booking.finance_commission_paid_help' : 'booking.finance_commission_paid_off')),
         ];

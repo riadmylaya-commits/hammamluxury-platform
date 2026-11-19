@@ -139,20 +139,20 @@ class BookingSheetTest extends BookingFlowTestCase
         $b = $b->fresh();
         $this->assertGreaterThan(0, (float) $b->commission_amount);
         $m = FinanceStats::month(Booking::where('spa_id', $this->spa->id), $this->spa->partner_id);
-        $this->assertSame([1, (float) $b->total, 0, 0.0, (float) $b->commission_amount, 0.0, 0.0],
-            [$m['confirmed_count'], $m['confirmed_total'], $m['performed_count'], $m['performed_total'], $m['commission_forecast'], $m['commission_accrued'], $m['commission_paid']]);
+        $this->assertSame([1, (float) $b->total, 0, 0.0, (float) $b->commission_amount, 0.0, 0.0, 0.0],
+            [$m['confirmed_count'], $m['confirmed_total'], $m['performed_count'], $m['performed_total'], $m['commission_forecast'], $m['commission_accrued'], $m['commission_invoiced'], $m['commission_paid']]);
         Livewire::test(FinanceOverview::class)
             ->assertSee('intermédiaire sans encaissement')->assertSee('déclarés par les établissements')
             ->assertSeeInOrder(['Réservations confirmées — prévision', $money((float) $b->total), 'Prestations effectuées', $money(0),
-                'Commission prévisionnelle', $money((float) $b->commission_amount), 'Commission acquise', $money(0), 'Commission payée à HammamLuxury', $money(0)])
+                'Commission prévisionnelle', $money((float) $b->commission_amount), 'Commission acquise', $money(0), 'Commission facturée', $money(0), 'Commission payée à HammamLuxury', $money(0)])
             ->assertSee('Facturation non activée')
             ->assertSee('/partenaire/'.$this->spa->slug.'/commission-statement?period='.now(config('hl.timezone'))->format('Y-m'), false);
 
         // Prestation déclarée effectuée : la commission devient acquise, toujours pas payée.
         $b->forceFill(['status' => 'completed'])->save();
         $m = FinanceStats::month(Booking::where('spa_id', $this->spa->id), $this->spa->partner_id);
-        $this->assertSame([0, 0.0, 1, (float) $b->total, 0.0, (float) $b->commission_amount, 0.0],
-            [$m['confirmed_count'], $m['confirmed_total'], $m['performed_count'], $m['performed_total'], $m['commission_forecast'], $m['commission_accrued'], $m['commission_paid']]);
+        $this->assertSame([0, 0.0, 1, (float) $b->total, 0.0, (float) $b->commission_amount, 0.0, 0.0],
+            [$m['confirmed_count'], $m['confirmed_total'], $m['performed_count'], $m['performed_total'], $m['commission_forecast'], $m['commission_accrued'], $m['commission_invoiced'], $m['commission_paid']]);
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         Livewire::test(PlatformFinance::class)->assertSee('intermédiaire sans encaissement')
             ->assertSeeInOrder(['Prestations effectuées', $money((float) $b->total), 'Commission acquise', $money((float) $b->commission_amount), 'Commission payée à HammamLuxury', $money(0)]);
