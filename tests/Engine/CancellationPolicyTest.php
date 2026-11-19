@@ -148,6 +148,10 @@ class CancellationPolicyTest extends BookingFlowTestCase
         $this->assertTrue($b->isNonRefundable() && (float) $b->total === 360.0 && (float) $b->standard_total === 400.0 && $b->cancellationHours() === 72, 'Réservation NR 360 (réf. 400), 72 h figés');
 
         $this->get('/fr/reservation/'.$b->manage_token)->assertOk()->assertSee('Non remboursable · −10 %')->assertSee('Ces conditions ont été acceptées');
+        // Avant confirmation : aucuns frais, même au tarif non remboursable ; les conditions s'appliquent une fois la réservation confirmée.
+        $this->assertSame(0.0, $b->cancelFeeNow());
+        Livewire::test(BookingShow::class, ['token' => $b->manage_token])->assertSee('vous pouvez l’annuler sans frais', false)->assertSee('Annulation gratuite — confirmer ?');
+        $this->bookings->accept($b->fresh());
         Livewire::test(BookingShow::class, ['token' => $b->manage_token])->assertSee('100 % du montant (360 MAD) restera dû')->call('cancel');
         $b->refresh();
         $this->assertTrue($b->status === 'cancelled' && (float) $b->cancel_fee === 360.0, 'Annulation depuis le suivi : 360 dus');
