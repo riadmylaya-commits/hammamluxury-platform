@@ -215,6 +215,7 @@ return [
     'action_done' => 'Done.',
     'action_failed' => 'Action not possible',
     'view' => 'Details',
+    'respond' => 'Respond',
 
     'stat_waiting' => 'Requests to handle',
     'stat_waiting_help' => 'Reply expected within :delay',

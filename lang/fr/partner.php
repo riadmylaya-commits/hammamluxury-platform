@@ -221,6 +221,7 @@ return [
     'action_done' => 'C’est fait.',
     'action_failed' => 'Action impossible',
     'view' => 'Détails',
+    'respond' => 'Répondre',
 
     // Tableau de bord
     'stat_waiting' => 'Demandes à traiter',
