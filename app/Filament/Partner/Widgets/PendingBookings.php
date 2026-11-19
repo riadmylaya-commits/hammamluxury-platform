@@ -23,21 +23,21 @@ class PendingBookings extends TableWidget
             ->heading(__('partner.pending_heading'))
             ->query(Booking::where('spa_id', Filament::getTenant()->id)->where('status', 'waiting')->orderBy('start_at')->with('participants'))
             ->columns([
-                // Téléphone : une carte par demande (aucun défilement horizontal) ; le tableau reste sur tablette et ordinateur.
-                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('md'),
-                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')->visibleFrom('md')
+                // Téléphone et tablette : une carte par demande (aucun défilement horizontal) ; le tableau reste sur ordinateur (≥ 1280 px).
+                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('xl'),
+                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')->visibleFrom('xl')
                     ->description(fn (Booking $b) => $b->last_minute ? __('partner.last_minute_badge', ['until' => $b->expires_at?->format('H\hi')]) : null),
-                Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName().' · '.$b->party.' '.__('partner.pers'))->wrap()->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName().' · '.$b->party.' '.__('partner.pers'))->wrap()->visibleFrom('xl'),
                 Tables\Columns\TextColumn::make('participants')->label(__('partner.treatments'))
-                    ->getStateUsing(fn (Booking $b) => $b->participants->pluck('treatment_name')->unique()->implode(', '))->wrap()->visibleFrom('md'),
-                Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->visibleFrom('md'),
-                Tables\Columns\TextColumn::make('expires_at')->label(__('partner.expires_at'))->since()->color(fn ($record) => $record->last_minute ? 'danger' : 'warning')->visibleFrom('md'),
+                    ->getStateUsing(fn (Booking $b) => $b->participants->pluck('treatment_name')->unique()->implode(', '))->wrap()->visibleFrom('xl'),
+                Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->visibleFrom('xl'),
+                Tables\Columns\TextColumn::make('expires_at')->label(__('partner.expires_at'))->since()->color(fn ($record) => $record->last_minute ? 'danger' : 'warning')->visibleFrom('xl'),
             ])
             ->actions([
-                Tables\Actions\Action::make('view_m')->label(__('partner.view'))->url(fn (Booking $b) => BookingResource::getUrl('view', ['record' => $b]))->extraAttributes(['class' => 'hl-mobile-only']),
-                Tables\Actions\ActionGroup::make(BookingActions::all('partner'))->label(__('partner.respond'))->button()->color('primary')->extraAttributes(['class' => 'hl-mobile-only']),
-                Tables\Actions\Action::make('view')->label(__('partner.view'))->url(fn (Booking $b) => BookingResource::getUrl('view', ['record' => $b]))->extraAttributes(['class' => 'hl-desktop-only']),
-                ...array_map(fn ($action) => $action->extraAttributes(['class' => 'hl-desktop-only'], merge: true), BookingActions::all('partner')),
+                Tables\Actions\Action::make('view_m')->label(__('partner.view'))->url(fn (Booking $b) => BookingResource::getUrl('view', ['record' => $b]))->extraAttributes(['class' => 'hl-pending-card']),
+                Tables\Actions\ActionGroup::make(BookingActions::all('partner'))->label(__('partner.respond'))->button()->color('primary')->extraAttributes(['class' => 'hl-pending-card']),
+                Tables\Actions\Action::make('view')->label(__('partner.view'))->url(fn (Booking $b) => BookingResource::getUrl('view', ['record' => $b]))->extraAttributes(['class' => 'hl-pending-table']),
+                ...array_map(fn ($action) => $action->extraAttributes(['class' => 'hl-pending-table'], merge: true), BookingActions::all('partner')),
             ])
             ->paginated(false)
             ->emptyStateHeading(__('partner.no_pending'));
