@@ -178,6 +178,7 @@
         <div wire:loading.remove wire:target="pickDate">
         @if ($slots)
             <div class="slots">@foreach ($slots as $s)<button type="button" aria-pressed="{{ $time === $s ? 'true' : 'false' }}" wire:click="pickTime('{{ $s }}')">{{ $s }}</button>@endforeach</div>
+            @if ($lastMinuteUntil)<div class="notice warn" style="margin-top:8px"><b>{{ __('ui.last_minute_title') }}</b> {{ __('ui.last_minute_slot', ['minutes' => config('hl.last_minute.response_minutes')]) }}</div>@endif
             @if ($time)<div class="muted small" style="margin-top:8px">{{ __('ui.ends_at', ['time' => \Carbon\CarbonImmutable::parse("$date $time")->addMinutes($quote['duration_min'])->format('H:i')]) }} · {{ $quote['duration_min'] }} {{ __('ui.min') }}</div>@endif
         @else
             <div class="notice"><b>{{ __('ui.no_slots') }}</b><br>{{ $slotsReason }}<br><span class="muted">{{ __('ui.try_other') }}</span></div>
@@ -210,7 +211,11 @@
         @if ($spa->instantBookingActive())
             <div class="notice info"><b>{{ __('ui.instant_title') }}</b> {{ __('ui.instant_help') }} {{ __('ui.no_account') }}</div>
         @else
+            @if ($lastMinuteUntil)
+            <div class="notice warn"><b>{{ __('ui.last_minute_title') }}</b> {{ __('ui.last_minute_notice', ['minutes' => config('hl.last_minute.response_minutes'), 'until' => $lastMinuteUntil]) }} {{ __('ui.no_account') }}</div>
+            @else
             <div class="notice info">{{ $spa->isReferenced() ? __('ui.no_payment_referenced', ['hours' => $spa->waitingTtlHours(), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1]]) : __('ui.no_payment', ['hours' => $spa->waitingTtlHours(), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1]]) }} {{ __('ui.no_account') }}</div>
+            @endif
         @endif
         <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" wire:loading.attr="disabled"><span wire:loading.remove wire:target="submit">{{ $spa->instantBookingActive() ? __('ui.submit_instant') : __('ui.submit') }}</span><span wire:loading wire:target="submit">{{ __('ui.submitting') }}</span></button></div>
     </form>

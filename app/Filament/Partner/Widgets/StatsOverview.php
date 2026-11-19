@@ -7,6 +7,7 @@ use App\Filament\Partner\Pages\EditSpaProfile;
 use App\Filament\Partner\Resources\BookingResource;
 use App\Filament\Shared\BillingPeriods;
 use App\Models\Booking;
+use Carbon\CarbonImmutable;
 use Filament\Facades\Filament;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -29,7 +30,9 @@ class StatsOverview extends BaseWidget
         $bookings = fn (array $filters) => BookingResource::getUrl('index', ['tableFilters' => $filters]);
 
         return [
-            Stat::make(__('partner.stat_waiting'), $q()->where('status', 'waiting')->count())->color('warning')->description(__('partner.stat_waiting_help', ['delay' => $spa->waitingTtlLabel()]))
+            Stat::make(__('partner.stat_waiting'), $q()->where('status', 'waiting')->count())->color('warning')->description(($urgent = $q()->where('status', 'waiting')->where('last_minute', true)->min('expires_at'))
+                ? __('partner.stat_waiting_last_minute', ['until' => CarbonImmutable::parse($urgent)->format('H\hi')])
+                : __('partner.stat_waiting_help', ['delay' => $spa->waitingTtlLabel()]))
                 ->url($bookings(['status' => ['values' => ['waiting']]]))->extraAttributes($clickable),
             Stat::make(__('partner.stat_upcoming'), $q()->where('status', 'confirmed')->where('start_at', '>=', now())->count())->color('success')
                 ->url($bookings(['status' => ['values' => ['confirmed']], 'upcoming' => ['isActive' => true]]))->extraAttributes($clickable),

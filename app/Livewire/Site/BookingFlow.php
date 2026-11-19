@@ -438,12 +438,25 @@ class BookingFlow extends Component
         }
     }
 
+    /** Heure limite de réponse si le créneau choisi relève de la « dernière minute », sinon null. */
+    private function lastMinuteUntil(): ?string
+    {
+        if (! $this->date || ! $this->time || $this->spa->instantBookingActive()) {
+            return null;
+        }
+        $bookings = app(BookingService::class);
+        [$until, $lastMinute] = $bookings->requestDeadline($this->spa, $bookings->parseStart($this->date, $this->time));
+
+        return $lastMinute ? $until->format('H\hi') : null;
+    }
+
     public function render(): View
     {
         return view('livewire.site.booking-flow', [
             'treatments' => $this->catalogue(),
             'quote' => $this->quote(),
             'calendar' => $this->step === 2 ? $this->calendar() : [],
+            'lastMinuteUntil' => $this->lastMinuteUntil(),
         ])->title(__('ui.book').' · '.$this->spa->name);
     }
 }
