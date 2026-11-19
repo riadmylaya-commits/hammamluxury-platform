@@ -36,7 +36,11 @@
 **{{ __('emails.created.partner_last_minute', ['minutes' => config('hl.last_minute.response_minutes')]) }}**
 
 @endif
+@if($booking->last_minute)
+{{ __('emails.created.partner_last_minute_deadline', ['minutes' => config('hl.last_minute.response_minutes'), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1], 'until' => $booking->expires_at?->translatedFormat('l j F Y H\hi')]) }}
+@else
 {{ __('emails.created.'.$textAudience.'.deadline', ['hours' => $booking->spa->waitingTtlHours(), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1], 'until' => $booking->expires_at?->translatedFormat('l j F Y H\hi')]) }}
+@endif
 @endif
 
 {{ config('app.name') }}

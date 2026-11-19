@@ -122,6 +122,8 @@ class LastMinuteTest extends BookingFlowTestCase
         $partnerMail = new BookingMail($b, 'created', 'partner');
         $this->assertStringStartsWith('Dernière minute', $partnerMail->envelope()->subject);
         $this->assertStringContainsString('30 minutes', $partnerMail->render());
+        $this->assertStringContainsString('délai de 30 minutes', $partnerMail->render());
+        $this->assertStringNotContainsString('délai de 2 h', $partnerMail->render(), 'E-mail partenaire : pas de délai de 2 h pour une dernière minute');
         $client = (new BookingMail($b, 'created', 'client'))->render();
         $this->assertStringContainsString('10h30', $client, 'E-mail client : heure limite');
         $this->assertStringContainsString('dernière minute', $client);
