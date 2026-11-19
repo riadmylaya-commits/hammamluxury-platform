@@ -16,7 +16,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
-Route::post('/csp-report', CspReportController::class)->middleware('throttle:60,1')->name('csp.report');
+// Pas de « throttle » : un 429 serait compté comme une erreur par fail2ban ; le contrôleur ignore lui-même les rapports en excès.
+Route::post('/csp-report', CspReportController::class)->name('csp.report');
 
 Route::get('/', function (Request $request) {
     $locale = $request->getPreferredLanguage(config('hl.locales')) ?: config('app.locale');

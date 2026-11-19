@@ -10,6 +10,7 @@ use App\Filament\Shared\Pages\TwoFactorSetup;
 use App\Http\Middleware\RequireTwoFactor;
 use App\Http\Responses\PartnerRegistrationResponse;
 use App\Models\Spa;
+use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -50,7 +51,7 @@ class PartnerPanelProvider extends PanelProvider
             ->emailVerification()
             ->brandName('HammamLuxury · Partenaires')
             ->colors(['primary' => Color::hex('#1f4d3f')])
-            ->font('Inter')
+            ->font('Inter', url: asset('fonts/inter/inter.css'), provider: LocalFontProvider::class)
             ->sidebarCollapsibleOnDesktop()
             ->tenant(Spa::class, slugAttribute: 'slug')
             ->tenantRegistration(RegisterSpa::class)
