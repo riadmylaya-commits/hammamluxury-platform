@@ -211,7 +211,8 @@ class LastMinuteTest extends BookingFlowTestCase
         Filament::setCurrentPanel(Filament::getPanel('partner'));
         Filament::setTenant($this->spa, true);
         Livewire::test(StatsOverview::class)->assertSee('Dernière minute : répondre avant 10h30')->assertDontSee('Réponse attendue sous');
-        Livewire::test(PendingBookings::class)->assertSee('Dernière minute · avant 10h30');
+        Livewire::test(PendingBookings::class)->assertSee('Dernière minute · avant 10h30')->assertSee('Répondre')
+            ->assertTableActionExists('accept')->assertTableActionExists('view');
     }
 
     public function test_customer_sees_the_shortened_deadline_before_sending(): void

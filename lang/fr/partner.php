@@ -51,6 +51,7 @@ return [
     'last_minute_help' => 'Facultatif. Si vous l’activez, les clients peuvent demander un soin proche (au plus tôt 1 h 30 après leur demande). Vous devez alors répondre sous :minutes minutes, entre :open h et :close h. En l’activant, vous vous engagez à répondre rapidement : une demande reçue la nuit pour un soin tôt le matin attend votre réponse entre :open h et :open h 30. Sans réponse, la demande expire et le créneau est libéré : rien n’est jamais confirmé à votre place.',
     'last_minute_withdrawn' => 'Option retirée par HammamLuxury. Écrivez-nous depuis la page Assistance pour la rétablir.',
     'last_minute_badge' => 'Dernière minute · avant :until',
+    'last_minute_short' => 'Dernière minute',
     'cancellation_hours' => 'Annulation gratuite jusqu’à (avant le rendez-vous)',
 
     // Soins
@@ -221,6 +222,7 @@ return [
     'action_done' => 'C’est fait.',
     'action_failed' => 'Action impossible',
     'view' => 'Détails',
+    'respond' => 'Répondre',
 
     // Tableau de bord
     'stat_waiting' => 'Demandes à traiter',
