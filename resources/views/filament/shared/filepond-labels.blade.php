@@ -30,11 +30,18 @@
     @media (min-width: 768px) { .hl-mobile-only { display: none; } }
     @media (max-width: 767px) { .hl-desktop-only { display: none; } }
 
-    /* Téléphone : une fenêtre (Accepter, Refuser…) ne dépasse jamais l'écran ; elle défile en entier et ses boutons restent
-       collés en bas, y compris quand le clavier réduit la hauteur disponible. */
+    /* Téléphone : une fenêtre (Accepter, Refuser…) ne dépasse jamais la zone visible ; elle défile en entier et ses boutons
+       restent collés en bas. --hl-vvh / --hl-vvtop suivent la zone réellement visible (script ci-dessous) : quand le clavier
+       s'ouvre, Safari et Chrome ne réduisent pas 100dvh, et les boutons resteraient sous le clavier. */
     @media (max-width: 639px) {
-        .fi-modal-window:not(.fi-modal-slide-over-window) { max-height: calc(100dvh - 2rem); overflow-y: auto; }
+        .fi-modal .fixed.overflow-y-auto:has(> div > .fi-modal-window) { top: var(--hl-vvtop, 0px); bottom: auto; height: var(--hl-vvh, 100dvh); }
+        .fi-modal-window:not(.fi-modal-slide-over-window) { max-height: calc(var(--hl-vvh, 100dvh) - 2rem); overflow-y: auto; }
         .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-footer { position: sticky; bottom: 0; z-index: 1; background: inherit; padding-top: .75rem; border-end-start-radius: inherit; border-end-end-radius: inherit; }
+        /* Clavier ouvert : la place est comptée, les boutons passent côte à côte et les marges se resserrent. */
+        .hl-keyboard-open .fi-modal-window:not(.fi-modal-slide-over-window) { max-height: calc(var(--hl-vvh, 100dvh) - .5rem); }
+        .hl-keyboard-open .fi-modal-window .fi-modal-footer { padding-bottom: .75rem; }
+        .hl-keyboard-open .fi-modal-window .fi-modal-footer-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
+        .hl-keyboard-open .fi-modal .fixed.overflow-y-auto:has(> div > .fi-modal-window) > div { padding: .25rem .5rem; }
     }
     /* Zone tactile d'au moins 44 × 44 px pour les boutons, sur téléphone, tablette et écran tactile. */
     @media (max-width: 1023px), (pointer: coarse) {
@@ -49,3 +56,22 @@
         tr.fi-ta-row:has(.hl-pending-card) .fi-ta-actions { justify-content: flex-start; padding-bottom: .75rem; }
     }
 </style>
+
+{{-- Zone visible du navigateur (clavier du téléphone déduit) pour dimensionner les fenêtres : voir le style ci-dessus. --}}
+<script>
+    (() => {
+        const viewport = window.visualViewport;
+        if (! viewport) {
+            return;
+        }
+        const root = document.documentElement;
+        const update = () => {
+            root.style.setProperty('--hl-vvh', viewport.height + 'px');
+            root.style.setProperty('--hl-vvtop', viewport.offsetTop + 'px');
+            root.classList.toggle('hl-keyboard-open', window.innerHeight - viewport.height > 120);
+        };
+        viewport.addEventListener('resize', update);
+        viewport.addEventListener('scroll', update);
+        update();
+    })();
+</script>

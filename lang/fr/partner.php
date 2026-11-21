@@ -212,6 +212,7 @@ return [
         'client_request' => 'À la demande du client',
         'other' => 'Autre (à préciser)',
     ],
+    'decline_reason_chosen' => 'Motif choisi : :reason.',
     'decline_full_help' => 'Si vous refusez souvent pour « Plus de place », pensez à mettre à jour vos horaires, blocages et ressources : le calendrier proposé aux clients en dépend.',
     'declined_block' => 'Refus de la demande',
     'declined_by' => 'Refusée par',

@@ -206,6 +206,7 @@ return [
         'client_request' => 'At the customer’s request',
         'other' => 'Other (please specify)',
     ],
+    'decline_reason_chosen' => 'Selected reason: :reason.',
     'decline_full_help' => 'If you often decline for “No room left”, please update your hours, closures and resources: the calendar shown to customers depends on them.',
     'declined_block' => 'Request declined',
     'declined_by' => 'Declined by',

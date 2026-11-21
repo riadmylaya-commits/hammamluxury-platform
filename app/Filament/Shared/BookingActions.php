@@ -95,7 +95,10 @@ class BookingActions
                 ->form([
                     // Liste native du navigateur : sur téléphone, le sélecteur du système ne peut pas être recouvert par les boutons de la fenêtre.
                     Select::make('reason')->label(__('partner.decline_reason'))->options(__('partner.decline_reasons'))->required()->native()->live()
-                        ->helperText(fn (Get $get) => $get('reason') === 'full' ? __('partner.decline_full_help') : null),
+                        // Sur un petit écran, la liste native coupe un libellé long : le motif choisi est répété en entier sous le champ.
+                        ->helperText(fn (Get $get) => filled($label = __('partner.decline_reasons')[$get('reason')] ?? null)
+                            ? trim(__('partner.decline_reason_chosen', ['reason' => $label]).' '.($get('reason') === 'full' ? __('partner.decline_full_help') : ''))
+                            : null),
                     Textarea::make('note')->label(__('partner.decline_note'))->rows(3)->maxLength(500)
                         ->required(fn (Get $get) => $get('reason') === 'other'),
                 ])

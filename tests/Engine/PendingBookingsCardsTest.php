@@ -37,9 +37,14 @@ class PendingBookingsCardsTest extends BookingFlowTestCase
         $submit = fn () => $list->instance()->getMountedTableAction()->getModalSubmitAction();
         $this->assertTrue($submit()->isDisabled(), '« Confirmer » inactif tant que le motif manque');
         $this->assertSame('true', $submit()->getExtraAttributes()['x-bind:disabled'] ?? null, 'réellement désactivé dans le navigateur, clavier compris');
+        $list->assertDontSee('Motif choisi');
         $list->setTableActionData(['reason' => 'other']);
         $this->assertFalse($submit()->isDisabled());
         $this->assertArrayNotHasKey('x-bind:disabled', $submit()->getExtraAttributes());
+        // Le motif choisi est répété en entier sous la liste (un libellé long est coupé dans la liste native d'un petit écran).
+        $list->assertSee('Motif choisi : Autre (à préciser).')->setTableActionData(['reason' => 'closed'])
+            ->assertSee('Motif choisi : Établissement fermé / horaires exceptionnels.')
+            ->setTableActionData(['reason' => 'full'])->assertSee('Motif choisi : Plus de place à cet horaire.')->assertSee('Si vous refusez souvent');
 
         // Sans motif, rien n'est enregistré même si la demande est envoyée.
         $list->callTableAction('decline', $d, data: ['reason' => null])->assertHasTableActionErrors(['reason']);
