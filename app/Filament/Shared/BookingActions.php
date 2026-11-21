@@ -93,7 +93,8 @@ class BookingActions
             $class::make('decline')->label(__('partner.decline'))->icon('heroicon-o-x-mark')->color('danger')
                 ->visible(fn (Booking $b) => $b->isWaiting() && ($actor !== 'partner' || $b->spa->managed_by !== 'admin'))
                 ->form([
-                    Select::make('reason')->label(__('partner.decline_reason'))->options(__('partner.decline_reasons'))->required()->native(false)->live()
+                    // Liste native du navigateur : sur téléphone, le sélecteur du système ne peut pas être recouvert par les boutons de la fenêtre.
+                    Select::make('reason')->label(__('partner.decline_reason'))->options(__('partner.decline_reasons'))->required()->native()->live()
                         ->helperText(fn (Get $get) => $get('reason') === 'full' ? __('partner.decline_full_help') : null),
                     Textarea::make('note')->label(__('partner.decline_note'))->rows(3)->maxLength(500)
                         ->required(fn (Get $get) => $get('reason') === 'other'),

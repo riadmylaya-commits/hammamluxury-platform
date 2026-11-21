@@ -34,10 +34,8 @@
        collés en bas, y compris quand le clavier réduit la hauteur disponible. */
     @media (max-width: 639px) {
         .fi-modal-window:not(.fi-modal-slide-over-window) { max-height: calc(100dvh - 2rem); overflow-y: auto; }
-        .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-footer { position: sticky; bottom: 0; background: inherit; padding-top: .75rem; border-end-start-radius: inherit; border-end-end-radius: inherit; }
+        .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-footer { position: sticky; bottom: 0; z-index: 1; background: inherit; padding-top: .75rem; border-end-start-radius: inherit; border-end-end-radius: inherit; }
     }
-    /* La liste déroulante d'un champ (motif du refus…) passe au-dessus des boutons collés en bas, sinon ses dernières lignes sont masquées sur petit iPhone. */
-    .fi-modal-window .choices__list--dropdown, .fi-modal-window .choices__list[aria-expanded] { z-index: 5; }
     /* Zone tactile d'au moins 44 × 44 px pour les boutons, sur téléphone, tablette et écran tactile. */
     @media (max-width: 1023px), (pointer: coarse) {
         .fi-btn, .fi-dropdown-list-item { min-height: 44px; }
