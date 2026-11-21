@@ -37,11 +37,15 @@
         .fi-modal .fixed.overflow-y-auto:has(> div > .fi-modal-window) { top: var(--hl-vvtop, 0px); bottom: auto; height: var(--hl-vvh, 100dvh); }
         .fi-modal-window:not(.fi-modal-slide-over-window) { max-height: calc(var(--hl-vvh, 100dvh) - 2rem); overflow-y: auto; }
         .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-footer { position: sticky; bottom: 0; z-index: 1; background: inherit; padding-top: .75rem; border-end-start-radius: inherit; border-end-end-radius: inherit; }
-        /* Clavier ouvert : la place est comptée, les boutons passent côte à côte et les marges se resserrent. */
+        /* Clavier ouvert : la place est comptée, les marges se resserrent. */
         .hl-keyboard-open .fi-modal-window:not(.fi-modal-slide-over-window) { max-height: calc(var(--hl-vvh, 100dvh) - .5rem); }
         .hl-keyboard-open .fi-modal-window .fi-modal-footer { padding-bottom: .75rem; }
-        .hl-keyboard-open .fi-modal-window .fi-modal-footer-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
         .hl-keyboard-open .fi-modal .fixed.overflow-y-auto:has(> div > .fi-modal-window) > div { padding: .25rem .5rem; }
+        /* Clavier ouvert ou écran peu haut : les deux boutons passent côte à côte pour laisser la place au formulaire. */
+        .hl-keyboard-open .fi-modal-window .fi-modal-footer-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
+    }
+    @media (max-width: 639px) and (max-height: 600px) {
+        .fi-modal-window .fi-modal-footer-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
     }
     /* Zone tactile d'au moins 44 × 44 px pour les boutons, sur téléphone, tablette et écran tactile. */
     @media (max-width: 1023px), (pointer: coarse) {
