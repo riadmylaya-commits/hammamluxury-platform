@@ -38,7 +38,7 @@
     }
     /* Zone tactile d'au moins 44 × 44 px pour les boutons, sur téléphone, tablette et écran tactile. */
     @media (max-width: 1023px), (pointer: coarse) {
-        .fi-btn, .fi-dropdown-list-item { min-height: 44px; }
+        .fi-btn, .fi-dropdown-list-item, .fi-modal-window select.fi-select-input { min-height: 44px; }
         .fi-btn { min-width: 44px; }
         .fi-modal-close-btn, a.hl-pending-card { min-height: 44px; min-width: 44px; }
     }
