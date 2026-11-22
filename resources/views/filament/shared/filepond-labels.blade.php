@@ -47,6 +47,17 @@
     @media (max-width: 639px) and (max-height: 600px) {
         .fi-modal-window .fi-modal-footer-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
     }
+    /* Téléphone peu haut (iPhone SE) : la fenêtre se resserre (pictogramme masqué, marges réduites) pour que le formulaire
+       entier tienne au-dessus des boutons, y compris avec le conseil du motif « Plus de place ». */
+    @media (max-width: 639px) and (max-height: 700px) {
+        .fi-modal-window:not(.fi-modal-slide-over-window) { max-height: calc(var(--hl-vvh, 100dvh) - 1rem); }
+        .fi-modal .fixed.overflow-y-auto:has(> div > .fi-modal-window) > div { padding: .5rem; }
+        .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-header > div:has(.fi-modal-icon):not(:has(.fi-modal-heading)) { display: none; }
+        .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-header { padding-top: 1rem; }
+        .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-content { padding-block: 1rem; }
+        .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-content .fi-fo-component-ctn { gap: .75rem; }
+        .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-footer { padding-bottom: 1rem; }
+    }
     /* Zone tactile d'au moins 44 × 44 px pour les boutons, sur téléphone, tablette et écran tactile. */
     @media (max-width: 1023px), (pointer: coarse) {
         .fi-btn, .fi-dropdown-list-item, .fi-modal-window select.fi-select-input { min-height: 44px; }
@@ -74,8 +85,30 @@
             root.style.setProperty('--hl-vvtop', viewport.offsetTop + 'px');
             root.classList.toggle('hl-keyboard-open', window.innerHeight - viewport.height > 120);
         };
-        viewport.addEventListener('resize', update);
+        // Téléphone : le champ que l'on vient de toucher reste visible dans la fenêtre, au-dessus des boutons, dès que le clavier s'ouvre.
+        const reveal = () => {
+            const field = document.activeElement;
+            const modal = field?.closest?.('.fi-modal-window');
+            if (! modal || ! field.matches('input, textarea, select') || ! window.matchMedia('(max-width: 639px)').matches) {
+                return;
+            }
+            const footer = modal.querySelector('.fi-modal-footer');
+            const top = modal.getBoundingClientRect().top + 8;
+            const bottom = (footer ?? modal).getBoundingClientRect()[footer ? 'top' : 'bottom'] - 8;
+            const box = field.getBoundingClientRect();
+            if (box.bottom > bottom) {
+                modal.scrollTop += Math.min(box.bottom - bottom, box.top - top);
+            } else if (box.top < top) {
+                modal.scrollTop -= top - box.top;
+            }
+        };
+        const refresh = () => {
+            update();
+            requestAnimationFrame(reveal);
+        };
+        viewport.addEventListener('resize', refresh);
         viewport.addEventListener('scroll', update);
+        document.addEventListener('focusin', () => setTimeout(reveal, 50));
         update();
     })();
 </script>
