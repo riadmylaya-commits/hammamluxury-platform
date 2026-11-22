@@ -47,9 +47,9 @@
     @media (max-width: 639px) and (max-height: 600px) {
         .fi-modal-window .fi-modal-footer-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
     }
-    /* Téléphone peu haut (iPhone SE) : la fenêtre se resserre (pictogramme masqué, marges réduites) pour que le formulaire
+    /* Téléphone de hauteur courante ou réduite (iPhone SE compris) : la fenêtre se resserre (pictogramme masqué, marges réduites) pour que le formulaire
        entier tienne au-dessus des boutons, y compris avec le conseil du motif « Plus de place ». */
-    @media (max-width: 639px) and (max-height: 700px) {
+    @media (max-width: 639px) and (max-height: 800px) {
         .fi-modal-window:not(.fi-modal-slide-over-window) { max-height: calc(var(--hl-vvh, 100dvh) - 1rem); }
         .fi-modal .fixed.overflow-y-auto:has(> div > .fi-modal-window) > div { padding: .5rem; }
         .fi-modal-window:not(.fi-modal-slide-over-window) .fi-modal-header > div:has(.fi-modal-icon):not(:has(.fi-modal-heading)) { display: none; }
