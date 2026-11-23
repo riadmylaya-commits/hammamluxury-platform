@@ -93,12 +93,23 @@ class BookingActions
             $class::make('decline')->label(__('partner.decline'))->icon('heroicon-o-x-mark')->color('danger')
                 ->visible(fn (Booking $b) => $b->isWaiting() && ($actor !== 'partner' || $b->spa->managed_by !== 'admin'))
                 ->form([
-                    Select::make('reason')->label(__('partner.decline_reason'))->options(__('partner.decline_reasons'))->required()->native(false)->live()
-                        ->helperText(fn (Get $get) => $get('reason') === 'full' ? __('partner.decline_full_help') : null),
+                    // Liste native du navigateur : sur téléphone, le sélecteur du système ne peut pas être recouvert par les boutons de la fenêtre.
+                    Select::make('reason')->label(__('partner.decline_reason'))->options(__('partner.decline_reasons'))->required()->native()->live()
+                        // Sur un petit écran, la liste native coupe un libellé long : le motif choisi est répété en entier sous le champ.
+                        ->helperText(fn (Get $get) => filled($label = __('partner.decline_reasons')[$get('reason')] ?? null)
+                            ? trim(__('partner.decline_reason_chosen', ['reason' => $label]).' '.($get('reason') === 'full' ? __('partner.decline_full_help') : ''))
+                            : null),
                     Textarea::make('note')->label(__('partner.decline_note'))->rows(3)->maxLength(500)
                         ->required(fn (Get $get) => $get('reason') === 'other'),
                 ])
                 ->requiresConfirmation()->modalDescription(__('partner.decline_help'))
+                // « Confirmer » reste inactif (toucher, souris et clavier) tant que le motif obligatoire n'est pas choisi :
+                // sans x-bind, le bouton d'envoi de Filament retire l'attribut disabled côté navigateur.
+                ->modalSubmitAction(function ($action, $livewire) {
+                    $missing = blank($livewire->mountedTableActionsData[0]['reason'] ?? $livewire->mountedActionsData[0]['reason'] ?? null);
+
+                    return $action->disabled($missing)->extraAttributes($missing ? ['x-bind:disabled' => 'true'] : []);
+                })
                 ->action(fn (Booking $b, array $data) => $run($b, 'decline', [$data['reason'] ?? null, $data['note'] ?? null, auth()->id()])),
             $class::make('complete')->label(__('partner.complete'))->icon('heroicon-o-flag')->color('info')
                 ->visible(fn (Booking $b) => $actor === 'admin' && $b->isConfirmed() && $b->end_at->isPast())

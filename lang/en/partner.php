@@ -50,6 +50,7 @@ return [
     'last_minute_help' => 'Optional. When enabled, customers can request a treatment starting soon (at the earliest 1 h 30 after their request). You must then reply within :minutes minutes, between :open:00 and :close:00. By enabling it, you commit to replying quickly: a request received overnight for an early-morning treatment awaits your reply between :open:00 and :open:30. Without a reply, the request expires and the slot is released: nothing is ever confirmed on your behalf.',
     'last_minute_withdrawn' => 'Option withdrawn by HammamLuxury. Write to us from the Assistance page to restore it.',
     'last_minute_badge' => 'Last minute — before :until',
+    'last_minute_short' => 'Last minute',
     'cancellation_hours' => 'Free cancellation until',
 
     'treatment' => 'Treatment',
@@ -205,6 +206,7 @@ return [
         'client_request' => 'At the customer’s request',
         'other' => 'Other (please specify)',
     ],
+    'decline_reason_chosen' => 'Selected reason: :reason.',
     'decline_full_help' => 'If you often decline for “No room left”, please update your hours, closures and resources: the calendar shown to customers depends on them.',
     'declined_block' => 'Request declined',
     'declined_by' => 'Declined by',
@@ -215,6 +217,7 @@ return [
     'action_done' => 'Done.',
     'action_failed' => 'Action not possible',
     'view' => 'Details',
+    'respond' => 'Respond',
 
     'stat_waiting' => 'Requests to handle',
     'stat_waiting_help' => 'Reply expected within :delay',
