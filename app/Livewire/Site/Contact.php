@@ -3,9 +3,8 @@
 namespace App\Livewire\Site;
 
 use App\Domain\Security\Honeypot;
-use App\Mail\ContactMail;
+use App\Domain\Support\SupportService;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -56,9 +55,8 @@ class Contact extends Component
         }
         RateLimiter::hit($key, 3600);
 
-        Mail::to(config('hl.contact_email'))->send(new ContactMail(
-            trim($this->name), trim($this->email), trim($this->subject), trim($this->message), app()->getLocale(), request()->ip()
-        ));
+        // Demande enregistrée, accusé de réception à l'expéditeur, alerte à l'administration.
+        app(SupportService::class)->open('client', trim($this->name), trim($this->email), trim($this->subject), trim($this->message), app()->getLocale());
 
         $this->reset('name', 'email', 'subject', 'message');
         $this->sent = true;
