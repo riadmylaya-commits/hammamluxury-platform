@@ -2,7 +2,8 @@
 
 use Illuminate\Support\Facades\Schedule;
 
-Schedule::command('hl:expire-waiting')->everyFiveMinutes()->withoutOverlapping();
+// Chaque minute : l'expiration suit l'heure limite annoncée au client. Verrou anti-chevauchement, expiré au plus tard après 5 min.
+Schedule::command('hl:expire-waiting')->everyMinute()->withoutOverlapping(5);
 Schedule::command('hl:complete-past')->everyFifteenMinutes()->withoutOverlapping();
 Schedule::command('hl:cancellation-reminders')->hourly()->withoutOverlapping();
 Schedule::command('hl:review-invitations')->dailyAt('10:00')->withoutOverlapping();
