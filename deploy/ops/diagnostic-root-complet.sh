@@ -12,7 +12,8 @@ echo "== cron hl"; for f in /etc/cron.d/hl-* /etc/cron.daily/hl-mysqldump; do ec
 echo "== monitor"; tail -5 /var/log/hl-monitor.log 2>&1; ls /usr/local/sbin
 echo "== application"; git --no-pager -c safe.directory=$APP -C $APP status -sb 2>&1 | head -5
 echo "variables .env (noms) :"; grep -oE '^[A-Z0-9_]+=' $APP/.env | tr -d '=' | tr '\n' ' '; echo
-grep -E '^(APP_ENV|APP_DEBUG|APP_URL|QUEUE_CONNECTION|CACHE_STORE|SESSION_DRIVER|MAIL_MAILER|MAIL_HOST|MAIL_FROM_ADDRESS|HL_NOINDEX|HL_BILLING_ENABLED|HL_DEMO[A-Z_]*)=' $APP/.env
+grep -E '^(APP_ENV|APP_DEBUG|APP_URL|QUEUE_CONNECTION|CACHE_STORE|SESSION_DRIVER|MAIL_MAILER|MAIL_HOST|MAIL_FROM_ADDRESS|HL_NOINDEX|HL_BILLING_ENABLED)=' $APP/.env
+echo "mot de passe de démonstration : $(grep -q "^HL_DEMO_PASSWORD=." $APP/.env && echo défini || echo absent) (valeur jamais affichée)"
 echo "== base"; mariadb -N -e "SELECT CONCAT(user,'@',host) FROM mysql.user; SELECT table_schema, COUNT(*) FROM information_schema.tables WHERE table_schema NOT IN ('mysql','sys','information_schema','performance_schema') GROUP BY 1" 2>&1
 echo "== services"; supervisorctl status 2>&1; timedatectl | grep -E 'Time zone|synchronized'; swapon --show | tail -1; nginx -t 2>&1 | tail -1
 echo "== mises à jour"; cat /var/run/reboot-required.pkgs 2>/dev/null | sort -u | tr '\n' ' '; echo; tail -3 /var/log/unattended-upgrades/unattended-upgrades.log 2>&1

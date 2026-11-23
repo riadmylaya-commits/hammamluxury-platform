@@ -11,8 +11,20 @@ Ces scripts ne modifient pas l'application par eux-mêmes : chacun s'arrête si 
 | `export-staging-nettoye.sh` | 3 (staging) | export des 6 fiches sans demandes de test ni jobs | — |
 | `phase2-code-et-base.sh` | 2 | redémarrage noyau, code `main`, migrations sur base vide, `.env` complété, release | DNS, WordPress, e-mails, HL_NOINDEX, HL_BILLING_* |
 | `phase3-import-donnees.sh` | 3 | import des 6 fiches depuis l'export, sommes de contrôle | écrasement d'une base non vide |
+| `deploiement-d155c5a.sh` | mise à jour | passe la production de `1afc6f6` à `d155c5a` (empreinte `25534c7b…`), données conservées : sauvegarde externe, maintenance, copie de la base rechargée et comparée table par table, code, 2 migrations d'ajout, contrôles avant réouverture | publication d'une fiche, facturation, modification de `.env`, suppression de données, redémarrage |
+| `retour-arriere-code.sh` | mise à jour | remet l'ancien code **sans restaurer la base** : réservations, comptes et notifications reçus depuis le déploiement conservés ; aucune migration annulée | restauration ou vidage de la base, modification de `.env` |
 
 Utilisateur d'intervention recommandé : `hl-devin` (clé SSH restreinte, expiration), `sudo` limité à des scripts **nommés individuellement** dans `/etc/sudoers.d/hl-devin` (un par phase, ajouté par la propriétaire après accord écrit) ; journal dans `/var/log/auth.log` et `/root/phase-<n>-<date>.log`.
 
 
 Installation d'un script : téléchargement, **vérification SHA-256 bloquante** (`sha256sum -c`), copie en `0500` dans `/opt/hl-ops/`, puis `chattr +i` (immuable : toute modification exige `chattr -i` par root = nouvelle validation).
+
+## Mise à jour vers d155c5a (scripts préparés, non installés)
+
+- `deploiement-d155c5a.sh CONFIRMER` s'arrête **avant toute modification** si : version installée ≠ `1afc6f6`, fiches ≠ 31, 34, 35, 36, 37, 38, fiche non brouillon / non référencée, facturation activée (base ou `.env`), empreinte du contenu téléchargé ≠ `25534c7b1ad8e876ac8eb84890bd59859d6999cd`, sauvegarde externe en échec.
+- Après la mise en maintenance, tout échec laisse le site en maintenance et affiche la commande de retour arrière.
+- Contrôles avant réouverture : 0 migration en attente, +2 migrations exactement, nombre de lignes identique pour toutes les tables de données, état des six fiches identique, facturation désactivée, `.env` inchangé (somme de contrôle), tâche `hl:expire-waiting` planifiée, file d'envoi en marche. Puis pages publiques, connexion Admin et partenaire en 200, fiche brouillon en 404, en-tête noindex.
+- `retour-arriere-code.sh <dossier> CONFIRMER` compare comptes, fiches, réservations, notifications avant et après : tout écart laisse le site en maintenance.
+- `retour-arriere.sh` (ancien) **restaure la base** : à ne pas utiliser après ce déploiement.
+- Répétition du 23/11 hors production (copie des six fiches de production, commandes système simulées : sudo, supervisor, fail2ban, sauvegarde externe) : arrêts préalables constatés, déploiement réussi, puis retour arrière avec une réservation et un compte créés entre-temps, tous deux conservés.
+- `diagnostic-root-complet.sh` n'affiche plus la valeur de `HL_DEMO_PASSWORD` (seulement « défini » ou « absent »).
