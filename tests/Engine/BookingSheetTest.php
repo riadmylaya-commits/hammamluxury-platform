@@ -156,6 +156,22 @@ class BookingSheetTest extends BookingFlowTestCase
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         Livewire::test(PlatformFinance::class)->assertSee('intermédiaire sans encaissement')
             ->assertSeeInOrder(['Prestations effectuées', $money((float) $b->total), 'Commission acquise', $money((float) $b->commission_amount), 'Commission payée à HammamLuxury', $money(0)]);
+
+        // Filtres : un autre mois ou un autre établissement ne montre pas cette prestation ; les calculs sont inchangés.
+        $previous = now()->subMonthNoOverflow()->format('Y-m');
+        $this->assertSame(0.0, FinanceStats::month(Booking::where('spa_id', $this->spa->id), $this->spa->partner_id, $previous)['commission_accrued']);
+        $this->assertSame($m, FinanceStats::month(Booking::where('spa_id', $this->spa->id), $this->spa->partner_id, now()->format('Y-m')));
+        Livewire::test(PlatformFinance::class)
+            ->assertSee('Tous les établissements')->assertSee($this->spa->name)
+            ->set('spaId', (string) $this->spa->id)->assertSeeInOrder(['Commission acquise', $money((float) $b->commission_amount)])
+            ->set('spaId', '999999')->assertSeeInOrder(['Commission acquise', $money((float) $b->commission_amount)])
+            ->set('spaId', '')->set('period', $previous)->assertSeeInOrder(['Prestations effectu', $money(0), 'Commission acquise', $money(0)])
+            ->set('period', '1999-01')->assertSet('period', now(config('hl.timezone'))->format('Y-m'));
+        Filament::setCurrentPanel(Filament::getPanel('partner'));
+        Filament::setTenant($this->spa, true);
+        Livewire::test(FinanceOverview::class)->assertDontSee('Tous les établissements')
+            ->set('period', $previous)->assertSeeInOrder(['Commission acquise', $money(0)])
+            ->assertSee('commission-statement?period='.$previous, false);
         $b->forceFill(['status' => 'confirmed'])->save();
         Filament::setCurrentPanel(Filament::getPanel('partner'));
         Filament::setTenant($this->spa, true);
