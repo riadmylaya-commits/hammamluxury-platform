@@ -115,7 +115,7 @@ return [
     'note' => 'Message pour l’établissement (facultatif)',
     'note_privacy' => 'Pour votre sécurité, les coordonnées (téléphone, e-mail, liens) sont masquées dans les messages avant confirmation.',
     'no_account' => 'Aucun compte nécessaire. Vous recevrez un e-mail de confirmation avec un lien de suivi.',
-    'no_payment' => 'Aucun paiement en ligne : vous réglez sur place. L’établissement confirme votre demande sous :hours h, sinon elle expire automatiquement.',
+    'no_payment' => 'Aucun paiement en ligne : vous réglez sur place. L’établissement confirme votre demande sous :hours h (délai compté entre :open h et :close h, heure du Maroc), sinon elle expire automatiquement.',
     'no_payment_referenced' => 'Aucun paiement en ligne : vous réglez sur place. HammamLuxury vérifie la disponibilité auprès de l’établissement et vous confirme par e-mail sous :hours h (entre :open h et :close h), sinon la demande expire automatiquement.',
     'referenced_banner_title' => 'Établissement référencé par HammamLuxury',
     'referenced_banner_body' => 'Informations relevées sur ses supports publics:date. Votre demande est transmise à l’établissement sous réserve de confirmation de disponibilité ; tarifs indicatifs, confirmés avant validation.',

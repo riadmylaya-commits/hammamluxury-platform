@@ -216,7 +216,7 @@
         @if ($spa->instantBookingActive())
             <div class="notice info"><b>{{ __('ui.instant_title') }}</b> {{ __('ui.instant_help') }} {{ __('ui.no_account') }}</div>
         @else
-            <div class="notice info">{{ $spa->isReferenced() ? __('ui.no_payment_referenced', ['hours' => $spa->waitingTtlHours(), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1]]) : __('ui.no_payment', ['hours' => $spa->waitingTtlHours()]) }} {{ __('ui.no_account') }}</div>
+            <div class="notice info">{{ $spa->isReferenced() ? __('ui.no_payment_referenced', ['hours' => $spa->waitingTtlHours(), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1]]) : __('ui.no_payment', ['hours' => $spa->waitingTtlHours(), 'open' => config('hl.admin_hours')[0], 'close' => config('hl.admin_hours')[1]]) }} {{ __('ui.no_account') }}</div>
         @endif
         <div x-ref="fail" x-show="failed" x-cloak class="offline-note" role="alert">{{ __('ui.send_failed') }}</div>
         <div class="row"><button type="button" class="btn ghost" wire:click="back">{{ __('ui.back') }}</button><button type="submit" class="btn acc sp" x-bind:disabled="sending"><span x-show="! sending">{{ $spa->instantBookingActive() ? __('ui.submit_instant') : __('ui.submit') }}</span><span x-show="sending" x-cloak>{{ __('ui.submitting') }}</span></button></div>

@@ -1,11 +1,13 @@
 <?php
 
 return [
+    'deadline_format' => 'l j F Y \\à H\\hi',
     'created' => [
+        'client_deadline' => 'Vous recevrez une réponse au plus tard le :until (heure du Maroc). Passé ce délai, la demande expire automatiquement, sans aucun frais, et nous vous en informons par e-mail.',
         'admin' => ['subject' => 'Nouvelle demande :ref à vérifier', 'title' => 'Nouvelle demande :ref à vérifier auprès de :spa', 'intro' => 'Une nouvelle demande vient d’arriver pour :spa (fiche gérée par HammamLuxury). Appelez l’établissement (:phone · WhatsApp :whatsapp) pour vérifier la disponibilité, le soin et le tarif, puis acceptez ou refusez la demande dans l’administration.', 'deadline' => 'Sans décision avant le :until (délai de :hours h en heures de service), la demande expirera automatiquement et le client en sera informé.'],
         'client_referenced' => ['subject' => 'Demande de réservation :ref — :spa', 'title' => 'Votre demande :ref est enregistrée', 'intro' => 'Merci :name. HammamLuxury vérifie la disponibilité auprès de :spa et vous confirme par e-mail dans les meilleurs délais. Aucun montant n’est dû avant confirmation.'],
         'client' => ['subject' => 'Demande de réservation :ref — :spa', 'title' => 'Votre demande :ref est enregistrée', 'intro' => 'Merci :name. :spa va confirmer votre demande dans les meilleurs délais. Vous recevrez un e-mail dès sa réponse.'],
-        'partner' => ['subject' => 'Nouvelle demande :ref', 'title' => 'Nouvelle demande de réservation :ref', 'intro' => 'Une nouvelle demande vient d’arriver pour :spa. Connectez-vous à votre espace partenaire pour l’accepter ou la refuser.', 'deadline' => 'Sans réponse sous :hours h, la demande expirera automatiquement et le créneau sera libéré.'],
+        'partner' => ['subject' => 'Nouvelle demande :ref', 'title' => 'Nouvelle demande de réservation :ref', 'intro' => 'Une nouvelle demande vient d’arriver pour :spa. Connectez-vous à votre espace partenaire pour l’accepter ou la refuser.', 'deadline' => 'Sans réponse avant le :until (délai de :hours h, compté entre :open h et :close h, heure du Maroc), la demande expirera automatiquement et le créneau sera libéré.'],
     ],
     'confirmed' => [
         'admin' => ['subject' => 'Réservation :ref confirmée', 'title' => 'Réservation :ref confirmée', 'intro' => 'Vous avez confirmé cette réservation pour :spa après vérification avec l’établissement.'],
@@ -24,6 +26,7 @@ return [
         'partner' => ['subject' => 'Réservation :ref annulée', 'title' => 'Réservation :ref annulée', 'intro' => 'La réservation de :name chez :spa est annulée. Le créneau est libéré.'],
     ],
     'expired' => [
+        'search_other' => 'Rechercher un autre spa',
         'admin' => ['subject' => 'Demande :ref expirée', 'title' => 'Demande :ref expirée sans décision', 'intro' => 'La demande de :name pour :spa a expiré sans décision dans l’administration. Le client a été informé.'],
         'client_referenced' => ['subject' => 'Demande :ref expirée — :spa', 'title' => 'Votre demande :ref a expiré', 'intro' => 'Désolé :name, nous n’avons pas pu confirmer votre demande pour :spa dans le délai prévu. Aucun montant n’est dû ; vous pouvez renouveler votre demande ou choisir un autre établissement.'],
         'client' => ['subject' => 'Demande :ref expirée — :spa', 'title' => 'Votre demande :ref a expiré', 'intro' => 'Désolé :name, :spa n’a pas répondu dans le délai prévu. Aucun montant n’est dû ; vous pouvez renouveler votre demande ou choisir un autre établissement.'],

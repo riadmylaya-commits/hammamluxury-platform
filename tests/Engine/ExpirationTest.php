@@ -6,10 +6,41 @@ use App\Events\BookingExpired;
 use App\Mail\BookingMail;
 use App\Models\Allocation;
 use App\Models\Booking;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Mail;
 
 class ExpirationTest extends BookingFlowTestCase
 {
+    public function test_night_request_on_a_partner_spa_expires_in_service_hours_and_emails_state_the_deadline(): void
+    {
+        config(['hl.admin_hours' => [9, 21], 'hl.waiting_ttl_hours' => 2]);
+        $night = CarbonImmutable::parse($this->day)->subDays(3)->setTime(23, 49);
+        $this->travelTo($night);
+        $b = $this->submit($this->intent('17:00', ['treatment' => $this->h->id, 'party' => 1]))['booking'];
+        $this->assertSame($night->addDay()->setTime(11, 0)->format('Y-m-d H:i'), $b->expires_at->format('Y-m-d H:i'), 'Demande de nuit : échéance à l’ouverture + 2 h');
+
+        $this->travelTo($night->addDay()->setTime(8, 59));
+        $this->assertSame([], $this->bookings->expireWaiting(), 'Rien n’expire pendant la nuit');
+
+        $client = (new BookingMail($b, 'created', 'client'))->render();
+        $this->assertStringContainsString('11h00', $client, 'E-mail client : heure limite indiquée');
+        $partner = (new BookingMail($b, 'created', 'partner'))->render();
+        $this->assertStringContainsString('11h00', $partner, 'E-mail établissement : heure limite indiquée');
+
+        $this->travelTo($night->addDay()->setTime(11, 1));
+        $this->assertSame([$b->id], $this->bookings->expireWaiting());
+        $expired = (new BookingMail($b->fresh(), 'expired', 'client'))->render();
+        $this->assertStringContainsString(route('search', ['locale' => 'fr']), $expired, 'E-mail d’expiration : lien vers la recherche d’un autre spa');
+    }
+
+    public function test_a_request_never_waits_past_the_appointment_start(): void
+    {
+        config(['hl.admin_hours' => [9, 21], 'hl.waiting_ttl_hours' => 2]);
+        $this->travelTo(CarbonImmutable::parse($this->day)->setTime(8, 30));
+        $b = $this->submit($this->intent('10:00', ['treatment' => $this->h->id, 'party' => 1]))['booking'];
+        $this->assertSame('10:00', $b->expires_at->format('H:i'), 'Échéance ramenée à l’heure du rendez-vous');
+    }
+
     public function test_waiting_expires_once_and_releases(): void
     {
         $sel = ['treatment' => $this->m->id, 'party' => 2];
@@ -54,7 +85,7 @@ class ExpirationTest extends BookingFlowTestCase
 
     public function test_spa_specific_waiting_ttl_overrides_global_value(): void
     {
-        config(['hl.waiting_ttl_hours' => 2]);
+        config(['hl.waiting_ttl_hours' => 2, 'hl.admin_hours' => [0, 24]]);
         $this->spa->update(['waiting_ttl_hours' => 12]);
         $b = $this->submit($this->intent('17:00', ['treatment' => $this->h->id, 'party' => 1]))['booking'];
         $delta = $b->expires_at->diffInMinutes(now(), true);
