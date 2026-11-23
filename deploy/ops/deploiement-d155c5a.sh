@@ -37,7 +37,9 @@ OLD=$(g rev-parse HEAD); echo "version installée : $OLD"
 [ "$(q "SELECT COUNT(*) FROM spas WHERE status<>'draft' OR listing_type<>'referenced' OR instant_booking<>0")" = 0 ] || { echo "une fiche n'est pas brouillon / référencée / sans réservation immédiate — arrêt"; exit 1; }
 [ "$(facturation)" = 0 ] || { echo "facturation activée en base — arrêt"; exit 1; }
 if grep -E '^HL_BILLING_ENABLED=(true|1)' "$APP/.env" >/dev/null; then echo "facturation activée dans .env — arrêt"; exit 1; fi
-[ "$(art migrate:status | grep -c Pending || true)" = 0 ] || { echo "migrations en attente avant déploiement — arrêt"; exit 1; }
+[[ "$CHK" =~ ^hl_controle_[0-9]{14}$ ]] && [ "$CHK" != "$DB" ] || { echo "nom de la base de contrôle invalide — arrêt"; exit 1; }
+MS=$(art migrate:status); [ "$(grep -c Pending <<<"$MS" || true)" = 0 ] || { echo "migrations en attente avant déploiement — arrêt"; exit 1; }
+[ "$(q "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DB' AND table_name IN ('support_requests','support_messages')")" = 0 ] || { echo "les tables de la nouvelle version existent déjà (déploiement déjà tenté) — arrêt"; exit 1; }
 g fetch -q "$REPO" main; g cat-file -e "$PIN^{commit}"
 [ "$(g rev-parse "$PIN^{tree}")" = "$TREE" ] || { echo "le contenu téléchargé n'a pas l'empreinte validée $TREE — arrêt"; exit 1; }
 g merge-base --is-ancestor "$OLD" "$PIN" || { echo "la version figée ne prolonge pas la version installée — arrêt"; exit 1; }
@@ -62,6 +64,8 @@ grep -E '^(users|spas|bookings|booking_notifications|migrations)=' "$PRE/comptes
 echo "== 4 code $PIN"; art optimize:clear -q || true
 g merge -q --ff-only "$PIN"; [ "$(g rev-parse HEAD)" = "$PIN" ]; g --no-pager log --oneline -1
 
+MS=$(art migrate:status); ATT=$(grep Pending <<<"$MS" | awk '{print $1}' | sort | tr '\n' ' ')
+[ "$ATT" = "2026_11_18_000001_create_support_requests 2026_11_19_000001_last_minute_requests " ] || { echo "migrations à appliquer inattendues : $ATT— arrêt (base non modifiée)"; exit 1; }
 echo "== 5 mise à jour (dépendances, compilation, 2 migrations d'ajout, caches) — chaque étape doit réussir"
 sudo -u deploy -H env HOME=/tmp/deploy-home bash -euo pipefail <<EOS
 cd $APP
@@ -81,7 +85,7 @@ if [ -f "$F2B" ] && ! cmp -s "$APP/deploy/fail2ban/filter-hl-nginx-abuse.conf" "
 systemctl reload php8.3-fpm; supervisorctl start hl-queue
 
 echo "== 6 contrôles avant réouverture (site toujours en maintenance)"
-P=$(art migrate:status | grep -c Pending || true); echo "migrations en attente : $P"; [ "$P" = 0 ]
+MS=$(art migrate:status); P=$(grep -c Pending <<<"$MS" || true); echo "migrations en attente : $P"; [ "$P" = 0 ]
 [ "$(q 'SELECT COUNT(*) FROM migrations')" = "$(( $(grep -oP '^migrations=\K.*' "$PRE/comptes-avant.txt") + 2 ))" ] || { echo "nombre de migrations inattendu — arrêt"; exit 1; }
 compte "$DB" > "$PRE/comptes-apres.txt"; fiches > "$PRE/fiches-apres.txt"
 diff <(grep -vE "$TECH" "$PRE/comptes-avant.txt") <(grep -vE "$TECH" "$PRE/comptes-apres.txt") || { echo "le nombre de lignes d'une table de données a changé — arrêt"; exit 1; }
