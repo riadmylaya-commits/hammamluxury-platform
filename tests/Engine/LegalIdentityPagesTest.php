@@ -45,7 +45,7 @@ class LegalIdentityPagesTest extends TestCase
             ->assertSee('Hetzner Online GmbH')
             ->assertDontSee('publiées avec leur autorisation')
             ->assertSee('supports de communication publics');
-        $this->get('/en/mentions-legales')->assertOk()->assertSee('[company name to be completed]')->assertDontSee('published with their permission');
+        $this->get('/en/mentions-legales')->assertOk()->assertSee('[company name to be completed]')->assertSee('Items in brackets')->assertDontSee('published with their permission');
         $this->get('/fr/cgu')->assertOk()->assertSee('[n° RC à compléter]')->assertDontSee('qui autorisent leur diffusion');
         $this->get('/fr/confidentialite')->assertOk()->assertSee('[adresse du siège à compléter]')->assertSee('5 ans à compter de la date de la prestation');
     }
@@ -55,7 +55,7 @@ class LegalIdentityPagesTest extends TestCase
         config(['hl.legal' => self::IDENTITY]);
 
         foreach (['/fr/mentions-legales', '/en/mentions-legales', '/fr/cgu', '/en/cgu', '/fr/confidentialite', '/en/confidentialite'] as $url) {
-            $this->get($url)->assertOk()->assertSee('Jaune et Vert')->assertDontSee('à compléter')->assertDontSee('to be completed');
+            $this->get($url)->assertOk()->assertSee('Jaune et Vert')->assertDontSee('à compléter')->assertDontSee('to be completed')->assertDontSee('Items in brackets')->assertDontSee('entre crochets');
         }
 
         $this->get('/fr/mentions-legales')->assertOk()
