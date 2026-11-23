@@ -57,9 +57,9 @@
         <div class="card" style="padding:16px;margin-top:14px" id="conditions">
             <b class="small">{{ __('ui.policy.title') }}</b>
             <p class="small" style="margin:6px 0">
-                @if ($b->isNonRefundable())<span class="chip acc xs">{{ __('ui.policy.summary_nr', ['pct' => $b->nr_discount_pct]) }}</span> {{ $b->status === 'cancelled' && ! $b->cancel_fee ? __('ui.policy.nr_booking_waived') : __('ui.policy.nr_booking', ['pct' => $b->nr_discount_pct, 'amount' => $fmt($b->total)]) }}
+                @if ($b->isNonRefundable())<span class="chip acc xs">{{ __('ui.policy.summary_nr', ['pct' => $b->nr_discount_pct]) }}</span> {{ $b->status === 'cancelled' && ! $b->cancel_fee ? __('ui.policy.nr_booking_waived') : __('ui.policy.nr_booking', ['pct' => $b->nr_discount_pct, 'amount' => $fmt($b->total)]) }}@if ($b->isWaiting()) {{ __('ui.policy.pending_free') }}@endif
                 @elseif ($b->cancellationToConfirm()){{ __('ui.policy.standard_desc_to_confirm') }}
-                @else{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($b->cancellationHours())]) }} @if ($b->isActive()){{ \App\Domain\Policy\CancellationPolicy::deadlineNotice($b->freeCancellationUntil(), $b->freeCancellationUntil()->locale(app()->getLocale())->isoFormat('LLL'), $fmt($b->total)) }}@endif
+                @else{{ __('ui.policy.standard_desc', ['label' => \App\Domain\Policy\CancellationPolicy::label($b->cancellationHours())]) }} @if ($b->isActive()){{ \App\Domain\Policy\CancellationPolicy::deadlineNotice($b->freeCancellationUntil(), $b->freeCancellationUntil()->locale(app()->getLocale())->isoFormat('LLL'), $fmt($b->total), null, $b->isWaiting()) }}@endif
                 @endif
             </p>
             @if ($b->status === 'cancelled')<p class="small" style="margin:6px 0;color:{{ $b->cancel_fee ? '#b42318' : '#1b7f4b' }}"><b>{{ $b->cancel_fee ? __('ui.policy.fee_due', ['amount' => $fmt($b->cancel_fee)]) : __('ui.policy.cancelled_free') }}</b></p>@endif
@@ -130,7 +130,7 @@
     @if ($b->canCancel('client'))
         <div style="margin-top:14px" x-data="{ ask: false }">
             <button class="btn bad sm" type="button" x-show="!ask" x-on:click="ask = true">{{ __('ui.cancel_booking') }}</button>
-            <div class="row" x-show="ask" x-cloak><span class="small">{{ $b->freeCancellationOpen() ? __('ui.policy.cancel_free_confirm') : __('ui.policy.cancel_fee_confirm', ['amount' => $fmt($b->total)]) }}</span><button class="btn bad sm" type="button" wire:click="cancel" wire:loading.attr="disabled">{{ __('ui.cancel_booking') }}</button><button class="btn ghost sm" type="button" x-on:click="ask = false">{{ __('ui.back') }}</button></div>
+            <div class="row" x-show="ask" x-cloak><span class="small">{{ $b->cancelFeeNow() <= 0 ? __('ui.policy.cancel_free_confirm') : __('ui.policy.cancel_fee_confirm', ['amount' => $fmt($b->total)]) }}</span><button class="btn bad sm" type="button" wire:click="cancel" wire:loading.attr="disabled">{{ __('ui.cancel_booking') }}</button><button class="btn ghost sm" type="button" x-on:click="ask = false">{{ __('ui.back') }}</button></div>
         </div>
     @else
         <a class="btn sec sm" style="margin-top:14px" href="{{ route('spa.show', ['spa' => $b->spa->slug]) }}">{{ __('ui.book_again') }}</a>

@@ -278,9 +278,15 @@ class Booking extends Model
         return $until !== null && ($now ?? now())->lt($until);
     }
 
-    /** Frais qu'entraînerait une annulation client maintenant (0 ou 100 % du montant). */
+    /** Frais qu'entraînerait une annulation client maintenant (0 ou 100 % du montant) ; toujours 0 avant confirmation. */
     public function cancelFeeNow(?CarbonInterface $now = null): float
     {
+        // Tant que l'établissement n'a pas confirmé, la demande s'annule sans frais : les conditions d'annulation
+        // (délai, tarif non remboursable) ne s'appliquent qu'aux réservations confirmées.
+        if ($this->status === 'waiting') {
+            return 0.0;
+        }
+
         return $this->cancellationToConfirm() || $this->freeCancellationOpen($now) ? 0.0 : round((float) $this->total, 2);
     }
 

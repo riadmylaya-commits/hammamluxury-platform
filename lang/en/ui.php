@@ -281,6 +281,8 @@ return [
         'nr_saving' => 'You save :amount',
         'free_until' => 'Free cancellation until :date.',
         'late_now' => 'The free-cancellation deadline has passed: if you cancel, 100% of the amount (:amount) remains due.',
+        'pending_free' => 'Until the venue has confirmed your request, you can cancel it at no cost; these terms apply once the booking is confirmed.',
+        'late_once_confirmed' => 'For this appointment, the free-cancellation deadline has already passed: once the booking is confirmed, 100% of the amount (:amount) remains due if you cancel.',
         'nr_booking' => 'Non-refundable rate (−:pct%): if you cancel, 100% of the amount (:amount) remains due.',
         'frozen' => 'These conditions were accepted at booking time and remain attached to this booking.',
         'fee_due' => 'Cancellation fee: :amount',
