@@ -107,7 +107,7 @@ class ReferencedListingTest extends BookingFlowTestCase
             $this->assertSame($this->day.' 11:00', $b->expires_at->format('Y-m-d H:i'), 'Expiration = échéance de réponse, toujours avant le rendez-vous');
             $this->assertTrue($b->expires_at->lt($b->start_at));
             $spa->update(['listing_type' => 'partner']);
-            $this->assertLessThan(735, $this->reload()->minLead(), 'Fiche partenaire : délai minimal inchangé (pas de délai de vérification)');
+            $this->assertSame(735, $this->reload()->minLead(), 'Fiche partenaire : même règle (délai de réponse + marge) tant que la dernière minute n’est pas activée');
         } finally {
             CarbonImmutable::setTestNow();
         }

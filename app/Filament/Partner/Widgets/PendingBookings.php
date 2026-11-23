@@ -22,12 +22,14 @@ class PendingBookings extends TableWidget
             ->heading(__('partner.pending_heading'))
             ->query(Booking::where('spa_id', Filament::getTenant()->id)->where('status', 'waiting')->orderBy('start_at')->with('participants'))
             ->columns([
-                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i'),
+                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')
+                    // Repère en première colonne : visible sans défilement, y compris sur téléphone.
+                    ->description(fn (Booking $b) => $b->last_minute ? __('partner.last_minute_badge', ['until' => $b->expires_at?->format('H\hi')]) : null),
                 Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName().' · '.$b->party.' '.__('partner.pers')),
                 Tables\Columns\TextColumn::make('participants')->label(__('partner.treatments'))
                     ->getStateUsing(fn (Booking $b) => $b->participants->pluck('treatment_name')->unique()->implode(', '))->wrap(),
                 Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr'),
-                Tables\Columns\TextColumn::make('expires_at')->label(__('partner.expires_at'))->since()->color('warning'),
+                Tables\Columns\TextColumn::make('expires_at')->label(__('partner.expires_at'))->since()->color(fn ($record) => $record->last_minute ? 'danger' : 'warning'),
             ])
             ->actions([
                 Tables\Actions\Action::make('view')->label(__('partner.view'))->url(fn (Booking $b) => BookingResource::getUrl('view', ['record' => $b])),

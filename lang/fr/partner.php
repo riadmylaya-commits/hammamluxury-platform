@@ -47,6 +47,10 @@ return [
     'slot_step' => 'Pas des créneaux',
     'default_value' => 'Par défaut : :v',
     'min_lead' => 'Délai minimum avant réservation',
+    'last_minute' => 'Accepter les demandes de dernière minute',
+    'last_minute_help' => 'Facultatif. Si vous l’activez, les clients peuvent demander un soin proche (au plus tôt 1 h 30 après leur demande). Vous devez alors répondre sous :minutes minutes, entre :open h et :close h. En l’activant, vous vous engagez à répondre rapidement : une demande reçue la nuit pour un soin tôt le matin attend votre réponse entre :open h et :open h 30. Sans réponse, la demande expire et le créneau est libéré : rien n’est jamais confirmé à votre place.',
+    'last_minute_withdrawn' => 'Option retirée par HammamLuxury. Écrivez-nous depuis la page Assistance pour la rétablir.',
+    'last_minute_badge' => 'Dernière minute · avant :until',
     'cancellation_hours' => 'Annulation gratuite jusqu’à (avant le rendez-vous)',
 
     // Soins
@@ -221,6 +225,7 @@ return [
     // Tableau de bord
     'stat_waiting' => 'Demandes à traiter',
     'stat_waiting_help' => 'Réponse attendue sous :delay',
+    'stat_waiting_last_minute' => 'Dernière minute : répondre avant :until',
     'stat_upcoming' => 'Réservations confirmées à venir',
     'stat_month' => 'Chiffre d’affaires du mois',
     'stat_spa' => 'Visibilité de la fiche',

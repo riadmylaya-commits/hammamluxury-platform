@@ -238,6 +238,10 @@ return [
     'instant_booking_at' => 'Activée le',
     'waiting_ttl' => 'Délai de réponse aux demandes',
     'waiting_ttl_help' => 'Heures laissées au partenaire pour accepter une demande avant son expiration automatique (vide = valeur globale : :default h).',
+    'last_minute_allowed' => 'Dernière minute autorisée',
+    'last_minute_allowed_help' => 'Décochez pour retirer l’option à un partenaire qui laisse expirer ses demandes. Choix actuel du partenaire : :state. Demandes de dernière minute expirées : :expired.',
+    'last_minute_on' => 'activée',
+    'last_minute_off' => 'désactivée',
 
     'create_spa' => 'Nouvel établissement',
     'create_spa_help' => 'La fiche est créée en brouillon dans votre portefeuille HammamLuxury ; vous la configurez ensuite comme un partenaire (photos, soins, horaires), puis vous l’attribuez à son propriétaire.',

@@ -155,8 +155,8 @@ class IntentTest extends BookingFlowTestCase
     public function test_confirmation_rechecks_current_minimum_lead_time(): void
     {
         $this->travelTo($this->at('09:00')->toMutable());
-        $prepared = $this->intent('10:00', ['treatment' => $this->m->id, 'party' => 1]);
-        $this->spa->update(['min_lead_minutes' => 120]);
+        $prepared = $this->intent('13:00', ['treatment' => $this->m->id, 'party' => 1]);
+        $this->spa->update(['min_lead_minutes' => 300]);
 
         $this->expectReason('too_soon', fn () => $this->bookings->confirmIntent(
             $this->spa, $prepared['intent']['token'], $this->customer,
@@ -168,7 +168,8 @@ class IntentTest extends BookingFlowTestCase
 
     public function test_confirmation_rejects_a_slot_that_started_after_preparation(): void
     {
-        $this->travelTo($this->at('09:59')->toMutable());
+        config(['hl.intent_ttl_minutes' => 240]);
+        $this->travelTo($this->at('07:00')->toMutable());
         $prepared = $this->intent('10:00', ['treatment' => $this->m->id, 'party' => 1]);
         $this->travelTo($this->at('10:00')->toMutable());
 

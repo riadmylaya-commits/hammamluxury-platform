@@ -88,6 +88,9 @@ class SpaResource extends Resource
                     ->content(fn (Spa $s) => $s->instant_booking_at?->format('d/m/Y H:i') ?? '—'),
                 Forms\Components\TextInput::make('waiting_ttl_hours')->label(__('admin.waiting_ttl'))->numeric()->minValue(0.5)->maxValue(72)->step(0.5)->suffix('h')
                     ->placeholder((string) config('hl.waiting_ttl_hours'))->helperText(__('admin.waiting_ttl_help', ['default' => config('hl.waiting_ttl_hours')])),
+                Forms\Components\Toggle::make('last_minute_allowed')->label(__('admin.last_minute_allowed'))->default(true)
+                    ->helperText(fn (?Spa $record) => __('admin.last_minute_allowed_help', ['state' => $record?->last_minute_enabled ? __('admin.last_minute_on') : __('admin.last_minute_off'),
+                        'expired' => $record ? $record->bookings()->where('last_minute', true)->where('status', 'expired')->count() : 0])),
             ]),
         ]);
     }
