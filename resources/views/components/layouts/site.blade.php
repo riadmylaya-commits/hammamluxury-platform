@@ -39,6 +39,11 @@
 </div></footer>
 <script src="{{ asset('js/hl-gallery.js') }}?v={{ filemtime(public_path('js/hl-gallery.js')) }}" defer></script>
 <script>
+document.addEventListener('livewire:init', function () {
+    Livewire.hook('request', function (r) {
+        r.fail(function () { window.dispatchEvent(new CustomEvent('hl-request-failed')); });
+    });
+});
 (function () {
     var el = document.getElementById('spa-map');
     if (!el) return;

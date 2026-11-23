@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'offline_notice' => 'Internet connection lost. Your details are kept. As soon as the connection returns, you can carry on where you left off.',
+    'send_failed' => 'Your request could not be sent: the Internet connection seems to be down. Your details are kept. As soon as the connection returns, press the button below again: your request will only be recorded once.',
     'tagline' => 'Spas & hammams',
     'nav_partner' => 'Partner area',
     'nav_list_hint' => 'List a new hammam or spa on HammamLuxury',

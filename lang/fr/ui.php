@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'offline_notice' => 'Connexion Internet interrompue. Vos informations sont conservées. Dès que la connexion revient, vous pourrez continuer là où vous en étiez.',
+    'send_failed' => 'Votre demande n’a pas pu être envoyée : la connexion Internet semble interrompue. Vos informations sont conservées. Dès que la connexion revient, appuyez de nouveau sur le bouton ci-dessous : votre demande ne sera enregistrée qu’une seule fois.',
     'tagline' => 'Spas & hammams',
     'nav_partner' => 'Espace partenaire',
     'nav_list_hint' => 'Inscrire un nouveau hammam ou spa sur HammamLuxury',
