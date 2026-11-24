@@ -46,6 +46,16 @@ controle_argent() { # $1 = moment
     if grep -E '^HL_BILLING_ENABLED=("?)(true|1)' "$APP/.env" >/dev/null; then echo "facturation activée dans .env — arrêt"; exit 1; fi
     if grep -E '^HL_BILLING_(START_PERIOD|ACCEPTANCE_REF|OWNER_AUTHORIZATION_REF)=' "$APP/.env" | grep -vqE '=("")?$'; then echo "verrou de facturation renseigné dans .env — arrêt"; exit 1; fi
 }
+# Aucun traitement ne doit pouvoir écrire dans la base pendant les contrôles d'intégrité : site en maintenance (503, ce qui suspend aussi les
+# tâches planifiées de l'application), file d'envoi arrêtée, aucune commande de l'application encore en cours.
+gel() {
+    local i
+    [ "$(url /fr)" = 503 ] || { echo "le site n'est pas en maintenance — arrêt"; return 1; }
+    [ -f "$APP/storage/framework/down" ] || { echo "marqueur de maintenance absent : les tâches planifiées ne sont pas suspendues — arrêt"; return 1; }
+    supervisorctl status hl-queue | grep -qE 'STOPPED|EXITED' || { echo "la file d'envoi n'est pas arrêtée — arrêt"; return 1; }
+    for i in $(seq 1 30); do pgrep -u deploy -f artisan >/dev/null || return 0; sleep 2; done
+    echo "une commande de l'application est encore en cours (tâche planifiée) — arrêt"; return 1
+}
 # Base temporaire de contrôle : nom daté, jamais celui de la base en service ; elle n'est supprimée que si ce script l'a créée.
 CHK_CREE=0
 nom_chk_sur() { [[ "$CHK" =~ ^hl_controle_[0-9]{14}$ ]] && [ "$CHK" != "$DB" ]; }
@@ -81,7 +91,8 @@ install -d -m 700 "$PRE"; echo "$OLD" > "$PRE/commit"; cp -a "$APP/.env" "$PRE/e
 ENVSUM=$(sha256sum < "$APP/.env")
 MODIFIE=1; art down --retry=60
 [ "$(url /fr)" = 503 ] || { echo "le mode maintenance n'est pas effectif — arrêt"; exit 1; }
-supervisorctl stop hl-queue
+supervisorctl stop hl-queue || true
+gel
 mariadb-dump --single-transaction --routines --triggers "$DB" | gzip > "$PRE/db.sql.gz"; gunzip -t "$PRE/db.sql.gz"
 compte "$DB" > "$PRE/comptes-avant.txt"; fiches > "$PRE/fiches-avant.txt"; colonnes "$DB" > "$PRE/colonnes-avant.txt"
 empreintes "$DB" "$PRE/colonnes-avant.txt" > "$PRE/contenu-avant.txt"
@@ -93,6 +104,8 @@ supprime_chk
 [ "$(mariadb -N -B -e "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name='$CHK'")" = 0 ] || { echo "la base temporaire n'a pas été supprimée — arrêt"; exit 1; }
 cmp -s "$PRE/comptes-avant.txt" "$PRE/comptes-copie.txt" || { echo "la copie rechargée n'a pas le même nombre de lignes que la base en service — arrêt (code non modifié)"; diff "$PRE/comptes-avant.txt" "$PRE/comptes-copie.txt" || true; exit 1; }
 cmp -s "$PRE/contenu-avant.txt" "$PRE/contenu-copie.txt" || { echo "la copie rechargée n'a pas le même contenu que la base en service — arrêt (code non modifié)"; diff "$PRE/contenu-avant.txt" "$PRE/contenu-copie.txt" || true; exit 1; }
+gel
+cmp -s "$PRE/contenu-avant.txt" <(empreintes "$DB" "$PRE/colonnes-avant.txt") || { echo "le contenu de la base en service a changé pendant le contrôle — arrêt (code non modifié)"; exit 1; }
 cmp -s "$PRE/comptes-avant.txt" <(compte "$DB") || { echo "la base en service a changé pendant le contrôle — arrêt (code non modifié)"; exit 1; }
 echo "copie de la base rechargeable à l'identique : $(wc -l < "$PRE/comptes-avant.txt") tables comptées, contenu de $(wc -l < "$PRE/contenu-avant.txt") tables de données comparé ; base temporaire supprimée"
 grep -E '^(users|spas|bookings|booking_notifications|migrations)=' "$PRE/comptes-avant.txt" | tr '\n' ' '; echo
@@ -119,10 +132,10 @@ php artisan filament:assets
 EOS
 [ "$APP/public/build/manifest.json" -nt "$PRE/commit" ] || { echo "compilation des ressources non renouvelée — arrêt"; exit 1; }
 if [ -f "$F2B" ] && ! cmp -s "$APP/deploy/fail2ban/filter-hl-nginx-abuse.conf" "$F2B"; then install -m 0644 "$APP/deploy/fail2ban/filter-hl-nginx-abuse.conf" "$F2B"; fail2ban-client reload hl-nginx-abuse >/dev/null; echo "filtre fail2ban mis à jour (rapports /csp-report ignorés)"; fi
-systemctl reload php8.3-fpm; supervisorctl start hl-queue
+systemctl reload php8.3-fpm
 
-echo "== 6 contrôles avant réouverture (site toujours en maintenance)"
-[ "$(url /fr)" = 503 ] || { echo "le site n'est plus en maintenance avant la fin des contrôles — arrêt"; art down --retry=60 || true; exit 1; }
+echo "== 6 contrôles avant réouverture (site en maintenance, file d'envoi arrêtée, tâches planifiées suspendues)"
+gel
 MS=$(art migrate:status); P=$(grep -c Pending <<<"$MS" || true); echo "migrations en attente : $P"; [ "$P" = 0 ]
 cmp -s "$PRE/migrations-avant.txt" <(q "SELECT migration FROM migrations ORDER BY id" | head -n "$(wc -l < "$PRE/migrations-avant.txt")") || { echo "l'historique des migrations a été modifié — arrêt"; exit 1; }
 [ "$(q 'SELECT COUNT(*) FROM migrations')" = "$(( $(wc -l < "$PRE/migrations-avant.txt") + 2 ))" ] || { echo "nombre de migrations inattendu — arrêt"; exit 1; }
@@ -141,6 +154,9 @@ controle_argent "après"
 [ "$(sha256sum < "$APP/.env")" = "$ENVSUM" ] || { echo ".env modifié pendant le déploiement — arrêt"; exit 1; }
 art schedule:list | grep -q 'hl:expire-waiting' || { echo "tâche d'expiration absente du planificateur — arrêt"; exit 1; }
 grep -qs "schedule:run" /etc/cron.d/hl-schedule || crontab -u deploy -l 2>/dev/null | grep -q "schedule:run" || { echo "planificateur système absent — arrêt"; exit 1; }
+gel
+cmp -s "$PRE/contenu-apres.txt" <(empreintes "$DB" "$PRE/colonnes-avant.txt") || { echo "le contenu des données a changé pendant les contrôles — arrêt"; exit 1; }
+supervisorctl start hl-queue
 supervisorctl status hl-queue | grep -q RUNNING || { echo "file d'envoi arrêtée — arrêt"; exit 1; }
 # E-mail de contrôle : un seul message, vers l'adresse de test de la propriétaire, remis directement au serveur d'envoi (aucun client destinataire).
 art tinker --execute="Illuminate\\Support\\Facades\\Mail::raw('Message de contrôle envoyé par le déploiement de HammamLuxury avant la réouverture du site. Aucune action attendue.', fn (\$m) => \$m->to('$MAILTEST')->subject('HammamLuxury - contrôle d\\'envoi avant réouverture')); echo 'ENVOI_ACCEPTE';" | grep -q ENVOI_ACCEPTE || { echo "le serveur d'envoi n'a pas accepté l'e-mail de contrôle — arrêt"; exit 1; }

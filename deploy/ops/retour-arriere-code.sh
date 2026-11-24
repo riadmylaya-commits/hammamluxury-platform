@@ -18,6 +18,14 @@ q() { mariadb -N -B "$DB" -e "$1"; }
 g() { sudo -u deploy -H git -C "$APP" "$@"; }
 art() { sudo -u deploy -H env HOME=/tmp/deploy-home php "$APP/artisan" "$@"; }
 url() { curl -s -o /dev/null -w '%{http_code}' -m 20 "$SITE$1" || true; }
+gel() {
+    local i
+    [ "$(url /fr)" = 503 ] || { echo "le site n'est pas en maintenance — arrêt"; return 1; }
+    [ -f "$APP/storage/framework/down" ] || { echo "marqueur de maintenance absent : les tâches planifiées ne sont pas suspendues — arrêt"; return 1; }
+    supervisorctl status hl-queue | grep -qE 'STOPPED|EXITED' || { echo "la file d'envoi n'est pas arrêtée — arrêt"; return 1; }
+    for i in $(seq 1 30); do pgrep -u deploy -f artisan >/dev/null || return 0; sleep 2; done
+    echo "une commande de l'application est encore en cours (tâche planifiée) — arrêt"; return 1
+}
 TECH="'cache','cache_locks','sessions','jobs','job_batches','failed_jobs'"
 colonnes() { mariadb -N -B -e "SET SESSION group_concat_max_len=1000000; SELECT table_name, GROUP_CONCAT(CONCAT('\`',column_name,'\`') ORDER BY ordinal_position) FROM information_schema.columns WHERE table_schema='$DB' AND table_name NOT IN ($TECH) AND table_name IN (SELECT table_name FROM information_schema.tables WHERE table_schema='$DB' AND table_type='BASE TABLE') GROUP BY table_name ORDER BY table_name"; }
 # Empreinte SHA-256 du contenu de chaque table (toutes les lignes, toutes les colonnes).
@@ -34,7 +42,7 @@ echo "== 1 maintenance, arrêt de la file d'envoi, copie de précaution de la ba
 art down --retry=60 || { echo "le mode maintenance n'a pas pu être activé — arrêt, code inchangé, site laissé tel quel"; exit 1; }; MAINT=1
 [ "$(url /fr)" = 503 ] || { echo "le mode maintenance n'est pas effectif — arrêt, code inchangé"; exit 1; }
 supervisorctl stop hl-queue || true
-supervisorctl status hl-queue | grep -qE 'STOPPED|EXITED' || { echo "la file d'envoi n'est pas arrêtée — arrêt, code inchangé"; exit 1; }
+gel || { echo "code inchangé"; exit 1; }
 install -d -m 700 "$SAUV"; mariadb-dump --single-transaction --routines --triggers "$DB" | gzip > "$SAUV/db.sql.gz"; gunzip -t "$SAUV/db.sql.gz"
 colonnes > "$SAUV/colonnes.txt"; empreintes "$SAUV/colonnes.txt" > "$SAUV/contenu-avant.txt"
 AVANT=$(etat); echo "avant : $AVANT"
@@ -57,15 +65,17 @@ php artisan event:cache
 php artisan filament:assets
 EOS
 if [ -s "$PRE/filter-hl-nginx-abuse.conf" ] && ! cmp -s "$PRE/filter-hl-nginx-abuse.conf" "$F2B"; then install -m 0644 "$PRE/filter-hl-nginx-abuse.conf" "$F2B"; fail2ban-client reload hl-nginx-abuse >/dev/null; echo "filtre fail2ban d'avant remis"; fi
-systemctl reload php8.3-fpm; supervisorctl start hl-queue
+systemctl reload php8.3-fpm
 
-echo "== 4 contrôles : aucune donnée perdue ni modifiée"
+echo "== 4 contrôles : aucune donnée perdue ni modifiée (site en maintenance, file d'envoi arrêtée, tâches planifiées suspendues)"
+gel
 APRES=$(etat); echo "après : $APRES"
 [ "$AVANT" = "$APRES" ] || { echo "ÉCART de données pendant le retour arrière — copie de la base : $SAUV"; exit 1; }
 empreintes "$SAUV/colonnes.txt" > "$SAUV/contenu-apres.txt"
 diff "$SAUV/contenu-avant.txt" "$SAUV/contenu-apres.txt" || { echo "le CONTENU d'une table a changé pendant le retour arrière — copie de la base : $SAUV"; exit 1; }
 echo "contenu de $(wc -l < "$SAUV/contenu-avant.txt") tables identique avant et après"
 grep -q 'fiches_non_brouillon=0 fiches_non_referencees=0 factures=0 paiements_enregistres=0 facturation_activee=0$' <<<"$APRES" || { echo "fiche publiée, commission, facture, paiement ou facturation non nuls — arrêt"; exit 1; }
+supervisorctl start hl-queue
 supervisorctl status hl-queue | grep -q RUNNING || { echo "file d'envoi arrêtée — arrêt"; exit 1; }
 
 echo "== 5 réouverture et contrôles publics"
