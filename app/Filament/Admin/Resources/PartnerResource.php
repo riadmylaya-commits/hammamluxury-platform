@@ -56,9 +56,33 @@ class PartnerResource extends Resource
                 Forms\Components\TextInput::make('commission_pct')->label(__('admin.commission_pct'))->numeric()->minValue(0)->maxValue(100)->suffix('%')
                     ->placeholder(__('partner.default_value', ['v' => config('hl.default_commission_pct').' %']))
                     ->helperText(__('admin.commission_pct_help')),
+                Forms\Components\Placeholder::make('commercial_now')->label(__('admin.rate_now'))
+                    ->content(fn (?Partner $record) => $record ? self::rateNow($record) : '—'),
+                Forms\Components\Placeholder::make('commercial_next')->label(__('admin.rate_next'))
+                    ->content(fn (?Partner $record) => $record ? self::rateNext($record) : '—'),
                 Forms\Components\Textarea::make('status_note')->label(__('admin.status_note'))->rows(3)->columnSpanFull(),
             ])->columns(2),
         ]);
+    }
+
+    public static function rateNow(Partner $p): string
+    {
+        if (! $p->isCommercial()) {
+            return '0 % — '.__('admin.commercial_referenced');
+        }
+
+        return $p->commissionPct().' % — '.($p->commissionPeriodOn()?->label ?? __('admin.commission_standard'));
+    }
+
+    public static function rateNext(Partner $p): string
+    {
+        $c = $p->commissionChanges()[0] ?? null;
+        if (! $c) {
+            return __('admin.rate_next_none');
+        }
+        $s = __('admin.rate_next_value', ['pct' => $c['to'], 'date' => $c['on']->format('d/m/Y'), 'days' => $c['days']]);
+
+        return $p->isCommercial() ? $s : $s.' — '.__('admin.rate_next_referenced');
     }
 
     public static function statuses(): array

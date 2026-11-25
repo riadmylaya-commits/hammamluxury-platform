@@ -12,6 +12,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /** Périodes commerciales d'un partenaire : mois gratuit, taux promotionnel, dates libres. Les réservations existantes ne sont jamais recalculées. */
@@ -71,6 +72,30 @@ class CommissionPeriodsRelationManager extends RelationManager
         }
     }
 
+    /** Prolongation exceptionnelle : repousse la fin de la période ; la période suivante commence d'autant plus tard. */
+    public static function extend(PartnerCommissionPeriod $period, string $newEnd, ?string $note = null): void
+    {
+        $end = CarbonImmutable::parse(substr($newEnd, 0, 10));
+        if ($period->ends_on === null || $end->format('Y-m-d') <= $period->ends_on->format('Y-m-d')) {
+            throw ValidationException::withMessages(array_fill_keys(['mountedTableActionsData.0.ends_on', 'ends_on'], __('admin.extend_must_be_later')));
+        }
+        DB::transaction(function () use ($period, $end, $note) {
+            $previous = $period->ends_on->format('Y-m-d');
+            foreach ($period->partner->commissionPeriods()->whereKeyNot($period->id)->get() as $other) {
+                if (! $other->overlaps($period->starts_on->format('Y-m-d'), $end->format('Y-m-d'))) {
+                    continue;
+                }
+                if ($other->ends_on !== null && $other->ends_on->format('Y-m-d') <= $end->format('Y-m-d')) {
+                    throw ValidationException::withMessages(array_fill_keys(['mountedTableActionsData.0.ends_on', 'ends_on'], __('admin.extend_swallows', ['label' => $other->label])));
+                }
+                $other->update(['starts_on' => $end->addDay()]);
+                self::log('partner.commission_period_updated', $other->refresh(), ['shifted_by_extension' => true]);
+            }
+            $period->update(['ends_on' => $end]);
+            self::log('partner.commission_period_extended', $period->refresh(), array_filter(['previous_end' => $previous, 'note' => $note]));
+        });
+    }
+
     private static function log(string $action, PartnerCommissionPeriod $p, array $extra = []): void
     {
         ActivityLog::record($action, $p->partner, ['label' => $p->label, 'pct' => $p->commission_pct, 'from' => $p->starts_on->format('Y-m-d'), 'to' => $p->ends_on?->format('Y-m-d')] + $extra);
@@ -113,6 +138,14 @@ class CommissionPeriodsRelationManager extends RelationManager
                     ->after(fn (PartnerCommissionPeriod $record) => self::log('partner.commission_period_created', $record)),
             ])
             ->actions([
+                Tables\Actions\Action::make('extend')->label(__('admin.extend'))->icon('heroicon-o-calendar-days')->color('gray')
+                    ->visible(fn (PartnerCommissionPeriod $record) => $record->ends_on !== null)
+                    ->modalDescription(__('admin.extend_help'))
+                    ->form([
+                        Forms\Components\DatePicker::make('ends_on')->label(__('admin.extend_new_end'))->required(),
+                        Forms\Components\TextInput::make('note')->label(__('admin.extend_note'))->maxLength(190),
+                    ])
+                    ->action(fn (PartnerCommissionPeriod $record, array $data) => self::extend($record, $data['ends_on'], $data['note'] ?? null)),
                 Tables\Actions\EditAction::make()->iconButton()
                     ->mutateFormDataUsing(function (array $data, PartnerCommissionPeriod $record) {
                         self::assertNoOverlap($this->getOwnerRecord(), $data['starts_on'], $data['ends_on'] ?? null, $record->id);

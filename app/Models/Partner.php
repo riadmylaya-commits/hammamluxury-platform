@@ -57,6 +57,35 @@ class Partner extends Model
         return $this->commissionPeriodOn($day)?->commission_pct ?? $this->commission_pct ?? (float) config('hl.default_commission_pct');
     }
 
+    /**
+     * Changements de taux à venir (périodes qui commencent ou se terminent), du plus proche au plus lointain.
+     *
+     * @return list<array{on: CarbonImmutable, from: float, to: float, days: int}>
+     */
+    public function commissionChanges(?\DateTimeInterface $from = null): array
+    {
+        $today = CarbonImmutable::parse(($from ?? CarbonImmutable::now(config('hl.timezone')))->format('Y-m-d'));
+        $days = [];
+        foreach ($this->commissionPeriods as $p) {
+            foreach ([$p->starts_on, $p->ends_on?->addDay()] as $d) {
+                if ($d !== null && $d->format('Y-m-d') > $today->format('Y-m-d')) {
+                    $days[$d->format('Y-m-d')] = true;
+                }
+            }
+        }
+        ksort($days);
+        $out = [];
+        foreach (array_keys($days) as $day) {
+            $at = CarbonImmutable::parse($day);
+            [$before, $after] = [$this->commissionPct($at->subDay()), $this->commissionPct($at)];
+            if ($before !== $after) {
+                $out[] = ['on' => $at, 'from' => $before, 'to' => $after, 'days' => (int) $today->diffInDays($at)];
+            }
+        }
+
+        return $out;
+    }
+
     /** Partenaire commercial (au moins une fiche sous accord) ou simple référencement gratuit (toutes ses fiches référencées). */
     public function isCommercial(): bool
     {

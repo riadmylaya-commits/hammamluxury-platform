@@ -2,9 +2,12 @@
 
 namespace Tests\Engine;
 
+use App\Filament\Admin\Resources\PartnerResource;
 use App\Filament\Admin\Resources\PartnerResource\Pages\EditPartner;
 use App\Filament\Admin\Resources\PartnerResource\RelationManagers\CommissionPeriodsRelationManager as Manager;
 use App\Models\ActivityLog;
+use App\Models\Booking;
+use App\Models\LedgerEntry;
 use App\Models\Partner;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -142,23 +145,126 @@ class CommissionPeriodsTest extends BookingFlowTestCase
         $this->assertSame(0, ActivityLog::where('action', 'partner.commission_change_alerted')->count(), 'fiche référencée : le taux reste 0 %, aucune alerte');
         $this->spa->update(['listing_type' => 'partner']);
 
+        $alerts = fn () => ActivityLog::where('action', 'partner.commission_change_alerted')->orderBy('id')->get()
+            ->map(fn (ActivityLog $l) => $l->properties['stage'].' '.$l->properties['on'].' '.(float) $l->properties['from'].'>'.(float) $l->properties['to'])->all();
+
         $this->onDay('2026-12-20');
         $this->artisan('hl:commission-alerts')->assertSuccessful();
-        $this->assertSame(0, ActivityLog::where('action', 'partner.commission_change_alerted')->count(), 'plus de 7 jours avant : rien');
+        $this->assertSame([], $alerts(), 'plus de 7 jours avant : rien');
 
-        $this->onDay('2026-12-25');
-        $this->artisan('hl:commission-alerts')->assertSuccessful();
-        $this->artisan('hl:commission-alerts')->assertSuccessful();
-        $logs = ActivityLog::where('action', 'partner.commission_change_alerted')->get();
-        $this->assertCount(1, $logs, 'une seule alerte par changement');
-        $this->assertSame(['on' => '2027-01-01', 'from' => 0, 'to' => 10], array_map(fn ($v) => is_float($v) ? (int) $v : $v, $logs[0]->properties));
+        foreach (['2026-12-25', '2026-12-26', '2026-12-30'] as $d) {
+            $this->onDay($d);
+            $this->artisan('hl:commission-alerts')->assertSuccessful();
+            $this->artisan('hl:commission-alerts')->assertSuccessful();
+        }
+        $this->assertSame(['J-7 2027-01-01 0>10'], $alerts(), 'J-7 une seule fois, rien entre J-7 et J-1');
 
-        $this->onDay('2027-06-28');
+        $this->onDay('2026-12-31');
         $this->artisan('hl:commission-alerts')->assertSuccessful();
-        $last = ActivityLog::where('action', 'partner.commission_change_alerted')->latest('id')->first();
-        $this->assertSame('2027-07-01', $last->properties['on']);
-        $this->assertEquals([10, 15], [$last->properties['from'], $last->properties['to']]);
-        $this->assertSame(2, ActivityLog::where('action', 'partner.commission_change_alerted')->count());
+        $this->artisan('hl:commission-alerts')->assertSuccessful();
+        $this->assertSame(['J-7 2027-01-01 0>10', 'J-1 2027-01-01 0>10'], $alerts(), 'J-1 une seule fois');
+
+        // Prolongation décidée après les alertes : le changement est déplacé, il est de nouveau annoncé à sa nouvelle date.
+        Manager::extend($this->partner->commissionPeriods()->first(), '2027-01-10');
+        $this->onDay('2027-01-04');
+        $this->artisan('hl:commission-alerts')->assertSuccessful();
+        $this->assertSame('J-7 2027-01-11 0>10', $alerts()[2]);
+
+        $this->onDay('2027-06-30');
+        $this->artisan('hl:commission-alerts')->assertSuccessful();
+        $this->assertSame('J-1 2027-07-01 10>15', last($alerts()), 'commande lancée seulement la veille : J-1 seul');
+        $this->assertCount(4, $alerts());
+    }
+
+    public function test_exceptional_extension_shifts_the_next_period_and_is_logged(): void
+    {
+        $this->actingAs($this->admin);
+        Manager::applyLaunchOffer($this->partner, '2026-12-01', 1, 6, 10);
+        [$free, $promo] = $this->partner->commissionPeriods()->get()->all();
+
+        Manager::extend($free, '2027-01-15', 'Travaux');
+        $this->assertSame(0.0, $this->rate('2027-01-15'), 'gratuité prolongée');
+        $this->assertSame(10.0, $this->rate('2027-01-16'), 'la période suivante commence le lendemain');
+        $this->assertSame(10.0, $this->rate('2027-06-30'), 'sa fin ne change pas');
+        $this->assertSame(15.0, $this->rate('2027-07-01'));
+        $log = ActivityLog::where('action', 'partner.commission_period_extended')->sole();
+        $this->assertSame(['2026-12-31', 'Travaux', $this->admin->id], [$log->properties['previous_end'], $log->properties['note'], $log->user_id]);
+
+        Manager::extend($promo->fresh(), '2027-09-30');
+        $this->assertSame(10.0, $this->rate('2027-09-30'));
+        $this->assertSame(15.0, $this->rate('2027-10-01'));
+
+        foreach (['2027-01-15', '2027-01-01', '2027-09-30'] as $bad) {
+            try {
+                Manager::extend($free->fresh(), $bad);
+                $this->fail("prolongation acceptée : $bad");
+            } catch (ValidationException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+        $this->assertSame('2027-01-15', $free->fresh()->ends_on->format('Y-m-d'), 'refus : rien n’est modifié');
+    }
+
+    public function test_cancelled_absent_and_completed_bookings_use_the_rate_frozen_at_creation(): void
+    {
+        $today = CarbonImmutable::now(config('hl.timezone'));
+        $this->partner->commissionPeriods()->create(['label' => 'Promo', 'commission_pct' => 10, 'starts_on' => $today->subDay()->format('Y-m-d'), 'ends_on' => $today->addDay()->format('Y-m-d')]);
+        $this->spa = $this->reload();
+        $done = $this->book('réalisée', '10:00', [['massage', 1]], true);
+        $absent = $this->book('absent', '12:00', [['massage', 1]], true);
+        $cancelled = $this->book('annulée', '17:00', [['massage', 1]], true);
+        $this->assertSame([10.0, 10.0, 10.0], [(float) $done->commission_pct, (float) $absent->commission_pct, (float) $cancelled->commission_pct]);
+
+        // Le taux passe à 15 % (fin de période), puis l'administration le modifie encore à la main : sans effet sur ces réservations.
+        $this->bookings->cancel($cancelled, 'admin');
+        $this->travelTo($absent->end_at->addHours(1)->toMutable());
+        $this->partner->update(['commission_pct' => 30]);
+        $this->assertSame(30.0, $this->partner->fresh()->commissionPct());
+        $this->bookings->complete($done->fresh(), 'admin');
+        $this->bookings->noShow($absent->fresh(), 'admin', true);
+
+        $done = $done->fresh();
+        $absent = $absent->fresh();
+        $cancelled = $cancelled->fresh();
+        $this->assertSame(['completed', 10.0, 40.0, 40.0], [$done->status, (float) $done->commission_pct, (float) $done->commission_amount, $done->commissionDue()], 'prestation réalisée après le changement : taux d’origine');
+        $this->assertSame(['no_show', 10.0, 40.0], [$absent->status, (float) $absent->commission_pct, $absent->commissionDue()], 'client absent, frais appliqués : taux d’origine');
+        $this->assertSame(['cancelled', 10.0, 0.0], [$cancelled->status, (float) $cancelled->commission_pct, $cancelled->commissionDue()], 'annulation sans frais : aucune commission');
+        $this->assertEqualsCanonicalizing([40.0, 40.0], LedgerEntry::where('type', 'commission')->pluck('amount')->map(fn ($a) => (float) $a)->all(), 'écritures de commission au taux d’origine');
+
+        $waived = $this->book('absent sans frais', '10:00', [['massage', 1]], true, 'confirmed', CarbonImmutable::parse($this->day)->addWeek()->format('Y-m-d'));
+        $this->assertSame(30.0, (float) $waived->commission_pct, 'nouvelle réservation : taux du jour');
+        $this->travelTo($waived->end_at->addHours(1)->toMutable());
+        $this->bookings->noShow($waived, 'admin', false);
+        $this->assertSame(0.0, $waived->fresh()->commissionDue(), 'absence sans frais : aucune commission');
+
+        $before = Booking::orderBy('id')->get(['id', 'commission_pct', 'commission_amount', 'commissionable_amount'])->toArray();
+        $ledger = LedgerEntry::orderBy('id')->get(['id', 'amount', 'type'])->toArray();
+        $this->partner->commissionPeriods()->delete();
+        Manager::applyLaunchOffer($this->partner, $today->subMonths(2)->format('Y-m-d'), 1, 6, 5);
+        $this->partner->update(['commission_pct' => 0]);
+        $this->assertSame($before, Booking::orderBy('id')->get(['id', 'commission_pct', 'commission_amount', 'commissionable_amount'])->toArray(), 'aucune modification de taux ne touche les réservations enregistrées');
+        $this->assertSame($ledger, LedgerEntry::orderBy('id')->get(['id', 'amount', 'type'])->toArray(), 'ni les écritures de commission');
+    }
+
+    public function test_partner_sheet_shows_current_rate_next_rate_date_and_days_left(): void
+    {
+        $today = CarbonImmutable::now(config('hl.timezone'));
+        $this->assertSame('15 % — '.__('admin.commission_standard'), PartnerResource::rateNow($this->partner->fresh()));
+        $this->assertSame(__('admin.rate_next_none'), PartnerResource::rateNext($this->partner->fresh()));
+
+        Manager::applyLaunchOffer($this->partner, $today->subDays(20)->format('Y-m-d'), 1, 6, 10);
+        $p = $this->partner->fresh();
+        $change = $today->subDays(20)->addMonthNoOverflow();
+        $this->assertSame('0 % — '.__('admin.launch_free_label'), PartnerResource::rateNow($p));
+        $this->assertSame(__('admin.rate_next_value', ['pct' => 10, 'date' => $change->format('d/m/Y'), 'days' => (int) $today->startOfDay()->diffInDays($change->startOfDay())]), PartnerResource::rateNext($p));
+        $this->actingAs($this->admin)->get('/admin/partners/'.$p->id.'/edit')->assertOk()
+            ->assertSee(__('admin.rate_now'))->assertSee(__('admin.rate_next'))->assertSee($change->format('d/m/Y'));
+
+        // Gestion manuelle conservée : sans période, le taux saisi à la main s'applique seul.
+        $p->commissionPeriods()->delete();
+        $p->update(['commission_pct' => 12]);
+        $this->assertSame('12 % — '.__('admin.commission_standard'), PartnerResource::rateNow($p->fresh()));
+        $this->assertSame(__('admin.rate_next_none'), PartnerResource::rateNext($p->fresh()));
     }
 
     public function test_admin_screen_shows_periods_and_commercial_distinction(): void
