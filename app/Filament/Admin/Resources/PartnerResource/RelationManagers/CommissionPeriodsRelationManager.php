@@ -46,7 +46,7 @@ class CommissionPeriodsRelationManager extends RelationManager
         $to = $to === null ? null : substr($to, 0, 10);
         $clash = $partner->commissionPeriods()->get()->first(fn (PartnerCommissionPeriod $p) => $p->id !== $ignoreId && $p->overlaps($from, $to));
         if ($clash) {
-            throw ValidationException::withMessages(['mountedTableActionsData.0.starts_on' => __('admin.period_overlap'), 'starts_on' => __('admin.period_overlap')]);
+            throw ValidationException::withMessages(array_fill_keys(['mountedTableActionsData.0.starts_on', 'mountedTableActionsData.0.start', 'starts_on'], __('admin.period_overlap')));
         }
     }
 

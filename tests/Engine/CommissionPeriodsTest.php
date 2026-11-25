@@ -136,6 +136,12 @@ class CommissionPeriodsTest extends BookingFlowTestCase
         Mail::fake();
         Manager::applyLaunchOffer($this->partner, '2026-12-01', 1, 6, 10);
 
+        $this->spa->update(['listing_type' => 'referenced']);
+        $this->onDay('2026-12-25');
+        $this->artisan('hl:commission-alerts')->assertSuccessful();
+        $this->assertSame(0, ActivityLog::where('action', 'partner.commission_change_alerted')->count(), 'fiche référencée : le taux reste 0 %, aucune alerte');
+        $this->spa->update(['listing_type' => 'partner']);
+
         $this->onDay('2026-12-20');
         $this->artisan('hl:commission-alerts')->assertSuccessful();
         $this->assertSame(0, ActivityLog::where('action', 'partner.commission_change_alerted')->count(), 'plus de 7 jours avant : rien');
@@ -163,7 +169,9 @@ class CommissionPeriodsTest extends BookingFlowTestCase
         Livewire::actingAs($this->admin)->test(Manager::class, ['ownerRecord' => $this->partner, 'pageClass' => EditPartner::class])
             ->assertSuccessful()->assertSee(__('admin.launch_promo_label'))->assertSee(__('admin.period_current'))
             ->callTableAction('create', data: ['label' => 'Doublon', 'commission_pct' => 5, 'starts_on' => now()->format('Y-m-d'), 'ends_on' => null])
-            ->assertHasTableActionErrors();
+            ->assertHasTableActionErrors(['starts_on'])
+            ->callTableAction('launchOffer', data: ['start' => now()->format('Y-m-d'), 'free_months' => 1, 'promo_months' => 0, 'promo_pct' => 10])
+            ->assertHasTableActionErrors(['start']);
         $this->assertSame(2, $this->partner->commissionPeriods()->count());
         $this->actingAs($this->spa->partner->user)->get('/admin/partners')->assertForbidden();
     }
