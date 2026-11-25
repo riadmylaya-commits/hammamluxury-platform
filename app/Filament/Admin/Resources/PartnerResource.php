@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources;
 use App\Domain\Billing\BillingGate;
 use App\Domain\Phone\PhoneNumber;
 use App\Filament\Admin\Resources\PartnerResource\Pages;
+use App\Filament\Admin\Resources\PartnerResource\RelationManagers;
 use App\Filament\Forms\Components\PhoneField;
 use App\Filament\Partner\Pages\BillingProfile;
 use App\Models\ActivityLog;
@@ -53,7 +54,8 @@ class PartnerResource extends Resource
             Forms\Components\Section::make(__('admin.validation'))->schema([
                 Forms\Components\Select::make('status')->label(__('partner.status'))->options(self::statuses())->required(),
                 Forms\Components\TextInput::make('commission_pct')->label(__('admin.commission_pct'))->numeric()->minValue(0)->maxValue(100)->suffix('%')
-                    ->placeholder(__('partner.default_value', ['v' => config('hl.default_commission_pct').' %'])),
+                    ->placeholder(__('partner.default_value', ['v' => config('hl.default_commission_pct').' %']))
+                    ->helperText(__('admin.commission_pct_help')),
                 Forms\Components\Textarea::make('status_note')->label(__('admin.status_note'))->rows(3)->columnSpanFull(),
             ])->columns(2),
         ]);
@@ -74,7 +76,12 @@ class PartnerResource extends Resource
                 Tables\Columns\TextColumn::make('user.name')->label(__('admin.contact')),
                 Tables\Columns\TextColumn::make('contact_phone')->label(__('partner.phone'))->formatStateUsing(fn (?string $state) => PhoneNumber::format($state)),
                 Tables\Columns\TextColumn::make('spas_count')->counts('spas')->label(__('admin.spas')),
-                Tables\Columns\TextColumn::make('commission_pct')->label(__('admin.commission_pct'))->formatStateUsing(fn (Partner $p) => $p->commissionPct().' %'),
+                Tables\Columns\TextColumn::make('commercial_type')->label(__('admin.commercial_type'))->badge()
+                    ->state(fn (Partner $p) => $p->isCommercial() ? __('admin.commercial_partner') : __('admin.commercial_referenced'))
+                    ->color(fn (Partner $p) => $p->isCommercial() ? 'success' : 'gray'),
+                Tables\Columns\TextColumn::make('commission_pct')->label(__('admin.commission_pct'))
+                    ->state(fn (Partner $p) => $p->isCommercial() ? $p->commissionPct().' %' : '0 %')
+                    ->description(fn (Partner $p) => $p->isCommercial() ? ($p->commissionPeriodOn()?->label ?? __('admin.commission_standard')) : __('admin.commission_referenced_note')),
                 Tables\Columns\IconColumn::make('billing_ready')->label(__('billing.billing_ready'))->boolean()
                     ->state(fn (Partner $p) => app(BillingGate::class)->partnerReady($p))
                     ->tooltip(fn (Partner $p) => app(BillingGate::class)->partnerReady($p) ? __('billing.billing_ready_yes') : __('billing.billing_ready_no')),
@@ -96,6 +103,11 @@ class PartnerResource extends Resource
                     }),
                 Tables\Actions\EditAction::make(),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [RelationManagers\CommissionPeriodsRelationManager::class];
     }
 
     public static function getPages(): array
