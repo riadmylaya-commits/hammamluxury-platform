@@ -169,7 +169,8 @@ class CommissionPeriodsTest extends BookingFlowTestCase
         Livewire::actingAs($this->admin)->test(Manager::class, ['ownerRecord' => $this->partner, 'pageClass' => EditPartner::class])
             ->assertSuccessful()->assertSee(__('admin.launch_promo_label'))->assertSee(__('admin.period_current'))
             ->callTableAction('create', data: ['label' => 'Doublon', 'commission_pct' => 5, 'starts_on' => now()->format('Y-m-d'), 'ends_on' => null])
-            ->assertHasTableActionErrors(['starts_on'])
+            ->assertHasTableActionErrors(['starts_on']);
+        Livewire::actingAs($this->admin)->test(Manager::class, ['ownerRecord' => $this->partner, 'pageClass' => EditPartner::class])
             ->callTableAction('launchOffer', data: ['start' => now()->format('Y-m-d'), 'free_months' => 1, 'promo_months' => 0, 'promo_pct' => 10])
             ->assertHasTableActionErrors(['start']);
         $this->assertSame(2, $this->partner->commissionPeriods()->count());

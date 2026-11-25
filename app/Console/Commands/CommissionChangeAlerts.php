@@ -25,7 +25,10 @@ class CommissionChangeAlerts extends Command
         $today = CarbonImmutable::now(config('hl.timezone'))->startOfDay();
         $limit = $today->addDays((int) $this->option('days'));
         $sent = 0;
-        foreach (Partner::has('commissionPeriods')->with('commissionPeriods')->get() as $partner) {
+        foreach (Partner::has('commissionPeriods')->with(['commissionPeriods', 'spas'])->get() as $partner) {
+            if (! $partner->isCommercial()) {
+                continue; // fiches référencées : 0 % quoi qu'il arrive, aucun changement réel à annoncer
+            }
             $byDay = [];
             foreach ($partner->commissionPeriods as $p) {
                 foreach ([$p->starts_on, $p->ends_on?->addDay()] as $change) {
