@@ -17,6 +17,10 @@ set -euo pipefail
 M=/mnt; OPS=$M/opt/hl-ops; SUD=$M/etc/sudoers.d/hl-devin
 NOUVEAUX="deploiement-d155c5a.sh retour-arriere-code.sh diagnostic-root-complet.sh sommes-de-controle.sh"
 ANCIENS="deploiement-code.sh retour-arriere.sh six-fiches.sh"
+# Compte d'intervention : valable jusqu'au 20/12/2026 inclus (accord du 25/11/2026) ; il s'éteint seul le 21/12. Aucun autre droit n'est modifié.
+EXP_AVANT=$(( $(date -u -d 2026-11-30 +%s) / 86400 )); EXP_FIN=$(( $(date -u -d 2026-12-21 +%s) / 86400 ))
+lire_exp() { awk -F: '$1=="hl-devin"{print $8}' $M/etc/shadow; }
+fixer_exp() { chroot $M /usr/bin/chage -E 2026-12-21 hl-devin; }
 DROITS='Defaults:hl-devin !requiretty, log_output\nhl-devin ALL=(root) NOPASSWD: /opt/hl-ops/diagnostic-root-minimal.sh, /opt/hl-ops/diagnostic-root-complet.sh, /opt/hl-ops/sommes-de-controle.sh, /opt/hl-ops/prep-sauvegarde.sh, /opt/hl-ops/prep-test-restauration.sh, /opt/hl-ops/recette.sh, /opt/hl-ops/deploiement-d155c5a.sh, /opt/hl-ops/retour-arriere-code.sh\n'
 mountpoint -q $M || mount /dev/sda1 $M
 grep -q '^hl-devin:' $M/etc/passwd; [ -d "$OPS" ]; [ -f "$SUD" ]
@@ -36,6 +40,7 @@ sha256sum -c <<'L'
 4943eb1820f4b1aef11a2f969b1cf216b642e3cde546485bc49dcb1221a9d5de  sommes-de-controle.sh
 L
 for f in $NOUVEAUX; do bash -n "$f"; done
+E=$(lire_exp); [ "$E" = "$EXP_AVANT" ] || [ "$E" = "$EXP_FIN" ] || { echo "date d'expiration du compte d'intervention inattendue ($E) — arrêt, rien n'est modifié"; exit 1; }
 # Aucune tâche planifiée, aucun service, aucun autre script ne doit appeler un ancien script.
 DEP=$(grep -rIlE 'deploiement-code\.sh|retour-arriere\.sh|six-fiches\.sh' $M/etc/cron.d $M/etc/cron.daily $M/etc/cron.hourly $M/etc/cron.weekly $M/etc/cron.monthly $M/etc/crontab $M/var/spool/cron $M/etc/systemd/system $M/lib/systemd/system $M/etc/supervisor $M/usr/local/sbin $M/usr/local/bin $M/etc/sudoers $M/etc/sudoers.d $M/etc/rc.local $M/etc/profile.d $M/root/.bashrc $M/root/.profile $M/opt/hl-ops 2>/dev/null | grep -vE "^($SUD|$OPS/(deploiement-code|retour-arriere|six-fiches|sommes-de-controle)\.sh)$" || true)
 [ -z "$DEP" ] || { echo "un ancien script est encore appelé par : $DEP — arrêt, rien n'est modifié"; exit 1; }
@@ -81,5 +86,10 @@ if grep -qE 'deploiement-code\.sh|/retour-arriere\.sh|six-fiches\.sh' "$SUD"; th
 for f in "$OPS"/* "$SUD"; do printf '%s  %s  %s  %s\n' "$(sha256sum < "$f" | cut -d' ' -f1)" "$(stat -c '%U:%G %a' "$f")" "$(lsattr "$f" | cut -d' ' -f1 | grep -q i && echo verrouillé || echo NON-VERROUILLÉ)" "${f#$M}"; done
 grep -v '^Defaults' "$SUD"
 note "installation terminée"; touch "$ARCH/termine"
+# 4. Prolongation du compte d'intervention (dernière étape : un échec ici ne remet pas en cause l'installation, il est signalé).
+PROL="compte d'intervention valable jusqu'au 20/12/2026 inclus"
+if [ "$(lire_exp)" != "$EXP_FIN" ]; then note "4 expiration avant : jour $(lire_exp)"; fixer_exp || true; fi
+if [ "$(lire_exp)" = "$EXP_FIN" ]; then note "4 $PROL"; else PROL="PROLONGATION DU COMPTE NON FAITE (expiration inchangée : jour $(lire_exp))"; note "4 $PROL"; fi
+[ "$(awk -F: '$1=="hl-devin"' $M/etc/shadow | cut -d: -f2 | cut -c1)" != '$' ] && echo "compte toujours sans mot de passe utilisable"
 sync; umount $M
-echo "INSTALLATION OK — trois anciens scripts retirés — archive : ${ARCH#$M}"
+echo "INSTALLATION OK — trois anciens scripts retirés — archive : ${ARCH#$M} — $PROL"
