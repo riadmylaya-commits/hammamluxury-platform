@@ -90,31 +90,41 @@ class PartnerResource extends Resource
         return ['pending' => __('admin.p_pending'), 'approved' => __('admin.p_approved'), 'suspended' => __('admin.p_suspended')];
     }
 
+    public static function mobileCard(Partner $p): string
+    {
+        return implode('', [
+            '<div><strong>'.e($p->company_name).'</strong></div>',
+            '<div>'.e($p->isCommercial() ? __('admin.commercial_partner') : __('admin.commercial_referenced')).' · '.e(self::rateNow($p)).'</div>',
+            '<div>'.e(self::statuses()[$p->status] ?? $p->status).'</div>',
+        ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('company_name')->label(__('partner.company_name'))->searchable()->weight('bold')
+                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Partner $p) => self::mobileCard($p))->html()->wrap()->hiddenFrom('xl'),
+                Tables\Columns\TextColumn::make('company_name')->visibleFrom('xl')->label(__('partner.company_name'))->searchable()->weight('bold')->wrap()
                     ->description(fn (Partner $p) => $p->user?->email),
-                Tables\Columns\TextColumn::make('user.name')->label(__('admin.contact')),
-                Tables\Columns\TextColumn::make('contact_phone')->label(__('partner.phone'))->formatStateUsing(fn (?string $state) => PhoneNumber::format($state)),
-                Tables\Columns\TextColumn::make('spas_count')->counts('spas')->label(__('admin.spas')),
-                Tables\Columns\TextColumn::make('commercial_type')->label(__('admin.commercial_type'))->badge()
+                Tables\Columns\TextColumn::make('user.name')->visibleFrom('xl')->toggleable(isToggledHiddenByDefault: true)->label(__('admin.contact')),
+                Tables\Columns\TextColumn::make('contact_phone')->visibleFrom('xl')->toggleable(isToggledHiddenByDefault: true)->label(__('partner.phone'))->formatStateUsing(fn (?string $state) => PhoneNumber::format($state)),
+                Tables\Columns\TextColumn::make('spas_count')->visibleFrom('xl')->counts('spas')->label(__('admin.spas')),
+                Tables\Columns\TextColumn::make('commercial_type')->visibleFrom('xl')->label(__('admin.commercial_type'))->badge()
                     ->state(fn (Partner $p) => $p->isCommercial() ? __('admin.commercial_partner') : __('admin.commercial_referenced'))
                     ->color(fn (Partner $p) => $p->isCommercial() ? 'success' : 'gray'),
-                Tables\Columns\TextColumn::make('commission_pct')->label(__('admin.commission_pct'))
+                Tables\Columns\TextColumn::make('commission_pct')->visibleFrom('xl')->label(__('admin.commission_pct'))
                     ->state(fn (Partner $p) => $p->isCommercial() ? $p->commissionPct().' %' : '0 %')
                     ->description(fn (Partner $p) => $p->isCommercial() ? ($p->commissionPeriodOn()?->label ?? __('admin.commission_standard')) : __('admin.commission_referenced_note')),
-                Tables\Columns\IconColumn::make('billing_ready')->label(__('billing.billing_ready'))->boolean()
+                Tables\Columns\IconColumn::make('billing_ready')->visibleFrom('xl')->label(__('billing.billing_ready'))->boolean()
                     ->state(fn (Partner $p) => app(BillingGate::class)->partnerReady($p))
                     ->tooltip(fn (Partner $p) => app(BillingGate::class)->partnerReady($p) ? __('billing.billing_ready_yes') : __('billing.billing_ready_no')),
-                Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()
+                Tables\Columns\TextColumn::make('status')->visibleFrom('xl')->label(__('partner.status'))->badge()
                     ->formatStateUsing(fn ($state) => self::statuses()[$state] ?? $state)
                     ->color(fn ($state) => match ($state) {
                         'approved' => 'success', 'pending' => 'warning', default => 'danger'
                     }),
-                Tables\Columns\TextColumn::make('created_at')->label(__('admin.registered'))->since(),
+                Tables\Columns\TextColumn::make('created_at')->visibleFrom('xl')->toggleable(isToggledHiddenByDefault: true)->label(__('admin.registered'))->since(),
             ])
             ->filters([Tables\Filters\SelectFilter::make('status')->options(self::statuses())])
             ->actions([

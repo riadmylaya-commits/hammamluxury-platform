@@ -11,6 +11,7 @@ use App\Models\LedgerEntry;
 use App\Models\Partner;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
@@ -281,5 +282,16 @@ class CommissionPeriodsTest extends BookingFlowTestCase
             ->assertHasTableActionErrors(['start']);
         $this->assertSame(2, $this->partner->commissionPeriods()->count());
         $this->actingAs($this->spa->partner->user)->get('/admin/partners')->assertForbidden();
+    }
+
+    public function test_sheet_summary_refreshes_as_soon_as_periods_change(): void
+    {
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $page = Livewire::actingAs($this->admin)->test(EditPartner::class, ['record' => $this->partner->id])
+            ->assertSee(__('admin.rate_next_none'));
+        Livewire::actingAs($this->admin)->test(Manager::class, ['ownerRecord' => $this->partner, 'pageClass' => EditPartner::class])
+            ->callTableAction('launchOffer', data: ['start' => now()->format('Y-m-d'), 'free_months' => 1, 'promo_months' => 6, 'promo_pct' => 10])
+            ->assertDispatched('commission-periods-changed');
+        $page->dispatch('commission-periods-changed')->assertDontSee(__('admin.rate_next_none'))->assertSee(__('admin.launch_free_label'));
     }
 }

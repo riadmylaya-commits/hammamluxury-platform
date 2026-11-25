@@ -113,10 +113,13 @@ class CommissionPeriodsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('state')->label(__('admin.period_state'))->badge()->state($state)
                     ->formatStateUsing(fn (string $state) => __('admin.period_'.$state))
                     ->color(fn (string $state) => ['current' => 'success', 'future' => 'warning', 'past' => 'gray'][$state]),
-                Tables\Columns\TextColumn::make('label')->label(__('admin.period_label'))->wrap(),
-                Tables\Columns\TextColumn::make('commission_pct')->label(__('admin.commission_pct'))->suffix(' %')->weight('bold'),
-                Tables\Columns\TextColumn::make('starts_on')->label(__('admin.period_starts'))->date('d/m/Y'),
-                Tables\Columns\TextColumn::make('ends_on')->label(__('admin.period_ends'))->date('d/m/Y')->placeholder(__('admin.period_no_end')),
+                Tables\Columns\TextColumn::make('m_card')->label(__('admin.period_label'))->hiddenFrom('md')->html()->wrap()
+                    ->state(fn (PartnerCommissionPeriod $p) => '<div><strong>'.e($p->commission_pct).' %</strong> · '.e($p->label).'</div><div>'
+                        .e($p->starts_on->format('d/m/Y')).' → '.e($p->ends_on?->format('d/m/Y') ?? __('admin.period_no_end')).'</div>'),
+                Tables\Columns\TextColumn::make('label')->visibleFrom('md')->label(__('admin.period_label'))->wrap(),
+                Tables\Columns\TextColumn::make('commission_pct')->visibleFrom('md')->label(__('admin.commission_pct'))->suffix(' %')->weight('bold'),
+                Tables\Columns\TextColumn::make('starts_on')->visibleFrom('md')->label(__('admin.period_starts'))->date('d/m/Y'),
+                Tables\Columns\TextColumn::make('ends_on')->visibleFrom('md')->label(__('admin.period_ends'))->date('d/m/Y')->placeholder(__('admin.period_no_end')),
             ])
             ->emptyStateHeading(__('admin.no_periods'))
             ->headerActions([
@@ -128,33 +131,42 @@ class CommissionPeriodsRelationManager extends RelationManager
                         Forms\Components\TextInput::make('promo_months')->label(__('admin.launch_promo_months'))->integer()->minValue(0)->maxValue(36)->default(0)->required(),
                         Forms\Components\TextInput::make('promo_pct')->label(__('admin.launch_promo_pct'))->numeric()->minValue(0)->maxValue(100)->suffix('%')->default(10)->required(),
                     ])
-                    ->action(fn (array $data) => self::applyLaunchOffer($this->getOwnerRecord(), $data['start'], (int) $data['free_months'], (int) $data['promo_months'], (float) $data['promo_pct'])),
+                    ->action(fn (array $data) => self::applyLaunchOffer($this->getOwnerRecord(), $data['start'], (int) $data['free_months'], (int) $data['promo_months'], (float) $data['promo_pct']))
+                    ->after(fn () => $this->dispatch('commission-periods-changed')),
                 Tables\Actions\CreateAction::make()
                     ->mutateFormDataUsing(function (array $data) {
                         self::assertNoOverlap($this->getOwnerRecord(), $data['starts_on'], $data['ends_on'] ?? null);
 
                         return $data + ['created_by' => auth()->id()];
                     })
-                    ->after(fn (PartnerCommissionPeriod $record) => self::log('partner.commission_period_created', $record)),
+                    ->after(function (PartnerCommissionPeriod $record) {
+                        self::log('partner.commission_period_created', $record);
+                        $this->dispatch('commission-periods-changed');
+                    }),
             ])
             ->actions([
-                Tables\Actions\Action::make('extend')->label(__('admin.extend'))->icon('heroicon-o-calendar-days')->color('gray')
+                Tables\Actions\Action::make('extend')->label(__('admin.extend'))->icon('heroicon-o-calendar-days')->color('gray')->iconButton()->tooltip(__('admin.extend'))
                     ->visible(fn (PartnerCommissionPeriod $record) => $record->ends_on !== null)
                     ->modalDescription(__('admin.extend_help'))
                     ->form([
                         Forms\Components\DatePicker::make('ends_on')->label(__('admin.extend_new_end'))->required(),
                         Forms\Components\TextInput::make('note')->label(__('admin.extend_note'))->maxLength(190),
                     ])
-                    ->action(fn (PartnerCommissionPeriod $record, array $data) => self::extend($record, $data['ends_on'], $data['note'] ?? null)),
+                    ->action(fn (PartnerCommissionPeriod $record, array $data) => self::extend($record, $data['ends_on'], $data['note'] ?? null))
+                    ->after(fn () => $this->dispatch('commission-periods-changed')),
                 Tables\Actions\EditAction::make()->iconButton()
                     ->mutateFormDataUsing(function (array $data, PartnerCommissionPeriod $record) {
                         self::assertNoOverlap($this->getOwnerRecord(), $data['starts_on'], $data['ends_on'] ?? null, $record->id);
 
                         return $data;
                     })
-                    ->after(fn (PartnerCommissionPeriod $record) => self::log('partner.commission_period_updated', $record)),
+                    ->after(function (PartnerCommissionPeriod $record) {
+                        self::log('partner.commission_period_updated', $record);
+                        $this->dispatch('commission-periods-changed');
+                    }),
                 Tables\Actions\DeleteAction::make()->iconButton()
-                    ->before(fn (PartnerCommissionPeriod $record) => self::log('partner.commission_period_deleted', $record)),
+                    ->before(fn (PartnerCommissionPeriod $record) => self::log('partner.commission_period_deleted', $record))
+                    ->after(fn () => $this->dispatch('commission-periods-changed')),
             ]);
     }
 }
