@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 # DÉPLOIEMENT d155c5a (production, root) — fait passer l'application de 1afc6f6 à la version figée ci-dessous, données conservées.
-# Usage : deploiement-d155c5a.sh CONFIRMER
+# DEUX ÉTAPES, deux commandes :
+#   deploiement-d155c5a.sh CONFIRMER  → installe la version, contrôle tout, envoie UN e-mail de contrôle puis S'ARRÊTE, site en maintenance.
+#   deploiement-d155c5a.sh ROUVRIR    → seulement après confirmation écrite de la propriétaire qu'elle a reçu l'e-mail dans Gmail :
+#                                        recontrôle les données, relance la file d'envoi, rouvre le site, contrôles publics.
+# Entre les deux : site en maintenance, file d'envoi arrêtée. Pour renoncer : retour-arriere-code.sh <dossier> CONFIRMER.
 # Ne publie aucune fiche, n'active ni facturation ni paiement, ne modifie pas .env, ne supprime aucune donnée, ne redémarre pas le serveur.
 # NE RESTAURE JAMAIS LA BASE EN SERVICE : le seul rechargement se fait dans une base temporaire de contrôle au nom distinct, supprimée ensuite.
 # S'arrête AVANT toute modification si : autre intervention en cours, version installée inattendue, fiche non brouillon, commission ou
 # facturation non nulle, déploiement déjà tenté, contenu téléchargé différent de l'empreinte validée, sauvegarde externe en échec.
 # Retour arrière (code seul, base conservée) : retour-arriere-code.sh <dossier /root/pre-deploiement-…> CONFIRMER
 set -euo pipefail
-[ "${1:-}" = CONFIRMER ] || { echo "ajouter CONFIRMER"; exit 2; }
+case "${1:-}" in CONFIRMER|ROUVRIR) ETAPE=$1 ;; *) echo "usage : CONFIRMER (étape 1) ou ROUVRIR (étape 2, après confirmation de réception de l'e-mail)"; exit 2 ;; esac
+ATTENTE=/root/deploiement-en-attente
 PIN=d155c5a5ba49e83afb9564bef694d079adcb6aa4
 TREE=25534c7b1ad8e876ac8eb84890bd59859d6999cd
 FROM=1afc6f6bfe99e0940ee5fe4352b2d4cef7c86fcc
@@ -63,6 +68,37 @@ supprime_chk() { if [ "$CHK_CREE" = 1 ] && nom_chk_sur; then mariadb -e "DROP DA
 install -d -o deploy -g deploy -m 700 /tmp/deploy-home
 MODIFIE=0
 trap 'c=$?; supprime_chk || echo "ATTENTION : base temporaire $CHK à supprimer à la main"; if [ $c -ne 0 ]; then if [ $MODIFIE = 1 ]; then echo "ÉCHEC APRÈS MODIFICATION — le site reste en maintenance. Lancer : retour-arriere-code.sh $PRE CONFIRMER"; else echo "ARRÊT AVANT TOUTE MODIFICATION — production inchangée"; fi; fi' EXIT
+
+rouvrir() {
+    echo "== 7 réouverture et contrôles publics"
+    supervisorctl start hl-queue
+    supervisorctl status hl-queue | grep -q RUNNING || { echo "file d'envoi arrêtée — arrêt"; exit 1; }
+    art up; rm -f "$ATTENTE"
+    OK=1; for u in /fr /fr/recherche /admin/login /partenaire/login /up; do c=$(url "$u"); echo "$u → $c"; [ "$c" = 200 ] || OK=0; done
+    c=$(url /fr/spa/mythic-oriental-spa); echo "/fr/spa/mythic-oriental-spa → $c (404 attendu : fiche en brouillon)"; [ "$c" = 404 ] || OK=0
+    curl -sI -m 20 "$SITE/fr" | grep -qi '^x-robots-tag:.*noindex' && echo "site non indexable" || { echo "en-tête noindex absent"; OK=0; }
+    if [ $OK = 1 ]; then echo "DEPLOIEMENT d155c5a OK — retour arrière possible avec : retour-arriere-code.sh $PRE CONFIRMER"; else art down --retry=60; echo "contrôle public en échec — site remis en maintenance"; exit 1; fi
+}
+
+if [ "$ETAPE" = ROUVRIR ]; then
+    # Étape 2 : uniquement après l'étape 1 réussie (marqueur) ; rien n'est réinstallé, les données sont recontrôlées avant la réouverture.
+    [ -s "$ATTENTE" ] || { echo "aucun déploiement en attente de réouverture — arrêt, rien n'est modifié"; exit 1; }
+    PRE=$(sed -n 's/^PRE=//p' "$ATTENTE"); ENVSUM=$(sed -n 's/^ENVSUM=//p' "$ATTENTE")
+    [[ "$PRE" =~ ^/root/pre-deploiement-[0-9]{8}-[0-9]{6}$ ]] && [ -s "$PRE/contenu-apres.txt" ] && [ -s "$PRE/colonnes-avant.txt" ] && [ -s "$PRE/fiches-avant.txt" ] || { echo "marqueur d'attente invalide — arrêt"; exit 1; }
+    MODIFIE=1
+    echo "== 6 bis contrôles avant réouverture (étape 2) — dossier $PRE"
+    [ "$(g rev-parse HEAD)" = "$PIN" ] && [ "$(g rev-parse 'HEAD^{tree}')" = "$TREE" ] && [ -z "$(g status --porcelain)" ] || { echo "le code installé n'est pas exactement $PIN — arrêt"; exit 1; }
+    gel
+    cmp -s "$PRE/contenu-apres.txt" <(empreintes "$DB" "$PRE/colonnes-avant.txt") || { echo "le contenu des données a changé pendant l'attente — arrêt"; exit 1; }
+    cmp -s "$PRE/fiches-avant.txt" <(fiches) || { echo "l'état des fiches a changé — arrêt"; exit 1; }
+    [ "$(q "SELECT COUNT(*) FROM spas WHERE status<>'draft'")" = 0 ] || { echo "une fiche n'est plus en brouillon — arrêt"; exit 1; }
+    controle_argent "avant réouverture"
+    [ "$(sha256sum < "$APP/.env")" = "$ENVSUM" ] || { echo ".env modifié pendant l'attente — arrêt"; exit 1; }
+    gel
+    echo "données, six fiches en brouillon, commissions, facturation, .env : identiques à la fin de l'étape 1"
+    rouvrir; exit 0
+fi
+[ ! -e "$ATTENTE" ] || { echo "un déploiement attend déjà sa réouverture (ROUVRIR) ou son retour arrière — arrêt, rien n'est modifié"; exit 1; }
 
 echo "== 1 contrôles préalables (lecture seule)"
 nom_chk_sur || { echo "nom de la base de contrôle invalide — arrêt"; exit 1; }
@@ -156,16 +192,13 @@ art schedule:list | grep -q 'hl:expire-waiting' || { echo "tâche d'expiration a
 grep -qs "schedule:run" /etc/cron.d/hl-schedule || crontab -u deploy -l 2>/dev/null | grep -q "schedule:run" || { echo "planificateur système absent — arrêt"; exit 1; }
 gel
 cmp -s "$PRE/contenu-apres.txt" <(empreintes "$DB" "$PRE/colonnes-avant.txt") || { echo "le contenu des données a changé pendant les contrôles — arrêt"; exit 1; }
-supervisorctl start hl-queue
-supervisorctl status hl-queue | grep -q RUNNING || { echo "file d'envoi arrêtée — arrêt"; exit 1; }
 # E-mail de contrôle : un seul message, vers l'adresse de test de la propriétaire, remis directement au serveur d'envoi (aucun client destinataire).
 art tinker --execute="Illuminate\\Support\\Facades\\Mail::raw('Message de contrôle envoyé par le déploiement de HammamLuxury avant la réouverture du site. Aucune action attendue.', fn (\$m) => \$m->to('$MAILTEST')->subject('HammamLuxury - contrôle d\\'envoi avant réouverture')); echo 'ENVOI_ACCEPTE';" | grep -q ENVOI_ACCEPTE || { echo "le serveur d'envoi n'a pas accepté l'e-mail de contrôle — arrêt"; exit 1; }
 echo "e-mail de contrôle accepté par le serveur d'envoi (destinataire : $MAILTEST)"
-echo "contenu des données, six fiches en brouillon, commissions, facturation, .env, planificateur, file d'envoi, e-mail : conformes"
+echo "contenu des données, six fiches en brouillon, commissions, facturation, .env, planificateur, e-mail accepté : conformes"
 
-echo "== 7 réouverture et contrôles publics"
-art up
-OK=1; for u in /fr /fr/recherche /admin/login /partenaire/login /up; do c=$(url "$u"); echo "$u → $c"; [ "$c" = 200 ] || OK=0; done
-c=$(url /fr/spa/mythic-oriental-spa); echo "/fr/spa/mythic-oriental-spa → $c (404 attendu : fiche en brouillon)"; [ "$c" = 404 ] || OK=0
-curl -sI -m 20 "$SITE/fr" | grep -qi '^x-robots-tag:.*noindex' && echo "site non indexable" || { echo "en-tête noindex absent"; OK=0; }
-if [ $OK = 1 ]; then echo "DEPLOIEMENT d155c5a OK — retour arrière possible avec : retour-arriere-code.sh $PRE CONFIRMER"; else art down --retry=60; echo "contrôle public en échec — site remis en maintenance"; exit 1; fi
+gel
+printf 'PRE=%s\nENVSUM=%s\n' "$PRE" "$ENVSUM" > "$ATTENTE"; chmod 600 "$ATTENTE"
+echo "ÉTAPE 1 TERMINÉE — le site RESTE EN MAINTENANCE, file d'envoi arrêtée."
+echo "Attendre la confirmation écrite de réception de l'e-mail dans Gmail ($MAILTEST), puis : deploiement-d155c5a.sh ROUVRIR"
+echo "Pour renoncer : retour-arriere-code.sh $PRE CONFIRMER"

@@ -30,8 +30,8 @@ fi
 
 echo "== A. vérifications (lecture seule)"
 sha256sum -c <<'L'
-c1351d0fa3233f931fec6cf6cc30718832d1dc66049bde898f6f07b98c4e0cb1  deploiement-d155c5a.sh
-cbea800e46d0132c60fe02504f5d3597d7f6a3ec0f5febd94250bfc30b37d407  retour-arriere-code.sh
+92e2adfe9264203682ba8b9513574e9648ce8bb04dad8a607ae7afc17a0aba06  deploiement-d155c5a.sh
+27224d72c5078dcd259413b21ce007f2017e8c39b545b5a81abcbefe844ae377  retour-arriere-code.sh
 918b293c015d77f0e7199db43009eb9b88762c7a3d616684b1a8c8e5789ccbbc  diagnostic-root-complet.sh
 4943eb1820f4b1aef11a2f969b1cf216b642e3cde546485bc49dcb1221a9d5de  sommes-de-controle.sh
 L

@@ -79,7 +79,7 @@ supervisorctl start hl-queue
 supervisorctl status hl-queue | grep -q RUNNING || { echo "file d'envoi arrêtée — arrêt"; exit 1; }
 
 echo "== 5 réouverture et contrôles publics"
-art up
+art up; rm -f /root/deploiement-en-attente
 OK=1; for u in /fr /admin/login /partenaire/login /up; do c=$(url "$u"); echo "$u → $c"; [ "$c" = 200 ] || OK=0; done
 if [ $OK = 1 ]; then echo "RETOUR ARRIERE DU CODE TERMINE (version $OLD) — base conservée, copie de précaution : $SAUV"
 else art down --retry=60; echo "le site ne répond pas 200 — site remis en maintenance"; exit 1; fi
