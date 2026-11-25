@@ -105,7 +105,7 @@ class PartnerResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Partner $p) => self::mobileCard($p))->html()->wrap()->hiddenFrom('xl'),
-                Tables\Columns\TextColumn::make('company_name')->visibleFrom('xl')->label(__('partner.company_name'))->searchable()->weight('bold')->wrap()
+                Tables\Columns\TextColumn::make('company_name')->visibleFrom('xl')->label(__('partner.company_name'))->searchable()->weight('bold')->wrap()->wrapHeader()
                     ->description(fn (Partner $p) => $p->user?->email),
                 Tables\Columns\TextColumn::make('user.name')->visibleFrom('xl')->toggleable(isToggledHiddenByDefault: true)->label(__('admin.contact')),
                 Tables\Columns\TextColumn::make('contact_phone')->visibleFrom('xl')->toggleable(isToggledHiddenByDefault: true)->label(__('partner.phone'))->formatStateUsing(fn (?string $state) => PhoneNumber::format($state)),
@@ -113,10 +113,10 @@ class PartnerResource extends Resource
                 Tables\Columns\TextColumn::make('commercial_type')->visibleFrom('xl')->label(__('admin.commercial_type'))->badge()
                     ->state(fn (Partner $p) => $p->isCommercial() ? __('admin.commercial_partner') : __('admin.commercial_referenced'))
                     ->color(fn (Partner $p) => $p->isCommercial() ? 'success' : 'gray'),
-                Tables\Columns\TextColumn::make('commission_pct')->visibleFrom('xl')->label(__('admin.commission_pct'))
+                Tables\Columns\TextColumn::make('commission_pct')->visibleFrom('xl')->wrap()->label(__('admin.commission_pct'))
                     ->state(fn (Partner $p) => $p->isCommercial() ? $p->commissionPct().' %' : '0 %')
                     ->description(fn (Partner $p) => $p->isCommercial() ? ($p->commissionPeriodOn()?->label ?? __('admin.commission_standard')) : __('admin.commission_referenced_note')),
-                Tables\Columns\IconColumn::make('billing_ready')->visibleFrom('xl')->label(__('billing.billing_ready'))->boolean()
+                Tables\Columns\IconColumn::make('billing_ready')->visibleFrom('xl')->wrapHeader()->alignCenter()->label(__('billing.billing_ready'))->boolean()
                     ->state(fn (Partner $p) => app(BillingGate::class)->partnerReady($p))
                     ->tooltip(fn (Partner $p) => app(BillingGate::class)->partnerReady($p) ? __('billing.billing_ready_yes') : __('billing.billing_ready_no')),
                 Tables\Columns\TextColumn::make('status')->visibleFrom('xl')->label(__('partner.status'))->badge()
