@@ -109,7 +109,7 @@ class InvoiceResource extends Resource
                 Tables\Filters\Filter::make('overdue')->label(__('billing.invoice_status_overdue'))
                     ->query(fn (Builder $query) => $query->issued()->whereNotIn('status', ['paid', 'cancelled'])->whereDate('due_at', '<', CarbonImmutable::now(config('hl.timezone'))->toDateString())),
             ])
-            ->actions([Tables\Actions\ViewAction::make(), ...self::invoiceActions()])
+            ->actions([Tables\Actions\ViewAction::make(), Tables\Actions\ActionGroup::make(self::invoiceActions())])
             ->emptyStateHeading(__('billing.no_invoices'));
     }
 
