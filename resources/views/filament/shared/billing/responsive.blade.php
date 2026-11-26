@@ -1,5 +1,6 @@
 {{-- Tableaux de facturation en cartes libellé / valeur sous 768 px. --}}
 <style>
+    .hl-rt td button, .hl-rt td a { white-space: nowrap; }
     @media (max-width: 767px) {
         .hl-rt thead { display: none; }
         .hl-rt, .hl-rt tbody { display: block; width: 100%; }
@@ -8,7 +9,6 @@
         .hl-rt td::before { content: attr(data-label); flex: none; max-width: 45%; text-align: left; color: #6b7280; font-family: inherit; font-weight: 400; }
         .hl-rt td { flex-wrap: wrap; }
         .hl-rt td > div { flex: 1 1 100%; }
-        .hl-rt td button, .hl-rt td a { white-space: nowrap; }
         .hl-rt td:empty { display: none; }
     }
 </style>
