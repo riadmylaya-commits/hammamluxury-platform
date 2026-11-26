@@ -159,7 +159,7 @@
 @elseif ($step === 2)
     <h2 style="font-size:20px;margin-bottom:10px">{{ __('ui.pick_date') }}</h2>
     <div class="card" style="padding:12px">
-        <div class="calnav"><button type="button" wire:click="shiftMonth(-1)">‹</button><b>{{ \Carbon\CarbonImmutable::parse($month.'-01')->locale(app()->getLocale())->isoFormat('MMMM YYYY') }}</b><button type="button" wire:click="shiftMonth(1)">›</button></div>
+        <div class="calnav"><button type="button" wire:click="shiftMonth(-1)" aria-label="{{ __('ui.prev_month') }}">‹</button><b>{{ \Carbon\CarbonImmutable::parse($month.'-01')->locale(app()->getLocale())->isoFormat('MMMM YYYY') }}</b><button type="button" wire:click="shiftMonth(1)" aria-label="{{ __('ui.next_month') }}">›</button></div>
         <div class="cal">
             @foreach (__('ui.days_short') as $d)<div class="h">{{ $d }}</div>@endforeach
             @foreach ($calendar as $c)
@@ -203,7 +203,7 @@
         </div>
         <div class="fld"><label>{{ __('ui.email') }}</label><input class="inp @error('email') err @enderror" type="email" wire:model="email" autocomplete="email" inputmode="email" required>@error('email')<span class="ferr">{{ $message }}</span>@enderror</div>
         <div class="fld"><label>{{ __('ui.phone') }}</label>
-            <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,2fr);gap:8px">
+            <div class="telgrid">
                 <select class="inp @error('phoneCountry') err @enderror" wire:model="phoneCountry" autocomplete="tel-country-code" aria-label="{{ __('phone.country') }}">@foreach (\App\Domain\Phone\PhoneNumber::options() as $iso => $lbl)<option value="{{ $iso }}">{{ $lbl }}</option>@endforeach</select>
                 <input class="inp @error('phone') err @enderror" type="tel" wire:model="phone" autocomplete="tel-national" inputmode="tel" placeholder="0612345678" aria-label="{{ __('phone.number') }}" required>
             </div>
