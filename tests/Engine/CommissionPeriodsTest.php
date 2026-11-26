@@ -227,6 +227,15 @@ class CommissionPeriodsTest extends BookingFlowTestCase
         $this->assertSame(15.0, $this->rate('2027-07-01'));
     }
 
+    public function test_shifted_promo_keeps_six_calendar_months(): void
+    {
+        $this->actingAs($this->admin);
+        Manager::applyLaunchOffer($this->partner, '2026-11-26', 1, 6, 10);
+        Manager::extend($this->partner->commissionPeriods()->orderBy('starts_on')->first(), '2027-01-09');
+        $promo = $this->partner->commissionPeriods()->orderBy('starts_on')->get()->last();
+        $this->assertSame(['2027-01-10', '2027-07-09'], [$promo->starts_on->format('Y-m-d'), $promo->ends_on->format('Y-m-d')]);
+    }
+
     public function test_every_logged_action_has_a_french_label(): void
     {
         $labels = __('admin.log_action', [], 'fr');
