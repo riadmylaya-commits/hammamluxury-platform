@@ -31,6 +31,10 @@
             $over = (float) $sumPayments->sum(fn ($p) => (float) ($p->overpayment->amount ?? 0));
             $overIds = $sumPayments->map(fn ($p) => $p->overpayment?->id)->filter()->all();
             $overCredits = $overIds ? \App\Models\PartnerCredit::whereIn('overpayment_id', $overIds)->get() : collect();
+            // Avoir émis sur une facture déjà réglée : l'excédent devient un crédit partenaire rattaché à l'avoir.
+            $noteCredits = \App\Models\PartnerCredit::whereIn('credit_note_id', $invoice->creditNotes()->pluck('id'))->where('status', '!=', \App\Models\PartnerCredit::STATUS_REVERSED)->get();
+            $noteCredit = (float) $noteCredits->sum('amount');
+            $overCredits = $overCredits->concat($noteCredits);
             $rows = [
                 ['billing.sum_initial', (float) $invoice->total_ttc, false],
                 ['billing.sum_credit_notes', -(float) $invoice->credited_amount, false],
@@ -38,6 +42,7 @@
                 ['billing.sum_payments', -$cashIn, false],
                 ['billing.sum_credits_applied', -$creditIn, false],
                 ['billing.sum_overpayment', $over, false],
+                ['billing.sum_credit_from_notes', $noteCredit, false],
                 ['billing.balance', (float) $invoice->balance, true],
             ];
         @endphp
@@ -51,7 +56,7 @@
                     </div>
                 @endforeach
             </dl>
-            @if ($over > 0)
+            @if ($over + $noteCredit > 0)
                 <p class="text-xs text-gray-500" style="margin-top:.5rem">{{ __('billing.sum_overpayment_note', ['applied' => $fmt($overCredits->sum('applied_amount')), 'refunded' => $fmt($overCredits->sum('refunded_amount')), 'remaining' => $fmt($overCredits->sum(fn ($c) => $c->remaining()))]) }}</p>
             @endif
         </x-filament::section>
