@@ -24,7 +24,7 @@
             <label class="sortsel small"><span class="muted">{{ __('ui.sort_by') }}</span>
                 <select class="inp" wire:model.live="sort">@foreach (__('ui.sort') as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></label>
         </div>
-        @if ($searchDate)<div class="notice ok small" style="margin-bottom:12px">{{ __('ui.open_on_date', ['date' => \Carbon\CarbonImmutable::parse($searchDate)->translatedFormat('l j F Y')]) }} <a href="{{ route('search', array_filter(['q' => $q, 'category' => $category, 'sort' => $sort !== 'recommended' ? $sort : null])) }}">{{ __('ui.clear_date') }}</a></div>@endif
+        @if ($searchDate)<div class="notice ok small" style="margin-bottom:12px">{{ __('ui.open_on_date', ['date' => \Carbon\CarbonImmutable::parse($searchDate)->translatedFormat('l j F Y')]) }} <a href="{{ route('search', array_filter(['q' => $q, 'category' => $category, 'sort' => $sort !== 'recommended' ? $sort : null])) }}" data-date-clear>{{ __('ui.clear_date') }}</a></div>@endif
         @if ($spas->isEmpty())<div class="notice">{{ $searchDate ? __('ui.no_results_date') : __('ui.no_results') }}</div>@endif
         <div class="rescards">@foreach ($spas as $s)@include('livewire.site._spa-card', ['s' => $s, 'searchDate' => $searchDate])@endforeach</div>
     </div>
