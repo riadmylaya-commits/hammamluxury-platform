@@ -129,7 +129,7 @@ class BookingResource extends Resource
             '<div style="font-weight:700">'.e($b->start_at->translatedFormat('D d/m · H:i')).' <span '.$muted.'>→ '.e($b->end_at->format('H:i')).' · '.$b->duration_min.' min</span></div>',
             '<div>'.e($b->customerName()).' <span '.$muted.'>· '.$b->party.' '.e(__('partner.pers')).'</span></div>',
             '<div style="white-space:normal">'.e(static::treatmentsLine($b)).'</div>',
-            '<div style="margin-top:.3rem">'.$badge.' <strong>'.e(number_format((float) $b->total, 0, ',', ' ')).' '.e(config('hl.currency')).'</strong>'
+            '<div style="margin-top:.3rem">'.$badge.' <strong>'.e(number_format((float) $b->total, fmod((float) $b->total, 1) ? 2 : 0, ',', ' ')).' '.e(config('hl.currency')).'</strong>'
                 .($b->unread_count ? ' <span style="color:#991b1b;font-weight:600">✉ '.$b->unread_count.'</span>' : '').'</div>',
             '<div '.$muted.'>'.e($b->reference.' · '.$source).'</div>',
         ];
