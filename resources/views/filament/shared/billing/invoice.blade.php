@@ -30,7 +30,7 @@
                 <p class="text-sm text-gray-500">{{ __('billing.no_payments') }}</p>
             @else
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                    <table class="w-full text-sm hl-rt">
                         <thead>
                             <tr class="text-left text-gray-500">
                                 <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.paid_on') }}</th>
@@ -45,16 +45,17 @@
                         <tbody>
                             @foreach ($payments as $p)
                                 <tr class="border-t border-gray-100 dark:border-gray-800 {{ $p->isReversal() ? 'text-gray-500' : '' }}">
-                                    <td style="padding:.5rem .75rem .5rem 0">{{ $p->paid_on->format('d/m/Y') }}
+                                    <td data-label="<tr class="text-left text-gray-500">
+                                <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.paid_on') }}" style="padding:.5rem .75rem .5rem 0">{{ $p->paid_on->format('d/m/Y') }}
                                         @if ($p->isReversal())<div class="text-xs text-danger-600">{{ __('billing.reversal_of', ['id' => $p->reverses_payment_id]) }} · {{ $p->reversal_reason }}</div>@endif
                                         @if ($p->reversedBy)<div class="text-xs text-danger-600">{{ __('billing.reversed') }}</div>@endif
                                         @if ($p->overpayment)<div class="text-xs text-warning-600">{{ __('billing.overpayment') }} : {{ $fmt($p->overpayment->amount) }} · {{ __('billing.overpayment_status_'.$p->overpayment->status) }}</div>@endif
                                     </td>
-                                    <td style="padding:.5rem .75rem .5rem 0">{{ __('billing.method_'.$p->method) }}</td>
-                                    <td class="text-right font-semibold {{ $p->amount < 0 ? 'text-danger-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ $fmt($p->amount) }}</td>
-                                    <td class="text-right" style="padding:.5rem .75rem .5rem 0">{{ $fmt($p->balance_after) }}</td>
-                                    <td style="padding:.5rem .75rem .5rem 0">{{ $p->reference ?? '—' }}@if ($p->note)<div class="text-xs text-gray-500">{{ $p->note }}</div>@endif</td>
-                                    <td style="padding:.5rem .75rem .5rem 0">
+                                    <td data-label="{{ __('billing.method') }}" style="padding:.5rem .75rem .5rem 0">{{ __('billing.method_'.$p->method) }}</td>
+                                    <td data-label="{{ __('billing.amount') }}" class="text-right font-semibold {{ $p->amount < 0 ? 'text-danger-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ $fmt($p->amount) }}</td>
+                                    <td data-label="{{ __('billing.balance_after') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ $fmt($p->balance_after) }}</td>
+                                    <td data-label="{{ __('billing.reference') }}" style="padding:.5rem .75rem .5rem 0">{{ $p->reference ?? '—' }}@if ($p->note)<div class="text-xs text-gray-500">{{ $p->note }}</div>@endif</td>
+                                    <td data-label="{{ __('billing.receipt') }}" style="padding:.5rem .75rem .5rem 0">
                                         @if ($p->receipt_number)
                                             <span class="font-mono">{{ $p->receipt_number }}</span>
                                             @if ($p->receipt_status === 'ready' && ! empty($receiptAction))
@@ -66,7 +67,7 @@
                                             —
                                         @endif
                                     </td>
-                                    <td style="padding:.5rem 0 .5rem 1rem">{{ $p->confirmedBy?->name }}<div class="text-xs text-gray-500">{{ $p->confirmed_at->setTimezone($tz)->format('d/m/Y H:i') }}</div>
+                                    <td data-label="{{ __('billing.confirmed_by') }}" style="padding:.5rem 0 .5rem 1rem">{{ $p->confirmedBy?->name }}<div class="text-xs text-gray-500">{{ $p->confirmed_at->setTimezone($tz)->format('d/m/Y H:i') }}</div>
                                         @if (! empty($reverseAction) && ! $p->isReversal() && ! $p->reversedBy)
                                             <div class="mt-1">{{ $reverseAction(['payment' => $p->id]) }}</div>
                                         @endif
@@ -84,7 +85,7 @@
         @if ($notes->isNotEmpty())
         <x-filament::section :heading="__('billing.credit_notes')">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="w-full text-sm hl-rt">
                     <thead>
                         <tr class="text-left text-gray-500">
                             <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.credit_note_number') }}</th>
@@ -98,17 +99,18 @@
                     <tbody>
                         @foreach ($notes as $n)
                             <tr class="border-t border-gray-100 dark:border-gray-800 align-top">
-                                <td class="font-mono" style="padding:.5rem .75rem .5rem 0">{{ $n->label() }}
+                                <td data-label="<tr class="text-left text-gray-500">
+                            <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.credit_note_number') }}" class="font-mono" style="padding:.5rem .75rem .5rem 0">{{ $n->label() }}
                                     @if ($n->issued_at)<div class="text-xs text-gray-500">{{ $n->issued_at->setTimezone($tz)->format('d/m/Y H:i') }} · {{ $n->issuedBy?->name }}</div>@endif
                                     @if ($n->isReversal())<div class="text-xs text-danger-600">{{ __('billing.credit_note_reverses') }} {{ $n->reverses?->number }}</div>@endif
                                     @if ($n->reversedBy)<div class="text-xs text-danger-600">{{ __('billing.credit_note_status_reversed') }} · {{ $n->reversedBy->number }}</div>@endif
                                     @if ($n->lines->isNotEmpty())<div class="text-xs text-gray-500">{{ $n->lines->pluck('booking_reference')->filter()->implode(', ') }}</div>@endif</td>
-                                <td style="padding:.5rem .75rem .5rem 0"><x-filament::badge :color="$n->isDraft() ? 'gray' : ($n->reversedBy ? 'danger' : 'success')">{{ __('billing.credit_note_status_'.($n->reversedBy ? 'reversed' : $n->status)) }}</x-filament::badge>
+                                <td data-label="{{ __('partner.status') }}" style="padding:.5rem .75rem .5rem 0"><x-filament::badge :color="$n->isDraft() ? 'gray' : ($n->reversedBy ? 'danger' : 'success')">{{ __('billing.credit_note_status_'.($n->reversedBy ? 'reversed' : $n->status)) }}</x-filament::badge>
                                     @if ($n->partnerCredit)<div class="text-xs text-warning-600">{{ __('billing.credit') }} : {{ $fmt($n->partnerCredit->amount) }} · {{ __('billing.credit_status_'.$n->partnerCredit->status) }}</div>@endif</td>
-                                <td style="padding:.5rem .75rem .5rem 0">{{ $n->reason }}</td>
-                                <td class="text-right font-semibold {{ $n->total_ttc < 0 ? 'text-danger-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ $fmt($n->total_ttc) }}</td>
-                                <td class="text-right" style="padding:.5rem .75rem .5rem 0">{{ $n->invoice_balance_after !== null ? $fmt($n->invoice_balance_after) : '—' }}</td>
-                                <td style="padding:.5rem 0 .5rem 1rem">
+                                <td data-label="{{ __('billing.credit_note_reason') }}" style="padding:.5rem .75rem .5rem 0">{{ $n->reason }}</td>
+                                <td data-label="{{ __('billing.credit_note_total') }}" class="text-right font-semibold {{ $n->total_ttc < 0 ? 'text-danger-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ $fmt($n->total_ttc) }}</td>
+                                <td data-label="{{ __('billing.balance_after') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ $n->invoice_balance_after !== null ? $fmt($n->invoice_balance_after) : '—' }}</td>
+                                <td data-label="{{ __('billing.pdf') }}" style="padding:.5rem 0 .5rem 1rem">
                                     @if ($n->isDraft())
                                         @if (! empty($cnActions['issue']))<div>{{ $cnActions['issue'](['note' => $n->id]) }}</div>@endif
                                         @if (! empty($cnActions['discard']))<div class="mt-1">{{ $cnActions['discard'](['note' => $n->id]) }}</div>@endif
@@ -149,7 +151,7 @@
     @foreach ($invoice->sections() as $section)
         <x-filament::section :heading="$section['spa']?->name ?? '—'" :description="__('billing.subtotal_spa').' : '.$fmt($section['total'])">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="w-full text-sm hl-rt">
                     <thead>
                         <tr class="text-left text-gray-500">
                             <th style="padding:.25rem .75rem .25rem 0">{{ __('booking.reference') }}</th>
@@ -164,13 +166,14 @@
                     <tbody>
                         @foreach ($section['lines'] as $line)
                             <tr class="border-t border-gray-100 dark:border-gray-800">
-                                <td class="font-mono" style="padding:.5rem .75rem .5rem 0">@if ($bookingUrl && $line->booking_id)<a class="underline" href="{{ $bookingUrl($line->booking_id) }}">{{ $line->booking_reference }}</a>@else{{ $line->booking_reference }}@endif</td>
-                                <td style="padding:.5rem .75rem .5rem 0">{{ $line->service_at?->setTimezone($tz)->format('d/m/Y H:i') }}</td>
-                                <td style="padding:.5rem .75rem .5rem 0">{{ $line->description }}</td>
-                                <td class="text-right" style="padding:.5rem .75rem .5rem 0">{{ $line->base_amount !== null ? $fmt($line->base_amount) : '' }}</td>
-                                <td class="text-right" style="padding:.5rem .75rem .5rem 0">{{ $line->commission_pct !== null ? $line->commission_pct.' %' : '' }}</td>
-                                <td class="text-right font-semibold" style="padding:.5rem .75rem .5rem 0">{{ $fmt($line->amount) }}</td>
-                                <td style="padding:.5rem 0 .5rem 1rem">{{ $line->origin_period }}@if ($line->carried) · {{ __('billing.carried') }}@endif</td>
+                                <td data-label="<tr class="text-left text-gray-500">
+                            <th style="padding:.25rem .75rem .25rem 0">{{ __('booking.reference') }}" class="font-mono" style="padding:.5rem .75rem .5rem 0">@if ($bookingUrl && $line->booking_id)<a class="underline" href="{{ $bookingUrl($line->booking_id) }}">{{ $line->booking_reference }}</a>@else{{ $line->booking_reference }}@endif</td>
+                                <td data-label="{{ __('billing.service_date') }}" style="padding:.5rem .75rem .5rem 0">{{ $line->service_at?->setTimezone($tz)->format('d/m/Y H:i') }}</td>
+                                <td data-label="{{ __('billing.pdf_description') }}" style="padding:.5rem .75rem .5rem 0">{{ $line->description }}</td>
+                                <td data-label="{{ __('billing.base') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ $line->base_amount !== null ? $fmt($line->base_amount) : '' }}</td>
+                                <td data-label="{{ __('billing.rate') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ $line->commission_pct !== null ? $line->commission_pct.' %' : '' }}</td>
+                                <td data-label="{{ __('billing.commission') }}" class="text-right font-semibold" style="padding:.5rem .75rem .5rem 0">{{ $fmt($line->amount) }}</td>
+                                <td data-label="{{ __('billing.origin_period') }}" style="padding:.5rem 0 .5rem 1rem">{{ $line->origin_period }}@if ($line->carried) · {{ __('billing.carried') }}@endif</td>
                             </tr>
                         @endforeach
                     </tbody>

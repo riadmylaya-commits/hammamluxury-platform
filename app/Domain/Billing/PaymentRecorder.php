@@ -80,8 +80,9 @@ class PaymentRecorder
                     'paid_on' => $paidOn->toDateString(), 'method' => $method,
                     'reference' => $this->clean($data['reference'] ?? null, 120), 'note' => $this->clean($data['note'] ?? null, 1000),
                     'idempotency_key' => $key, 'confirmed_by' => $admin->id, 'confirmed_at' => $now, 'balance_after' => $balanceAfter,
-                    'receipt_number' => $cash ? sprintf('HL-R-%d-%05d', $paidOn->year, InvoiceSequence::next($paidOn->year, 'receipt')) : null,
-                    'receipt_status' => $cash ? InvoicePayment::RECEIPT_PENDING : null,
+                    // Chaque règlement, partiel ou final, en espèces ou par virement, reçoit son propre reçu numéroté.
+                    'receipt_number' => sprintf('HL-R-%d-%05d', $paidOn->year, InvoiceSequence::next($paidOn->year, 'receipt')),
+                    'receipt_status' => InvoicePayment::RECEIPT_PENDING,
                 ]);
                 $this->apply($locked, $paidAfter, $now);
                 if ($excess > 0) {
@@ -103,9 +104,7 @@ class PaymentRecorder
 
             return $existing;
         }
-        if ($payment->isCash()) {
-            GenerateReceiptPdf::dispatch($payment->id);
-        }
+        GenerateReceiptPdf::dispatch($payment->id);
 
         return $payment;
     }

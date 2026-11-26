@@ -18,7 +18,7 @@
     .box { border: 1px solid #e5e7eb; padding: 8px 10px; }
     .lines th { background: #fdf2e9; text-align: left; padding: 5px 6px; border-bottom: 1px solid #e5e7eb; font-size: 9.5px; }
     .lines td { padding: 4px 6px; border-bottom: 1px solid #f3f4f6; }
-    .r { text-align: right; }
+    .r { text-align: right; white-space: nowrap; }
     .section td { background: #f9fafb; font-weight: bold; }
     .totals td { padding: 3px 6px; }
     .totals .grand td { font-weight: bold; font-size: 12px; border-top: 2px solid #7c2d12; }
@@ -82,7 +82,7 @@
                 <td class="r">{{ $line->base_amount !== null ? $fmt($line->base_amount) : '' }}</td>
                 <td class="r">{{ $line->commission_pct !== null ? rtrim(rtrim(number_format($line->commission_pct, 2, ',', ''), '0'), ',').' %' : '' }}</td>
                 <td class="r">{{ $fmt($line->amount) }}</td>
-                <td>{{ $line->origin_period }}@if ($line->carried) · {{ __('billing.carried') }}@endif</td>
+                <td>{{ preg_replace('/^(\d{4})-(\d{2})$/', '$2/$1', (string) $line->origin_period) }}@if ($line->carried) · {{ __('billing.carried') }}@endif</td>
             </tr>
         @endforeach
         <tr class="section"><td colspan="5" class="r">{{ __('billing.subtotal_spa') }}</td><td class="r">{{ $fmt($section['total']) }}</td><td></td></tr>

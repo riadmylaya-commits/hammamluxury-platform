@@ -151,7 +151,7 @@ class BillingGate
             $root = $parent;
         }
 
-        return $this->isBeforeStart($root->created_at) ? LedgerEntry::SCOPE_LEGACY : LedgerEntry::SCOPE_BILLABLE;
+        return $this->isBeforeStart($root->created_at ?? now()) ? LedgerEntry::SCOPE_LEGACY : LedgerEntry::SCOPE_BILLABLE;
     }
 
     /** Écriture facturable : qualifiée « billable » explicitement, jamais « legacy ». Null = non qualifiée = non facturable. */

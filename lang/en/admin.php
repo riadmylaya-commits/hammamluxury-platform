@@ -141,6 +141,7 @@ return [
         'billing.receipt_pdf_failed' => 'Receipt pdf failed (billing)',
         'billing.receipt_pdf_ready' => 'Receipt pdf ready (billing)',
         'billing.reminder_sent' => 'Reminder sent (billing)',
+        'billing.drafts_generated' => 'Invoice drafts generated',
         'billing.scope_marked' => 'Scope marked (billing)',
         'billing.setting_changed' => 'Setting changed (billing)',
         'billing.statement_notified' => 'Statement notified (billing)',
