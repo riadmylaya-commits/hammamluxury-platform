@@ -91,6 +91,7 @@ return [
     'no_extras' => 'Aucun extra',
 
     // Ressources
+    'resource_types_nav' => 'Ressources',
     'resource_types' => 'Ressources (cabines, thérapeutes…)',
     'resource_type' => 'Type de ressource',
     'add_resource_type' => 'Ajouter un type',

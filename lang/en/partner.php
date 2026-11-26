@@ -88,6 +88,7 @@ return [
     'max_qty' => 'Max quantity',
     'no_extras' => 'No extras',
 
+    'resource_types_nav' => 'Resources',
     'resource_types' => 'Resources (cabins, therapists…)',
     'add_resource_type' => 'Add a type',
     'kind' => 'Kind',

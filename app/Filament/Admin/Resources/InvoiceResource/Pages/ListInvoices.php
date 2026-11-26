@@ -60,7 +60,8 @@ class ListInvoices extends ListRecords
                 ->action(function (array $data) {
                     abort_unless(auth()->user()?->role === 'admin', 403);
                     abort_unless(array_key_exists((string) $data['period'], self::closedPeriods()), 422);
-                    $drafts = app(InvoiceDrafter::class)->draftAll($data['period']);
+                    // draftAll renvoie aussi les factures déjà émises du mois : seuls les brouillons comptent.
+                    $drafts = array_values(array_filter(app(InvoiceDrafter::class)->draftAll($data['period']), fn ($i) => $i->isDraft()));
                     ActivityLog::record('billing.drafts_generated', null, ['period' => $data['period'], 'drafts' => count($drafts)], 'admin');
                     Notification::make()->title(trans_choice('billing.generate_drafts_done', count($drafts), ['count' => count($drafts)]))->success()->send();
                 }),
