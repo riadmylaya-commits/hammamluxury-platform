@@ -14,5 +14,6 @@ Schedule::command('hl:billing-receipt-retry')->hourly()->withoutOverlapping();
 Schedule::command('hl:billing-credit-note-retry')->hourly()->withoutOverlapping();
 Schedule::command('hl:billing-reminders')->dailyAt('08:00')->timezone('Africa/Casablanca')->withoutOverlapping();
 Schedule::command('hl:billing-correction-reminders')->dailyAt('08:00')->timezone('Africa/Casablanca')->withoutOverlapping();
+Schedule::command('hl:commission-alerts')->dailyAt('08:00')->timezone('Africa/Casablanca')->withoutOverlapping();
 Schedule::command('hl:notifications-retry --alert')->everyThirtyMinutes()->withoutOverlapping();
 Schedule::command('hl:demo-guard --alert')->dailyAt('06:00')->environments(['production']);

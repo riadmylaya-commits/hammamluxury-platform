@@ -6,10 +6,17 @@ use App\Filament\Admin\Resources\PartnerResource;
 use App\Filament\Partner\Pages\BillingProfile;
 use App\Models\ActivityLog;
 use Filament\Resources\Pages\EditRecord;
+use Livewire\Attributes\On;
 
 class EditPartner extends EditRecord
 {
     protected static string $resource = PartnerResource::class;
+
+    #[On('commission-periods-changed')]
+    public function refreshCommercialSummary(): void
+    {
+        $this->record->unsetRelation('commissionPeriods');
+    }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {

@@ -76,22 +76,27 @@ class InvoiceResource extends Resource
 
         return $table->defaultSort('period', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('number')->label(__('billing.invoice_number'))->formatStateUsing(fn (?string $state, Invoice $record) => $record->label())->default('—')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('partner.company_name')->label(__('billing.partner'))->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('period')->label(__('billing.period'))->sortable(),
-                Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()->formatStateUsing(fn (string $state) => __('billing.invoice_status_'.$state))
+                Tables\Columns\TextColumn::make('m_card')->label(__('billing.invoice_number'))->hiddenFrom('lg')->html()->wrap()
+                    ->state(fn (Invoice $r) => '<div><strong>'.e($r->label()).'</strong> · '.e(__('billing.invoice_status_'.$r->status)).'</div>'
+                        .'<div>'.e($r->partner?->company_name).' · '.e($r->period).'</div>'
+                        .'<div>'.e(__('billing.total_ttc')).' : '.e($fmt($r->total_ttc, $r)).' · '.e(__('billing.balance')).' : '.e($fmt($r->balance, $r)).'</div>'
+                        .($r->due_at ? '<div>'.e(__('billing.due_at')).' : '.e($r->due_at->format('d/m/Y')).'</div>' : '')),
+                Tables\Columns\TextColumn::make('number')->visibleFrom('lg')->label(__('billing.invoice_number'))->formatStateUsing(fn (?string $state, Invoice $record) => $record->label())->default('—')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('partner.company_name')->visibleFrom('lg')->label(__('billing.partner'))->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('period')->visibleFrom('lg')->label(__('billing.period'))->sortable(),
+                Tables\Columns\TextColumn::make('status')->visibleFrom('lg')->label(__('partner.status'))->badge()->formatStateUsing(fn (string $state) => __('billing.invoice_status_'.$state))
                     ->color(fn (string $state) => match ($state) {
                         'draft' => 'gray', 'issued' => 'warning', 'paid' => 'success', 'overdue' => 'danger', 'cancelled' => 'gray', default => 'info'
                     }),
-                Tables\Columns\TextColumn::make('lines_count')->label(__('billing.invoice_lines'))->alignRight(),
-                Tables\Columns\TextColumn::make('total_ttc')->label(__('billing.total_ttc'))->formatStateUsing($fmt)->alignRight()->sortable(),
-                Tables\Columns\TextColumn::make('paid_amount')->label(__('billing.paid_amount'))->formatStateUsing($fmt)->alignRight()->sortable()->toggleable(),
-                Tables\Columns\TextColumn::make('credited_amount')->label(__('billing.credited_amount'))->formatStateUsing($fmt)->alignRight()->sortable()->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('balance')->label(__('billing.balance'))->formatStateUsing($fmt)->alignRight()->sortable()
+                Tables\Columns\TextColumn::make('lines_count')->visibleFrom('lg')->label(__('billing.invoice_lines'))->alignRight(),
+                Tables\Columns\TextColumn::make('total_ttc')->visibleFrom('lg')->label(__('billing.total_ttc'))->formatStateUsing($fmt)->alignRight()->sortable(),
+                Tables\Columns\TextColumn::make('paid_amount')->visibleFrom('lg')->label(__('billing.paid_amount'))->formatStateUsing($fmt)->alignRight()->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('credited_amount')->visibleFrom('lg')->label(__('billing.credited_amount'))->formatStateUsing($fmt)->alignRight()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('balance')->visibleFrom('lg')->label(__('billing.balance'))->formatStateUsing($fmt)->alignRight()->sortable()
                     ->color(fn (Invoice $record) => $record->isIssued() && $record->balance > 0 ? ($record->status === Invoice::STATUS_OVERDUE ? 'danger' : 'warning') : 'gray'),
-                Tables\Columns\TextColumn::make('issued_at')->label(__('billing.issued_at'))->dateTime('d/m/Y H:i', config('hl.timezone'))->placeholder('—')->sortable(),
-                Tables\Columns\TextColumn::make('due_at')->label(__('billing.due_at'))->date('d/m/Y')->placeholder('—')->sortable(),
-                Tables\Columns\TextColumn::make('pdf_status')->label(__('billing.pdf_status'))->badge()->placeholder('—')
+                Tables\Columns\TextColumn::make('issued_at')->visibleFrom('lg')->label(__('billing.issued_at'))->dateTime('d/m/Y H:i', config('hl.timezone'))->placeholder('—')->sortable(),
+                Tables\Columns\TextColumn::make('due_at')->visibleFrom('lg')->label(__('billing.due_at'))->date('d/m/Y')->placeholder('—')->sortable(),
+                Tables\Columns\TextColumn::make('pdf_status')->visibleFrom('lg')->label(__('billing.pdf_status'))->badge()->placeholder('—')
                     ->formatStateUsing(fn (string $state) => __('billing.pdf_'.$state))->color(fn (string $state) => match ($state) {
                         'ready' => 'success', 'failed' => 'danger', default => 'gray'
                     }),
@@ -104,7 +109,7 @@ class InvoiceResource extends Resource
                 Tables\Filters\Filter::make('overdue')->label(__('billing.invoice_status_overdue'))
                     ->query(fn (Builder $query) => $query->issued()->whereNotIn('status', ['paid', 'cancelled'])->whereDate('due_at', '<', CarbonImmutable::now(config('hl.timezone'))->toDateString())),
             ])
-            ->actions([Tables\Actions\ViewAction::make(), ...self::invoiceActions()])
+            ->actions([Tables\Actions\ViewAction::make(), Tables\Actions\ActionGroup::make(self::invoiceActions())])
             ->emptyStateHeading(__('billing.no_invoices'));
     }
 
