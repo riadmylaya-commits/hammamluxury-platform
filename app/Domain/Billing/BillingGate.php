@@ -66,6 +66,10 @@ class BillingGate
                 $out[] = 'issuer_'.$field.'_missing';
             }
         }
+        // En production, une identité d'essai (émetteur ou RIB fictif de la recette) ne peut jamais servir à émettre.
+        if (app()->environment('production') && preg_match('/fictif|fictive|recette|staging|\\btest\\b/iu', implode(' ', array_map('strval', $this->settings->issuer())))) {
+            $out[] = 'issuer_fictitious';
+        }
         if ($this->settings->startPeriod() !== null && LedgerEntry::whereNull('billing_scope')->exists()) {
             $out[] = 'ledger_unqualified_entries';
         }
