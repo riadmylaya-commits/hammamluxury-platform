@@ -25,6 +25,8 @@ final class PhoneField
                 ->label(__('phone.country'))
                 ->options(fn () => PhoneNumber::options())
                 ->default(PhoneNumber::DEFAULT_COUNTRY)
+                // À l'édition d'une fiche sans numéro, le pays n'est pas hydraté : Maroc par défaut, comme à la création.
+                ->afterStateHydrated(fn (Select $component, $state) => $state ?: $component->state(PhoneNumber::DEFAULT_COUNTRY))
                 ->selectablePlaceholder(false)
                 ->native($nativeCountry)
                 ->searchable(! $nativeCountry)
