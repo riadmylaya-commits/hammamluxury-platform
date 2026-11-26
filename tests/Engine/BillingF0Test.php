@@ -137,6 +137,28 @@ class BillingF0Test extends BookingFlowTestCase
         $this->assertTrue($log->properties['new']);
     }
 
+    public function test_production_issuance_requires_the_authorised_issuer_fingerprint(): void
+    {
+        $settings = app(BillingSettings::class);
+        $settings->set('issuer.company_name', 'Société Exemple SARL');
+        $gate = app(BillingGate::class);
+        $this->assertNotContains('issuer_not_authorized', $gate->globalBlockers());
+        $this->app['env'] = 'production';
+        try {
+            $this->assertContains('issuer_not_authorized', $gate->globalBlockers());
+            config(['hl.billing.authorized_issuer_fingerprint' => $gate->issuerFingerprint()]);
+            $this->assertNotContains('issuer_not_authorized', $gate->globalBlockers());
+            // Toute modification de l'identité, ou un autre hôte, invalide l'autorisation.
+            $settings->set('issuer.bank_account', 'MA64 1111 0000 0000 0000 0000 000');
+            $this->assertContains('issuer_not_authorized', app(BillingGate::class)->globalBlockers());
+            config(['hl.billing.authorized_issuer_fingerprint' => app(BillingGate::class)->issuerFingerprint()]);
+            config(['app.url' => 'https://autre.example']);
+            $this->assertContains('issuer_not_authorized', app(BillingGate::class)->globalBlockers());
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
     public function test_a_test_issuer_identity_blocks_issuance_in_production_only(): void
     {
         $settings = app(BillingSettings::class);

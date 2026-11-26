@@ -37,6 +37,15 @@ class BillingGate
         return $out;
     }
 
+    /** Empreinte de l'identité de l'émetteur, liée au nom d'hôte du site : une empreinte de recette ne vaut pas en production. */
+    public function issuerFingerprint(): string
+    {
+        $issuer = array_map(fn ($v) => mb_strtolower(preg_replace('/\s+/u', ' ', trim((string) $v))), $this->settings->issuer());
+        ksort($issuer);
+
+        return hash('sha256', parse_url((string) config('app.url'), PHP_URL_HOST).'|'.json_encode($issuer, JSON_UNESCAPED_UNICODE));
+    }
+
     protected function issuanceLotsDelivered(): bool
     {
         return self::ISSUANCE_LOTS_DELIVERED;
@@ -69,6 +78,11 @@ class BillingGate
         // En production, une identité d'essai (émetteur ou RIB fictif de la recette) ne peut jamais servir à émettre.
         if (app()->environment('production') && preg_match('/fictif|fictive|recette|staging|\\btest\\b/iu', implode(' ', array_map('strval', $this->settings->issuer())))) {
             $out[] = 'issuer_fictitious';
+        }
+        // En production, l'émission n'est possible que pour l'identité exacte autorisée par écrit : son empreinte est posée
+        // dans le .env du serveur. Toute autre identité (y compris copiée d'une recette, quels que soient ses libellés) bloque.
+        if (app()->environment('production') && ! hash_equals($this->issuerFingerprint(), strtolower(trim((string) config('hl.billing.authorized_issuer_fingerprint'))))) {
+            $out[] = 'issuer_not_authorized';
         }
         if ($this->settings->startPeriod() !== null && LedgerEntry::whereNull('billing_scope')->exists()) {
             $out[] = 'ledger_unqualified_entries';

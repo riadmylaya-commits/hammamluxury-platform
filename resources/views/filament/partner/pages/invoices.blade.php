@@ -66,7 +66,7 @@
                     <tbody>
                         @foreach ($credits as $c)
                             <tr class="border-t border-gray-100 dark:border-gray-800 align-top">
-                                <td data-label="{{ __('billing.credit_source') }}" style="padding:.5rem .75rem .5rem 0">{{ __('billing.credit_source_'.$c->source) }} · <span class="font-mono">{{ $c->sourceLabel() }}</span>
+                                <td data-label="{{ __('billing.credit_source') }}" class="hl-wide" style="padding:.5rem .75rem .5rem 0">{{ __('billing.credit_source_'.$c->source) }} · <span class="font-mono">{{ $c->sourceLabel() }}</span>
                                     @foreach ($c->applications as $a)
                                         <div class="text-xs text-gray-500">{{ __('billing.credit_kind_'.$a->kind) }} · {{ number_format($a->amount, 2, ',', ' ') }} {{ $c->currency }} · {{ $a->isRefund() ? $a->refund_on?->format('d/m/Y').' · '.__('billing.refund_method_'.$a->refund_method).' · '.$a->refund_reference : $a->invoice?->number }}</div>
                                     @endforeach</td>

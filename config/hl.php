@@ -84,6 +84,8 @@ return [
         // l'autorisation explicite de la propriétaire, posées uniquement dans le .env du serveur concerné.
         'acceptance_ref' => env('HL_BILLING_ACCEPTANCE_REF'),
         'owner_authorization_ref' => env('HL_BILLING_OWNER_AUTHORIZATION_REF'),
+        // Empreinte de l'identité de l'émetteur autorisée par écrit (hl:billing-issuer-fingerprint) ; exigée en production.
+        'authorized_issuer_fingerprint' => env('HL_BILLING_ISSUER_FINGERPRINT'),
         // Identité de l'émetteur (HammamLuxury), à compléter dans l'Admin après validation comptable.
         'issuer' => [
             'company_name' => env('HL_BILLING_ISSUER_NAME'),

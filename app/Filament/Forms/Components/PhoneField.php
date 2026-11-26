@@ -10,7 +10,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Get;
 
 /**
- * Sélecteur de pays (drapeau + indicatif) + numéro national ; l'état du champ `$name` est un E.164 (+212661351989).
+ * Sélecteur de pays (drapeau + indicatif) + numéro national ; l'état du champ `$name` est un E.164 (+212612345678).
  * Le pays est un champ auxiliaire `{name}_country`, jamais enregistré.
  */
 final class PhoneField
@@ -24,7 +24,7 @@ final class PhoneField
             Select::make($countryField)
                 ->label(__('phone.country'))
                 ->options(fn () => PhoneNumber::options())
-                ->default(fn () => PhoneNumber::detectCountry())
+                ->default(PhoneNumber::DEFAULT_COUNTRY)
                 ->selectablePlaceholder(false)
                 ->native($nativeCountry)
                 ->searchable(! $nativeCountry)
@@ -36,7 +36,7 @@ final class PhoneField
                 ->tel()
                 ->required($required)
                 ->maxLength(25)
-                ->placeholder('0661351989')
+                ->placeholder('0612345678')
                 ->helperText(__('phone.help'))
                 ->prefix(fn (Get $get) => '+'.PhoneNumber::dialCode((string) ($get($countryField) ?: PhoneNumber::DEFAULT_COUNTRY)))
                 ->afterStateHydrated(function (TextInput $component, ?string $state, Get $get, callable $set) use ($countryField): void {
