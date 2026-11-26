@@ -66,9 +66,9 @@ class BookingResource extends Resource
             ->modifyQueryUsing(fn (Builder $query) => $query->with('participants')->withCount(['messages as unread_count' => fn ($q) => $q->unreadFor('partner')]))
             ->columns([
                 Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('md'),
-                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')->sortable()->visibleFrom('md')
+                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')->sortable()->visibleFrom('md')->wrap()
                     ->description(fn (Booking $b) => '→ '.$b->end_at->format('H:i').' · '.$b->duration_min.' min'),
-                Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName())->visibleFrom('md')
+                Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName())->visibleFrom('md')->wrap()
                     ->description(fn (Booking $b) => $b->party.' '.__('partner.pers').' · '.$b->reference),
                 Tables\Columns\TextColumn::make('participants')->label(__('partner.treatments'))
                     ->getStateUsing(fn (Booking $b) => static::treatmentsLine($b))
