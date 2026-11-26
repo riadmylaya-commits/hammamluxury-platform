@@ -137,6 +137,20 @@ class BillingF0Test extends BookingFlowTestCase
         $this->assertTrue($log->properties['new']);
     }
 
+    public function test_a_test_issuer_identity_blocks_issuance_in_production_only(): void
+    {
+        $settings = app(BillingSettings::class);
+        $settings->set('issuer.company_name', 'HL TEST émetteur fictif SARL');
+        $settings->set('issuer.bank_account', 'RIB FICTIF - AUCUN VIREMENT');
+        $this->assertNotContains('issuer_fictitious', app(BillingGate::class)->globalBlockers());
+        $this->app['env'] = 'production';
+        $this->assertContains('issuer_fictitious', app(BillingGate::class)->globalBlockers());
+        $settings->set('issuer.company_name', 'Jaune et Vert SARLAU');
+        $settings->set('issuer.bank_account', 'MA64 0000 0000 0000 0000 0000 000');
+        $this->assertNotContains('issuer_fictitious', app(BillingGate::class)->globalBlockers());
+        $this->app['env'] = 'testing';
+    }
+
     public function test_release_locks_cannot_be_lifted_by_settings_table_or_admin_form(): void
     {
         $this->actingAs($this->admin);
