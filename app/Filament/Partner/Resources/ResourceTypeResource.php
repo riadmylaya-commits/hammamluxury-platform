@@ -74,12 +74,12 @@ class ResourceTypeResource extends Resource
                 Tables\Columns\TextColumn::make('name_fr')->label(__('partner.resource_type'))->wrap()->weight('bold'),
                 Tables\Columns\TextColumn::make('kind')->visibleFrom('md')->label(__('partner.kind'))->formatStateUsing(fn ($state) => __("partner.kind_$state"))->badge()->color('gray'),
                 Tables\Columns\TextColumn::make('allocation_mode')->visibleFrom('lg')->label(__('partner.allocation_mode'))->formatStateUsing(fn ($state) => __("partner.mode_$state")),
-                Tables\Columns\TextColumn::make('resources_count')->counts('resources')->label(__('partner.resources')),
+                Tables\Columns\TextColumn::make('resources_count')->visibleFrom('sm')->counts('resources')->label(__('partner.resources')),
                 Tables\Columns\TextColumn::make('buffer_min')->visibleFrom('lg')->label(__('partner.buffer_min'))->formatStateUsing(fn ($state) => (int) $state ? $state.' min' : '—'),
                 Tables\Columns\TextColumn::make('capacity')->visibleFrom('sm')->label(__('partner.capacity'))
                     ->getStateUsing(fn (ResourceType $t) => $t->resources()->where('status', 'active')->sum('capacity')),
             ])
-            ->actions([Tables\Actions\EditAction::make()])
+            ->actions([Tables\Actions\EditAction::make()->iconButton()])
             ->emptyStateHeading(__('partner.no_resource_types'))
             ->emptyStateDescription(__('partner.no_resource_types_help'));
     }
