@@ -148,9 +148,9 @@ class TreatmentResource extends Resource
                 Tables\Columns\TextColumn::make('nr_discount_pct')->visibleFrom('lg')->label(__('ui.policy.non_refundable'))->formatStateUsing(fn ($state) => '−'.$state.' %')->placeholder('—')->badge()->color('success')->visible(fn () => CancellationPolicy::nrEnabled()),
                 Tables\Columns\TextColumn::make('cancellation_hours')->visibleFrom('xl')->label(__('partner.cancellation_hours'))->formatStateUsing(fn ($state) => CancellationPolicy::label((int) $state))->placeholder(__('partner.spa_default'))->toggleable(),
                 Tables\Columns\TextColumn::make('extras_count')->visibleFrom('lg')->counts('extras')->label(__('partner.extras')),
-                Tables\Columns\IconColumn::make('status')->label(__('partner.status'))->boolean(fn ($state) => $state === 'active')->getStateUsing(fn (Treatment $t) => $t->status === 'active'),
+                Tables\Columns\IconColumn::make('status')->visibleFrom('sm')->label(__('partner.status'))->boolean()->getStateUsing(fn (Treatment $t) => $t->status === 'active'),
             ])
-            ->actions([Tables\Actions\EditAction::make()])
+            ->actions([Tables\Actions\EditAction::make()->iconButton()])
             ->emptyStateHeading(__('partner.no_treatments'))
             ->emptyStateDescription(__('partner.no_treatments_help'));
     }
