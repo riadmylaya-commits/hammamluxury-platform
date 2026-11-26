@@ -26,6 +26,9 @@
     ['input', 'change'].forEach(function (e) {
         document.addEventListener(e, function (ev) { if (ev.target.matches && ev.target.matches('input[data-datefmt]')) { show(ev.target); keep(ev.target); } });
     });
+    document.addEventListener('click', function (ev) {
+        if (ev.target.closest && ev.target.closest('[data-date-clear]')) { try { sessionStorage.removeItem(KEY); } catch (e) {} }
+    });
     document.addEventListener('DOMContentLoaded', all);
     window.addEventListener('pageshow', all);
 })();
