@@ -304,7 +304,7 @@ class BookingActions
                 RepeatableEntry::make('notes')->label('')->schema([
                     TextEntry::make('created_at')->label('')->dateTime('d/m/Y H:i'),
                     TextEntry::make('user.name')->label('')->placeholder('—'),
-                    TextEntry::make('body')->label('')->columnSpan(2),
+                    TextEntry::make('body')->label('')->columnSpan(['lg' => 2]),
                 ])->columns(4),
             ]),
 
@@ -330,7 +330,7 @@ class BookingActions
                     TextEntry::make('created_at')->label('')->dateTime('d/m/Y H:i'),
                     TextEntry::make('sender')->label('')->badge()->formatStateUsing(fn ($state) => __('partner.senders')[$state] ?? $state)
                         ->color(fn ($state) => $state === 'client' ? 'info' : 'primary'),
-                    TextEntry::make('body')->label('')->columnSpan(2),
+                    TextEntry::make('body')->label('')->columnSpan(['lg' => 2]),
                 ])->columns(4)->placeholder(__('partner.no_messages')),
             ]),
 

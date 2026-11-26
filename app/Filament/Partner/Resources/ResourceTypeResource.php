@@ -27,6 +27,11 @@ class ResourceTypeResource extends Resource
         return __('partner.resource_type');
     }
 
+    public static function getNavigationLabel(): string
+    {
+        return __('partner.resource_types_nav');
+    }
+
     public static function getPluralModelLabel(): string
     {
         return __('partner.resource_types');
@@ -66,12 +71,12 @@ class ResourceTypeResource extends Resource
             ->reorderable('sort_order')
             ->defaultSort('sort_order')
             ->columns([
-                Tables\Columns\TextColumn::make('name_fr')->label(__('partner.resource_type'))->weight('bold'),
-                Tables\Columns\TextColumn::make('kind')->label(__('partner.kind'))->formatStateUsing(fn ($state) => __("partner.kind_$state"))->badge()->color('gray'),
-                Tables\Columns\TextColumn::make('allocation_mode')->label(__('partner.allocation_mode'))->formatStateUsing(fn ($state) => __("partner.mode_$state")),
+                Tables\Columns\TextColumn::make('name_fr')->label(__('partner.resource_type'))->wrap()->weight('bold'),
+                Tables\Columns\TextColumn::make('kind')->visibleFrom('md')->label(__('partner.kind'))->formatStateUsing(fn ($state) => __("partner.kind_$state"))->badge()->color('gray'),
+                Tables\Columns\TextColumn::make('allocation_mode')->visibleFrom('lg')->label(__('partner.allocation_mode'))->formatStateUsing(fn ($state) => __("partner.mode_$state")),
                 Tables\Columns\TextColumn::make('resources_count')->counts('resources')->label(__('partner.resources')),
-                Tables\Columns\TextColumn::make('buffer_min')->label(__('partner.buffer_min'))->formatStateUsing(fn ($state) => (int) $state ? $state.' min' : '—'),
-                Tables\Columns\TextColumn::make('capacity')->label(__('partner.capacity'))
+                Tables\Columns\TextColumn::make('buffer_min')->visibleFrom('lg')->label(__('partner.buffer_min'))->formatStateUsing(fn ($state) => (int) $state ? $state.' min' : '—'),
+                Tables\Columns\TextColumn::make('capacity')->visibleFrom('sm')->label(__('partner.capacity'))
                     ->getStateUsing(fn (ResourceType $t) => $t->resources()->where('status', 'active')->sum('capacity')),
             ])
             ->actions([Tables\Actions\EditAction::make()])

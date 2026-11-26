@@ -11,7 +11,7 @@
                 </x-filament::input.select>
             </x-filament::input.wrapper>
         </div>
-        <a href="{{ $this->disputesUrl() }}" class="text-sm text-primary-600 underline">{{ __('billing.my_disputes') }} ({{ $this->openDisputesCount() }} {{ __('billing.open_plural') }})</a>
+        <a href="{{ $this->disputesUrl() }}" class="text-sm text-primary-600 underline" style="display:inline-block;padding:.65rem 0">{{ __('billing.my_disputes') }} ({{ $this->openDisputesCount() }} {{ __('billing.open_plural') }})</a>
     </div>
 
     @include('filament.shared.billing.statement', ['statement' => $statement, 'canDispute' => true, 'bookingUrl' => fn (int $id) => $this->bookingUrl($id)])
