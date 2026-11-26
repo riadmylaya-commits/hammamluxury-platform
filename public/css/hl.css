@@ -18,6 +18,7 @@ img{display:block;max-width:100%}
 .pbtn.login{background:#fff;color:var(--brand);border:1.5px solid var(--brand)}.pbtn.login:hover{background:var(--soft)}
 .nav.dark .pbtn.login{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.7)}.nav.dark .pbtn.login:hover{background:rgba(255,255,255,.22)}
 @media (max-width:899px){.nav{flex-wrap:wrap;row-gap:10px}.nav .sp{display:none}.nav .logo{margin-right:auto}.nav .pro{order:3;width:100%;display:grid;grid-template-columns:1fr 1fr}.pbtn{justify-content:center;padding:11px 10px;font-size:13px}}
+@media (max-width:359px){.nav .pro{grid-template-columns:1fr}}
 .lang{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12px;background:#fff;cursor:pointer;text-decoration:none;color:var(--ink)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--brand);color:#fff;border:0;border-radius:12px;padding:13px 18px;font-weight:600;cursor:pointer;text-decoration:none;font-size:15px;line-height:1.2}
 .btn:hover{background:var(--brand2)}.btn.full{width:100%}.btn.sec{background:#fff;color:var(--brand);border:1.5px solid var(--brand)}
