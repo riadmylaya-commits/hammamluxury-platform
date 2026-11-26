@@ -1,14 +1,5 @@
 <x-filament-panels::page>
-<style>
-    @media (max-width: 767px) {
-        .hl-rt thead { display: none; }
-        .hl-rt, .hl-rt tbody { display: block; width: 100%; }
-        .hl-rt tr { display: block; padding: .5rem 0; }
-        .hl-rt td { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; padding: .2rem 0 !important; text-align: right; overflow-wrap: anywhere; }
-        .hl-rt td::before { content: attr(data-label); flex: none; max-width: 45%; text-align: left; color: #6b7280; font-family: inherit; font-weight: 400; }
-        .hl-rt td:empty { display: none; }
-    }
-</style>
+    @include('filament.shared.billing.responsive')
     @php($invoices = $this->invoices())
     @php($tz = config('hl.timezone'))
     @if ($invoices->isEmpty())
@@ -32,8 +23,7 @@
                     <tbody>
                         @foreach ($invoices as $i)
                             <tr class="border-t border-gray-100 dark:border-gray-800 {{ $selected === $i->id ? 'bg-primary-50 dark:bg-primary-950' : '' }}">
-                                <td data-label="<tr class="text-left text-gray-500">
-                            <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.invoice_number') }}" class="font-mono" style="padding:.5rem .75rem .5rem 0"><button type="button" class="underline" wire:click="select({{ $i->id }})">{{ $i->number }}</button></td>
+                                <td data-label="{{ __('billing.invoice_number') }}" class="font-mono" style="padding:.5rem .75rem .5rem 0"><button type="button" class="underline" wire:click="select({{ $i->id }})">{{ $i->number }}</button></td>
                                 <td data-label="{{ __('billing.period') }}" style="padding:.5rem .75rem .5rem 0">{{ preg_replace('/^(\d{4})-(\d{2})$/', '$2/$1', (string) $i->period) }}</td>
                                 <td data-label="{{ __('billing.issued_at') }}" style="padding:.5rem .75rem .5rem 0">{{ $i->issued_at->setTimezone($tz)->format('d/m/Y') }}</td>
                                 <td data-label="{{ __('billing.due_at') }}" style="padding:.5rem .75rem .5rem 0">{{ $i->due_at->format('d/m/Y') }}</td>
@@ -76,8 +66,7 @@
                     <tbody>
                         @foreach ($credits as $c)
                             <tr class="border-t border-gray-100 dark:border-gray-800 align-top">
-                                <td data-label="<tr class="text-left text-gray-500">
-                            <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.credit_source') }}" style="padding:.5rem .75rem .5rem 0">{{ __('billing.credit_source_'.$c->source) }} · <span class="font-mono">{{ $c->sourceLabel() }}</span>
+                                <td data-label="{{ __('billing.credit_source') }}" style="padding:.5rem .75rem .5rem 0">{{ __('billing.credit_source_'.$c->source) }} · <span class="font-mono">{{ $c->sourceLabel() }}</span>
                                     @foreach ($c->applications as $a)
                                         <div class="text-xs text-gray-500">{{ __('billing.credit_kind_'.$a->kind) }} · {{ number_format($a->amount, 2, ',', ' ') }} {{ $c->currency }} · {{ $a->isRefund() ? $a->refund_on?->format('d/m/Y').' · '.__('billing.refund_method_'.$a->refund_method).' · '.$a->refund_reference : $a->invoice?->number }}</div>
                                     @endforeach</td>
