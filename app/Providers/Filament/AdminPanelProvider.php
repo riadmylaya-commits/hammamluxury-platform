@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Shared\Pages\TwoFactorChallenge;
 use App\Filament\Shared\Pages\TwoFactorSetup;
+use App\Filament\Support\InitialsAvatarProvider;
 use App\Http\Middleware\RequireTwoFactor;
 use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
@@ -34,6 +35,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->passwordReset()
             ->brandName('HammamLuxury · Administration')
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->colors(['primary' => Color::hex('#c4753b')])
             ->font('Inter', url: asset('fonts/inter/inter.css'), provider: LocalFontProvider::class)
             ->sidebarCollapsibleOnDesktop()

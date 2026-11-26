@@ -2,6 +2,7 @@
 
 namespace Tests\Engine;
 
+use App\Filament\Admin\Resources\ActivityLogResource;
 use App\Filament\Admin\Resources\ActivityLogResource\Pages\ListActivityLogs;
 use App\Filament\Admin\Resources\PartnerResource;
 use App\Filament\Admin\Resources\PartnerResource\Pages\EditPartner;
@@ -13,6 +14,7 @@ use App\Models\Partner;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
@@ -172,9 +174,9 @@ class CommissionPeriodsTest extends BookingFlowTestCase
         $this->artisan('hl:commission-alerts')->assertSuccessful();
         $this->assertSame('J-7 2027-01-11 0>10', $alerts()[2]);
 
-        $this->onDay('2027-06-30');
+        $this->onDay('2027-07-10');
         $this->artisan('hl:commission-alerts')->assertSuccessful();
-        $this->assertSame('J-1 2027-07-01 10>15', last($alerts()), 'commande lancée seulement la veille : J-1 seul');
+        $this->assertSame('J-1 2027-07-11 10>15', last($alerts()), 'commande lancée seulement la veille : J-1 seul');
         $this->assertCount(4, $alerts());
     }
 
@@ -187,8 +189,13 @@ class CommissionPeriodsTest extends BookingFlowTestCase
         Manager::extend($free, '2027-01-15', 'Travaux');
         $this->assertSame(0.0, $this->rate('2027-01-15'), 'gratuité prolongée');
         $this->assertSame(10.0, $this->rate('2027-01-16'), 'la période suivante commence le lendemain');
-        $this->assertSame(10.0, $this->rate('2027-06-30'), 'sa fin ne change pas');
-        $this->assertSame(15.0, $this->rate('2027-07-01'));
+        $this->assertSame(10.0, $this->rate('2027-07-15'), 'les six mois promotionnels sont conservés en entier');
+        $this->assertSame(15.0, $this->rate('2027-07-16'));
+        $shift = ActivityLog::where('action', 'partner.commission_period_updated')->sole();
+        $this->assertSame(['2027-01-01', '2027-06-30', '2027-01-16', '2027-07-15'], [$shift->properties['previous_from'], $shift->properties['previous_to'], $shift->properties['from'], $shift->properties['to']]);
+        $text = ActivityLogResource::details($shift);
+        $this->assertStringContainsString('Début : 01/01/2027 → 16/01/2027', $text);
+        $this->assertStringContainsString('Fin : 30/06/2027 → 15/07/2027', $text);
         $log = ActivityLog::where('action', 'partner.commission_period_extended')->sole();
         $this->assertSame(['2026-12-31', 'Travaux', $this->admin->id], [$log->properties['previous_end'], $log->properties['note'], $log->user_id]);
 
@@ -196,7 +203,7 @@ class CommissionPeriodsTest extends BookingFlowTestCase
         $this->assertSame(10.0, $this->rate('2027-09-30'));
         $this->assertSame(15.0, $this->rate('2027-10-01'));
 
-        foreach (['2027-01-15', '2027-01-01', '2027-09-30'] as $bad) {
+        foreach (['2027-01-15', '2027-01-01'] as $bad) {
             try {
                 Manager::extend($free->fresh(), $bad);
                 $this->fail("prolongation acceptée : $bad");
@@ -205,6 +212,34 @@ class CommissionPeriodsTest extends BookingFlowTestCase
             }
         }
         $this->assertSame('2027-01-15', $free->fresh()->ends_on->format('Y-m-d'), 'refus : rien n’est modifié');
+    }
+
+    public function test_extension_can_keep_the_original_end_of_the_next_period(): void
+    {
+        $this->actingAs($this->admin);
+        Manager::applyLaunchOffer($this->partner, '2026-12-01', 1, 6, 10);
+        $free = $this->partner->commissionPeriods()->orderBy('starts_on')->first();
+
+        Manager::extend($free, '2027-01-15', null, true);
+        $this->assertSame(0.0, $this->rate('2027-01-15'));
+        $this->assertSame(10.0, $this->rate('2027-01-16'));
+        $this->assertSame(10.0, $this->rate('2027-06-30'), 'fin initiale conservée');
+        $this->assertSame(15.0, $this->rate('2027-07-01'));
+    }
+
+    public function test_every_logged_action_has_a_french_label(): void
+    {
+        $labels = __('admin.log_action', [], 'fr');
+        $missing = [];
+        foreach (File::allFiles(app_path()) as $file) {
+            preg_match_all("/ActivityLog::record\\(\\s*'([a-z_.]+)'\\s*[,)]/", $file->getContents(), $m);
+            foreach ($m[1] as $action) {
+                if (! isset($labels[$action])) {
+                    $missing[] = $action;
+                }
+            }
+        }
+        $this->assertSame([], array_values(array_unique($missing)));
     }
 
     public function test_cancelled_absent_and_completed_bookings_use_the_rate_frozen_at_creation(): void

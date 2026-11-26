@@ -7,6 +7,7 @@ use App\Filament\Partner\Pages\Register as RegisterPartner;
 use App\Filament\Partner\Pages\RegisterSpa;
 use App\Filament\Shared\Pages\TwoFactorChallenge;
 use App\Filament\Shared\Pages\TwoFactorSetup;
+use App\Filament\Support\InitialsAvatarProvider;
 use App\Http\Middleware\RequireTwoFactor;
 use App\Http\Responses\PartnerRegistrationResponse;
 use App\Models\Spa;
@@ -50,6 +51,7 @@ class PartnerPanelProvider extends PanelProvider
             ->authPasswordBroker('partners')
             ->emailVerification()
             ->brandName('HammamLuxury · Partenaires')
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->colors(['primary' => Color::hex('#1f4d3f')])
             ->font('Inter', url: asset('fonts/inter/inter.css'), provider: LocalFontProvider::class)
             ->sidebarCollapsibleOnDesktop()
