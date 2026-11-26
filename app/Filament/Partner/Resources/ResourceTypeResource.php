@@ -73,9 +73,9 @@ class ResourceTypeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name_fr')->label(__('partner.resource_type'))->wrap()->weight('bold'),
                 Tables\Columns\TextColumn::make('kind')->visibleFrom('md')->label(__('partner.kind'))->formatStateUsing(fn ($state) => __("partner.kind_$state"))->badge()->color('gray'),
-                Tables\Columns\TextColumn::make('allocation_mode')->visibleFrom('lg')->wrap()->label(__('partner.allocation_mode'))->formatStateUsing(fn ($state) => __("partner.mode_$state")),
+                Tables\Columns\TextColumn::make('allocation_mode')->visibleFrom('2xl')->wrap()->label(__('partner.allocation_mode'))->formatStateUsing(fn ($state) => __("partner.mode_$state")),
                 Tables\Columns\TextColumn::make('resources_count')->visibleFrom('sm')->counts('resources')->label(__('partner.resources')),
-                Tables\Columns\TextColumn::make('buffer_min')->visibleFrom('2xl')->label(__('partner.buffer_min'))->formatStateUsing(fn ($state) => (int) $state ? $state.' min' : '—'),
+                Tables\Columns\TextColumn::make('buffer_min')->toggleable(isToggledHiddenByDefault: true)->label(__('partner.buffer_min'))->formatStateUsing(fn ($state) => (int) $state ? $state.' min' : '—'),
                 Tables\Columns\TextColumn::make('capacity')->visibleFrom('sm')->label(__('partner.capacity'))
                     ->getStateUsing(fn (ResourceType $t) => $t->resources()->where('status', 'active')->sum('capacity')),
             ])
