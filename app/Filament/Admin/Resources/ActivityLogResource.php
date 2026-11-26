@@ -82,8 +82,17 @@ class ActivityLogResource extends Resource
                 unset($props[$old], $props[$new]);
             }
         }
+        unset($props['agent']); // chaîne technique du navigateur : conservée en base, non affichée
+        $auth = str_starts_with($l->action, 'auth.');
+        $period = str_starts_with($l->action, 'partner.commission_');
         foreach ($props as $k => $v) {
-            $parts[] = self::keyLabel((string) $k).' : '.self::value((string) $k, $v);
+            $label = match (true) {
+                $auth && $k === 'method' => __('admin.log_auth_method'),
+                ! $period && $k === 'from' => __('admin.log_keys')['before'] ?? 'Avant',
+                ! $period && $k === 'to' => __('admin.log_keys')['after'] ?? 'Après',
+                default => self::keyLabel((string) $k),
+            };
+            $parts[] = $label.' : '.self::value((string) $k, $v);
         }
 
         return implode(' · ', array_filter($parts));
@@ -115,11 +124,14 @@ class ActivityLogResource extends Resource
         if (in_array($key, ['pct', 'previous_pct'], true) && is_numeric($v)) {
             return rtrim(rtrim(number_format((float) $v, 2, ',', ' '), '0'), ',').' %';
         }
+        if (is_string($v) && preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $v, $m)) {
+            return "$m[2]/$m[1]";
+        }
         if (is_string($v) && preg_match('/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}:\d{2}))?/', $v, $m)) {
             return "$m[3]/$m[2]/$m[1]".(isset($m[4]) ? ' '.$m[4] : '');
         }
 
-        return (string) $v;
+        return is_string($v) ? (__('admin.log_values')[$v] ?? $v) : (string) $v;
     }
 
     public static function mobileCard(ActivityLog $l): string
@@ -146,7 +158,7 @@ class ActivityLogResource extends Resource
                 Tables\Columns\TextColumn::make('subject')->visibleFrom('xl')->label(__('admin.subject'))->wrap()
                     ->getStateUsing(fn (ActivityLog $l) => self::subjectLabel($l)),
                 Tables\Columns\TextColumn::make('properties')->visibleFrom('xl')->label(__('admin.details'))
-                    ->getStateUsing(fn (ActivityLog $l) => self::details($l))->wrap(),
+                    ->getStateUsing(fn (ActivityLog $l) => '<span style="overflow-wrap:anywhere">'.e(self::details($l)).'</span>')->html()->wrap(),
                 Tables\Columns\TextColumn::make('ip')->visibleFrom('xl')->label('IP')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([

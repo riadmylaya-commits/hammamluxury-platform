@@ -241,12 +241,19 @@ class CommissionPeriodsTest extends BookingFlowTestCase
         $labels = __('admin.log_action', [], 'fr');
         $missing = [];
         foreach (File::allFiles(app_path()) as $file) {
-            preg_match_all("/ActivityLog::record\\(\\s*'([a-z_.]+)'\\s*[,)]/", $file->getContents(), $m);
-            foreach ($m[1] as $action) {
-                if (! isset($labels[$action])) {
+            $code = $file->getContents();
+            if (! str_contains($code, 'ActivityLog::record') && ! str_contains($code, "=> ['auth.")) {
+                continue;
+            }
+            preg_match_all("/(?<!__\\(|route\\(|config\\(|trans\\()'((?:auth|billing|booking|partner|spa|review|extra|notification)\\.[a-z0-9_]+)'/", $code, $found);
+            foreach ($found[1] as $action) {
+                if (! isset($labels[$action]) && ! str_ends_with($action, '_') && $action !== 'booking.spa') {
                     $missing[] = $action;
                 }
             }
+        }
+        foreach (['published', 'refused', 'suspended', 'changes_requested'] as $decision) {
+            $this->assertArrayHasKey("spa.$decision", $labels);
         }
         $this->assertSame([], array_values(array_unique($missing)));
     }

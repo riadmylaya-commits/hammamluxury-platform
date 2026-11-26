@@ -157,11 +157,11 @@ class CommissionPeriodsRelationManager extends RelationManager
             ->description(__('admin.periods_help'))
             ->defaultSort('starts_on')
             ->columns([
-                Tables\Columns\TextColumn::make('state')->label(__('admin.period_state'))->badge()->state($state)
+                Tables\Columns\TextColumn::make('state')->visibleFrom('md')->label(__('admin.period_state'))->badge()->state($state)
                     ->formatStateUsing(fn (string $state) => __('admin.period_'.$state))
                     ->color(fn (string $state) => ['current' => 'success', 'future' => 'warning', 'past' => 'gray'][$state]),
                 Tables\Columns\TextColumn::make('m_card')->label(__('admin.period_label'))->hiddenFrom('md')->html()->wrap()
-                    ->state(fn (PartnerCommissionPeriod $p) => '<div><strong>'.e($p->commission_pct).' %</strong> · '.e($p->label).'</div><div>'
+                    ->state(fn (PartnerCommissionPeriod $p) => '<div><strong>'.e($p->commission_pct).' %</strong> · '.e($p->label).'</div><div>'.e(__('admin.period_'.$state($p))).'</div><div>'
                         .e($p->starts_on->format('d/m/Y')).' → '.e($p->ends_on?->format('d/m/Y') ?? __('admin.period_no_end')).'</div>'),
                 Tables\Columns\TextColumn::make('label')->visibleFrom('md')->label(__('admin.period_label'))->wrap(),
                 Tables\Columns\TextColumn::make('commission_pct')->visibleFrom('md')->label(__('admin.commission_pct'))->suffix(' %')->weight('bold'),
