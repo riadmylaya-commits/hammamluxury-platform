@@ -101,7 +101,7 @@ class CommissionPeriodsRelationManager extends RelationManager
                     $other->update(['starts_on' => $start]);
                     $cursor = null;
                 } else {
-                    $newOtherEnd = $other->ends_on ? CarbonImmutable::parse($other->ends_on->format('Y-m-d'))->addDays($shift) : null;
+                    $newOtherEnd = self::shiftedEnd($other, $start, $shift);
                     $other->update(['starts_on' => $start, 'ends_on' => $newOtherEnd]);
                     $cursor = $newOtherEnd;
                 }
@@ -110,6 +110,23 @@ class CommissionPeriodsRelationManager extends RelationManager
             $period->update(['ends_on' => $end]);
             self::log('partner.commission_period_extended', $period->refresh(), array_filter(['previous_end' => $previous, 'note' => $note]));
         });
+    }
+
+    /** Fin d'une période décalée : même nombre de mois civils si elle en comptait un nombre entier (six mois restent six mois), sinon même nombre de jours. */
+    private static function shiftedEnd(PartnerCommissionPeriod $other, CarbonImmutable $start, int $shift): ?CarbonImmutable
+    {
+        if ($other->ends_on === null) {
+            return null;
+        }
+        $from = CarbonImmutable::parse($other->starts_on->format('Y-m-d'));
+        $to = CarbonImmutable::parse($other->ends_on->format('Y-m-d'));
+        for ($n = 1; $n <= 60; $n++) {
+            if ($from->addMonthsNoOverflow($n)->subDay()->equalTo($to)) {
+                return $start->addMonthsNoOverflow($n)->subDay();
+            }
+        }
+
+        return $to->addDays($shift);
     }
 
     /** @return array<string, mixed> anciennes valeurs des champs modifiés */
