@@ -128,14 +128,14 @@ class PartnerResource extends Resource
             ])
             ->filters([Tables\Filters\SelectFilter::make('status')->options(self::statuses())])
             ->actions([
-                Tables\Actions\Action::make('approve')->label(__('admin.approve'))->icon('heroicon-o-check')->color('success')
+                Tables\Actions\Action::make('approve')->label(__('admin.approve'))->icon('heroicon-o-check')->color('success')->iconButton()->tooltip(__('admin.approve'))
                     ->visible(fn (Partner $p) => $p->status !== 'approved')->requiresConfirmation()
                     ->action(function (Partner $p) {
                         $p->update(['status' => 'approved']);
                         ActivityLog::record('partner.approved', $p, ['company' => $p->company_name]);
                         Notification::make()->title(__('admin.approved_ok'))->success()->send();
                     }),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->iconButton()->tooltip(__('filament-actions::edit.single.label')),
             ]);
     }
 
