@@ -245,7 +245,7 @@ class CommissionPeriodsTest extends BookingFlowTestCase
             if (! str_contains($code, 'ActivityLog::record') && ! str_contains($code, "=> ['auth.")) {
                 continue;
             }
-            preg_match_all("/(?<!__\\(|route\\(|config\\(|trans\\()'((?:auth|billing|booking|partner|spa|review|extra|notification)\\.[a-z0-9_]+)'/", $code, $found);
+            preg_match_all("/(?<!__\\(|route\\(|config\\(|trans\\(|trans_choice\\()'((?:auth|billing|booking|partner|spa|review|extra|notification)\\.[a-z0-9_]+)'/", $code, $found);
             foreach ($found[1] as $action) {
                 if (! isset($labels[$action]) && ! str_ends_with($action, '_') && $action !== 'booking.spa') {
                     $missing[] = $action;

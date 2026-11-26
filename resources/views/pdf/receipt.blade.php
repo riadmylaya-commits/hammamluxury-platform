@@ -49,13 +49,13 @@
     <tr><td>{{ __('billing.amount_received') }}</td><td class="amount">{{ $fmt($payment->amount) }}</td></tr>
     <tr><td>{{ __('billing.method') }}</td><td>{{ __('billing.method_'.$payment->method) }}</td></tr>
     <tr><td>{{ __('billing.paid_on') }}</td><td>{{ $payment->paid_on->format('d/m/Y') }}</td></tr>
-    <tr><td>{{ __('billing.invoice_number') }}</td><td>{{ $invoice->number }} — {{ __('billing.period') }} {{ $invoice->period }}</td></tr>
+    <tr><td>{{ __('billing.invoice') }}</td><td>{{ $invoice->number }} — {{ ucfirst(\Carbon\CarbonImmutable::createFromFormat('Y-m-d', $invoice->period.'-01')->locale(app()->getLocale())->translatedFormat('F Y')) }}</td></tr>
     <tr><td>{{ __('billing.total_ttc') }}</td><td>{{ $fmt($invoice->total_ttc) }}</td></tr>
     <tr><td>{{ __('billing.balance_after') }}</td><td>{{ $fmt($payment->balance_after) }}</td></tr>
     @if ($payment->reference)<tr><td>{{ __('billing.reference') }}</td><td>{{ $payment->reference }}</td></tr>@endif
     <tr><td>{{ __('billing.confirmed_by') }}</td><td>{{ $payment->confirmedBy?->name }}</td></tr>
 </table>
-<p class="muted" style="margin-top:14px">{{ __('billing.receipt_legal') }}</p>
+<p class="muted" style="margin-top:14px">{{ __($payment->isCash() ? 'billing.receipt_legal' : 'billing.receipt_legal_transfer') }}</p>
 <div class="foot">{{ $issuer['company_name'] ?? 'HammamLuxury' }} · {{ $payment->receipt_number }} · {{ __('billing.pdf_footer') }}</div>
 </body>
 </html>

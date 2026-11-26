@@ -186,11 +186,9 @@ class BillingF0Test extends BookingFlowTestCase
         $this->assertSame('billable', $lateEntry->billing_scope, 'Commission acquise après le démarrage pour une prestation ancienne : facturable.');
         $this->assertSame(60.0, $lateEntry->amount);
 
-        // Nouvelles écritures après qualification : l'émission est bloquée tant qu'elles ne sont pas qualifiées.
+        // Nouvelles écritures après la qualification initiale : qualifiées d'office à leur création, sans commande manuelle.
         $this->bookings->setPaymentStatus($old->fresh(), 'admin', 'paid');
         $this->bookings->setPaymentStatus($late->fresh(), 'admin', 'refunded');
-        $this->assertContains('ledger_unqualified_entries', $gate()->globalBlockers());
-        $this->artisan('hl:billing-mark-legacy', ['--apply' => true])->assertSuccessful();
         $this->assertNotContains('ledger_unqualified_entries', $gate()->globalBlockers());
         $this->assertSame(0, LedgerEntry::whereNull('billing_scope')->count());
         $this->assertSame('legacy', LedgerEntry::where('booking_id', $old->id)->orderByDesc('id')->first()->billing_scope);

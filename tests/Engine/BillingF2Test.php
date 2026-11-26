@@ -549,4 +549,35 @@ class BillingF2Test extends BookingFlowTestCase
         auth()->logout();
         $this->assertContains($this->get('/storage/'.$issued->pdf_path)->getStatusCode(), [403, 404]);
     }
+
+    public function test_entries_are_not_qualified_before_the_initial_qualification(): void
+    {
+        $this->completed();
+        $this->assertSame(1, LedgerEntry::whereNull('billing_scope')->count(), 'Sans qualification initiale explicite, rien n\'est qualifié d\'office.');
+    }
+
+    public function test_admin_generates_drafts_from_the_invoice_list_without_issuing(): void
+    {
+        $this->completed();
+        $this->qualify();
+        $this->travelToNextMonth(6);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $this->actingAs($this->admin);
+        $this->assertArrayHasKey($this->period, ListInvoices::closedPeriods());
+        $this->assertArrayNotHasKey(CarbonImmutable::now(config('hl.timezone'))->format('Y-m'), ListInvoices::closedPeriods(), 'Le mois en cours n\'est jamais proposé.');
+
+        Livewire::test(ListInvoices::class)->callAction('generateDrafts', ['period' => $this->period])->assertHasNoActionErrors();
+        $invoice = Invoice::sole();
+        $this->assertTrue($invoice->isDraft());
+        $this->assertNull($invoice->number);
+        $this->assertSame(1, ActivityLog::where('action', 'billing.drafts_generated')->count());
+
+        // Relance : le brouillon est actualisé, jamais dupliqué.
+        Livewire::test(ListInvoices::class)->callAction('generateDrafts', ['period' => $this->period])->assertHasNoActionErrors();
+        $this->assertSame(1, Invoice::count());
+
+        // Un mois non clos ou hors liste est refusé.
+        Livewire::test(ListInvoices::class)->callAction('generateDrafts', ['period' => '2099-01'])->assertHasActionErrors(['period']);
+        $this->assertSame(1, Invoice::count());
+    }
 }

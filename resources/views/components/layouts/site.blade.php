@@ -38,6 +38,7 @@
     <div><b>{{ __('ui.footer_legal') }}</b><a href="{{ route('page', 'cgu') }}">{{ __('pages.terms.nav') }}</a><a href="{{ route('page', 'confidentialite') }}">{{ __('pages.privacy.nav') }}</a><a href="{{ route('page', 'mentions-legales') }}">{{ __('pages.legal.nav') }}</a></div>
 </div></footer>
 <script src="{{ asset('js/hl-gallery.js') }}?v={{ filemtime(public_path('js/hl-gallery.js')) }}" defer></script>
+<script src="{{ asset('js/hl-date.js') }}?v={{ filemtime(public_path('js/hl-date.js')) }}" defer></script>
 <script>
 document.addEventListener('livewire:init', function () {
     Livewire.hook('request', function (r) {

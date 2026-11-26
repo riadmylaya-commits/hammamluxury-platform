@@ -27,7 +27,7 @@ class ReceiptPdf
     /** @throws PaymentException */
     public function generate(InvoicePayment $payment): string
     {
-        if (! $payment->isCash() || $payment->receipt_number === null || $payment->isReversal()) {
+        if ($payment->receipt_number === null || $payment->isReversal()) {
             throw new PaymentException('receipt_not_applicable');
         }
         if ($payment->receipt_status === InvoicePayment::RECEIPT_READY && $this->verify($payment)) {
