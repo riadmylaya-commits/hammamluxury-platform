@@ -6,7 +6,7 @@
             <p class="text-sm text-gray-500">{{ __('billing.no_credits') }}</p>
         @else
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="w-full text-sm hl-rt">
                     <thead>
                         <tr class="text-left text-gray-500">
                             <th style="padding:.25rem .75rem .25rem 0">#</th>
@@ -22,13 +22,13 @@
                         @foreach ($rows as $c)
                             @php($invoice = $c->source === 'credit_note' ? $c->creditNote?->invoice : $c->overpayment?->invoice)
                             <tr class="border-t border-gray-100 dark:border-gray-800 align-top">
-                                <td class="font-mono" style="padding:.5rem .75rem .5rem 0">{{ $c->id }}<div class="text-xs text-gray-500">{{ $c->created_at->setTimezone($tz)->format('d/m/Y') }}</div></td>
-                                <td style="padding:.5rem .75rem .5rem 0">{{ $c->partner->company_name }}</td>
-                                <td style="padding:.5rem .75rem .5rem 0">{{ __('billing.credit_source_'.$c->source) }} · <span class="font-mono">{{ $c->sourceLabel() }}</span>
+                                <td data-label="#" class="font-mono" style="padding:.5rem .75rem .5rem 0">{{ $c->id }}<div class="text-xs text-gray-500">{{ $c->created_at->setTimezone($tz)->format('d/m/Y') }}</div></td>
+                                <td data-label="{{ __('billing.partner') }}" class="hl-wide" style="padding:.5rem .75rem .5rem 0">{{ $c->partner->company_name }}</td>
+                                <td data-label="{{ __('billing.credit_source') }}" class="hl-wide" style="padding:.5rem .75rem .5rem 0">{{ __('billing.credit_source_'.$c->source) }} · <span class="font-mono">{{ $c->sourceLabel() }}</span>
                                     @if ($invoice)<div class="text-xs"><a class="underline" href="{{ $this->invoiceUrl($invoice->id) }}">{{ __('billing.invoice') }} {{ $invoice->number }}</a></div>@endif</td>
-                                <td class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->amount, 2, ',', ' ') }} {{ $c->currency }}</td>
-                                <td class="text-right font-semibold {{ $c->isOpen() && $c->remaining() > 0 ? 'text-success-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->remaining(), 2, ',', ' ') }} {{ $c->currency }}</td>
-                                <td style="padding:.5rem .75rem .5rem 0">
+                                <td data-label="{{ __('billing.amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->amount, 2, ',', ' ') }} {{ $c->currency }}</td>
+                                <td data-label="{{ __('billing.credit_remaining') }}" class="text-right font-semibold {{ $c->isOpen() && $c->remaining() > 0 ? 'text-success-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->remaining(), 2, ',', ' ') }} {{ $c->currency }}</td>
+                                <td data-label="{{ __('billing.credit_history') }}" class="hl-wide" style="padding:.5rem .75rem .5rem 0">
                                     @forelse ($c->applications as $a)
                                         <div class="text-xs">{{ $a->decided_at->setTimezone($tz)->format('d/m/Y H:i') }} · {{ __('billing.credit_kind_'.$a->kind) }} · <strong>{{ number_format($a->amount, 2, ',', ' ') }} {{ $c->currency }}</strong>
                                             · @if ($a->isRefund()){{ $a->refund_on?->format('d/m/Y') }} · {{ __('billing.refund_method_'.$a->refund_method) }} · {{ $a->refund_reference }}@if ($a->note) · {{ $a->note }}@endif
@@ -38,7 +38,7 @@
                                         <span class="text-xs text-gray-500">—</span>
                                     @endforelse
                                 </td>
-                                <td style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$c->status === 'open' ? 'success' : 'gray'">{{ __('billing.credit_status_'.$c->status) }}</x-filament::badge>
+                                <td data-label="{{ __('partner.status') }}" style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$c->status === 'open' ? 'success' : 'gray'">{{ __('billing.credit_status_'.$c->status) }}</x-filament::badge>
                                     @if ($c->closed_at)<div class="text-xs text-gray-500">{{ $c->closedBy?->name }} · {{ $c->closed_at->setTimezone($tz)->format('d/m/Y H:i') }}@if ($c->note) · {{ $c->note }}@endif</div>@endif
                                     @if ($c->isOpen())
                                         <div class="mt-1">{{ ($this->applyCreditAction)(['credit' => $c->id]) }}</div>
@@ -52,4 +52,5 @@
         @endif
     </x-filament::section>
     <x-filament-actions::modals />
+    @include('filament.shared.billing.responsive')
 </x-filament-panels::page>

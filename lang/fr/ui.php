@@ -45,6 +45,8 @@ return [
     'photo_of' => 'Photo :n / :total',
     'close' => 'Fermer',
     'prev' => 'Précédente',
+    'prev_month' => 'Mois précédent',
+    'next_month' => 'Mois suivant',
     'next' => 'Suivante',
     'filters' => 'Filtres',
     'reviews' => ':count avis',

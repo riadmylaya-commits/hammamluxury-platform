@@ -223,3 +223,6 @@ body.lb-open{overflow:hidden}
 
 .datewrap{position:relative;display:block}.datewrap input[type=date]{color:transparent}.datewrap input[type=date]::-webkit-datetime-edit{color:transparent}.datewrap input[type=date]::-webkit-date-and-time-value{color:transparent}
 .datewrap .datefmt{position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:16px;font-weight:600;color:var(--ink);white-space:nowrap}.datewrap .datefmt.ph{color:var(--muted);font-weight:400}
+
+.telgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,2fr);gap:8px}
+@media (max-width:359px){.telgrid{grid-template-columns:1fr}}
