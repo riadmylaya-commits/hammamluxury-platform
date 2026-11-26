@@ -65,21 +65,21 @@ class BookingResource extends Resource
             ->defaultSort('start_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with('participants')->withCount(['messages as unread_count' => fn ($q) => $q->unreadFor('partner')]))
             ->columns([
-                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('md'),
-                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')->sortable()->visibleFrom('md')->wrap()
+                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('xl'),
+                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')->sortable()->visibleFrom('xl')->wrap()
                     ->description(fn (Booking $b) => '→ '.$b->end_at->format('H:i').' · '.$b->duration_min.' min'),
-                Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName())->visibleFrom('md')->wrap()
+                Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName())->visibleFrom('xl')->wrap()
                     ->description(fn (Booking $b) => $b->party.' '.__('partner.pers').' · '.$b->reference),
                 Tables\Columns\TextColumn::make('participants')->label(__('partner.treatments'))
                     ->getStateUsing(fn (Booking $b) => static::treatmentsLine($b))
-                    ->wrap()->visibleFrom('md'),
-                Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->sortable()->visibleFrom('md'),
+                    ->wrap()->visibleFrom('xl'),
+                Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->sortable()->visibleFrom('xl'),
                 Tables\Columns\TextColumn::make('source')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')->visibleFrom('2xl')
                     ->formatStateUsing(fn ($state, Booking $b) => $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : __('partner.sources')[$state] ?? $state)->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()->visibleFrom('md')
+                Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()->visibleFrom('xl')
                     ->formatStateUsing(fn ($state) => __('ui.status')[$state] ?? $state)
                     ->color(fn ($state) => BookingActions::statusColor($state)),
-                Tables\Columns\TextColumn::make('unread_count')->label('')->badge()->color('danger')->icon('heroicon-o-chat-bubble-left-right')->visibleFrom('md')
+                Tables\Columns\TextColumn::make('unread_count')->label('')->badge()->color('danger')->icon('heroicon-o-chat-bubble-left-right')->visibleFrom('xl')
                     ->formatStateUsing(fn ($state) => $state ?: null)->tooltip(__('partner.unread_messages')),
                 Tables\Columns\TextColumn::make('reference')->label(__('partner.reference'))->searchable()->toggleable(isToggledHiddenByDefault: true)->visibleFrom('2xl'),
             ])

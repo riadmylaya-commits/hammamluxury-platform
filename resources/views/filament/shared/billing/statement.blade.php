@@ -51,7 +51,7 @@
 
     @if ($statement->spas !== [])
         <x-filament::section>
-            <p class="text-base font-semibold">{{ __('billing.total_billable') }} : {{ $fmt($statement->total) }}</p>
+            <p class="text-base font-semibold">{{ __('billing.total_billable') }} : <span class="whitespace-nowrap" style="white-space:nowrap">{{ $fmt($statement->total) }}</span></p>
             <p class="text-xs text-gray-500">{{ __('billing.total_help') }}</p>
         </x-filament::section>
     @endif
