@@ -2,6 +2,7 @@
 
 namespace Tests\Engine;
 
+use App\Filament\Admin\Resources\ActivityLogResource\Pages\ListActivityLogs;
 use App\Filament\Admin\Resources\PartnerResource;
 use App\Filament\Admin\Resources\PartnerResource\Pages\EditPartner;
 use App\Filament\Admin\Resources\PartnerResource\RelationManagers\CommissionPeriodsRelationManager as Manager;
@@ -293,5 +294,23 @@ class CommissionPeriodsTest extends BookingFlowTestCase
             ->callTableAction('launchOffer', data: ['start' => now()->format('Y-m-d'), 'free_months' => 1, 'promo_months' => 6, 'promo_pct' => 10])
             ->assertDispatched('commission-periods-changed');
         $page->dispatch('commission-periods-changed')->assertDontSee(__('admin.rate_next_none'))->assertSee(__('admin.launch_free_label'));
+    }
+
+    public function test_activity_log_can_be_filtered_by_partner_with_readable_labels(): void
+    {
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $this->actingAs($this->admin);
+        $a = $this->partner;
+        $u = User::factory()->create(['role' => 'partner']);
+        $b = Partner::create(['user_id' => $u->id, 'company_name' => 'Beta SARL', 'status' => 'approved']);
+        $la = ActivityLog::record('partner.commission_period_extended', $a, ['pct' => 0]);
+        $lb = ActivityLog::record('partner.commission_period_created', $b, ['pct' => 10]);
+
+        Livewire::test(ListActivityLogs::class)
+            ->filterTable('partner', $a->id)
+            ->assertCanSeeTableRecords([$la])
+            ->assertCanNotSeeTableRecords([$lb])
+            ->assertSee('Période commerciale prolongée')
+            ->assertSee($a->company_name);
     }
 }
