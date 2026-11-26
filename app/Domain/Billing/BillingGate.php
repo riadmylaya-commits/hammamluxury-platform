@@ -16,7 +16,7 @@ class BillingGate
      * Verrou de code : l'émission réelle dépend des lots suivants (brouillons, factures, envoi, paiements).
      * Ne passe à true que par une PR revue, dans le dernier lot nécessaire ; aucun réglage ni variable d'environnement ne le lève.
      */
-    public const ISSUANCE_LOTS_DELIVERED = false;
+    public const ISSUANCE_LOTS_DELIVERED = true; // STAGING UNIQUEMENT — recette fictive, ne jamais fusionner
 
     public function __construct(private readonly BillingSettings $settings) {}
 
