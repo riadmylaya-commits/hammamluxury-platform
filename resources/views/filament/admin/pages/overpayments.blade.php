@@ -25,7 +25,7 @@
                                 <td data-label="{{ __('billing.paid_on') }}" class="hl-wide" style="padding:.5rem .75rem .5rem 0">{{ $o->payment->paid_on->format('d/m/Y') }} · {{ __('billing.method_'.$o->payment->method) }}</td>
                                 <td data-label="{{ __('billing.amount_received') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($o->payment->amount, 2, ',', ' ') }} {{ $o->currency }}</td>
                                 <td data-label="{{ __('billing.overpayment') }}" class="text-right font-semibold text-warning-600" style="padding:.5rem .75rem .5rem 0">{{ number_format($o->amount, 2, ',', ' ') }} {{ $o->currency }}</td>
-                                <td data-label="{{ __('partner.status') }}" style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$o->status === 'open' ? 'warning' : 'gray'">{{ __('billing.overpayment_status_'.$o->status) }}</x-filament::badge>
+                                <td data-label="{{ __('partner.status') }}" style="padding:.5rem 0 .5rem 1rem">@php($credited = $o->status === 'open' && $o->partner_credit_id !== null)<x-filament::badge :color="$credited ? 'info' : ($o->status === 'open' ? 'warning' : 'gray')">{{ __('billing.overpayment_status_'.($credited ? 'credited' : $o->status)) }}</x-filament::badge>
                                     @if ($o->decided_at)<div class="text-xs text-gray-500">{{ $o->decidedBy?->name }} · {{ $o->decided_at->setTimezone($tz)->format('d/m/Y H:i') }} · {{ $o->decision_note }}</div>@endif
                                     @if ($o->status === 'open' && $o->partner_credit_id === null)
                                         <div class="mt-1">{{ ($this->openCreditAction)(['overpayment' => $o->id]) }}</div>

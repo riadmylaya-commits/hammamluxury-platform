@@ -88,7 +88,8 @@ class BookingResource extends Resource
                 Tables\Filters\SelectFilter::make('status')->label(__('partner.status'))->options(__('ui.status'))->default('waiting')->multiple(),
                 Tables\Filters\SelectFilter::make('order')->label(__('partner.sort_by'))->options(__('partner.sort_options'))
                     ->query(fn (Builder $query) => $query)
-                    ->baseQuery(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
+                    // Un tri choisi sur un en-tête de colonne (ordinateur) reste prioritaire.
+                    ->baseQuery(fn (Builder $query, array $data, $livewire) => match ($livewire->tableSortColumn ? null : ($data['value'] ?? null)) {
                         'date_asc' => $query->orderBy('start_at'),
                         'total_desc' => $query->orderBy('total', 'desc'),
                         'total_asc' => $query->orderBy('total'),

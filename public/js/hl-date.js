@@ -90,14 +90,22 @@
             if (open && open.btn === btn) { close(); return; }
             close();
             var pop = el('div', { 'class': 'dp-pop', role: 'dialog', 'aria-label': label });
+            // Le contenu est redessiné à chaque changement de mois : le clic ne doit pas être pris pour un clic extérieur.
+            pop.addEventListener('click', function (ev) { ev.stopPropagation(); });
             var m = /^(\d{4})-(\d{2})/.exec(input.value || input.getAttribute('min') || '');
             var now = new Date();
             draw(input, pop, m ? +m[1] : now.getFullYear(), m ? +m[2] - 1 : now.getMonth());
             wrap.appendChild(pop); btn.setAttribute('aria-expanded', 'true');
+            // Sur les très petits écrans, la fenêtre est ramenée dans la largeur visible.
+            var over = pop.getBoundingClientRect().right - (document.documentElement.clientWidth - 8);
+            if (over > 0) { pop.style.left = -over + 'px'; }
             open = { pop: pop, btn: btn, wrap: wrap };
         });
     }
-    document.addEventListener('click', function (ev) { if (open && !open.wrap.contains(ev.target)) { close(); } });
+    // « pointerdown » en plus de « click » : Safari sur iPhone n'émet pas de clic sur un élément non interactif.
+    ['click', 'pointerdown'].forEach(function (t) {
+        document.addEventListener(t, function (ev) { if (open && !open.wrap.contains(ev.target)) { close(); } });
+    });
     document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && open) { var b = open.btn; close(); b.focus(); } });
     function all() {
         document.querySelectorAll('input[data-datefmt]').forEach(function (i) { enhance(i); restore(i); show(i); });
