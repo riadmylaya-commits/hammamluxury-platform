@@ -377,6 +377,7 @@ return [
     'pdf_credit_note_note' => 'Issued to correct an already issued invoice; the original invoice is kept. Tax treatment of credit notes is subject to accountant validation.',
     'corrections_pending' => 'Post-issue corrections',
     'corrections_pending_help' => 'Negative entries (cancellation, adjustment) recorded after the booking was invoiced: never deducted from a later invoice, they must be credited on the original invoice.',
+    'correction_amount' => 'Correction in the partner’s favour',
     'corrections_none' => 'No pending correction.',
     'correction_age' => 'Age',
     'correction_age_days' => ':days d',

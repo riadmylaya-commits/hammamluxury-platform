@@ -14,7 +14,7 @@
                             <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.partner') }}</th>
                             <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.invoice_number') }}</th>
                             <th style="padding:.25rem .75rem .25rem 0">{{ __('billing.pdf_description') }}</th>
-                            <th class="text-right" style="padding:.25rem .75rem .25rem 0">{{ __('billing.amount') }}</th>
+                            <th class="text-right" style="padding:.25rem .75rem .25rem 0">{{ __('billing.correction_amount') }}</th>
                             <th style="padding:.25rem 0 .25rem 1rem">{{ __('billing.correction_age') }}</th>
                         </tr>
                     </thead>
@@ -29,7 +29,7 @@
                                     <div class="text-xs text-gray-500">{{ __('billing.invoice_status_'.$c['invoice']->status) }} · {{ __('billing.balance') }} {{ number_format($c['invoice']->balance, 2, ',', ' ') }} {{ $c['invoice']->currency }}</div></td>
                                 <td data-label="{{ __('billing.pdf_description') }}" class="hl-wide" style="padding:.5rem .75rem .5rem 0">{{ __('billing.line_'.$e->type, ['status' => $e->booking?->status ? __('booking.status.'.$e->booking->status) : '']) }}
                                     <div class="text-xs text-gray-500">{{ $e->created_at->setTimezone($tz)->format('d/m/Y H:i') }}@if ($c['dispute']) · {{ __('billing.correction_from_dispute', ['id' => $c['dispute']->id]) }}@endif</div></td>
-                                <td data-label="{{ __('billing.amount') }}" class="text-right font-semibold text-danger-600" style="padding:.5rem .75rem .5rem 0">{{ number_format(-$e->amount, 2, ',', ' ') }} {{ $c['invoice']->currency }}</td>
+                                <td data-label="{{ __('billing.correction_amount') }}" class="text-right font-semibold text-danger-600 whitespace-nowrap" style="padding:.5rem .75rem .5rem 0">−&nbsp;{{ number_format(abs((float) $e->amount), 2, ',', ' ') }} {{ $c['invoice']->currency }}</td>
                                 <td data-label="{{ __('billing.correction_age') }}" style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$c['age_days'] >= $due ? 'danger' : 'gray'">{{ __('billing.correction_age_days', ['days' => $c['age_days']]) }}</x-filament::badge>
                                     @if ($c['age_days'] >= $due)<div class="text-xs text-danger-600">{{ __('billing.correction_overdue', ['days' => $due]) }}</div>@endif</td>
                             </tr>

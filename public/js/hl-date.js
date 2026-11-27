@@ -5,7 +5,7 @@
         if (!out) { return; }
         var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input.value || '');
         out.textContent = m ? m[3] + '/' + m[2] + '/' + m[1] : out.getAttribute('data-ph');
-        out.classList.toggle('ph', !m);
+        out.classList.toggle('empty', !m);
     }
     // La date choisie est conservée pendant la navigation (rechargement compris), tant qu'elle n'est pas passée.
     var KEY = 'hl-date';

@@ -377,6 +377,7 @@ return [
     'pdf_credit_note_note' => 'Document émis en correction d’une facture déjà émise ; la facture d’origine est conservée. Le traitement fiscal des avoirs est soumis à validation comptable.',
     'corrections_pending' => 'Corrections post-émission',
     'corrections_pending_help' => 'Écritures négatives (annulation, ajustement) acquises après la facturation de la réservation : elles ne sont jamais déduites d’une facture suivante et doivent donner lieu à un avoir sur la facture d’origine.',
+    'correction_amount' => 'Correction en faveur du partenaire',
     'corrections_none' => 'Aucune correction en attente.',
     'correction_age' => 'Ancienneté',
     'correction_age_days' => ':days j',

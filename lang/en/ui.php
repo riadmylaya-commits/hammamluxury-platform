@@ -23,7 +23,7 @@ return [
         ['Checked requests', 'Every request is confirmed with the venue before validation.'],
         ['No account needed', 'Book with your e-mail and WhatsApp; create an account later if you wish.'],
         ['Verified venues', 'Every listing is checked by our team before going live, from the venue’s own information.'],
-        ['Fast confirmation', 'Your request is confirmed within 2 h during the day and you are notified by e-mail.'],
+        ['Fast reply', 'The venue replies to your request within 2 h during service hours, 8 am to 9 pm; you are notified by e-mail.'],
     ],
     'popular_cities' => 'Popular destinations',
     'browse_cat' => 'By treatment type',

@@ -23,7 +23,7 @@ return [
         ['Demandes vérifiées', 'Chaque demande est confirmée avec l’établissement avant validation.'],
         ['Sans compte', 'Réservez avec votre e-mail et WhatsApp, créez un compte plus tard si vous le souhaitez.'],
         ['Établissements vérifiés', 'Chaque fiche est contrôlée par notre équipe avant publication, à partir des informations de l’établissement.'],
-        ['Confirmation rapide', 'Votre demande est confirmée sous 2 h en journée, vous êtes prévenu par e-mail.'],
+        ['Réponse rapide', 'L’établissement répond à votre demande sous 2 h pendant les horaires de service, de 8 h à 21 h ; vous êtes prévenu par e-mail.'],
     ],
     'popular_cities' => 'Destinations populaires',
     'browse_cat' => 'Par type de soin',
