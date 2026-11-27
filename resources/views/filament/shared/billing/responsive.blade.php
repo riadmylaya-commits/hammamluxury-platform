@@ -6,7 +6,7 @@
         .hl-rt, .hl-rt tbody { display: block; width: 100%; }
         .hl-rt tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1rem; row-gap: .5rem; padding: .85rem 0; }
         .hl-rt td { display: block; padding: 0 !important; text-align: left !important; overflow-wrap: break-word; line-height: 1.45; }
-        .hl-rt td::before { content: attr(data-label); display: block; font-size: .75rem; line-height: 1.3; color: #6b7280; font-family: inherit; font-weight: 400; }
+        .hl-rt td::before { content: attr(data-label); display: block; font-size: .75rem; line-height: 1.3; color: #6b7280; font-family: inherit; font-weight: 400; white-space: normal; }
         .hl-rt td.hl-wide { grid-column: 1 / -1; }
         .hl-rt td:empty { display: none; }
     }
