@@ -310,7 +310,7 @@ return [
     'overpayment_status_open' => 'À régulariser',
     'overpayment_status_applied' => 'Imputé',
     'overpayment_status_refunded' => 'Remboursé',
-    'overpayment_status_credited' => 'Converti en crédit (disponible)',
+    'overpayment_status_credited' => 'Converti en crédit',
     'overpayment_status_reversed' => 'Annulé (paiement contre-passé)',
     'overpayment_help' => 'Excédent signalé, jamais imputé automatiquement : la régularisation (imputation ou remboursement) relève du lot avoirs/remboursements et reste manuelle et tracée.',
     'reminders' => 'Rappels envoyés',

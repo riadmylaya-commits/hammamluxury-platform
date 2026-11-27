@@ -310,7 +310,7 @@ return [
     'overpayment_status_open' => 'To settle',
     'overpayment_status_applied' => 'Allocated',
     'overpayment_status_refunded' => 'Refunded',
-    'overpayment_status_credited' => 'Converted to credit (available)',
+    'overpayment_status_credited' => 'Converted to credit',
     'overpayment_status_reversed' => 'Cancelled (payment reversed)',
     'overpayment_help' => 'Excess flagged, never allocated automatically: settlement (allocation or refund) belongs to the credit notes/refunds batch and stays manual and traceable.',
     'reminders' => 'Reminders sent',
