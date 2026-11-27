@@ -96,6 +96,9 @@
             var now = new Date();
             draw(input, pop, m ? +m[1] : now.getFullYear(), m ? +m[2] - 1 : now.getMonth());
             wrap.appendChild(pop); btn.setAttribute('aria-expanded', 'true');
+            // Sur les très petits écrans, la fenêtre est ramenée dans la largeur visible.
+            var over = pop.getBoundingClientRect().right - (document.documentElement.clientWidth - 8);
+            if (over > 0) { pop.style.left = -over + 'px'; }
             open = { pop: pop, btn: btn, wrap: wrap };
         });
     }
