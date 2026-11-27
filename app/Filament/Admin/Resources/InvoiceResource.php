@@ -72,12 +72,15 @@ class InvoiceResource extends Resource
 
     public static function table(Table $table): Table
     {
-        $fmt = fn ($state, Invoice $record) => number_format((float) $state, 2, ',', ' ').' '.$record->currency;
+        $fmt = fn ($state, Invoice $record) => number_format((float) $state, 2, ',', ' ')."\u{00A0}".$record->currency;
 
         return $table->defaultSort('period', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('m_card')->label(__('billing.invoice_number'))->hiddenFrom('lg')->html()->wrap()
-                    ->state(fn (Invoice $r) => '<div><strong>'.e($r->label()).'</strong> · '.e(__('billing.invoice_status_'.$r->status)).'</div>'
+                    ->state(fn (Invoice $r) => '<div><strong>'.e($r->label()).'</strong> <span style="display:inline-block;border-radius:.375rem;padding:.25rem .5rem;font-size:.75rem;line-height:1rem;font-weight:500;'.match ($r->status) {
+                        Invoice::STATUS_PAID => 'background:#f0fdf4;color:#16a34a', Invoice::STATUS_OVERDUE => 'background:#fef2f2;color:#dc2626',
+                        Invoice::STATUS_DRAFT, Invoice::STATUS_CANCELLED => 'background:#f9fafb;color:#4b5563', default => 'background:#fffbeb;color:#d97706',
+                    }.'">'.e(__('billing.invoice_status_'.$r->status)).'</span></div>'
                         .'<div>'.e($r->partner?->company_name).' · '.e($r->period).'</div>'
                         .'<div>'.e(__('billing.total_ttc')).' : '.e($fmt($r->total_ttc, $r)).' · '.e(__('billing.balance')).' : '.e($fmt($r->balance, $r)).'</div>'
                         .($r->due_at ? '<div>'.e(__('billing.due_at')).' : '.e($r->due_at->format('d/m/Y')).'</div>' : '')),

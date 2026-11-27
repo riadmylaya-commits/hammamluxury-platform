@@ -130,15 +130,15 @@ class BookingResource extends Resource
         $muted = 'style="color:#6b7280;font-size:.8rem"';
         $status = __('ui.status')[$b->status] ?? $b->status;
         $color = match (BookingActions::statusColor($b->status)) {
-            'success' => 'background:#dcfce7;color:#166534', 'warning' => 'background:#fef3c7;color:#92400e', 'danger' => 'background:#fee2e2;color:#991b1b', 'info' => 'background:#dbeafe;color:#1e40af', default => 'background:#f3f4f6;color:#374151',
+            'success' => 'background:#f0fdf4;color:#16a34a', 'warning' => 'background:#fffbeb;color:#d97706', 'danger' => 'background:#fef2f2;color:#dc2626', 'info' => 'background:#eff6ff;color:#2563eb', default => 'background:#f9fafb;color:#4b5563',
         };
-        $badge = '<span style="display:inline-block;border-radius:.375rem;padding:.1rem .5rem;font-size:.75rem;font-weight:600;'.$color.'">'.e($status).'</span>';
+        $badge = '<span style="display:inline-block;border-radius:.375rem;padding:.25rem .5rem;font-size:.75rem;line-height:1rem;font-weight:500;'.$color.'">'.e($status).'</span>';
         $source = $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : (__('partner.sources')[$b->source] ?? $b->source);
         $parts = [
             '<div style="font-weight:700">'.e($b->start_at->translatedFormat('D d/m · H:i')).' <span '.$muted.'>→ '.e($b->end_at->format('H:i')).' · '.$b->duration_min.' min</span></div>',
             '<div>'.e($b->customerName()).' <span '.$muted.'>· '.$b->party.' '.e(__('partner.pers')).'</span></div>',
             '<div style="white-space:normal">'.e(static::treatmentsLine($b)).'</div>',
-            '<div style="margin-top:.3rem">'.$badge.' <strong>'.e(number_format((float) $b->total, fmod((float) $b->total, 1) ? 2 : 0, ',', ' ')).' '.e(config('hl.currency')).'</strong>'
+            '<div style="margin-top:.3rem">'.$badge.' <strong style="white-space:nowrap">'.e(number_format((float) $b->total, 2, ',', ' '))."\u{00A0}".e(config('hl.currency')).'</strong>'
                 .($b->unread_count ? ' <span style="color:#991b1b;font-weight:600">✉ '.$b->unread_count.'</span>' : '').'</div>',
             '<div '.$muted.'>'.e($b->reference.' · '.$source).'</div>',
         ];

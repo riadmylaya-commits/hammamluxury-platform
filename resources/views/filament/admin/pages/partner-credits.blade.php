@@ -26,11 +26,11 @@
                                 <td data-label="{{ __('billing.partner') }}" class="hl-wide" style="padding:.5rem .75rem .5rem 0">{{ $c->partner->company_name }}</td>
                                 <td data-label="{{ __('billing.credit_source') }}" class="hl-wide" style="padding:.5rem .75rem .5rem 0">{{ __('billing.credit_source_'.$c->source) }} · <span class="font-mono">{{ $c->sourceLabel() }}</span>
                                     @if ($invoice)<div class="text-xs"><a class="underline" href="{{ $this->invoiceUrl($invoice->id) }}">{{ __('billing.invoice') }} {{ $invoice->number }}</a></div>@endif</td>
-                                <td data-label="{{ __('billing.amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->amount, 2, ',', ' ') }} {{ $c->currency }}</td>
-                                <td data-label="{{ __('billing.credit_remaining') }}" class="text-right font-semibold {{ $c->isOpen() && $c->remaining() > 0 ? 'text-success-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->remaining(), 2, ',', ' ') }} {{ $c->currency }}</td>
+                                <td data-label="{{ __('billing.amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->amount, 2, ',', ' ') }}&nbsp;{{ $c->currency }}</td>
+                                <td data-label="{{ __('billing.credit_remaining') }}" class="text-right font-semibold {{ $c->isOpen() && $c->remaining() > 0 ? 'text-success-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->remaining(), 2, ',', ' ') }}&nbsp;{{ $c->currency }}</td>
                                 <td data-label="{{ __('billing.credit_history') }}" class="hl-wide" style="padding:.5rem .75rem .5rem 0">
                                     @forelse ($c->applications as $a)
-                                        <div class="text-xs">{{ $a->decided_at->setTimezone($tz)->format('d/m/Y H:i') }} · {{ __('billing.credit_kind_'.$a->kind) }} · <strong>{{ number_format($a->amount, 2, ',', ' ') }} {{ $c->currency }}</strong>
+                                        <div class="text-xs">{{ $a->decided_at->setTimezone($tz)->format('d/m/Y H:i') }} · {{ __('billing.credit_kind_'.$a->kind) }} · <strong>{{ number_format($a->amount, 2, ',', ' ') }}&nbsp;{{ $c->currency }}</strong>
                                             · @if ($a->isRefund()){{ $a->refund_on?->format('d/m/Y') }} · {{ __('billing.refund_method_'.$a->refund_method) }} · {{ $a->refund_reference }}@if ($a->note) · {{ $a->note }}@endif
                                             @else<a class="underline" href="{{ $this->invoiceUrl($a->invoice_id) }}">{{ $a->invoice?->number }}</a>@endif
                                             · {{ $a->decidedBy?->name }}</div>

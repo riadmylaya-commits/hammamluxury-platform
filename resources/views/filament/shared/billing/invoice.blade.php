@@ -1,5 +1,5 @@
 @php
-    $fmt = fn ($v) => number_format((float) $v, 2, ',', ' ').' '.$invoice->currency;
+    $fmt = fn ($v) => number_format((float) $v, 2, ',', ' ')."\u{00A0}".$invoice->currency;
     $tz = config('hl.timezone');
 @endphp
 <div class="space-y-6">
@@ -84,7 +84,7 @@
                                     <td data-label="{{ __('billing.paid_on') }}" style="padding:.5rem .75rem .5rem 0" class="hl-wide">{{ $p->paid_on->format('d/m/Y') }}
                                         @if ($p->isReversal())<div class="text-xs text-danger-600">{{ __('billing.reversal_of', ['id' => $p->reverses_payment_id]) }} · {{ $p->reversal_reason }}</div>@endif
                                         @if ($p->reversedBy)<div class="text-xs text-danger-600">{{ __('billing.reversed') }}</div>@endif
-                                        @if ($p->overpayment)<div class="text-xs text-warning-600">{{ __('billing.overpayment') }} : {{ $fmt($p->overpayment->amount) }} · {{ __('billing.overpayment_status_'.$p->overpayment->status) }}</div>@endif
+                                        @if ($p->overpayment)<div class="text-xs text-warning-600">{{ __('billing.overpayment') }} : {{ $fmt($p->overpayment->amount) }} · {{ __('billing.overpayment_status_'.($p->overpayment->status === 'open' && $p->overpayment->partner_credit_id !== null ? 'credited' : $p->overpayment->status)) }}</div>@endif
                                     </td>
                                     <td data-label="{{ __('billing.method') }}" style="padding:.5rem .75rem .5rem 0">{{ __('billing.method_'.$p->method) }}</td>
                                     <td data-label="{{ __('billing.amount') }}" class="text-right font-semibold {{ $p->amount < 0 ? 'text-danger-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ $fmt($p->amount) }}</td>

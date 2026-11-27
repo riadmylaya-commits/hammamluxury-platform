@@ -27,9 +27,9 @@
                                 <td data-label="{{ __('billing.period') }}" style="padding:.5rem .75rem .5rem 0">{{ preg_replace('/^(\d{4})-(\d{2})$/', '$2/$1', (string) $i->period) }}</td>
                                 <td data-label="{{ __('billing.issued_at') }}" style="padding:.5rem .75rem .5rem 0">{{ $i->issued_at->setTimezone($tz)->format('d/m/Y') }}</td>
                                 <td data-label="{{ __('billing.due_at') }}" style="padding:.5rem .75rem .5rem 0">{{ $i->due_at->format('d/m/Y') }}</td>
-                                <td data-label="{{ __('billing.total_ttc') }}" class="text-right font-semibold" style="padding:.5rem .75rem .5rem 0">{{ number_format($i->total_ttc, 2, ',', ' ') }} {{ $i->currency }}</td>
-                                <td data-label="{{ __('billing.paid_amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($i->paid_amount, 2, ',', ' ') }} {{ $i->currency }}</td>
-                                <td data-label="{{ __('billing.balance') }}" class="text-right font-semibold {{ $i->balance > 0 ? 'text-warning-600' : 'text-success-600' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($i->balance, 2, ',', ' ') }} {{ $i->currency }}</td>
+                                <td data-label="{{ __('billing.total_ttc') }}" class="text-right font-semibold" style="padding:.5rem .75rem .5rem 0">{{ number_format($i->total_ttc, 2, ',', ' ') }}&nbsp;{{ $i->currency }}</td>
+                                <td data-label="{{ __('billing.paid_amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($i->paid_amount, 2, ',', ' ') }}&nbsp;{{ $i->currency }}</td>
+                                <td data-label="{{ __('billing.balance') }}" class="text-right font-semibold {{ $i->balance > 0 ? 'text-warning-600' : 'text-success-600' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($i->balance, 2, ',', ' ') }}&nbsp;{{ $i->currency }}</td>
                                 <td data-label="{{ __('partner.status') }}" style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$i->status === 'paid' ? 'success' : ($i->status === 'overdue' ? 'danger' : 'warning')">{{ __('billing.invoice_status_'.$i->status) }}</x-filament::badge>
                                     @if ($i->pdf_status !== 'ready')<span class="text-xs text-gray-500"> · {{ __('billing.pdf_pending') }}</span>@endif</td>
                             </tr>
@@ -68,12 +68,12 @@
                             <tr class="border-t border-gray-100 dark:border-gray-800 align-top">
                                 <td data-label="{{ __('billing.credit_source') }}" class="hl-wide" style="padding:.5rem .75rem .5rem 0">{{ __('billing.credit_source_'.$c->source) }} · <span class="font-mono">{{ $c->sourceLabel() }}</span>
                                     @foreach ($c->applications as $a)
-                                        <div class="text-xs text-gray-500">{{ __('billing.credit_kind_'.$a->kind) }} · {{ number_format($a->amount, 2, ',', ' ') }} {{ $c->currency }} · {{ $a->isRefund() ? $a->refund_on?->format('d/m/Y').' · '.__('billing.refund_method_'.$a->refund_method).' · '.$a->refund_reference : $a->invoice?->number }}</div>
+                                        <div class="text-xs text-gray-500">{{ __('billing.credit_kind_'.$a->kind) }} · {{ number_format($a->amount, 2, ',', ' ') }}&nbsp;{{ $c->currency }} · {{ $a->isRefund() ? $a->refund_on?->format('d/m/Y').' · '.__('billing.refund_method_'.$a->refund_method).' · '.$a->refund_reference : $a->invoice?->number }}</div>
                                     @endforeach</td>
-                                <td data-label="{{ __('billing.amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->amount, 2, ',', ' ') }} {{ $c->currency }}</td>
-                                <td data-label="{{ __('billing.credit_applied_amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->applied_amount, 2, ',', ' ') }} {{ $c->currency }}</td>
-                                <td data-label="{{ __('billing.credit_refunded_amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->refunded_amount, 2, ',', ' ') }} {{ $c->currency }}</td>
-                                <td data-label="{{ __('billing.credit_remaining') }}" class="text-right font-semibold {{ $c->isOpen() && $c->remaining() > 0 ? 'text-success-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->remaining(), 2, ',', ' ') }} {{ $c->currency }}</td>
+                                <td data-label="{{ __('billing.amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->amount, 2, ',', ' ') }}&nbsp;{{ $c->currency }}</td>
+                                <td data-label="{{ __('billing.credit_applied_amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->applied_amount, 2, ',', ' ') }}&nbsp;{{ $c->currency }}</td>
+                                <td data-label="{{ __('billing.credit_refunded_amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->refunded_amount, 2, ',', ' ') }}&nbsp;{{ $c->currency }}</td>
+                                <td data-label="{{ __('billing.credit_remaining') }}" class="text-right font-semibold {{ $c->isOpen() && $c->remaining() > 0 ? 'text-success-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->remaining(), 2, ',', ' ') }}&nbsp;{{ $c->currency }}</td>
                                 <td data-label="{{ __('partner.status') }}" style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$c->status === 'open' ? 'success' : 'gray'">{{ __('billing.credit_status_'.$c->status) }}</x-filament::badge></td>
                             </tr>
                         @endforeach

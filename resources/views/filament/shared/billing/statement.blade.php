@@ -1,6 +1,6 @@
 {{-- Relevé provisoire : $statement (Statement), $canDispute (bool), $bookingUrl (Closure|null) --}}
 @php($cur = config('hl.currency'))
-@php($fmt = fn ($v) => number_format((float) $v, 2, ',', ' ').' '.$cur)
+@php($fmt = fn ($v) => number_format((float) $v, 2, ',', ' ')."\u{00A0}".$cur)
 <div class="space-y-6">
     @include('filament.shared.billing.responsive')
     <x-filament::section icon="heroicon-o-information-circle">
