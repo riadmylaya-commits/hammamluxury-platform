@@ -66,7 +66,7 @@ class BookingResource extends Resource
             ->modifyQueryUsing(fn (Builder $query) => $query->with('participants')->withCount(['messages as unread_count' => fn ($q) => $q->unreadFor('partner')]))
             ->columns([
                 Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('xl'),
-                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')->sortable()->visibleFrom('xl')->wrap()
+                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m/Y · H:i')->sortable()->visibleFrom('xl')->wrap()
                     ->description(fn (Booking $b) => '→ '.$b->end_at->format('H:i').' · '.$b->duration_min.' min'),
                 Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName())->visibleFrom('xl')->wrap()
                     ->description(fn (Booking $b) => $b->party.' '.__('partner.pers').' · '.$b->reference),
@@ -135,7 +135,7 @@ class BookingResource extends Resource
         $badge = '<span style="display:inline-block;border-radius:.375rem;padding:.25rem .5rem;font-size:.75rem;line-height:1rem;font-weight:500;'.$color.'">'.e($status).'</span>';
         $source = $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : (__('partner.sources')[$b->source] ?? $b->source);
         $parts = [
-            '<div style="font-weight:700">'.e($b->start_at->translatedFormat('D d/m · H:i')).' <span '.$muted.'>→ '.e($b->end_at->format('H:i')).' · '.$b->duration_min.' min</span></div>',
+            '<div style="font-weight:700">'.e($b->start_at->translatedFormat('D d/m/Y · H:i')).' <span '.$muted.'>→ '.e($b->end_at->format('H:i')).' · <span style="white-space:nowrap">'.$b->duration_min."\u{00A0}min".'</span></span></div>',
             '<div>'.e($b->customerName()).' <span '.$muted.'>· '.$b->party.' '.e(__('partner.pers')).'</span></div>',
             '<div style="white-space:normal">'.e(static::treatmentsLine($b)).'</div>',
             '<div style="margin-top:.3rem">'.$badge.' <strong style="white-space:nowrap">'.e(number_format((float) $b->total, 2, ',', ' '))."\u{00A0}".e(config('hl.currency')).'</strong>'

@@ -77,13 +77,20 @@ class InvoiceResource extends Resource
         return $table->defaultSort('period', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('m_card')->label(__('billing.invoice_number'))->hiddenFrom('lg')->html()->wrap()
-                    ->state(fn (Invoice $r) => '<div><strong>'.e($r->label()).'</strong> <span style="display:inline-block;border-radius:.375rem;padding:.25rem .5rem;font-size:.75rem;line-height:1rem;font-weight:500;'.match ($r->status) {
+                    ->state(fn (Invoice $r) => '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:.375rem"><strong>'.e($r->label()).'</strong> <span style="display:inline-block;border-radius:.375rem;padding:.25rem .5rem;font-size:.75rem;line-height:1rem;font-weight:500;'.match ($r->status) {
                         Invoice::STATUS_PAID => 'background:#f0fdf4;color:#16a34a', Invoice::STATUS_OVERDUE => 'background:#fef2f2;color:#dc2626',
                         Invoice::STATUS_DRAFT, Invoice::STATUS_CANCELLED => 'background:#f9fafb;color:#4b5563', default => 'background:#fffbeb;color:#d97706',
                     }.'">'.e(__('billing.invoice_status_'.$r->status)).'</span></div>'
-                        .'<div>'.e($r->partner?->company_name).' · '.e($r->period).'</div>'
-                        .'<div>'.e(__('billing.total_ttc')).' : '.e($fmt($r->total_ttc, $r)).' · '.e(__('billing.balance')).' : '.e($fmt($r->balance, $r)).'</div>'
-                        .($r->due_at ? '<div>'.e(__('billing.due_at')).' : '.e($r->due_at->format('d/m/Y')).'</div>' : '')),
+                        .'<div style="margin-top:.25rem;font-weight:500">'.e($r->partner?->company_name).'</div>'
+                        .'<div style="margin-top:.25rem;display:grid;grid-template-columns:auto 1fr;column-gap:.75rem;row-gap:.125rem;font-size:.8125rem;line-height:1.35">'
+                        .collect([
+                            [__('billing.period'), e($r->period)],
+                            [__('billing.total_ttc'), e($fmt($r->total_ttc, $r))],
+                            [__('billing.balance'), '<strong>'.e($fmt($r->balance, $r)).'</strong>'],
+                            [__('billing.due_at'), $r->due_at ? e($r->due_at->format('d/m/Y')) : null],
+                        ])->filter(fn (array $l) => $l[1] !== null)
+                            ->map(fn (array $l) => '<span style="color:#6b7280">'.e($l[0]).'</span><span style="text-align:right;white-space:nowrap">'.$l[1].'</span>')->implode('')
+                        .'</div>'),
                 Tables\Columns\TextColumn::make('number')->visibleFrom('lg')->label(__('billing.invoice_number'))->formatStateUsing(fn (?string $state, Invoice $record) => $record->label())->default('—')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('partner.company_name')->visibleFrom('lg')->label(__('billing.partner'))->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('period')->visibleFrom('lg')->label(__('billing.period'))->sortable(),

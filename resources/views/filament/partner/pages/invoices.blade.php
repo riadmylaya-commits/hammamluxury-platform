@@ -74,7 +74,7 @@
                                 <td data-label="{{ __('billing.credit_applied_amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->applied_amount, 2, ',', ' ') }}&nbsp;{{ $c->currency }}</td>
                                 <td data-label="{{ __('billing.credit_refunded_amount') }}" class="text-right" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->refunded_amount, 2, ',', ' ') }}&nbsp;{{ $c->currency }}</td>
                                 <td data-label="{{ __('billing.credit_remaining') }}" class="text-right font-semibold {{ $c->isOpen() && $c->remaining() > 0 ? 'text-success-600' : '' }}" style="padding:.5rem .75rem .5rem 0">{{ number_format($c->remaining(), 2, ',', ' ') }}&nbsp;{{ $c->currency }}</td>
-                                <td data-label="{{ __('partner.status') }}" style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$c->status === 'open' ? 'success' : 'gray'">{{ __('billing.credit_status_'.$c->status) }}</x-filament::badge></td>
+                                <td data-label="{{ __('partner.status') }}" style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$c->status === 'open' ? 'success' : 'gray'">{{ __('billing.credit_status_'.$c->displayStatus()) }}</x-filament::badge></td>
                             </tr>
                         @endforeach
                     </tbody>

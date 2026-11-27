@@ -124,7 +124,7 @@ class Presentation
     public static function duration(int $minutes): string
     {
         if ($minutes < 60) {
-            return $minutes.' '.__('ui.min');
+            return $minutes."\u{00A0}".__('ui.min');
         }
         $h = intdiv($minutes, 60);
         $m = $minutes % 60;

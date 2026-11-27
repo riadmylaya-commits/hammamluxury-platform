@@ -18,7 +18,7 @@ class PresentationTest extends EngineTestCase
 
     public function test_duration_label(): void
     {
-        $this->assertSame('45 min', Presentation::duration(45));
+        $this->assertSame("45\u{00A0}min", Presentation::duration(45));
         $this->assertSame('1h', Presentation::duration(60));
         $this->assertSame('1h45', Presentation::duration(105));
         $this->assertSame('2h05', Presentation::duration(125));
@@ -41,7 +41,7 @@ class PresentationTest extends EngineTestCase
 
         $this->assertTrue($row['is_package']);
         $this->assertSame('1h45', $row['duration_label']);
-        $this->assertSame('Hammam 45 min + Massage à l’argan 60 min', $row['components']);
+        $this->assertSame('Hammam 45 min + Massage à l’argan 60 min', str_replace("\u{00A0}", ' ', $row['components']));
         $this->assertSame(['Hammam', 'Massage à l’argan'], array_column($row['steps'], 'type'));
         $this->assertSame(1200.0, (float) $row['price_couple']);
         $this->assertSame(['Thé à la menthe', 'Peignoir'], $row['included']);
@@ -68,7 +68,7 @@ class PresentationTest extends EngineTestCase
         $r = $this->get('/fr/spa/'.$this->spa->slug)->assertOk();
         $r->assertSee('Durée totale')->assertSee('1h45')->assertSee('Pour 2 personnes')->assertSee('1 200')
             ->assertSee('Inclus')->assertSee('Thé à la menthe')->assertSee('Accès piscine')
-            ->assertSee('Ajouter à mon rituel')->assertSee('Massage crânien')->assertSee('+15 min')
+            ->assertSee('Ajouter à mon rituel')->assertSee('Massage crânien')->assertSee('+15&nbsp;min', false)
             ->assertSee('La plus demandée')->assertDontSee('Infos pratiques');
 
         $this->spa->update(['practical_info' => ['gender' => 'mixed', 'languages' => ['fr', 'en'], 'children' => '', 'bring' => '  ', 'unknown' => 'x']]);

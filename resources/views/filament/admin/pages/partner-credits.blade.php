@@ -38,7 +38,7 @@
                                         <span class="text-xs text-gray-500">—</span>
                                     @endforelse
                                 </td>
-                                <td data-label="{{ __('partner.status') }}" style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$c->status === 'open' ? 'success' : 'gray'">{{ __('billing.credit_status_'.$c->status) }}</x-filament::badge>
+                                <td data-label="{{ __('partner.status') }}" style="padding:.5rem 0 .5rem 1rem"><x-filament::badge :color="$c->status === 'open' ? 'success' : 'gray'">{{ __('billing.credit_status_'.$c->displayStatus()) }}</x-filament::badge>
                                     @if ($c->closed_at)<div class="text-xs text-gray-500">{{ $c->closedBy?->name }} · {{ $c->closed_at->setTimezone($tz)->format('d/m/Y H:i') }}@if ($c->note) · {{ $c->note }}@endif</div>@endif
                                     @if ($c->isOpen())
                                         <div class="mt-1">{{ ($this->applyCreditAction)(['credit' => $c->id]) }}</div>

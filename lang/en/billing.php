@@ -396,6 +396,7 @@ return [
     'credit_status_open' => 'Available',
     'credit_status_applied' => 'Applied',
     'credit_status_refunded' => 'Refunded',
+    'credit_status_settled' => 'Settled',
     'credit_status_reversed' => 'Reversed',
     'credit_open' => 'Open a credit',
     'credit_open_help' => 'Turns this overpayment into a partner credit to apply or refund manually. No automatic allocation.',

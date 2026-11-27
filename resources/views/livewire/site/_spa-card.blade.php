@@ -1,5 +1,5 @@
 <a class="res card" href="{{ route('spa.show', [$s['slug']] + array_filter(['date' => $searchDate ?? null])) }}">
-    <div class="ph {{ ['', 'green', 'sand', 'blue'][$s['id'] % 4] }}">@if ($s['photos'])<img src="{{ $s['photos'][0]['url'] }}" alt="{{ $s['photos'][0]['caption'] ?? $s['name'] }}" loading="lazy">@endif</div>
+    <div class="ph {{ ['', 'green', 'sand', 'blue'][$s['id'] % 4] }}">@if ($s['photos'])<img src="{{ $s['photos'][0]['url'] }}" alt="{{ $s['photos'][0]['caption'] ?? $s['name'] }}" @if ($loop->index > 2) loading="lazy" @endif>@endif</div>
     <div class="body">
         <div class="row" style="align-items:flex-start">
             <div class="sp">

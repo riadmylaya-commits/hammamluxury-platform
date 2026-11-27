@@ -92,7 +92,7 @@
                     @if ($pt['extras'])
                         <div class="pcard-extras">
                             @foreach ($pt['extras'] as $e)
-                                <button type="button" class="xchip" aria-pressed="{{ isset($p['extras'][$e['id']]) ? 'true' : 'false' }}" wire:click="toggleExtra({{ $e['id'] }}, {{ $i }})">{{ isset($p['extras'][$e['id']]) ? '✓ ' : '+ ' }}{{ $e['name'] }}@if (isset($p['extras'][$e['id']]) && $e['max_qty'] > 1) ×{{ $p['extras'][$e['id']] }}@endif · {{ $fmt($e['price']) }}@if ($e['extra_min']) · +{{ $e['extra_min'] }} {{ __('ui.min') }}@endif</button>
+                                <button type="button" class="xchip" aria-pressed="{{ isset($p['extras'][$e['id']]) ? 'true' : 'false' }}" wire:click="toggleExtra({{ $e['id'] }}, {{ $i }})">{{ isset($p['extras'][$e['id']]) ? '✓ ' : '+ ' }}{{ $e['name'] }}@if (isset($p['extras'][$e['id']]) && $e['max_qty'] > 1) ×{{ $p['extras'][$e['id']] }}@endif · {{ $fmt($e['price']) }}@if ($e['extra_min']) · +{{ $e['extra_min'] }}&nbsp;{{ __('ui.min') }}@endif</button>
                             @endforeach
                         </div>
                     @endif
@@ -132,7 +132,7 @@
         @if ($ct['extras'])<div class="muted small" style="margin-bottom:8px">{{ __('ui.add_to_ritual_help') }}</div>@endif
         @forelse ($ct['extras'] as $e)
             <button type="button" class="opt" aria-pressed="{{ isset($extras[$e['id']]) ? 'true' : 'false' }}" wire:click="toggleExtra({{ $e['id'] }})">
-                <div><b>{{ $e['name'] }}</b>@if (isset($extras[$e['id']]) && $e['max_qty'] > 1) ×{{ $extras[$e['id']] }}@endif<div class="muted small">@if ($e['per_person']){{ __('ui.extra_each') }}@endif @if ($e['extra_min'])· +{{ $e['extra_min'] }} {{ __('ui.min') }}@endif</div></div>
+                <div><b>{{ $e['name'] }}</b>@if (isset($extras[$e['id']]) && $e['max_qty'] > 1) ×{{ $extras[$e['id']] }}@endif<div class="muted small">@if ($e['per_person']){{ __('ui.extra_each') }}@endif @if ($e['extra_min'])· +{{ $e['extra_min'] }}&nbsp;{{ __('ui.min') }}@endif</div></div>
                 <div class="r"><b>+{{ $fmt($e['price']) }}</b></div>
             </button>
         @empty
@@ -180,7 +180,7 @@
         @if ($slots)
             <div class="slots">@foreach ($slots as $s)<button type="button" aria-pressed="{{ $time === $s ? 'true' : 'false' }}" wire:click="pickTime('{{ $s }}')">{{ $s }}</button>@endforeach</div>
             @if ($lastMinuteUntil)<div class="notice warn" style="margin-top:8px"><b>{{ __('ui.last_minute_title') }}</b> {{ __('ui.last_minute_slot', ['minutes' => config('hl.last_minute.response_minutes')]) }}</div>@endif
-            @if ($time)<div class="muted small" style="margin-top:8px">{{ __('ui.ends_at', ['time' => \Carbon\CarbonImmutable::parse("$date $time")->addMinutes($quote['duration_min'])->format('H:i')]) }} · {{ $quote['duration_min'] }} {{ __('ui.min') }}</div>@endif
+            @if ($time)<div class="muted small" style="margin-top:8px">{{ __('ui.ends_at', ['time' => \Carbon\CarbonImmutable::parse("$date $time")->addMinutes($quote['duration_min'])->format('H:i')]) }} · {{ $quote['duration_min'] }}&nbsp;{{ __('ui.min') }}</div>@endif
         @else
             <div class="notice"><b>{{ __('ui.no_slots') }}</b><br>{{ $slotsReason }}<br><span class="muted">{{ __('ui.try_other') }}</span></div>
         @endif
@@ -234,7 +234,7 @@
 @php($recap = view('livewire.site._recap', ['quote' => $quote, 'spa' => $spa, 'date' => $date, 'time' => $time, 'fmt' => $fmt, 'treatments' => $treatments])->render())
 <aside class="card recap desk">{!! $recap !!}</aside>
 <div class="stickytot mobile-only inflow">
-    <details><summary class="row" style="list-style:none;cursor:pointer"><div class="sp"><b>{{ $fmt($quote['total']) }}</b> <span class="muted small">· {{ $quote['party'] }} pers. · {{ $quote['duration_min'] }} {{ __('ui.min') }}</span></div><span class="chip grey">{{ __('ui.recap') }}</span></summary>
+    <details><summary class="row" style="list-style:none;cursor:pointer"><div class="sp"><b>{{ $fmt($quote['total']) }}</b> <span class="muted small">· {{ $quote['party'] }} pers. · {{ $quote['duration_min'] }}&nbsp;{{ __('ui.min') }}</span></div><span class="chip grey">{{ __('ui.recap') }}</span></summary>
     <div style="padding-top:10px">{!! $recap !!}</div></details>
 </div>
 @endif

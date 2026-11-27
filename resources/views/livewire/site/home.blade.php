@@ -22,7 +22,7 @@
 <section class="sec"><h2>{{ __('ui.popular_cities') }}</h2>
     <div class="hscroll">
         @foreach ($cities as $i => $c)
-            <a class="city" href="{{ route('search', ['q' => $c->city]) }}"><div class="ph {{ ['', 'green', 'sand', 'blue'][$i % 4] }}">@if ($c->photo)<img src="{{ $c->photo }}" alt="" loading="lazy">@endif<span>{{ $c->city }} · {{ trans_choice('ui.spas', $c->n) }}</span></div></a>
+            <a class="city" href="{{ route('search', ['q' => $c->city]) }}"><div class="ph {{ ['', 'green', 'sand', 'blue'][$i % 4] }}">@if ($c->photo)<img src="{{ $c->photo }}" alt="">@endif<span>{{ $c->city }} · {{ trans_choice('ui.spas', $c->n) }}</span></div></a>
         @endforeach
     </div>
 </section>

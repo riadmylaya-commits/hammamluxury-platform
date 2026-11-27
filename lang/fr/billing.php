@@ -396,6 +396,7 @@ return [
     'credit_status_open' => 'Disponible',
     'credit_status_applied' => 'Imputé',
     'credit_status_refunded' => 'Remboursé',
+    'credit_status_settled' => 'Soldé',
     'credit_status_reversed' => 'Annulé (avoir inverse)',
     'credit_open' => 'Ouvrir un crédit',
     'credit_open_help' => 'Transforme ce trop-perçu en crédit partenaire à imputer ou rembourser manuellement. Aucune imputation automatique.',
