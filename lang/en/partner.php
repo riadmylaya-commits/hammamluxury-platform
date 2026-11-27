@@ -584,4 +584,6 @@ return [
     'rotate_link_mode' => 'What would you like to do?',
     'rotate_link_rotate' => 'Generate a new link (the old one is invalidated)',
     'rotate_link_revoke' => 'Revoke access without a new link',
+    'sort_by' => 'Sort by',
+    'sort_options' => ['date_asc' => 'Date: earliest first', 'total_desc' => 'Total: highest first', 'total_asc' => 'Total: lowest first'],
 ];
