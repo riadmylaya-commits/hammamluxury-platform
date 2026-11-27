@@ -230,7 +230,8 @@ class PanelsTest extends BookingFlowTestCase
         Livewire::test(ListBookings::class)->assertCanSeeTableRecords([$a, $b], inOrder: true)
             ->filterTable('order', 'total_asc')->assertCanSeeTableRecords([$b, $a], inOrder: true)
             ->filterTable('order', 'total_desc')->assertCanSeeTableRecords([$a, $b], inOrder: true)
-            ->filterTable('order', 'date_asc')->assertCanSeeTableRecords([$b, $a], inOrder: true);
+            ->filterTable('order', 'date_asc')->assertCanSeeTableRecords([$b, $a], inOrder: true)
+            ->sortTable('total', 'desc')->assertCanSeeTableRecords([$a, $b], inOrder: true);
         $b->forceFill(['start_at' => $a->start_at, 'end_at' => $a->end_at])->save();
         Livewire::test(ViewBooking::class, ['record' => $a->getRouteKey()])->assertSee($a->reference)->callAction('accept')->assertHasNoActionErrors();
         $this->assertSame('confirmed', $a->fresh()->status);
