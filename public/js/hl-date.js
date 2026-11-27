@@ -90,6 +90,8 @@
             if (open && open.btn === btn) { close(); return; }
             close();
             var pop = el('div', { 'class': 'dp-pop', role: 'dialog', 'aria-label': label });
+            // Le contenu est redessiné à chaque changement de mois : le clic ne doit pas être pris pour un clic extérieur.
+            pop.addEventListener('click', function (ev) { ev.stopPropagation(); });
             var m = /^(\d{4})-(\d{2})/.exec(input.value || input.getAttribute('min') || '');
             var now = new Date();
             draw(input, pop, m ? +m[1] : now.getFullYear(), m ? +m[2] - 1 : now.getMonth());
