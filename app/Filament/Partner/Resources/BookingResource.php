@@ -86,6 +86,14 @@ class BookingResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('source')->label(__('partner.source'))->options(__('partner.sources')),
                 Tables\Filters\SelectFilter::make('status')->label(__('partner.status'))->options(__('ui.status'))->default('waiting')->multiple(),
+                Tables\Filters\SelectFilter::make('order')->label(__('partner.sort_by'))->options(__('partner.sort_options'))
+                    ->query(fn (Builder $query) => $query)
+                    ->baseQuery(fn (Builder $query, array $data) => match ($data['value'] ?? null) {
+                        'date_asc' => $query->orderBy('start_at'),
+                        'total_desc' => $query->orderBy('total', 'desc'),
+                        'total_asc' => $query->orderBy('total'),
+                        default => $query,
+                    }),
                 Tables\Filters\Filter::make('upcoming')->label(__('partner.upcoming'))->query(fn (Builder $query) => $query->where('start_at', '>=', now())),
             ])
             ->actions([

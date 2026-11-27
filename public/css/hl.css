@@ -226,3 +226,13 @@ body.lb-open{overflow:hidden}
 
 .telgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,2fr);gap:8px}
 @media (max-width:359px){.telgrid{grid-template-columns:1fr}}
+
+.datewrap.dp input{color:transparent;caret-color:transparent}
+.datewrap .dp-btn{position:absolute;inset:0;width:100%;background:none;border:0;padding:0;cursor:pointer;border-radius:inherit}
+.dp-pop{position:absolute;z-index:50;top:calc(100% + 6px);left:0;width:min(300px,calc(100vw - 32px));background:#fff;color:var(--ink);border:1px solid rgba(0,0,0,.12);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:12px}
+.dp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.dp-head strong{text-transform:capitalize;font-size:15px}
+.dp-head button{width:40px;height:40px;border:0;background:none;font-size:22px;cursor:pointer;border-radius:8px;color:inherit}.dp-head button:disabled{opacity:.25;cursor:default}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}.dp-wd{font-size:11px;color:var(--muted);text-transform:capitalize;padding:4px 0}
+.dp-grid button{height:38px;border:0;background:none;border-radius:8px;font-size:14px;cursor:pointer;color:inherit;padding:0}.dp-grid button:disabled{color:var(--muted);opacity:.4;cursor:default}
+.dp-grid button.on{background:var(--ink);color:#fff;font-weight:700}.dp-grid button:not(:disabled):not(.on):hover{background:rgba(0,0,0,.06)}
+.dp-clear{margin-top:8px;border:0;background:none;text-decoration:underline;font-size:13px;cursor:pointer;color:inherit;padding:6px 0}

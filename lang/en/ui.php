@@ -45,6 +45,7 @@ return [
     'photo_of' => 'Photo :n / :total',
     'close' => 'Close',
     'prev' => 'Previous',
+    'date_reset' => 'Clear date',
     'prev_month' => 'Previous month',
     'next_month' => 'Next month',
     'next' => 'Next',
