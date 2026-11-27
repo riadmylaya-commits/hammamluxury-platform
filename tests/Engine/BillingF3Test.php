@@ -336,12 +336,12 @@ class BillingF3Test extends BookingFlowTestCase
         $this->assertSame(2, InvoicePayment::count(), 'Blocage strict : rien n’est enregistré, aucun numéro consommé.');
         $this->assertSame(2, (int) InvoiceSequence::where('kind', 'receipt')->where('year', $year)->value('last_number'));
         $t = $this->pay($invoice, 10, 'bank_transfer');
-        $this->assertNull($t->receipt_number, 'Le virement n’est pas plafonné et n’a pas de reçu.');
+        $this->assertSame("HL-R-$year-00003", $t->receipt_number, 'Le virement n’est pas plafonné ; chaque règlement a son propre reçu.');
 
         app(PaymentRecorder::class)->reverse($c2, $this->admin, 'Erreur', 'rev-c2');
         $this->assertSame(20.0, app(PaymentRecorder::class)->cashReceived($invoice), 'La contre-passation libère le plafond.');
         $c3 = $this->pay($invoice, 30, 'cash');
-        $this->assertSame("HL-R-$year-00003", $c3->receipt_number, 'Un numéro n’est jamais réutilisé.');
+        $this->assertSame("HL-R-$year-00004", $c3->receipt_number, 'Un numéro n’est jamais réutilisé.');
         $this->assertNull(InvoicePayment::whereKey($c3->id + 0)->first()->reverses_payment_id);
         $reversal = InvoicePayment::where('reverses_payment_id', $c2->id)->sole();
         $this->assertNull($reversal->receipt_number);

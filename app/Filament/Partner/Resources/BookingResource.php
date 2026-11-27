@@ -65,27 +65,36 @@ class BookingResource extends Resource
             ->defaultSort('start_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query) => $query->with('participants')->withCount(['messages as unread_count' => fn ($q) => $q->unreadFor('partner')]))
             ->columns([
-                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('md'),
-                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')->sortable()->visibleFrom('md')
+                Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('xl'),
+                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m/Y · H:i')->sortable()->visibleFrom('xl')->wrap()
                     ->description(fn (Booking $b) => '→ '.$b->end_at->format('H:i').' · '.$b->duration_min.' min'),
-                Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName())->visibleFrom('md')
-                    ->description(fn (Booking $b) => $b->party.' '.__('partner.pers')),
+                Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName())->visibleFrom('xl')->wrap()
+                    ->description(fn (Booking $b) => $b->party.' '.__('partner.pers').' · '.$b->reference),
                 Tables\Columns\TextColumn::make('participants')->label(__('partner.treatments'))
                     ->getStateUsing(fn (Booking $b) => static::treatmentsLine($b))
-                    ->wrap()->visibleFrom('md'),
-                Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->sortable()->visibleFrom('md'),
-                Tables\Columns\TextColumn::make('source')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')->visibleFrom('md')
+                    ->wrap()->visibleFrom('xl'),
+                Tables\Columns\TextColumn::make('total')->label(__('partner.total'))->money(config('hl.currency'), locale: 'fr')->sortable()->visibleFrom('xl'),
+                Tables\Columns\TextColumn::make('source')->label(__('partner.source'))->badge()->color(fn ($state) => $state === 'partner' ? 'info' : 'gray')->visibleFrom('2xl')
                     ->formatStateUsing(fn ($state, Booking $b) => $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : __('partner.sources')[$state] ?? $state)->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()->visibleFrom('md')
+                Tables\Columns\TextColumn::make('status')->label(__('partner.status'))->badge()->visibleFrom('xl')
                     ->formatStateUsing(fn ($state) => __('ui.status')[$state] ?? $state)
                     ->color(fn ($state) => BookingActions::statusColor($state)),
-                Tables\Columns\TextColumn::make('unread_count')->label('')->badge()->color('danger')->icon('heroicon-o-chat-bubble-left-right')->visibleFrom('md')
+                Tables\Columns\TextColumn::make('unread_count')->label('')->badge()->color('danger')->icon('heroicon-o-chat-bubble-left-right')->visibleFrom('xl')
                     ->formatStateUsing(fn ($state) => $state ?: null)->tooltip(__('partner.unread_messages')),
-                Tables\Columns\TextColumn::make('reference')->label(__('partner.reference'))->searchable()->toggleable(isToggledHiddenByDefault: true)->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('reference')->label(__('partner.reference'))->searchable()->toggleable(isToggledHiddenByDefault: true)->visibleFrom('2xl'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('source')->label(__('partner.source'))->options(__('partner.sources')),
                 Tables\Filters\SelectFilter::make('status')->label(__('partner.status'))->options(__('ui.status'))->default('waiting')->multiple(),
+                Tables\Filters\SelectFilter::make('order')->label(__('partner.sort_by'))->options(__('partner.sort_options'))
+                    ->query(fn (Builder $query) => $query)
+                    // Un tri choisi sur un en-tête de colonne (ordinateur) reste prioritaire.
+                    ->baseQuery(fn (Builder $query, array $data, $livewire) => match ($livewire->tableSortColumn ? null : ($data['value'] ?? null)) {
+                        'date_asc' => $query->orderBy('start_at'),
+                        'total_desc' => $query->orderBy('total', 'desc'),
+                        'total_asc' => $query->orderBy('total'),
+                        default => $query,
+                    }),
                 Tables\Filters\Filter::make('upcoming')->label(__('partner.upcoming'))->query(fn (Builder $query) => $query->where('start_at', '>=', now())),
             ])
             ->actions([
@@ -121,15 +130,15 @@ class BookingResource extends Resource
         $muted = 'style="color:#6b7280;font-size:.8rem"';
         $status = __('ui.status')[$b->status] ?? $b->status;
         $color = match (BookingActions::statusColor($b->status)) {
-            'success' => 'background:#dcfce7;color:#166534', 'warning' => 'background:#fef3c7;color:#92400e', 'danger' => 'background:#fee2e2;color:#991b1b', 'info' => 'background:#dbeafe;color:#1e40af', default => 'background:#f3f4f6;color:#374151',
+            'success' => 'background:#f0fdf4;color:#16a34a', 'warning' => 'background:#fffbeb;color:#d97706', 'danger' => 'background:#fef2f2;color:#dc2626', 'info' => 'background:#eff6ff;color:#2563eb', default => 'background:#f9fafb;color:#4b5563',
         };
-        $badge = '<span style="display:inline-block;border-radius:.375rem;padding:.1rem .5rem;font-size:.75rem;font-weight:600;'.$color.'">'.e($status).'</span>';
+        $badge = '<span style="display:inline-block;border-radius:.375rem;padding:.25rem .5rem;font-size:.75rem;line-height:1rem;font-weight:500;'.$color.'">'.e($status).'</span>';
         $source = $b->channel ? (__('partner.channels')[$b->channel] ?? $b->channel) : (__('partner.sources')[$b->source] ?? $b->source);
         $parts = [
-            '<div style="font-weight:700">'.e($b->start_at->translatedFormat('D d/m · H:i')).' <span '.$muted.'>→ '.e($b->end_at->format('H:i')).' · '.$b->duration_min.' min</span></div>',
+            '<div style="font-weight:700">'.e($b->start_at->translatedFormat('D d/m/Y · H:i')).' <span '.$muted.'>→ '.e($b->end_at->format('H:i')).' · <span style="white-space:nowrap">'.$b->duration_min."\u{00A0}min".'</span></span></div>',
             '<div>'.e($b->customerName()).' <span '.$muted.'>· '.$b->party.' '.e(__('partner.pers')).'</span></div>',
             '<div style="white-space:normal">'.e(static::treatmentsLine($b)).'</div>',
-            '<div style="margin-top:.3rem">'.$badge.' <strong>'.e(number_format((float) $b->total, 0, ',', ' ')).' '.e(config('hl.currency')).'</strong>'
+            '<div style="margin-top:.3rem">'.$badge.' <strong style="white-space:nowrap">'.e(number_format((float) $b->total, 2, ',', ' '))."\u{00A0}".e(config('hl.currency')).'</strong>'
                 .($b->unread_count ? ' <span style="color:#991b1b;font-weight:600">✉ '.$b->unread_count.'</span>' : '').'</div>',
             '<div '.$muted.'>'.e($b->reference.' · '.$source).'</div>',
         ];

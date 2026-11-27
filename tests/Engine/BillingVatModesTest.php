@@ -141,6 +141,7 @@ class BillingVatModesTest extends BookingFlowTestCase
     /** Toute ligne mentionnant le crédit annulé affiche un reste à 0,00 et aucune mise en valeur « disponible ». */
     private function assertReversedCreditShowsNothingAvailable(string $html): void
     {
+        $html = str_replace(['&nbsp;', "\u{00A0}"], ' ', $html); // la devise est liée au montant par une espace insécable
         $rows = array_filter(explode('<tr', $html), fn (string $row) => str_contains($row, __('billing.credit_status_reversed')) && str_contains($row, 'MAD'));
         $this->assertNotEmpty($rows, 'la ligne du crédit annulé doit être affichée');
         foreach ($rows as $row) {

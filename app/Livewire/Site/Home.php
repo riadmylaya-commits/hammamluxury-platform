@@ -22,6 +22,10 @@ class Home extends Component
         $cities = Spa::query()->fromSub($catalogue->bookableSpas()->select('city'), 'b')
             ->selectRaw('city, COUNT(*) AS n')->groupBy('city')->orderByDesc('n')->limit(4)->get();
 
+        // Photo de la destination : couverture du premier établissement publié de la ville qui en a une.
+        $cities->each(fn ($c) => $c->photo = $catalogue->bookableSpas()->where('city', $c->city)->with('photos')->orderBy('id')->get()
+            ->map(fn (Spa $s) => $s->coverPhoto()?->url())->filter()->first());
+
         return view('livewire.site.home', [
             'cities' => $cities,
             'featured' => $catalogue->search(null)->limit(4)->get()->map(fn (Spa $s) => $catalogue->spaCard($s) + ['treatments_count' => $s->treatments_count]),

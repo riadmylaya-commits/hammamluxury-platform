@@ -47,7 +47,7 @@
                             <h4>{{ $t['name'] }} @if ($t['is_package'])<span class="chip acc">{{ __('ui.package') }}</span>@endif</h4>
                             @if ($t['is_package'])
                                 <div class="pkg">
-                                    @foreach ($t['steps'] as $s)<span class="pkg-step"><b>{{ $s['type'] }}</b> {{ $s['duration_min'] }} {{ __('ui.min') }}</span>@if (! $loop->last)<span class="pkg-plus">+</span>@endif @endforeach
+                                    @foreach ($t['steps'] as $s)<span class="pkg-step"><b>{{ $s['type'] }}</b> {{ $s['duration_min'] }}&nbsp;{{ __('ui.min') }}</span>@if (! $loop->last)<span class="pkg-plus">+</span>@endif @endforeach
                                 </div>
                                 <div class="small"><b>{{ __('ui.total_duration') }} {{ $t['duration_label'] }}</b> <span class="muted">· {{ __('ui.cat.'.$t['category']) }}</span></div>
                             @else
@@ -58,7 +58,7 @@
                                 <div class="incl"><span class="xs muted">{{ __('ui.included_title') }}</span>@foreach ($t['included'] as $inc)<span class="chip ok">✓ {{ $inc }}</span>@endforeach</div>
                             @endif
                             @if ($t['extras'])
-                                <div class="incl"><span class="xs muted">{{ __('ui.add_to_ritual') }}</span>@foreach ($t['extras'] as $e)<span class="chip grey">+ {{ $e['name'] }} · {{ number_format($e['price'], 0, ',', ' ') }} {{ $cur }}@if ($e['extra_min']) · +{{ $e['extra_min'] }} {{ __('ui.min') }}@endif</span>@endforeach</div>
+                                <div class="incl"><span class="xs muted">{{ __('ui.add_to_ritual') }}</span>@foreach ($t['extras'] as $e)<span class="chip grey">+ {{ $e['name'] }} · {{ number_format($e['price'], 0, ',', ' ') }} {{ $cur }}@if ($e['extra_min']) · +{{ $e['extra_min'] }}&nbsp;{{ __('ui.min') }}@endif</span>@endforeach</div>
                             @endif
                             @if ($t['price_group'] && ! $t['fixed_party'])<div class="xs muted" style="margin-top:6px">{{ __('ui.formula.group') }} {{ number_format($t['price_group'], 0, ',', ' ') }} {{ $cur }}{{ __('ui.per_person') }}</div>@endif
                         </div>

@@ -138,19 +138,19 @@ class TreatmentResource extends Resource
             ->reorderable('sort_order')
             ->defaultSort('sort_order')
             ->columns([
-                Tables\Columns\TextColumn::make('name_fr')->label(__('partner.treatment'))->searchable()->weight('bold')
+                Tables\Columns\TextColumn::make('name_fr')->label(__('partner.treatment'))->searchable()->wrap()->weight('bold')
                     ->icon(fn (Treatment $t) => $t->featured_badge ? 'heroicon-s-star' : null)->iconColor('warning')
                     ->description(fn (Treatment $t) => $t->steps->count() > 1 ? __('ui.package').' · '.$t->steps->map(fn ($s) => $s->duration_min.' min')->implode(' → ') : null),
-                Tables\Columns\TextColumn::make('category')->label(__('partner.category'))->formatStateUsing(fn ($state) => __('ui.cat')[$state] ?? $state)->badge()->color('gray'),
-                Tables\Columns\TextColumn::make('duration_min')->label(__('partner.duration'))->suffix(' min'),
+                Tables\Columns\TextColumn::make('category')->visibleFrom('lg')->label(__('partner.category'))->formatStateUsing(fn ($state) => __('ui.cat')[$state] ?? $state)->badge()->color('gray'),
+                Tables\Columns\TextColumn::make('duration_min')->visibleFrom('sm')->label(__('partner.duration'))->suffix(' min'),
                 Tables\Columns\TextColumn::make('price_solo')->label(__('partner.price_solo'))->money(config('hl.currency'), locale: 'fr'),
-                Tables\Columns\TextColumn::make('price_couple')->label(__('partner.price_couple'))->money(config('hl.currency'), locale: 'fr')->placeholder('—'),
-                Tables\Columns\TextColumn::make('nr_discount_pct')->label(__('ui.policy.non_refundable'))->formatStateUsing(fn ($state) => '−'.$state.' %')->placeholder('—')->badge()->color('success')->visible(fn () => CancellationPolicy::nrEnabled()),
-                Tables\Columns\TextColumn::make('cancellation_hours')->label(__('partner.cancellation_hours'))->formatStateUsing(fn ($state) => CancellationPolicy::label((int) $state))->placeholder(__('partner.spa_default'))->toggleable(),
-                Tables\Columns\TextColumn::make('extras_count')->counts('extras')->label(__('partner.extras')),
-                Tables\Columns\IconColumn::make('status')->label(__('partner.status'))->boolean(fn ($state) => $state === 'active')->getStateUsing(fn (Treatment $t) => $t->status === 'active'),
+                Tables\Columns\TextColumn::make('price_couple')->visibleFrom('md')->label(__('partner.price_couple'))->money(config('hl.currency'), locale: 'fr')->placeholder('—'),
+                Tables\Columns\TextColumn::make('nr_discount_pct')->visibleFrom('lg')->label(__('ui.policy.non_refundable'))->formatStateUsing(fn ($state) => '−'.$state.' %')->placeholder('—')->badge()->color('success')->visible(fn () => CancellationPolicy::nrEnabled()),
+                Tables\Columns\TextColumn::make('cancellation_hours')->visibleFrom('2xl')->label(__('partner.cancellation_hours'))->formatStateUsing(fn ($state) => CancellationPolicy::label((int) $state))->placeholder(__('partner.spa_default'))->toggleable(),
+                Tables\Columns\TextColumn::make('extras_count')->visibleFrom('lg')->counts('extras')->label(__('partner.extras')),
+                Tables\Columns\IconColumn::make('status')->visibleFrom('sm')->label(__('partner.status'))->boolean()->getStateUsing(fn (Treatment $t) => $t->status === 'active'),
             ])
-            ->actions([Tables\Actions\EditAction::make()])
+            ->actions([Tables\Actions\EditAction::make()->iconButton()])
             ->emptyStateHeading(__('partner.no_treatments'))
             ->emptyStateDescription(__('partner.no_treatments_help'));
     }

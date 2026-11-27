@@ -5,7 +5,7 @@ namespace App\Domain\Phone;
 use Illuminate\Http\Request;
 
 /**
- * Numéros de téléphone au format international E.164 (ex. +212661351989).
+ * Numéros de téléphone au format international E.164 (ex. +212612345678).
  * Pays proposés dans les sélecteurs, détection du pays par défaut, normalisation et découpage.
  */
 final class PhoneNumber
@@ -100,7 +100,7 @@ final class PhoneNumber
 
     /**
      * Retourne le numéro au format E.164 ou null si invalide.
-     * Accepte "0661351989" (national), "661 35 19 89", "+212661351989", "00212…".
+     * Accepte "0612345678" (national), "612 34 56 78", "+212612345678", "00212…".
      */
     public static function normalize(?string $raw, ?string $iso = null): ?string
     {

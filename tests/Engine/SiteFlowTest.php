@@ -28,7 +28,7 @@ class SiteFlowTest extends BookingFlowTestCase
         $this->get('/en/recherche?q=nulle-part')->assertOk()->assertSee('No venue matches');
         $this->get('/fr/recherche?category=massage')->assertOk()->assertSee($this->spa->name);
         $this->get('/fr/recherche?category=face')->assertOk()->assertSee('Aucun établissement');
-        $this->get('/fr/spa/'.$this->spa->slug)->assertOk()->assertSee('Hammam + Massage')->assertSee('Massage crânien')->assertSee('+15 min')->assertSee('Fermé')->assertDontSee($this->spa->phone);
+        $this->get('/fr/spa/'.$this->spa->slug)->assertOk()->assertSee('Hammam + Massage')->assertSee('Massage crânien')->assertSee('+15&nbsp;min', false)->assertSee('Fermé')->assertDontSee($this->spa->phone);
         $this->get('/en/spa/'.$this->spa->slug)->assertOk()->assertSee('Treatments &amp; prices', false)->assertSee('Package');
         $this->get('/de/spa/'.$this->spa->slug)->assertNotFound();
         $this->spa->update(['status' => 'pending']);
@@ -40,7 +40,7 @@ class SiteFlowTest extends BookingFlowTestCase
         $c = Livewire::withQueryParams(['soin' => $this->hm->id])->test(BookingFlow::class, ['spa' => $this->spa])
             ->assertSet('treatment', $this->hm->id)->assertSee('1 pers.')
             ->call('changeParty', 1)->assertSet('party', 2)
-            ->call('toggleExtra', $this->cr->id)->assertSee('1 350 MAD')->assertSee('135 min')
+            ->call('toggleExtra', $this->cr->id)->assertSee('1 350 MAD')->assertSee('135&nbsp;min', false)
             ->call('next')->assertSet('step', 2)->assertSet('error', '')
             ->call('pickDate', $this->day)->assertSee('10:00')->assertSee('11:30')->assertDontSee('>12:00<', false)
             ->call('pickTime', '10:00')->assertSee('12:15')

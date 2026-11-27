@@ -146,7 +146,7 @@
         <dt>{{ __('ui.recap_date') }}</dt><dd>{{ $b->start_at->locale(app()->getLocale())->isoFormat('ddd D MMM YYYY') }}</dd>
         <dt>{{ __('ui.recap_time') }}</dt><dd>{{ $b->start_at->format('H:i') }} → {{ $b->end_at->format('H:i') }}</dd>
         <dt>{{ __('ui.recap_party') }}</dt><dd>{{ $b->party }}</dd>
-        <dt>{{ __('ui.recap_duration') }}</dt><dd>{{ $b->duration_min }} {{ __('ui.min') }}</dd>
+        <dt>{{ __('ui.recap_duration') }}</dt><dd>{{ $b->duration_min }}&nbsp;{{ __('ui.min') }}</dd>
         <dt>{{ __('ui.first_name') }}</dt><dd>{{ $b->first_name }} {{ $b->last_name }}</dd>
         @if ($b->hotel)<dt>{{ __('ui.hotel') }}</dt><dd>{{ $b->hotel }}</dd>@endif
     </dl>

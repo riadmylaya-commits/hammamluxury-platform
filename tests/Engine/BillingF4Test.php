@@ -452,6 +452,7 @@ class BillingF4Test extends BookingFlowTestCase
         $this->assertEqualsWithDelta($amount, $credit->applied_amount, 0.001);
         $this->assertEqualsWithDelta(40 - $amount, $credit->remaining(), 0.001);
         $this->assertSame(PartnerCredit::STATUS_OPEN, $credit->status);
+        $this->assertSame('open', $credit->displayStatus());
         try {
             app(PaymentRecorder::class)->reverse($payment, $this->admin, 'x', 'rv-1');
             $this->fail('credit application must not be reversible as a payment');
@@ -468,6 +469,8 @@ class BillingF4Test extends BookingFlowTestCase
         $this->assertSame('VIR-2026-1', $refund->refund_reference);
         $this->assertSame(0.0, $refund->credit_remaining_after);
         $credit->refresh();
+        $this->assertSame('settled', $credit->displayStatus(), 'imputation + remboursement = Soldé');
+        $this->assertSame('Soldé', __('billing.credit_status_settled', [], 'fr'));
         $this->assertSame(0.0, $credit->remaining());
         $this->assertSame(PartnerCredit::STATUS_APPLIED, $credit->status, 'usage majoritaire = imputation');
         $this->assertNotNull($credit->closed_at);

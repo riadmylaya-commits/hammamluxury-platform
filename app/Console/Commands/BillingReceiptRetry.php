@@ -15,7 +15,7 @@ class BillingReceiptRetry extends Command
 
     public function handle(): int
     {
-        $stuck = InvoicePayment::cash()->whereNotNull('receipt_number')->where('receipt_attempts', '<', (int) $this->option('max'))
+        $stuck = InvoicePayment::whereNotNull('receipt_number')->where('receipt_attempts', '<', (int) $this->option('max'))
             ->where(fn ($q) => $q->where('receipt_status', InvoicePayment::RECEIPT_FAILED)
                 ->orWhere(fn ($q) => $q->where('receipt_status', InvoicePayment::RECEIPT_PENDING)->where('updated_at', '<', now()->subMinutes(15))))
             ->get();

@@ -91,7 +91,7 @@ class BookingFlow extends Component
         $this->spa = $spa->load('hours');
         $this->date = CatalogueService::parseDate($this->date)?->format('Y-m-d') ?? '';
         $this->month = ($this->date ? CarbonImmutable::parse($this->date) : CarbonImmutable::now())->format('Y-m');
-        $this->phoneCountry = PhoneNumber::detectCountry();
+        $this->phoneCountry = PhoneNumber::DEFAULT_COUNTRY;
         if ($this->treatment && ! $this->catalogue()->firstWhere('id', $this->treatment)) {
             $this->treatment = null;
         }

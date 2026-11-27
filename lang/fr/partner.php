@@ -91,6 +91,7 @@ return [
     'no_extras' => 'Aucun extra',
 
     // Ressources
+    'resource_types_nav' => 'Ressources',
     'resource_types' => 'Ressources (cabines, thérapeutes…)',
     'resource_type' => 'Type de ressource',
     'add_resource_type' => 'Ajouter un type',
@@ -590,4 +591,6 @@ return [
     'rotate_link_mode' => 'Que souhaitez-vous faire ?',
     'rotate_link_rotate' => 'Générer un nouveau lien (l’ancien est invalidé)',
     'rotate_link_revoke' => 'Révoquer l’accès sans nouveau lien',
+    'sort_by' => 'Trier par',
+    'sort_options' => ['date_asc' => 'Date : la plus ancienne d’abord', 'total_desc' => 'Total : le plus élevé d’abord', 'total_asc' => 'Total : le plus bas d’abord'],
 ];

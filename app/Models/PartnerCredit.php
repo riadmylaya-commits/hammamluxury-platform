@@ -80,6 +80,17 @@ class PartnerCredit extends Model
         return round(max(0, $this->amount - $this->applied_amount - $this->refunded_amount), 2);
     }
 
+    /** Statut affiché : « settled » quand le crédit a été consommé à la fois par imputation et par remboursement. */
+    public function displayStatus(): string
+    {
+        if (in_array($this->status, [self::STATUS_APPLIED, self::STATUS_REFUNDED], true)
+            && $this->applications->pluck('kind')->unique()->count() > 1) {
+            return 'settled';
+        }
+
+        return $this->status;
+    }
+
     public function isOpen(): bool
     {
         return $this->status === self::STATUS_OPEN;

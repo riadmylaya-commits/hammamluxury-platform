@@ -92,7 +92,7 @@
                     @if ($pt['extras'])
                         <div class="pcard-extras">
                             @foreach ($pt['extras'] as $e)
-                                <button type="button" class="xchip" aria-pressed="{{ isset($p['extras'][$e['id']]) ? 'true' : 'false' }}" wire:click="toggleExtra({{ $e['id'] }}, {{ $i }})">{{ isset($p['extras'][$e['id']]) ? '✓ ' : '+ ' }}{{ $e['name'] }}@if (isset($p['extras'][$e['id']]) && $e['max_qty'] > 1) ×{{ $p['extras'][$e['id']] }}@endif · {{ $fmt($e['price']) }}@if ($e['extra_min']) · +{{ $e['extra_min'] }} {{ __('ui.min') }}@endif</button>
+                                <button type="button" class="xchip" aria-pressed="{{ isset($p['extras'][$e['id']]) ? 'true' : 'false' }}" wire:click="toggleExtra({{ $e['id'] }}, {{ $i }})">{{ isset($p['extras'][$e['id']]) ? '✓ ' : '+ ' }}{{ $e['name'] }}@if (isset($p['extras'][$e['id']]) && $e['max_qty'] > 1) ×{{ $p['extras'][$e['id']] }}@endif · {{ $fmt($e['price']) }}@if ($e['extra_min']) · +{{ $e['extra_min'] }}&nbsp;{{ __('ui.min') }}@endif</button>
                             @endforeach
                         </div>
                     @endif
@@ -132,7 +132,7 @@
         @if ($ct['extras'])<div class="muted small" style="margin-bottom:8px">{{ __('ui.add_to_ritual_help') }}</div>@endif
         @forelse ($ct['extras'] as $e)
             <button type="button" class="opt" aria-pressed="{{ isset($extras[$e['id']]) ? 'true' : 'false' }}" wire:click="toggleExtra({{ $e['id'] }})">
-                <div><b>{{ $e['name'] }}</b>@if (isset($extras[$e['id']]) && $e['max_qty'] > 1) ×{{ $extras[$e['id']] }}@endif<div class="muted small">@if ($e['per_person']){{ __('ui.extra_each') }}@endif @if ($e['extra_min'])· +{{ $e['extra_min'] }} {{ __('ui.min') }}@endif</div></div>
+                <div><b>{{ $e['name'] }}</b>@if (isset($extras[$e['id']]) && $e['max_qty'] > 1) ×{{ $extras[$e['id']] }}@endif<div class="muted small">@if ($e['per_person']){{ __('ui.extra_each') }}@endif @if ($e['extra_min'])· +{{ $e['extra_min'] }}&nbsp;{{ __('ui.min') }}@endif</div></div>
                 <div class="r"><b>+{{ $fmt($e['price']) }}</b></div>
             </button>
         @empty
@@ -159,7 +159,7 @@
 @elseif ($step === 2)
     <h2 style="font-size:20px;margin-bottom:10px">{{ __('ui.pick_date') }}</h2>
     <div class="card" style="padding:12px">
-        <div class="calnav"><button type="button" wire:click="shiftMonth(-1)">‹</button><b>{{ \Carbon\CarbonImmutable::parse($month.'-01')->locale(app()->getLocale())->isoFormat('MMMM YYYY') }}</b><button type="button" wire:click="shiftMonth(1)">›</button></div>
+        <div class="calnav"><button type="button" wire:click="shiftMonth(-1)" aria-label="{{ __('ui.prev_month') }}">‹</button><b>{{ \Carbon\CarbonImmutable::parse($month.'-01')->locale(app()->getLocale())->isoFormat('MMMM YYYY') }}</b><button type="button" wire:click="shiftMonth(1)" aria-label="{{ __('ui.next_month') }}">›</button></div>
         <div class="cal">
             @foreach (__('ui.days_short') as $d)<div class="h">{{ $d }}</div>@endforeach
             @foreach ($calendar as $c)
@@ -180,7 +180,7 @@
         @if ($slots)
             <div class="slots">@foreach ($slots as $s)<button type="button" aria-pressed="{{ $time === $s ? 'true' : 'false' }}" wire:click="pickTime('{{ $s }}')">{{ $s }}</button>@endforeach</div>
             @if ($lastMinuteUntil)<div class="notice warn" style="margin-top:8px"><b>{{ __('ui.last_minute_title') }}</b> {{ __('ui.last_minute_slot', ['minutes' => config('hl.last_minute.response_minutes')]) }}</div>@endif
-            @if ($time)<div class="muted small" style="margin-top:8px">{{ __('ui.ends_at', ['time' => \Carbon\CarbonImmutable::parse("$date $time")->addMinutes($quote['duration_min'])->format('H:i')]) }} · {{ $quote['duration_min'] }} {{ __('ui.min') }}</div>@endif
+            @if ($time)<div class="muted small" style="margin-top:8px">{{ __('ui.ends_at', ['time' => \Carbon\CarbonImmutable::parse("$date $time")->addMinutes($quote['duration_min'])->format('H:i')]) }} · {{ $quote['duration_min'] }}&nbsp;{{ __('ui.min') }}</div>@endif
         @else
             <div class="notice"><b>{{ __('ui.no_slots') }}</b><br>{{ $slotsReason }}<br><span class="muted">{{ __('ui.try_other') }}</span></div>
         @endif
@@ -203,9 +203,9 @@
         </div>
         <div class="fld"><label>{{ __('ui.email') }}</label><input class="inp @error('email') err @enderror" type="email" wire:model="email" autocomplete="email" inputmode="email" required>@error('email')<span class="ferr">{{ $message }}</span>@enderror</div>
         <div class="fld"><label>{{ __('ui.phone') }}</label>
-            <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,2fr);gap:8px">
+            <div class="telgrid">
                 <select class="inp @error('phoneCountry') err @enderror" wire:model="phoneCountry" autocomplete="tel-country-code" aria-label="{{ __('phone.country') }}">@foreach (\App\Domain\Phone\PhoneNumber::options() as $iso => $lbl)<option value="{{ $iso }}">{{ $lbl }}</option>@endforeach</select>
-                <input class="inp @error('phone') err @enderror" type="tel" wire:model="phone" autocomplete="tel-national" inputmode="tel" placeholder="0661351989" aria-label="{{ __('phone.number') }}" required>
+                <input class="inp @error('phone') err @enderror" type="tel" wire:model="phone" autocomplete="tel-national" inputmode="tel" placeholder="0612345678" aria-label="{{ __('phone.number') }}" required>
             </div>
             <span class="xs muted">{{ __('phone.help') }}</span>
             @error('phone')<span class="ferr">{{ $message }}</span>@enderror
@@ -234,7 +234,7 @@
 @php($recap = view('livewire.site._recap', ['quote' => $quote, 'spa' => $spa, 'date' => $date, 'time' => $time, 'fmt' => $fmt, 'treatments' => $treatments])->render())
 <aside class="card recap desk">{!! $recap !!}</aside>
 <div class="stickytot mobile-only inflow">
-    <details><summary class="row" style="list-style:none;cursor:pointer"><div class="sp"><b>{{ $fmt($quote['total']) }}</b> <span class="muted small">· {{ $quote['party'] }} pers. · {{ $quote['duration_min'] }} {{ __('ui.min') }}</span></div><span class="chip grey">{{ __('ui.recap') }}</span></summary>
+    <details><summary class="row" style="list-style:none;cursor:pointer"><div class="sp"><b>{{ $fmt($quote['total']) }}</b> <span class="muted small">· {{ $quote['party'] }} pers. · {{ $quote['duration_min'] }}&nbsp;{{ __('ui.min') }}</span></div><span class="chip grey">{{ __('ui.recap') }}</span></summary>
     <div style="padding-top:10px">{!! $recap !!}</div></details>
 </div>
 @endif

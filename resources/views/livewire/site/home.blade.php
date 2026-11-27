@@ -7,7 +7,7 @@
         <div class="fld"><label>{{ __('ui.search_where') }}</label><input class="inp" name="q" value="{{ $q }}" placeholder="{{ __('ui.search_where_ph') }}" autocomplete="off"></div>
         <div class="fld"><label>{{ __('ui.search_what') }}</label>
             <select class="inp" name="category"><option value="">{{ __('ui.any_treatment') }}</option>@foreach (__('ui.cat') as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
-        <div class="fld"><label>{{ __('ui.search_when') }}</label><input class="inp" type="date" name="date" min="{{ now()->format('Y-m-d') }}"></div>
+        <div class="fld"><label>{{ __('ui.search_when') }}</label><span class="datewrap"><input class="inp" type="date" data-datefmt aria-label="{{ __('ui.search_when') }} ({{ __('ui.date_ph') }})" name="date" data-prev="{{ __('ui.prev_month') }}" data-next="{{ __('ui.next_month') }}" data-clear="{{ __('ui.date_reset') }}" min="{{ now()->format('Y-m-d') }}"><span class="datefmt empty" data-ph="{{ __('ui.date_ph') }}" aria-hidden="true">{{ __('ui.date_ph') }}</span></span></div>
         <button class="btn" type="submit">{{ __('ui.search_btn') }}</button>
     </form>
 </x-slot:hero>
@@ -22,7 +22,7 @@
 <section class="sec"><h2>{{ __('ui.popular_cities') }}</h2>
     <div class="hscroll">
         @foreach ($cities as $i => $c)
-            <a class="city" href="{{ route('search', ['q' => $c->city]) }}"><div class="ph {{ ['', 'green', 'sand', 'blue'][$i % 4] }}"><span>{{ $c->city }} · {{ trans_choice('ui.spas', $c->n) }}</span></div></a>
+            <a class="city" href="{{ route('search', ['q' => $c->city]) }}"><div class="ph {{ ['', 'green', 'sand', 'blue'][$i % 4] }}">@if ($c->photo)<img src="{{ $c->photo }}" alt="">@endif<span>{{ $c->city }} · {{ trans_choice('ui.spas', $c->n) }}</span></div></a>
         @endforeach
     </div>
 </section>

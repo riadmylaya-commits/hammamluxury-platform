@@ -25,7 +25,7 @@ class PendingBookings extends TableWidget
             ->columns([
                 // Téléphone et tablette : une carte par demande (aucun défilement horizontal) ; le tableau reste sur ordinateur (≥ 1280 px).
                 Tables\Columns\TextColumn::make('m_card')->label('')->state(fn (Booking $b) => static::mobileCard($b))->html()->wrap()->hiddenFrom('xl'),
-                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m · H:i')->visibleFrom('xl')
+                Tables\Columns\TextColumn::make('start_at')->label(__('partner.date_time'))->dateTime('D d/m/Y · H:i')->visibleFrom('xl')
                     ->description(fn (Booking $b) => $b->last_minute ? __('partner.last_minute_short') : null),
                 Tables\Columns\TextColumn::make('customer')->label(__('partner.customer'))->getStateUsing(fn (Booking $b) => $b->customerName().' · '.$b->party.' '.__('partner.pers'))->wrap()->visibleFrom('xl'),
                 Tables\Columns\TextColumn::make('participants')->label(__('partner.treatments'))
@@ -54,7 +54,7 @@ class PendingBookings extends TableWidget
             : '';
 
         return new HtmlString(implode('', [
-            '<div style="font-weight:700">'.e($b->start_at->translatedFormat('D d/m · H:i')).'</div>',
+            '<div style="font-weight:700">'.e($b->start_at->translatedFormat('D d/m/Y · H:i')).'</div>',
             $urgent,
             '<div style="white-space:normal">'.e($b->customerName()).' <span '.$muted.'>· '.$b->party.' '.e(__('partner.pers')).'</span></div>',
             '<div style="white-space:normal" '.$muted.'>'.e($b->participants->pluck('treatment_name')->unique()->implode(', ')).'</div>',

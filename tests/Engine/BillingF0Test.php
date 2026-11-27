@@ -137,6 +137,42 @@ class BillingF0Test extends BookingFlowTestCase
         $this->assertTrue($log->properties['new']);
     }
 
+    public function test_production_issuance_requires_the_authorised_issuer_fingerprint(): void
+    {
+        $settings = app(BillingSettings::class);
+        $settings->set('issuer.company_name', 'Société Exemple SARL');
+        $gate = app(BillingGate::class);
+        $this->assertNotContains('issuer_not_authorized', $gate->globalBlockers());
+        $this->app['env'] = 'production';
+        try {
+            $this->assertContains('issuer_not_authorized', $gate->globalBlockers());
+            config(['hl.billing.authorized_issuer_fingerprint' => $gate->issuerFingerprint()]);
+            $this->assertNotContains('issuer_not_authorized', $gate->globalBlockers());
+            // Toute modification de l'identité, ou un autre hôte, invalide l'autorisation.
+            $settings->set('issuer.bank_account', 'MA64 1111 0000 0000 0000 0000 000');
+            $this->assertContains('issuer_not_authorized', app(BillingGate::class)->globalBlockers());
+            config(['hl.billing.authorized_issuer_fingerprint' => app(BillingGate::class)->issuerFingerprint()]);
+            config(['app.url' => 'https://autre.example']);
+            $this->assertContains('issuer_not_authorized', app(BillingGate::class)->globalBlockers());
+        } finally {
+            $this->app['env'] = 'testing';
+        }
+    }
+
+    public function test_a_test_issuer_identity_blocks_issuance_in_production_only(): void
+    {
+        $settings = app(BillingSettings::class);
+        $settings->set('issuer.company_name', 'HL TEST émetteur fictif SARL');
+        $settings->set('issuer.bank_account', 'RIB FICTIF - AUCUN VIREMENT');
+        $this->assertNotContains('issuer_fictitious', app(BillingGate::class)->globalBlockers());
+        $this->app['env'] = 'production';
+        $this->assertContains('issuer_fictitious', app(BillingGate::class)->globalBlockers());
+        $settings->set('issuer.company_name', 'Jaune et Vert SARLAU');
+        $settings->set('issuer.bank_account', 'MA64 0000 0000 0000 0000 0000 000');
+        $this->assertNotContains('issuer_fictitious', app(BillingGate::class)->globalBlockers());
+        $this->app['env'] = 'testing';
+    }
+
     public function test_release_locks_cannot_be_lifted_by_settings_table_or_admin_form(): void
     {
         $this->actingAs($this->admin);
@@ -186,11 +222,9 @@ class BillingF0Test extends BookingFlowTestCase
         $this->assertSame('billable', $lateEntry->billing_scope, 'Commission acquise après le démarrage pour une prestation ancienne : facturable.');
         $this->assertSame(60.0, $lateEntry->amount);
 
-        // Nouvelles écritures après qualification : l'émission est bloquée tant qu'elles ne sont pas qualifiées.
+        // Nouvelles écritures après la qualification initiale : qualifiées d'office à leur création, sans commande manuelle.
         $this->bookings->setPaymentStatus($old->fresh(), 'admin', 'paid');
         $this->bookings->setPaymentStatus($late->fresh(), 'admin', 'refunded');
-        $this->assertContains('ledger_unqualified_entries', $gate()->globalBlockers());
-        $this->artisan('hl:billing-mark-legacy', ['--apply' => true])->assertSuccessful();
         $this->assertNotContains('ledger_unqualified_entries', $gate()->globalBlockers());
         $this->assertSame(0, LedgerEntry::whereNull('billing_scope')->count());
         $this->assertSame('legacy', LedgerEntry::where('booking_id', $old->id)->orderByDesc('id')->first()->billing_scope);

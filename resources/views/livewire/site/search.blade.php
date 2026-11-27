@@ -3,7 +3,7 @@
     <div class="fld"><label>{{ __('ui.search_where') }}</label><input class="inp" wire:model.live.debounce.400ms="q" placeholder="{{ __('ui.search_where_ph') }}"></div>
     <div class="fld"><label>{{ __('ui.search_what') }}</label>
         <select class="inp" wire:model.live="category"><option value="">{{ __('ui.any_treatment') }}</option>@foreach (__('ui.cat') as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></div>
-    <div class="fld"><label>{{ __('ui.search_when') }}</label><input class="inp" type="date" wire:model.live="date" min="{{ now()->format('Y-m-d') }}"></div>
+    <div class="fld"><label>{{ __('ui.search_when') }}</label><span class="datewrap" wire:ignore><input class="inp" type="date" data-datefmt aria-label="{{ __('ui.search_when') }} ({{ __('ui.date_ph') }})" wire:model.live="date" data-prev="{{ __('ui.prev_month') }}" data-next="{{ __('ui.next_month') }}" data-clear="{{ __('ui.date_reset') }}" min="{{ now()->format('Y-m-d') }}"><span class="datefmt {{ \App\Domain\Catalogue\CatalogueService::parseDate($date) ? '' : 'empty' }}" data-ph="{{ __('ui.date_ph') }}" aria-hidden="true">{{ ($d = \App\Domain\Catalogue\CatalogueService::parseDate($date)) ? $d->format('d/m/Y') : __('ui.date_ph') }}</span></span></div>
     <button class="btn" type="submit">{{ __('ui.search_btn') }}</button>
 </form>
 <div class="fchips">
@@ -24,7 +24,7 @@
             <label class="sortsel small"><span class="muted">{{ __('ui.sort_by') }}</span>
                 <select class="inp" wire:model.live="sort">@foreach (__('ui.sort') as $k => $v)<option value="{{ $k }}">{{ $v }}</option>@endforeach</select></label>
         </div>
-        @if ($searchDate)<div class="notice ok small" style="margin-bottom:12px">{{ __('ui.open_on_date', ['date' => \Carbon\CarbonImmutable::parse($searchDate)->translatedFormat('l j F Y')]) }} <a href="{{ route('search', array_filter(['q' => $q, 'category' => $category, 'sort' => $sort !== 'recommended' ? $sort : null])) }}">{{ __('ui.clear_date') }}</a></div>@endif
+        @if ($searchDate)<div class="notice ok small" style="margin-bottom:12px">{{ __('ui.open_on_date', ['date' => \Carbon\CarbonImmutable::parse($searchDate)->translatedFormat('l j F Y')]) }} <a href="{{ route('search', array_filter(['q' => $q, 'category' => $category, 'sort' => $sort !== 'recommended' ? $sort : null])) }}" data-date-clear>{{ __('ui.clear_date') }}</a></div>@endif
         @if ($spas->isEmpty())<div class="notice">{{ $searchDate ? __('ui.no_results_date') : __('ui.no_results') }}</div>@endif
         <div class="rescards">@foreach ($spas as $s)@include('livewire.site._spa-card', ['s' => $s, 'searchDate' => $searchDate])@endforeach</div>
     </div>

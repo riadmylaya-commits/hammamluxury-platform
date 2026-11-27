@@ -27,7 +27,7 @@ class GenerateReceiptPdf implements ShouldQueue
     public function handle(ReceiptPdf $pdf, BillingNotifier $notifier, PaymentRecorder $recorder): void
     {
         $payment = InvoicePayment::with(['invoice.partner'])->find($this->paymentId);
-        if ($payment === null || ! $payment->isCash() || $payment->receipt_number === null) {
+        if ($payment === null || $payment->receipt_number === null) {
             return;
         }
         if ($payment->receipt_status === InvoicePayment::RECEIPT_READY && $pdf->verify($payment)) {

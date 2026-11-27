@@ -225,6 +225,16 @@ class PanelsTest extends BookingFlowTestCase
         Filament::setTenant($this->spa, true);
 
         Livewire::test(ListBookings::class)->assertCanSeeTableRecords([$a, $b]);
+        $a->forceFill(['total' => 300])->save();
+        $b->forceFill(['total' => 100, 'start_at' => $b->start_at->subDay(), 'end_at' => $b->end_at->subDay()])->save();
+        Livewire::test(ListBookings::class)->assertCanSeeTableRecords([$a, $b], inOrder: true)
+            ->filterTable('order', 'total_asc')->assertCanSeeTableRecords([$b, $a], inOrder: true)
+            ->filterTable('order', 'total_desc')->assertCanSeeTableRecords([$a, $b], inOrder: true)
+            ->filterTable('order', 'date_asc')->assertCanSeeTableRecords([$b, $a], inOrder: true)
+            ->sortTable('total', 'desc')->assertCanSeeTableRecords([$a, $b], inOrder: true)
+            ->filterTable('order', 'total_asc')->assertCanSeeTableRecords([$b, $a], inOrder: true)->assertSet('tableSortColumn', null)
+            ->set('tableSortColumn', 'total')->set('tableSortDirection', 'desc')->filterTable('status', 'confirmed')->assertSet('tableSortColumn', 'total');
+        $b->forceFill(['start_at' => $a->start_at, 'end_at' => $a->end_at])->save();
         Livewire::test(ViewBooking::class, ['record' => $a->getRouteKey()])->assertSee($a->reference)->callAction('accept')->assertHasNoActionErrors();
         $this->assertSame('confirmed', $a->fresh()->status);
 
