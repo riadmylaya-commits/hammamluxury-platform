@@ -62,3 +62,20 @@ Le script restaure fichiers + base dans `/tmp/hl-restore/files` et la base `hl_r
 9. Basculer le DNS, puis supprimer le dossier `/root/restore`.
 
 Temps estimé : 1 à 2 h, dépendant surtout de la réinstallation du serveur.
+
+## Contrôle complet du dépôt chiffré (relecture de 100 % des données)
+
+Le contrôle quotidien relit 10 % des données. Le contrôle complet relit et vérifie chaque bloc chiffré du dépôt externe.
+
+Commande, en root sur le serveur (aucun script du compte `hl-devin` ne la contient ; elle est à lancer par le titulaire du compte root, ou à ajouter comme script nommé dans `/opt/hl-ops/` et dans `/etc/sudoers.d/hl-devin`) :
+
+```bash
+set -a; . /etc/hl-backup/env; set +a
+nice -n 19 ionice -c3 restic check --read-data
+```
+
+Résultat attendu : `no errors were found`. Toute autre sortie : ne rien supprimer, conserver la sortie, relancer une sauvegarde (`/usr/local/sbin/hl-backup.sh`) puis un test de restauration isolé.
+
+- **Durée** : mesurée sur la staging le 27/11/2026 : 31 s pour un dépôt de 52 Mio (22 instantanés, 20 paquets), 6 % d'un cœur, 67 Mo de mémoire. Le dépôt de production est du même ordre (34 Mio de fichiers restaurés, base de 52 tables) : compter 1 à 2 minutes. La durée croît avec la taille du dépôt (télécharge tout le dépôt).
+- **Impact** : lecture seule sur le dépôt, aucune écriture dans la base ni dans les fichiers du site, aucune interruption de service. Le contrôle pose un verrou sur le dépôt : ne pas le lancer pendant la sauvegarde quotidienne (03:15 UTC) ni pendant un déploiement (qui sauvegarde d'abord).
+- **Fréquence conseillée** : avant chaque étape de déploiement, puis une fois par mois.
