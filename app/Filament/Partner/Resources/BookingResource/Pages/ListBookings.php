@@ -20,9 +20,9 @@ class ListBookings extends ListRecords
 
     // « Trier par » et le tri par en-tête de colonne s'excluent : le dernier choisi l'emporte, y compris sur les cartes
     // (téléphone, tablette) où les en-têtes sont masqués et où un tri hérité d'un lien ne pourrait pas être retiré.
-    public function updatedTableFilters(): void
+    public function updatedTableFilters(mixed $value = null, ?string $key = null): void
     {
-        if (filled($this->tableFilters['order']['value'] ?? null) && $this->tableSortColumn) {
+        if (str_starts_with((string) $key, 'order') && filled($this->tableFilters['order']['value'] ?? null) && $this->tableSortColumn) {
             $this->tableSortColumn = $this->tableSortDirection = null;
             $this->updatedTableSortColumn();
         }
