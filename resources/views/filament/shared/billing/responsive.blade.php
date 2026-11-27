@@ -1,6 +1,8 @@
 {{-- Tableaux de facturation en cartes sous 768 px : libellé au-dessus de la valeur, deux colonnes, champs longs en pleine largeur. --}}
 <style>
     .hl-rt td button, .hl-rt td a { white-space: nowrap; }
+    .hl-rt td.text-right { white-space: nowrap; }
+    .hl-rt td.text-right .block { white-space: normal; }
     @media (max-width: 767px) {
         .hl-rt thead { display: none; }
         .hl-rt, .hl-rt tbody { display: block; width: 100%; }
