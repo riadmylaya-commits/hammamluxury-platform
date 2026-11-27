@@ -39,7 +39,7 @@ Chacune exige un accord écrit de la propriétaire ; aucune n'entraîne les autr
 |---|---|---|---|
 | 1 | `d155c5a` | 2 migrations d'ajout | script `deploiement-d155c5a.sh` : arrêts préalables, sauvegarde externe, empreinte du contenu, e-mail de contrôle reçu, puis `ROUVRIR` ; essais réels ; 24 h de surveillance sans alerte |
 | 2 | PR #68 (périodes commerciales) | 1 migration d'ajout : table `partner_commission_periods` | mêmes contrôles ; six fiches référencées, brouillon, 0 % ; aucune période créée |
-| 3 | PR #69 (facturation, verrou fermé) | aucune migration | mêmes contrôles ; `hl:billing-status` : émission bloquée ; 0 facture, 0 règlement |
+| 3 | PR #69 (facturation, verrou fermé) | aucune migration | mêmes contrôles ; Admin → Paramètres de facturation : émission bloquée ; 0 facture, 0 règlement |
 
 Pour les étapes 2 et 3, le script de déploiement est dérivé de celui de l'étape 1 une fois la fusion faite (la version exacte et l'empreinte du contenu ne sont connues qu'à ce moment), relu, puis installé par la propriétaire avec vérification SHA-256.
 
@@ -60,11 +60,11 @@ En cas d'alerte : `docs/securite-surveillance.md`, section « Réaction à une a
 
 ## 6. Facturation : pourquoi elle ne peut pas s'activer par accident
 
-L'émission d'une facture exige **toutes** les conditions suivantes ; une seule manquante suffit à la refuser (`php artisan hl:billing-status` les liste) :
+L'émission d'une facture exige **toutes** les conditions suivantes ; une seule manquante suffit à la refuser (l'Admin → Paramètres de facturation les liste) :
 
 1. Verrou dans le code (`BillingGate::ISSUANCE_LOTS_DELIVERED = false`) : ne se lève que par une modification de code, donc une nouvelle PR, une fusion et un déploiement.
 2. Référence de recette et référence d'autorisation écrite de la propriétaire dans la configuration du serveur.
-3. `HL_BILLING_ENABLED=true`, période de départ, régime et taux de TVA, validation du comptable.
+3. Facturation activée dans l'Admin, période de départ, régime et taux de TVA, validation du comptable. Ces réglages seuls ne suffisent jamais : les points 1, 2 et 5 ne sont pas modifiables depuis l'Admin (test automatisé `BillingF0Test`).
 4. Identité complète de l'émetteur, sans terme d'essai.
 5. Empreinte de l'émetteur (`HL_BILLING_ISSUER_FINGERPRINT`) égale à celle calculée par `hl:billing-issuer-fingerprint` sur ce serveur : une configuration copiée depuis la staging est refusée.
 6. Identité de facturation complète du partenaire.
