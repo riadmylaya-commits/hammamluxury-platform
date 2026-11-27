@@ -102,7 +102,10 @@
             open = { pop: pop, btn: btn, wrap: wrap };
         });
     }
-    document.addEventListener('click', function (ev) { if (open && !open.wrap.contains(ev.target)) { close(); } });
+    // « pointerdown » en plus de « click » : Safari sur iPhone n'émet pas de clic sur un élément non interactif.
+    ['click', 'pointerdown'].forEach(function (t) {
+        document.addEventListener(t, function (ev) { if (open && !open.wrap.contains(ev.target)) { close(); } });
+    });
     document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && open) { var b = open.btn; close(); b.focus(); } });
     function all() {
         document.querySelectorAll('input[data-datefmt]').forEach(function (i) { enhance(i); restore(i); show(i); });
